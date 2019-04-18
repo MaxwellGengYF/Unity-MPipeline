@@ -3,7 +3,10 @@ guid: f5786a9fcf3ea5541ae9efca160436e5
 MonoImporter:
   externalObjects: {}
   serializedVersion: 2
-  defaultReferences: []
+  defaultReferences:
+  - rainRenderShader: {fileID: 4800000, guid: 769bf4b077be0eb43b6c0c07d36d2bab, type: 3}
+  - rainComputingShader: {fileID: 7200000, guid: 8dacb33f66ead4d41a8a8c1c344c4b8c,
+      type: 3}
   executionOrder: 0
   icon: {instanceID: 0}
   userData: 

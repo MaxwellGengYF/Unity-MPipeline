@@ -79,9 +79,6 @@ namespace MPipeline
     {
         public float4x4 rotation;
         public float3 position;
-        public float normalScale;
-        public float opaque;
-        public float3 color;
         public void* comp;
     }
 

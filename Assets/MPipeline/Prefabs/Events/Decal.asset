@@ -13,8 +13,4 @@ MonoBehaviour:
   m_Name: Decal
   m_EditorClassIdentifier: 
   enabled: 1
-  rain:
-    enabled: 0
-    size: 1024
-    timeScale: 1
   availiableDistance: 21.52

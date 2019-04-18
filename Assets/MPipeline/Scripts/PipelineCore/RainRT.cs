@@ -4,25 +4,23 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using Unity.Collections;
 namespace MPipeline
-{
-    [System.Serializable]
-    public class RainRT
+{ 
+    public class RainRT : MonoBehaviour
     {
         #region VARIABLE
-        public bool enabled = false;
         public int size = 1024;
-
         public float timeScale = 1;
-
         private Material rainMat;
         private ComputeBuffer allPoints;
         private  RenderTexture rainningRT;
-        private Shader rainRenderShader;
-        private ComputeShader rainComputingShader;
+        public Shader rainRenderShader;
+        public ComputeShader rainComputingShader;
+        private System.Action<CommandBuffer> updateFunc;
         #endregion
 
-        public void Init(PipelineResources resources)
+        void Awake()
         {
+            updateFunc = UpdateCB;
             allPoints = new ComputeBuffer(1024, 12);
             NativeArray<Vector3> allPointsInitValue = new NativeArray<Vector3>(1024, Allocator.Temp);
             for (int i = 0; i < 1024; ++i)
@@ -34,25 +32,23 @@ namespace MPipeline
             rainningRT.Create();
             rainningRT.filterMode = FilterMode.Bilinear;
             rainningRT.wrapMode = TextureWrapMode.Mirror;
-            rainRenderShader = resources.shaders.rainRenderShader;
-            rainComputingShader = resources.shaders.rainComputingShader;
             rainMat = new Material(rainRenderShader);
 
         }
 
-        public bool Check()
+        private void Update()
         {
-            return rainningRT && allPoints.IsValid();
+            RenderPipeline.ExecuteBufferAtFrameEnding(updateFunc);
         }
 
-        public void Dispose()
+        void OnDestroy()
         {
-            Object.DestroyImmediate(rainningRT);
+            DestroyImmediate(rainningRT);
             rainningRT = null;
             allPoints.Dispose();
         }
-
-        public void Update(CommandBuffer buffer)
+        
+        private void UpdateCB(CommandBuffer buffer)
         {
             if (enabled)
             {

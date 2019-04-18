@@ -17,8 +17,6 @@ namespace MPipeline
         public ComputeShader texCopyShader;
         public ComputeShader reflectionCullingShader;
         public ComputeShader voxelNoise;
-        public ComputeShader rainComputingShader;
-        public Shader rainRenderShader;
         public Shader minMaxDepthBounding;
         public Shader taaShader;
         public Shader ssrShader;
@@ -38,7 +36,6 @@ namespace MPipeline
         public Shader gtaoShader;
         public Shader lightingShader;
         public Shader irradianceVolumeShader;
-        public Shader decalShader;
         public Shader ssgiShader;
         public Mesh occluderMesh;
         public Mesh sphereMesh;

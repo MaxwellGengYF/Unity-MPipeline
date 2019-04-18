@@ -112,11 +112,11 @@ CGPROGRAM
 #pragma fragment frag_surf
 ENDCG
 }
-		Pass
+	Pass
 		{
 			ZTest less
 			Cull back
-			Tags {"LightMode" = "DirectionalLight"}
+			Tags {"LightMode" = "Shadow"}
 			CGPROGRAM
 			#pragma vertex vert
 			#pragma fragment frag
@@ -124,12 +124,12 @@ ENDCG
 			#pragma exclude_renderers gles
 			#include "UnityCG.cginc"
 			#include "CGINC/Procedural.cginc"
+			#pragma multi_compile __ POINT_LIGHT_SHADOW
 			
 			float4x4 _ShadowMapVP;
 			struct appdata_shadow
 			{
 				float4 vertex : POSITION;
-				float3 normal : NORMAL;
 				#if CUT_OFF
 				float2 texcoord : TEXCOORD0;
 				#endif
@@ -137,6 +137,9 @@ ENDCG
 			struct v2f
 			{
 				float4 vertex : SV_POSITION;
+				#if POINT_LIGHT_SHADOW
+				float3 worldPos : TEXCOORD1;
+				#endif
 				#if CUT_OFF
 				float2 texcoord : TEXCOORD0;
 				#endif
@@ -146,6 +149,9 @@ ENDCG
 			{
 				float4 worldPos = mul(unity_ObjectToWorld, v.vertex);
 				v2f o;
+				#if POINT_LIGHT_SHADOW
+				o.worldPos = worldPos.xyz;
+				#endif
 				o.vertex = mul(_ShadowMapVP, worldPos);
 				#if CUT_OFF
 				o.texcoord = v.texcoord;
@@ -161,109 +167,11 @@ ENDCG
 				float4 c = tex2D(_MainTex, i.texcoord);
 				clip(c.a * _Color.a - _Cutoff);
 				#endif
+				#if POINT_LIGHT_SHADOW
+				return distance(i.worldPos, _LightPos.xyz) / _LightPos.w;
+				#else
 				return i.vertex.z;
-			}
-
-			ENDCG
-		}
-
-		Pass
-        {
-			Tags {"LightMode"="PointLightPass"}
-			ZTest less
-			Cull back
-            CGPROGRAM
-            #pragma vertex vert
-            #pragma fragment frag
-            #pragma target 5.0
-            #include "CGINC/Procedural.cginc"
-			struct appdata_shadow
-			{
-				float4 vertex : POSITION;
-				#if CUT_OFF
-				float2 texcoord : TEXCOORD0;
 				#endif
-			};
-            struct v2f
-            {
-                float4 vertex : SV_POSITION;
-                float3 worldPos : TEXCOORD0;
-				#if CUT_OFF
-				float2 texcoord : TEXCOORD1;
-				#endif
-            };
-            float4x4 _VP;
-            v2f vert (appdata_shadow v) 
-            {
-                v2f o;
-				float4 worldPos = mul(unity_ObjectToWorld, v.vertex);
-                o.worldPos = worldPos.xyz;
-                o.vertex = mul(_VP, worldPos);
-				#if CUT_OFF
-				o.texcoord = v.texcoord;
-				#endif
-                return o;
-            }
-
-            float frag (v2f i) : SV_Target
-            {
-				#if CUT_OFF
-				i.texcoord = TRANSFORM_TEX(i.texcoord, _MainTex);
-				float4 c = tex2D(_MainTex, i.texcoord);
-				clip(c.a * _Color.a - _Cutoff);
-				#endif
-               return distance(i.worldPos, _LightPos.xyz) / _LightPos.w;
-            } 
-            ENDCG
-        }
-
-		Pass
-		{
-			Tags {"LightMode"="SpotLightPass"}
-			ZTest less
-			Cull back
-			CGPROGRAM
-			#pragma vertex vert
-			#pragma fragment frag
-			// Upgrade NOTE: excluded shader from OpenGL ES 2.0 because it uses non-square matrices
-			#pragma exclude_renderers gles
-			#include "UnityCG.cginc"
-			#include "CGINC/Procedural.cginc"
-			float4x4 _ShadowMapVP;
-			float _LightRadius;
-			struct v2f
-			{
-				float4 vertex : SV_POSITION;
-				#if CUT_OFF
-				float2 texcoord : TEXCOORD0;
-				#endif
-			};
-			struct appdata_shadow
-			{
-				float4 vertex : POSITION;
-				#if CUT_OFF
-				float2 texcoord : TEXCOORD0;
-				#endif
-			};
-
-			v2f vert (appdata_shadow v)
-			{
-				float4 worldPos = mul(unity_ObjectToWorld, v.vertex);
-				v2f o;
-				o.vertex = mul(_ShadowMapVP, worldPos);
-				#if CUT_OFF
-				o.texcoord = v.texcoord;
-				#endif
-				return o;
-			}
-			float frag (v2f i) : SV_TARGET
-			{
-				#if CUT_OFF
-				i.texcoord = TRANSFORM_TEX(i.texcoord, _MainTex);
-				float4 c = tex2D(_MainTex, i.texcoord);
-				clip(c.a * _Color.a - _Cutoff);
-				#endif
-				return i.vertex.z;
 			}
 
 			ENDCG

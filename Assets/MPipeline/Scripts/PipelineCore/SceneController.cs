@@ -180,6 +180,7 @@ namespace MPipeline
             ref SpotLightMatrix spotLightMatrix = ref spotcommand.shadowMatrices[spotLights.shadowIndex];
             spotLights.vpMatrix = GL.GetGPUProjectionMatrix(spotLightMatrix.projectionMatrix, false) * spotLightMatrix.worldToCamera;
             buffer.SetInvertCulling(true);
+            buffer.DisableShaderKeyword("POINT_LIGHT_SHADOW");
             currentCam.orthographic = false;
             currentCam.fieldOfView = spotLights.angle;
             currentCam.nearClipPlane = spotLights.nearClip;
@@ -213,7 +214,7 @@ namespace MPipeline
                 layerMask = mask,
                 renderingLayerMask = 1
             };
-            DrawingSettings dsettings = new DrawingSettings(new ShaderTagId("SpotLightPass"), new SortingSettings { criteria = SortingCriteria.None })
+            DrawingSettings dsettings = new DrawingSettings(new ShaderTagId("Shadow"), new SortingSettings { criteria = SortingCriteria.None })
             {
                 enableDynamicBatching = true,
                 enableInstancing = false,
@@ -234,6 +235,7 @@ namespace MPipeline
                 opts.command.SetGlobalBuffer(ShaderIDs.verticesBuffer, baseBuffer.verticesBuffer);
                 opts.command.SetGlobalBuffer(ShaderIDs.resultBuffer, baseBuffer.resultBuffer);
             }
+            opts.command.DisableShaderKeyword("POINT_LIGHT_SHADOW");
             opts.command.SetInvertCulling(true);
             Camera currentCam = cam.cam;
             Vector4 bias = sunLight.bias / currentCam.farClipPlane;
@@ -277,7 +279,7 @@ namespace MPipeline
                 };
                 SortingSettings sorting = new SortingSettings(SunLight.shadowCam);
                 sorting.criteria = SortingCriteria.CommonOpaque;
-                DrawingSettings dsettings = new DrawingSettings(new ShaderTagId("DirectionalLight"), sorting)
+                DrawingSettings dsettings = new DrawingSettings(new ShaderTagId("Shadow"), sorting)
                 {
                     enableDynamicBatching = true,
                     enableInstancing = false,
@@ -297,13 +299,14 @@ namespace MPipeline
             ref CubemapViewProjMatrix vpMatrices = ref vpMatrixArray[offset];
             cb.SetGlobalVector(ShaderIDs._LightPos, light.sphere);
             cb.SetInvertCulling(true);
+            cb.EnableShaderKeyword("POINT_LIGHT_SHADOW");
             FilteringSettings renderSettings = new FilteringSettings()
             {
                 renderQueueRange = RenderQueueRange.opaque,
                 layerMask = mask,
                 renderingLayerMask = 1
             };
-            DrawingSettings dsettings = new DrawingSettings(new ShaderTagId("PointLightPass"), new SortingSettings { criteria = SortingCriteria.None })
+            DrawingSettings dsettings = new DrawingSettings(new ShaderTagId("Shadow"), new SortingSettings { criteria = SortingCriteria.None })
             {
                 enableDynamicBatching = true,
                 enableInstancing = false,
@@ -313,7 +316,7 @@ namespace MPipeline
             int depthSlice = lit.ShadowIndex * 6;
             cb.SetRenderTarget(renderTarget, 0, CubemapFace.Unknown, depthSlice + 1);
             cb.ClearRenderTarget(true, true, new Color(float.PositiveInfinity, 1, 1, 1));
-            cb.SetGlobalMatrix(ShaderIDs._VP, vpMatrices.rightProjView);
+            cb.SetGlobalMatrix(ShaderIDs._ShadowMapVP, vpMatrices.rightProjView);
             data.ExecuteCommandBuffer();
             float size = light.sphere.w;
             lit.shadowCam.orthographic = true;
@@ -339,7 +342,7 @@ namespace MPipeline
             //-X
             cb.SetRenderTarget(renderTarget, 0, CubemapFace.Unknown, depthSlice);
             cb.ClearRenderTarget(true, true, new Color(float.PositiveInfinity, 1, 1, 1));
-            cb.SetGlobalMatrix(ShaderIDs._VP, vpMatrices.leftProjView);
+            cb.SetGlobalMatrix(ShaderIDs._ShadowMapVP, vpMatrices.leftProjView);
             if (gpurpEnabled)
             {
                 cb.DrawProceduralIndirect(Matrix4x4.identity, depthMaterial, 0, MeshTopology.Triangles, baseBuffer.instanceCountBuffer);
@@ -350,7 +353,7 @@ namespace MPipeline
             //Y
             cb.SetRenderTarget(renderTarget, 0, CubemapFace.Unknown, depthSlice + 3);
             cb.ClearRenderTarget(true, true, new Color(float.PositiveInfinity, 1, 1, 1));
-            cb.SetGlobalMatrix(ShaderIDs._VP, vpMatrices.upProjView);
+            cb.SetGlobalMatrix(ShaderIDs._ShadowMapVP, vpMatrices.upProjView);
             if (gpurpEnabled)
             {
                 cb.DrawProceduralIndirect(Matrix4x4.identity, depthMaterial, 0, MeshTopology.Triangles, baseBuffer.instanceCountBuffer);
@@ -361,7 +364,7 @@ namespace MPipeline
             //-Y
             cb.SetRenderTarget(renderTarget, 0, CubemapFace.Unknown, depthSlice + 2);
             cb.ClearRenderTarget(true, true, new Color(float.PositiveInfinity, 1, 1, 1));
-            cb.SetGlobalMatrix(ShaderIDs._VP, vpMatrices.downProjView);
+            cb.SetGlobalMatrix(ShaderIDs._ShadowMapVP, vpMatrices.downProjView);
             if (gpurpEnabled)
             {
                 cb.DrawProceduralIndirect(Matrix4x4.identity, depthMaterial, 0, MeshTopology.Triangles, baseBuffer.instanceCountBuffer);
@@ -372,7 +375,7 @@ namespace MPipeline
             //Z
             cb.SetRenderTarget(renderTarget, 0, CubemapFace.Unknown, depthSlice + 5);
             cb.ClearRenderTarget(true, true, new Color(float.PositiveInfinity, 1, 1, 1));
-            cb.SetGlobalMatrix(ShaderIDs._VP, vpMatrices.forwardProjView);
+            cb.SetGlobalMatrix(ShaderIDs._ShadowMapVP, vpMatrices.forwardProjView);
             if (gpurpEnabled)
             {
                 cb.DrawProceduralIndirect(Matrix4x4.identity, depthMaterial, 0, MeshTopology.Triangles, baseBuffer.instanceCountBuffer);
@@ -383,7 +386,7 @@ namespace MPipeline
             //-Z
             cb.SetRenderTarget(renderTarget, 0, CubemapFace.Unknown, depthSlice + 4);
             cb.ClearRenderTarget(true, true, new Color(float.PositiveInfinity, 1, 1, 1));
-            cb.SetGlobalMatrix(ShaderIDs._VP, vpMatrices.backProjView);
+            cb.SetGlobalMatrix(ShaderIDs._ShadowMapVP, vpMatrices.backProjView);
             if (gpurpEnabled)
             {
                 cb.DrawProceduralIndirect(Matrix4x4.identity, depthMaterial, 0, MeshTopology.Triangles, baseBuffer.instanceCountBuffer);

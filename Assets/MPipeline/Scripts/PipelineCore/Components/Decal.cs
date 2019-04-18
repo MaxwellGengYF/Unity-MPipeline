@@ -1,53 +1,32 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Unity.Mathematics;
-using static Unity.Mathematics.math;
+using UnityEngine.Rendering;
+
 namespace MPipeline
 {
-
-    public unsafe class Decal : MonoBehaviour
+    public class Decal : DecalBase
     {
         public Texture2D decalTex;
         public Texture2D normalTex;
-        public float normalScale = 0.1f;
+        public float normalScale = 1f;
         public Color albedoColor = Color.white;
-        private static NativeList<DecalData> decalDatas;
-        public static int allDecalCount
+        private static Material regularDecalMat;
+        public override void Init()
         {
-            get
+            if (!regularDecalMat)
             {
-                if (decalDatas.isCreated)
-                    return decalDatas.Length;
-                return 0;
+                regularDecalMat = new Material(Shader.Find("Unlit/Decal"));
             }
         }
-        public static ref DecalData GetData(int index)
+        public override void DrawDecal(CommandBuffer buffer)
         {
-            return ref decalDatas[index];
+            buffer.SetGlobalTexture(ShaderIDs._DecalAlbedo, decalTex);
+            buffer.SetGlobalTexture(ShaderIDs._DecalNormal, normalTex);
+            buffer.SetGlobalVector(ShaderIDs._Color, new Vector3(albedoColor.r, albedoColor.g, albedoColor.b));
+            buffer.SetGlobalVector(ShaderIDs._OpaqueScale, new Vector2(albedoColor.a, normalScale));
+            buffer.DrawMesh(GraphicsUtility.cubeMesh, transform.localToWorldMatrix, regularDecalMat, 0, 0);
         }
-        private int index;
-        private void Awake()
-        {
-            if (!decalDatas.isCreated) decalDatas = new NativeList<DecalData>(10, Unity.Collections.Allocator.Persistent);
-            decalDatas.Add(
-                new DecalData
-                {
-                    position = transform.position,
-                    rotation = transform.localToWorldMatrix,
-                    normalScale = normalScale,
-                    opaque = albedoColor.a,
-                    color = float3(albedoColor.r, albedoColor.g, albedoColor.b),
-                    comp = MUnsafeUtility.GetManagedPtr(this)
-                });
-        }
-
-        private void OnDestroy()
-        {
-            Decal lastDec = MUnsafeUtility.GetObject<Decal>(decalDatas[decalDatas.Length - 1].comp);
-            lastDec.index = index;
-            decalDatas[index] = decalDatas[decalDatas.Length - 1];
-            decalDatas.RemoveLast();
-        }
+        public override void OnDispose() { }
     }
 }

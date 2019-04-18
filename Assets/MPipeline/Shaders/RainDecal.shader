@@ -1,4 +1,4 @@
-﻿Shader "Unlit/Decal"
+﻿Shader "Unlit/RainDecal"
 {
     SubShader
     {
@@ -33,14 +33,13 @@
                 float4 vertex : SV_POSITION;
                 float4 screenUV : TEXCOORD0;
             };
-            Texture2D<float4> _DecalAlbedo; SamplerState sampler_DecalAlbedo;
-            Texture2D<float4> _DecalNormal; SamplerState sampler_DecalNormal;
             Texture2D<float4> _BackupNormalMap; SamplerState sampler_BackupNormalMap;
             Texture2D<float4> _BackupAlbedoMap; SamplerState sampler_BackupAlbedoMap;
             Texture2D<float> _CameraDepthTexture; SamplerState sampler_CameraDepthTexture;
+            Texture2D<float2> _RainTexture; SamplerState sampler_RainTexture;
             float4x4 _InvVP;
-            float2 _OpaqueScale;
             float3 _Color;
+            float2 _OpaqueScale;
             v2f vert (appdata v)
             {
                 v2f o;
@@ -59,23 +58,20 @@
                 worldPos /= worldPos.w;
                 float3 localPos = mul(unity_WorldToObject, worldPos).xyz;
                 localPos += 0.5;
+                albedo = originAlbedo;
                 if(dot(abs(localPos - saturate(localPos)), 1) > 1e-5)
                 {
-                    albedo = originAlbedo;
                     normal = originNormal;
                     return;
                 }
                 originNormal.xyz = originNormal.xyz * 2 - 1;
-                float4 decalAlbedo = _DecalAlbedo.Sample(sampler_DecalAlbedo, localPos.xz);
-                decalAlbedo.rgb *= _Color;
-                decalAlbedo.a = decalAlbedo.a * _OpaqueScale.x;
-                float3 decalNormal =  normalize(UnpackNormal(_DecalNormal.Sample(sampler_DecalNormal, localPos.xz)));
-                decalNormal.xy *= _OpaqueScale.y;
+                float3 decalNormal;
+                decalNormal.xy =  _RainTexture.Sample(sampler_RainTexture, localPos.xz) * _OpaqueScale.y;
+                decalNormal.z = sqrt(1 - decalNormal.xy * decalNormal.xy);
                 decalNormal = normalize(decalNormal);
                 decalNormal = mul((float3x3)unity_ObjectToWorld, decalNormal).xzy;
-                albedo.rgb = lerp(originAlbedo.rgb, decalAlbedo.rgb, decalAlbedo.a);
                 albedo.a = originAlbedo.a;
-                normal.xyz = normalize(lerp(originNormal.xyz, decalNormal, decalAlbedo.a)) * 0.5 + 0.5;
+                normal.xyz = normalize(lerp(originNormal.xyz, decalNormal, _OpaqueScale.x)) * 0.5 + 0.5;
                 normal.a = originNormal.a;
             }
             ENDCG
