@@ -16,5 +16,5 @@ MonoBehaviour:
   rain:
     enabled: 0
     size: 1024
-    timeScale: 2
+    timeScale: 1
   availiableDistance: 21.52

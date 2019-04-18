@@ -33,6 +33,7 @@ namespace MPipeline
         public override void PreRenderFrame(PipelineCamera cam, ref PipelineCommandData data)
         {
             if (!cam.cam.TryGetCullingParameters(out cullParams)) return;
+            data.buffer.SetInvertCulling(cam.inverseRender);
             cullParams.reflectionProbeSortingCriteria = ReflectionProbeSortingCriteria.ImportanceThenSize;
             cullParams.cullingOptions = CullingOptions.NeedsLighting | CullingOptions.NeedsReflectionProbes;
             if (cam.cam.useOcclusionCulling)

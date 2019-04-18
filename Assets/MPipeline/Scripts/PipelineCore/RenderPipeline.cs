@@ -6,6 +6,7 @@ using UnityEngine.Rendering;
 using System.Reflection;
 using Unity.Collections;
 using Unity.Mathematics;
+using Unity.Collections.LowLevel.Unsafe;
 namespace MPipeline
 {
     public unsafe sealed class RenderPipeline : UnityEngine.Rendering.RenderPipeline
@@ -15,11 +16,6 @@ namespace MPipeline
         public static RenderPipeline current { get; private set; }
         public static PipelineCommandData data;
         #endregion
-        private struct Command
-        {
-            public object obj;
-            public Action<object> func;
-        }
         private struct PtrEqual : IFunction<UIntPtr, UIntPtr, bool>
         {
             public bool Run(ref UIntPtr a, ref UIntPtr b)
@@ -29,8 +25,6 @@ namespace MPipeline
         }
         public PipelineResources resources;
         public static bool renderingEditor { get; private set; }
-        private static List<Command> afterRenderFrame = new List<Command>(10);
-        private static List<Command> beforeRenderFrame = new List<Command>(10);
         public static PipelineResources.CameraRenderingPath currentPath { get; private set; }
         private static NativeList<int> ReleaseList;
         private static NativeDictionary<UIntPtr, int, PtrEqual> eventsGuideBook;
@@ -89,27 +83,9 @@ namespace MPipeline
             return null;
         }
 
-        public static void AddCommandAfterFrame(object arg, Action<object> func)
-        {
-            afterRenderFrame.Add(new Command
-            {
-                func = func,
-                obj = arg
-            });
-        }
-
         public static void ExecuteBufferAtFrameEnding(Action<CommandBuffer> buffer)
         {
             bufferAfterFrame.Add(buffer);
-        }
-
-        public static void AddCommandBeforeFrame(object arg, Action<object> func)
-        {
-            beforeRenderFrame.Add(new Command
-            {
-                func = func,
-                obj = arg
-            });
         }
 
         public RenderPipeline(PipelineResources resources)
@@ -168,18 +144,9 @@ namespace MPipeline
         }
         protected override void Render(ScriptableRenderContext renderContext, Camera[] cameras)
         {
-            bool* propertyCheckedFlags = stackalloc bool[]
-            {
-                false,
-                false,
-                false
-            };
+            bool* propertyCheckedFlags = stackalloc bool[resources.allEvents.Length];
+            UnsafeUtility.MemClear(propertyCheckedFlags, resources.allEvents.Length);
             GraphicsSettings.useScriptableRenderPipelineBatching = resources.useSRPBatcher;
-            foreach (var i in beforeRenderFrame)
-            {
-                i.func(i.obj);
-            }
-            beforeRenderFrame.Clear();
             SceneController.SetState();
 #if UNITY_EDITOR
             foreach (var pair in bakeList)
@@ -232,11 +199,6 @@ namespace MPipeline
                 data.ExecuteCommandBuffer();
                 renderContext.Submit();
             }
-            foreach (var i in afterRenderFrame)
-            {
-                i.func(i.obj);
-            }
-            afterRenderFrame.Clear();
             if (bufferAfterFrame.Count > 0)
             {
                 foreach (var i in bufferAfterFrame)
@@ -274,7 +236,6 @@ namespace MPipeline
                 }
             }
 #endif
-            data.buffer.SetInvertCulling(pipelineCam.inverseRender);
             foreach (var e in collect)
             {
                 if (e.Enabled)
@@ -290,7 +251,6 @@ namespace MPipeline
                     e.FrameUpdate(pipelineCam, ref data);
                 }
             }
-            data.buffer.SetInvertCulling(false);
             foreach (var i in ReleaseList)
             {
                 data.buffer.ReleaseTemporaryRT(i);
