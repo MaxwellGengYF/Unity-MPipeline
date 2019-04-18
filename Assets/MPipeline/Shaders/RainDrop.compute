@@ -1,0 +1,17 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+#include "CGINC/Random.cginc"
+float _DeltaTime;
+RWStructuredBuffer<float3> allPoints;	//x: x Axis y: y Axis z: currentTime
+[numthreads(1024,1,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+	float3 currentPoints = allPoints[id.x];
+	currentPoints.z += _DeltaTime;
+	if(currentPoints.z > 1)
+	{
+		currentPoints.z--;
+		currentPoints.xy = MNoise(currentPoints.xy) * 2 - 1;
+	}
+	allPoints[id.x] = currentPoints;
+}

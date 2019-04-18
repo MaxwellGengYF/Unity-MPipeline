@@ -1,0 +1,38 @@
+﻿#pragma kernel Remove
+#pragma kernel FrustumCull
+#pragma kernel ClearCull
+#include "CGINC/Terrain.cginc"
+
+uint _Count;
+
+RWStructuredBuffer<TerrainPanel> clusterBuffer;    
+StructuredBuffer<uint2> _IndexBuffer;
+RWStructuredBuffer<uint> instanceCountBuffer;
+RWStructuredBuffer<uint> resultBuffer;
+
+[numthreads(64,1,1)]
+void Remove (uint id : SV_DispatchThreadID)
+{
+    if(id >= _Count) return;
+    uint2 value = _IndexBuffer[id];
+    clusterBuffer[value.x] = clusterBuffer[value.y];
+}
+
+[numthreads(64,1,1)]
+void FrustumCull (uint id : SV_DispatchThreadID)
+{
+    if(id >= _Count) return;
+    TerrainPanel panel = clusterBuffer[id];
+    if(PlaneTest(panel.position, panel.extent) > 0.5)
+    {
+        uint index;
+        InterlockedAdd(instanceCountBuffer[1], 1, index);
+        resultBuffer[index] = id;
+    }
+}
+
+[numthreads(1, 1, 1)]
+void ClearCull(uint id : SV_DISPATCHTHREADID)
+{
+    instanceCountBuffer[1] = 0;
+}

@@ -1,0 +1,142 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel SetXYPlane
+#pragma kernel SetZPlane
+#pragma kernel CBDR
+#pragma kernel TBDR
+
+#include "UnityCG.cginc"
+#include "CGINC/VoxelLight.cginc"
+float4x4 _InvVP;
+
+RWTexture3D<float4> _XYPlaneTexture;
+RWTexture2D<float4> _ZPlaneTexture;
+StructuredBuffer<PointLight> _AllPointLight;
+StructuredBuffer<SpotLight> _AllSpotLight;
+RWStructuredBuffer<uint> _PointLightIndexBuffer;
+RWStructuredBuffer<uint> _SpotLightIndexBuffer;
+uint _PointLightCount;
+uint _SpotLightCount;
+
+
+[numthreads(XRES, YRES, 1)]
+void SetXYPlane(uint2 id : SV_DispatchThreadID)
+{
+	float2 leftBotUV = id / float2(XRES, YRES);
+	float2 rightTopUV = leftBotUV + (1.0 / float2(XRES, YRES));
+	leftBotUV = leftBotUV * 2 - 1;
+	rightTopUV = rightTopUV * 2 - 1;
+	const float nearZ = 1;
+#if UNITY_REVERSED_Z
+	
+	_XYPlaneTexture[uint3(id, 0)] = GetPlane(mul(_InvVP, float4(1, rightTopUV.y, nearZ, 1)), mul(_InvVP, float4(-1, rightTopUV.y, nearZ, 1)), mul(_InvVP, float4(0, rightTopUV.y, 0.5, 1)));                  //TOP
+	_XYPlaneTexture[uint3(id, 1)] = GetPlane(mul(_InvVP, float4(-1, leftBotUV.y, nearZ, 1)), mul(_InvVP, float4(1, leftBotUV.y, nearZ, 1)), mul(_InvVP, float4(0, leftBotUV.y, 0.5, 1)));                  //DOWN
+	_XYPlaneTexture[uint3(id, 2)] = GetPlane(mul(_InvVP, float4(leftBotUV.x, 1, nearZ, 1)), mul(_InvVP, float4(leftBotUV.x, -1, nearZ, 1)), mul(_InvVP, float4(leftBotUV.x, 0, 0.5, 1)));        //LEFT
+	_XYPlaneTexture[uint3(id, 3)] = GetPlane(mul(_InvVP, float4(rightTopUV.x, -1, nearZ, 1)), mul(_InvVP, float4(rightTopUV.x, 1, nearZ, 1)), mul(_InvVP, float4(rightTopUV.x, 0, 0.5, 1)));            //RIGHT
+#else
+	_XYPlaneTexture[uint3(id, 0)] = GetPlane(mul(_InvVP, float4(-1, rightTopUV.y, nearZ, 1)), mul(_InvVP, float4(1, rightTopUV.y, nearZ, 1)), mul(_InvVP, float4(0, rightTopUV.y, 0.5, 1)));                  //TOP
+	_XYPlaneTexture[uint3(id, 1)] = GetPlane(mul(_InvVP, float4(1, leftBotUV.y, nearZ, 1)), mul(_InvVP, float4(-1, leftBotUV.y, nearZ, 1)), mul(_InvVP, float4(0, leftBotUV.y, 0.5, 1)));                  //DOWN
+	_XYPlaneTexture[uint3(id, 2)] = GetPlane(mul(_InvVP, float4(leftBotUV.x, -1, nearZ, 1)), mul(_InvVP, float4(leftBotUV.x, 1, nearZ, 1)), mul(_InvVP, float4(leftBotUV.x, 0, 0.5, 1)));        //LEFT
+	_XYPlaneTexture[uint3(id, 3)] = GetPlane(mul(_InvVP, float4(rightTopUV.x, 1, nearZ, 1)), mul(_InvVP, float4(rightTopUV.x, -1, nearZ, 1)), mul(_InvVP, float4(rightTopUV.x, 0, 0.5, 1)));            //RIGHT
+
+#endif
+}
+
+[numthreads(ZRES, 1, 1)]
+void SetZPlane(uint id : SV_DISPATCHTHREADID)
+{
+	float3 backPos = lerp(_CameraNearPos, _CameraFarPos, pow(id / (float)ZRES, CLUSTERRATE));
+	float3 forwardPos = lerp(_CameraNearPos, _CameraFarPos, pow((id + 1.0) / (float)ZRES, CLUSTERRATE));
+	_ZPlaneTexture[uint2(id, 0)] = GetPlane(-_CameraForward, backPos);
+	_ZPlaneTexture[uint2(id, 1)] = GetPlane(_CameraForward, forwardPos);
+}
+
+[numthreads(XRES, YRES, 1)]
+void CBDR(uint3 id : SV_DISPATCHTHREADID)
+{
+	float4 planes[6];
+	uint i;
+	planes[0] = _ZPlaneTexture[uint2(id.z, 0)];
+	planes[1] = _ZPlaneTexture[uint2(id.z, 1)];
+	planes[2] = _XYPlaneTexture[uint3(id.xy, 0)];
+	planes[3] = _XYPlaneTexture[uint3(id.xy, 1)];
+	planes[4] = _XYPlaneTexture[uint3(id.xy, 2)];
+	planes[5] = _XYPlaneTexture[uint3(id.xy, 3)];
+	//TODO
+
+	uint clusterCount = 0;
+	uint sBufferIndex = GetIndex(id, VOXELSIZE, (MAXLIGHTPERCLUSTER + 1)) + 1;
+	for (i = 0; i < _PointLightCount; ++i) {
+		PointLight lit = _AllPointLight[i];
+		if (SphereIntersect(lit.sphere, planes) > 0.5) {
+			_PointLightIndexBuffer[sBufferIndex + clusterCount] = i;
+			clusterCount++;
+		}
+	}
+	_PointLightIndexBuffer[sBufferIndex - 1] = clusterCount + sBufferIndex;
+
+	clusterCount = 0;
+	
+	for (i = 0; i < _SpotLightCount; ++i) {
+		Cone lit = _AllSpotLight[i].lightCone;
+		if (ConeIntersect(lit, planes) > 0.5) {
+			_SpotLightIndexBuffer[sBufferIndex + clusterCount] = i;
+			clusterCount++;
+		}
+	}
+	_SpotLightIndexBuffer[sBufferIndex - 1] = clusterCount + sBufferIndex;
+}
+int2 _TileSize;
+Texture2D<float2> _DepthBoundTexture;
+RWTexture3D<int> _PointLightTile;
+RWTexture3D<int> _SpotLightTile;
+float3 _CameraPos;
+inline float2 LinearEyeDepth( float2 z )
+{
+    return 1.0 / (_ZBufferParams.z * z + _ZBufferParams.w);
+}
+[numthreads(8, 8, 1)]
+void TBDR(uint2 id : SV_DISPATCHTHREADID)
+{
+	bool2 border = id >= _TileSize;
+	uint i;
+	if(border.x || border.y) return;
+	float2 uv = (id + 0.5) / (float2)_TileSize;
+	float4 cornerUV = (float4(id.xy, id.xy) + float4(0,0,1,1)) / float4(_TileSize.xy, _TileSize.xy);
+	cornerUV = cornerUV * 2 - 1;
+	float4 tilePlanes[6];
+	const float nearZ = 1;
+#if UNITY_REVERSED_Z
+	tilePlanes[2] = GetPlane(mul(_InvVP, float4(1, cornerUV.w, nearZ, 1)), mul(_InvVP, float4(-1, cornerUV.w, nearZ, 1)), mul(_InvVP, float4(0, cornerUV.w, 0.5, 1)));                  //TOP
+	tilePlanes[3] = GetPlane(mul(_InvVP, float4(-1, cornerUV.y, nearZ, 1)), mul(_InvVP, float4(1, cornerUV.y, nearZ, 1)), mul(_InvVP, float4(0, cornerUV.y, 0.5, 1)));                  //DOWN
+	tilePlanes[4] = GetPlane(mul(_InvVP, float4(cornerUV.x, 1, nearZ, 1)), mul(_InvVP, float4(cornerUV.x, -1, nearZ, 1)), mul(_InvVP, float4(cornerUV.x, 0, 0.5, 1)));        //LEFT
+	tilePlanes[5] = GetPlane(mul(_InvVP, float4(cornerUV.z, -1, nearZ, 1)), mul(_InvVP, float4(cornerUV.z, 1, nearZ, 1)), mul(_InvVP, float4(cornerUV.z, 0, 0.5, 1)));            //RIGHT
+	float2 minMax = _DepthBoundTexture[id].yx;
+#else
+	tilePlanes[2] = GetPlane(mul(_InvVP, float4(-1, cornerUV.w, nearZ, 1)), mul(_InvVP, float4(1, cornerUV.w, nearZ, 1)), mul(_InvVP, float4(0, cornerUV.w, 0.5, 1)));                  //TOP
+	tilePlanes[3] = GetPlane(mul(_InvVP, float4(1, cornerUV.y, nearZ, 1)), mul(_InvVP, float4(-1, cornerUV.y, nearZ, 1)), mul(_InvVP, float4(0, cornerUV.y, 0.5, 1)));                  //DOWN
+	tilePlanes[4] = GetPlane(mul(_InvVP, float4(cornerUV.x, -1, nearZ, 1)), mul(_InvVP, float4(cornerUV.x, 1, nearZ, 1)), mul(_InvVP, float4(cornerUV.x, 0, 0.5, 1)));        //LEFT
+	tilePlanes[5] = GetPlane(mul(_InvVP, float4(cornerUV.z, 1, nearZ, 1)), mul(_InvVP, float4(cornerUV.z, -1, nearZ, 1)), mul(_InvVP, float4(cornerUV.z, 0, 0.5, 1)));            //RIGHT
+	float2 minMax = _DepthBoundTexture[id].xy;
+#endif
+	float2 eyeDepthBounding =  LinearEyeDepth(minMax);
+	tilePlanes[0] = GetPlane(-_CameraForward, _CameraPos + _CameraForward * eyeDepthBounding.x);
+	tilePlanes[1] = GetPlane(_CameraForward, _CameraPos + _CameraForward * eyeDepthBounding.y);
+	uint lightCount = 1;
+	for (i = 0; i < _PointLightCount; ++i) {
+		PointLight lit = _AllPointLight[i];
+		if (SphereIntersect(lit.sphere, tilePlanes) > 0.5) {
+			_PointLightTile[uint3(id, lightCount)] = i;
+			lightCount++;
+		}
+	}
+	_PointLightTile[uint3(id, 0)] = lightCount;
+	lightCount = 1;
+	for (i = 0; i < _SpotLightCount; ++i) {
+		Cone lit = _AllSpotLight[i].lightCone;
+		if (ConeIntersect(lit, tilePlanes) > 0.5) {
+			_SpotLightTile[uint3(id,lightCount)] = i;
+			lightCount++;
+		}
+	}
+	_SpotLightTile[uint3(id, 0)] = lightCount;
+}

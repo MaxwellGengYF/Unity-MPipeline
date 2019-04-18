@@ -1,0 +1,48 @@
+﻿#pragma kernel RunFrustumCull
+#pragma kernel ClearCluster
+#define COMPUTESHADER
+#include "CGINC/Procedural.cginc"
+
+struct ClusterMeshData
+{
+    float3 extent;
+    float3 position;
+};
+RWStructuredBuffer<ClusterMeshData> clusterBuffer;
+RWStructuredBuffer<uint> instanceCountBuffer;
+RWStructuredBuffer<uint> resultBuffer;
+float4 planes[6];
+
+half PlaneTest(ClusterMeshData info){
+    float3 position = info.position;
+    float3 extent = info.extent;
+    half result = 1;
+    for(uint i = 0; i < 6; ++i)
+    {
+        float4 plane = planes[i];
+        float r = dot(position, plane.xyz); 
+        float3 absNormal = abs(plane.xyz);
+        float f = dot(absNormal, extent);
+        result *= ((r - f) < -plane.w) ? 1.0 : 0.0;
+    }
+    return result;
+}
+uint _Count;
+[numthreads(64, 1, 1)]
+void RunFrustumCull(uint id : SV_DISPATCHTHREADID)
+{
+    if(id >= _Count) return;
+    ClusterMeshData currentObject = clusterBuffer[id];
+    half result =  PlaneTest(currentObject);
+    if(result > 0.5){
+        uint currentIndex;
+        InterlockedAdd(instanceCountBuffer[1], 1, currentIndex);
+        resultBuffer[currentIndex] = id;
+    }
+}
+
+[numthreads(1,1,1)]
+void ClearCluster(uint id : SV_DISPATCHTHREADID)
+{
+    instanceCountBuffer[1] = 0;
+}

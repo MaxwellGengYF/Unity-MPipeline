@@ -1,0 +1,364 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+
+//DIRLIGHT , DIRLIGHTSHADOW, POINTLIGHT: 0b111
+#pragma kernel CSMain
+#pragma kernel CSMain CUBEMAP
+#pragma kernel CSMain DIRMAP
+#pragma kernel CSMain CUBEMAP DIRMAP
+#pragma kernel CSMain SPOTMAP
+#pragma kernel CSMain CUBEMAP  SPOTMAP
+#pragma kernel CSMain DIRMAP  SPOTMAP
+#pragma kernel CSMain CUBEMAP DIRMAP  SPOTMAP
+#pragma kernel Scatter
+#pragma kernel Clear
+#pragma kernel CalculateGI
+#include "CGINC/Shader_Include/Include_HLSL.hlsl"
+#include "CGINC/VoxelLight.cginc"
+#include "UnityCG.cginc"
+#include "GI/GlobalIllumination.cginc"
+#include "GI/SHRuntime.cginc"
+#define EMISSION_GEOMETRY
+//#define NOISE
+float4x4 _InvVP;
+float4x4 _ShadowMapVPs[4];
+float4 _ShadowDisableDistance;
+float3 _DirLightFinalColor;
+uint _LightFlag;
+float4x4 _LastVp;
+float4 _SceneOffset;
+float _TemporalWeight;
+
+StructuredBuffer<uint> _PointLightIndexBuffer;
+StructuredBuffer<uint> _SpotLightIndexBuffer;
+
+Texture3D<float4> _VolumetricNoise; SamplerState sampler_VolumetricNoise;
+float _TimeVar;
+
+TextureCubeArray<float> _CubeShadowMapArray; SamplerState sampler_CubeShadowMapArray;
+Texture2DArray<float> _SpotMapArray; SamplerComparisonState sampler_SpotMapArray;
+StructuredBuffer<PointLight> _AllPointLight;
+StructuredBuffer<SpotLight> _AllSpotLight;
+StructuredBuffer<FogVolume> _AllFogVolume;
+Texture2DArray<float> _DirShadowMap; SamplerComparisonState sampler_DirShadowMap;
+RWTexture3D<float4> _VolumeTex;
+Texture3D<float4> _LastVolume; SamplerState sampler_LastVolume;
+float3 _DirLightPos;
+uint _FogVolumeCount; 
+float _IndirectIntensity;
+uint _AreaLightCount;
+StructuredBuffer<AreaLight> _AreaLightBuffer;
+
+
+	float AttenuationToZero(float d)
+	{
+		// attenuation = 1 / (1 + distance_to_light / light_radius)^2
+		//             = 1 / (1 + 2*(d/r) + (d/r)^2)
+		// For more details see: https://imdoingitwrong.wordpress.com/2011/01/31/light-attenuation/
+		float kDefaultPointLightRadius = 0.25;
+		float atten =         1.0 / pow(1.0 +   d/kDefaultPointLightRadius, 2);
+		float kCutoff = 1.0 / pow(1.0 + 1.0/kDefaultPointLightRadius, 2); // cutoff equal to attenuation at distance 1.0
+
+		// Force attenuation to fall towards zero at distance 1.0
+		atten = (atten - kCutoff) / (1.f - kCutoff);
+		if (d >= 1.f)
+			atten = 0.f;
+		
+		return atten;
+	}
+    
+float3 AreaLights(float3 pos)
+{
+	float3 color = 0;
+	uint count =  _AreaLightCount;
+    [loop]
+	for (uint i = 0; i < count; i++)
+	{
+        AreaLight light = _AreaLightBuffer[i];
+		float4 pClip = mul(light.mat, float4(pos, 1));
+		float3 p = float3(pClip.x / pClip.w, pClip.y / pClip.w, pClip.z);
+		float z = p.z * 0.5 + 0.5;
+
+		float att = 1;
+			att *= saturate(AttenuationToZero(z));
+
+			// Magic tweaks to the shape
+			float corner = 0.4;
+			float outset = 0.8;
+			float smooth = 0.7;
+
+			float d = length(max(abs(p.xy) - 1 + corner*outset, 0.0)) - corner;
+			att *= saturate(1 - smoothstep(-smooth, 0, d));
+			att *= smoothstep(-0.01, 0.01, z);
+        
+		color += light.color * att;
+	}
+	return color;
+}
+
+            inline float EyeDepthToProj(float lin)
+            {
+                return (1/lin - _ZBufferParams.w) / _ZBufferParams.z;
+            }
+			float GetHardShadow(float3 worldPos, float eyeDistance)
+			{
+				float4 eyeRange = eyeDistance < _ShadowDisableDistance;
+				eyeRange.yzw -= eyeRange.xyz;
+				float zAxisUV = dot(eyeRange, float4(0, 1, 2, 3));
+				float4x4 vpMat = _ShadowMapVPs[zAxisUV];
+				float4 shadowPos = mul(vpMat, float4(worldPos, 1));
+				float2 shadowUV = shadowPos.xy;
+				shadowUV = shadowUV * 0.5 + 0.5;
+
+				float dist = shadowPos.z;
+                float atten = _DirShadowMap.SampleCmpLevelZero(sampler_DirShadowMap, float3(shadowUV, zAxisUV), dist);
+				return atten;
+			}
+
+float3 RayleighScatter(float3 ray, float lengthRay, float HeightFalloff, float RayleighScale)
+{	
+	float Falloff = exp( -HeightFalloff * abs(_WorldSpaceCameraPos.y) );
+	float densityIntegral = lengthRay * Falloff;
+    [flatten]
+	if (abs(ray.y) > 0.001)
+	{
+		float t = HeightFalloff * ray.y;
+		t = abs(t) < 0.00001 ? 0.00001 : t;
+		densityIntegral *= ( 1.0 - exp(-t) ) / t;
+	}
+
+	return  ( RayleighScale * float3(0.00116, 0.0027, 0.00662) ) * densityIntegral * (1.0 / 4.0 * 3.14);
+}
+#define MieScattering(cosAngle, g) g.w * (g.x / (pow(g.y - g.z * cosAngle, 1.25)))
+// x: 1 - g^2, y: 1 + g^2, z: 2*g, w: 1/4pi   g = 0.36
+static const float4 _MieG = float4(0.8704, 1.1296,0.72,0.7853981633974483);
+float2 _CameraClipDistance; //X: Near Y: Far - Near
+float3 GetColor(float3 targetWorldPos, float linearDepth, float2 uv)
+{
+    float3 color = 0;
+    float3 viewDir = normalize(_WorldSpaceCameraPos.rgb - targetWorldPos);
+    if(_LightFlag & 4)
+    {
+        #ifdef DIRMAP
+            color.rgb += _DirLightFinalColor * GetHardShadow(targetWorldPos, linearDepth) * MieScattering(-dot(_DirLightPos, viewDir), _MieG);
+        #else
+            color.rgb += _DirLightFinalColor * MieScattering(-dot(_DirLightPos, viewDir), _MieG);
+        #endif
+    }
+    float rate = pow(max(0, (linearDepth - _CameraClipDistance.x) / _CameraClipDistance.y), 1.0 / CLUSTERRATE);
+    if(rate > 1) return 0;
+	uint3 voxelValue = uint3((uint2)(uv * float2(XRES, YRES)), (uint)(rate * ZRES));
+	uint sb = GetIndex(voxelValue, VOXELSIZE, (MAXLIGHTPERCLUSTER + 1));
+	uint2 LightIndex;// = uint2(sb + 1, _PointLightIndexBuffer[sb]);
+    uint c;
+    if(_LightFlag & 1){
+        LightIndex = uint2(sb + 1, _PointLightIndexBuffer[sb]);
+        [loop]
+        for (c = LightIndex.x; c < LightIndex.y; c++)
+        {
+            PointLight pt = _AllPointLight[_PointLightIndexBuffer[c]];
+            float3 lightDir = pt.sphere.xyz - targetWorldPos;
+            float lenOfLightDir = length(lightDir);
+            //Cull Light
+            if(lenOfLightDir > pt.sphere.w) continue;
+            
+            float3 currentCol = DistanceFalloff(lightDir, (1 / pt.sphere.w)) * MieScattering(dot(lightDir / lenOfLightDir, viewDir), _MieG) * pt.lightColor;
+            if(dot(currentCol, 1) < 1e-5) continue;
+            #ifdef CUBEMAP
+            if(pt.shadowIndex >= 0){
+                float shadowDist = _CubeShadowMapArray.SampleLevel(sampler_CubeShadowMapArray, float4(lightDir, pt.shadowIndex), 0);
+                float lightDist = lenOfLightDir / pt.sphere.w;
+                currentCol *= lightDist <= shadowDist;
+            }
+            #endif
+            color.rgb += currentCol;
+        }
+    }
+    if(_LightFlag & 8)
+    {
+        LightIndex = uint2(sb + 1, _SpotLightIndexBuffer[sb]);
+        [loop]
+        for (c = LightIndex.x; c < LightIndex.y; c++)
+	    {
+            SpotLight Light = _AllSpotLight[_SpotLightIndexBuffer[c]];
+            Cone SpotCone = Light.lightCone;
+            float LightRange = SpotCone.height;
+            float3 LightPos = SpotCone.vertex;
+            float LightAngle = Light.angle;
+            float3 LightForward = SpotCone.direction;
+            float3 Un_LightDir = LightPos - targetWorldPos;
+            float lightDirLength = length(Un_LightDir);
+            float3 lightDir = Un_LightDir / lightDirLength;
+            float ldf = -dot(lightDir, LightForward);
+            float2 SpotConeAngle = float2(cos(LightAngle), cos(Light.smallAngle));
+            if(ldf < SpotConeAngle.x || SpotCone.height / ldf < lightDirLength) continue;
+            float lightAngleScale = 1 / max ( 0.001, (SpotConeAngle.y - SpotConeAngle.x) );
+            float lightAngleOffset = -SpotConeAngle.x * lightAngleScale;
+            float SpotFalloff = AngleFalloff(ldf, lightAngleScale, lightAngleOffset);
+            float isNear =  dot(-Un_LightDir, SpotCone.direction) > Light.nearClip;
+            float ShadowTrem = 1;
+            float3 spotColor = SpotFalloff * DistanceFalloff(Un_LightDir, (1 / LightRange)) * MieScattering(-dot(lightDir, viewDir), _MieG) * Light.lightColor * isNear;
+            if(dot(spotColor, 1) < 1e-5) continue;
+            #ifdef SPOTMAP
+            if(Light.shadowIndex >= 0)
+            {
+                        float4 clipPos = mul(Light.vpMatrix, float4(targetWorldPos, 1));
+                        clipPos /= clipPos.w;
+                        float2 uv = clipPos.xy * 0.5 + 0.5;
+                        ShadowTrem = _SpotMapArray.SampleCmpLevelZero(sampler_SpotMapArray, float3(uv, Light.shadowIndex), clipPos.z);
+            }
+            #endif
+            color.rgb += ShadowTrem * spotColor;
+        }
+    }
+    //color.rgb *= RayleighScatter(targetWorldPos, distance(targetWorldPos, _WorldSpaceCameraPos), 1, 0.001);
+   // color.rgb += GetVolumetricColor(targetWorldPos);
+  /*  color.a = 0;
+    [loop]
+    for(c = 0; c < _FogVolumeCount; c++)
+    {
+        FogVolume vol = _AllFogVolume[c];
+        float3 localPos = abs(mul(vol.worldToLocal, float4(targetWorldPos, 1)).xyz);
+        bool3 b = localPos < vol.extent;
+        if(b.x && b.y && b.z){
+            color.a += vol.targetVolume;
+            color.rgb *= vol.color;
+        }
+    }
+    */
+    #ifdef EMISSION_GEOMETRY
+    color += AreaLights(targetWorldPos);
+    #endif
+    return min(color, 128);
+}
+
+float Cubic_Interpolate (float4 values, float x)
+		{
+			float p = (values.w - values.z) - (values.x - values.y);
+			float q = (values.x - values.y) - p;
+			float r = values.z - values.x;
+            return dot(float4(p,q,r, values.y) * float4(x*x*x, x*x, x, 1), 1);
+		}
+
+float4 ScatterStep(float3 accumulatedLight, float accumulatedTransmittance, float3 sliceLight, float sliceDensity)
+{
+	sliceDensity = max(sliceDensity, 0.000001);
+	float  sliceTransmittance = exp(-sliceDensity / _ScreenSize.z);
+
+	// Seb Hillaire's improved transmission by calculating an integral over slice depth instead of
+	// constant per slice value. Light still constant per slice, but that's acceptable. See slide 28 of
+	// Physically-based & Unified Volumetric Rendering in Frostbite
+	// http://www.frostbite.com/2015/08/physically-based-unified-volumetric-rendering-in-frostbite/
+	float3 sliceLightIntegral = sliceLight * (1.0 - sliceTransmittance) / sliceDensity;
+
+	accumulatedLight += sliceLightIntegral * accumulatedTransmittance;
+	accumulatedTransmittance *= sliceTransmittance;
+	
+	return float4(accumulatedLight, accumulatedTransmittance);
+}
+float _MaxDistance;
+
+#include "CGINC/Random.cginc"
+
+float3 RenderVoxel(uint3 id, inout float3 jitterCoord, const float zAxisOffset)
+{
+    jitterCoord = MNoise(jitterCoord);
+    jitterCoord.z = jitterCoord.z * 0.5 + zAxisOffset;
+    float2 uv = saturate(float2(id.xy + jitterCoord.xy) / (float2)(_ScreenSize.xy));
+    float2 projCoord = uv * 2 - 1;
+    float lerpPos = (id.z+  jitterCoord.z) / ((float)_ScreenSize.z);
+    float linearDepth = lerp(_NearFarClip.z, _MaxDistance, pow(lerpPos, FROXELRATE));
+    float4 targetWorldPos = mul(_InvVP, float4(projCoord, EyeDepthToProj(linearDepth), 1));
+    targetWorldPos /= targetWorldPos.w;
+    float3 col = GetColor(targetWorldPos.xyz, linearDepth, uv);
+    return col;
+}
+[numthreads(2, 2, VOXELZ)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    float3 value = (float3)id / (float3)_ScreenSize;
+    float4 col = float4((RenderVoxel(id, value, 0) + RenderVoxel(id, value, 0.5)) * 0.5, 0);
+    float2 uv = saturate(float2(id.xy + 0.5) / (float2)(_ScreenSize.xy));
+    float2 projCoord = uv * 2 - 1;
+    float lerpPos = (id.z +  0.5) / ((float)_ScreenSize.z);
+    float linearDepth = lerp(_NearFarClip.z, _MaxDistance, pow(lerpPos, FROXELRATE));
+    float4 targetWorldPos = mul(_InvVP, float4(projCoord, EyeDepthToProj(linearDepth), 1));
+    targetWorldPos /= targetWorldPos.w;
+    float3 currentCol = _VolumeTex[id].xyz;
+    [loop]
+    for(uint c = 0; c < _FogVolumeCount; c++)
+    {
+        FogVolume vol = _AllFogVolume[c];
+        float3 localPos = mul(vol.worldToLocal, targetWorldPos).xyz;
+        bool3 b = abs(localPos) < vol.extent;
+        if(b.x && b.y && b.z){
+            
+            col.rgb += vol.emissionColor;
+            col.rgb *= vol.color;
+            currentCol *= vol.color;
+            #ifdef NOISE
+            float4 noiseValue = 0;
+            float3 pos = mul(vol.worldToLocal, float4(targetWorldPos.xyz + MNoise(targetWorldPos.xyz) * 2 - 1, 1).xyz * 2 - 1)+ vol.extent / (vol.extent * 2);
+            noiseValue = _VolumetricNoise.SampleLevel(sampler_VolumetricNoise, (pos + vol.extent * 0.3) / (vol.extent * 2), 0);
+            noiseValue = noiseValue * 0.5 + 0.5;
+            col.a += vol.targetVolume * Cubic_Interpolate(noiseValue, _TimeVar);
+            #else
+            col.a += vol.targetVolume;
+            #endif
+        }
+    }
+    float4 lastWorldPos = float4(targetWorldPos.xyz - _SceneOffset.xyz, 1);
+    float4 lastFrameClip = mul(_LastVp, lastWorldPos);
+    lastFrameClip /= lastFrameClip.w;
+    float3 lastFrameUV = float3(lastFrameClip.xy * 0.5 + 0.5, (LinearEyeDepth(lastFrameClip.z) - _NearFarClip.z) / (_MaxDistance - _NearFarClip.z));
+    lastFrameUV.z = pow(lastFrameUV.z, 1 / FROXELRATE);
+    float4 lastFrameColor = _LastVolume.SampleLevel(sampler_LastVolume, lastFrameUV, 0);
+    float reprojectionValid = lerp(_TemporalWeight * (dot(abs(lastFrameUV - saturate(lastFrameUV)), 1) < 1e-4), 0.999, _SceneOffset.w);
+    _VolumeTex[id] = lerp(float4(col.xyz + currentCol, col.w), lastFrameColor, reprojectionValid);
+}
+
+[numthreads(2,2,VOXELZ)]
+void Clear(uint3 id : SV_DISPATCHTHREADID)
+{
+	_VolumeTex[id] = 0;
+}
+
+[numthreads(2, 2, VOXELZ)]
+void CalculateGI(uint3 id : SV_DISPATCHTHREADID)
+{
+    float3 value = (float3)id / (float3)_ScreenSize;
+    float3 jitterCoord = MNoise(value);
+    jitterCoord *= float3(0.7, 0.7, 0.5);
+    jitterCoord += float3(0.15, 0.15, 0.25);
+    float2 uv = saturate(float2(id.xy + jitterCoord.xy) / (float2)(_ScreenSize.xy));
+    float2 projCoord = uv * 2 - 1;
+    float lerpPos = (id.z+  jitterCoord.z) / ((float)_ScreenSize.z);
+    float linearDepth = lerp(_NearFarClip.z, _MaxDistance, pow(lerpPos, FROXELRATE));
+    float4 targetWorldPos = mul(_InvVP, float4(projCoord, EyeDepthToProj(linearDepth), 1));
+    targetWorldPos /= targetWorldPos.w;
+    float3 shUV = GetSHUV(targetWorldPos.xyz);
+    shUV = shUV;
+    float offset = dot(abs(shUV - saturate(shUV)), 1);
+    if(offset > 1e-6) return;
+    SHColor sh = GetSHFromTex(shUV);
+    _VolumeTex[id] += float4((GetSHColor(sh.c, _CameraForward) + GetSHColor(sh.c, -_CameraForward)) * _IndirectIntensity, 0);
+}
+
+[numthreads(32, 2, 1)]
+void Scatter(uint2 id : SV_DISPATCHTHREADID)
+{
+	float4 accum = float4(0, 0, 0, 1);
+	uint3 pos = uint3(id.xy, 0);
+    float lastDist = 0;
+    [loop]
+	for(uint z = 0; z < _ScreenSize.z; z++)
+	{
+		pos.z = z;
+		float4 slice = _VolumeTex[pos];
+		 float currentDist = (z + 1.0) / _ScreenSize.z;
+        currentDist = pow(currentDist, FROXELRATE);
+        slice *= (currentDist - lastDist) * _ScreenSize.z;
+		accum = ScatterStep(accum.rgb, accum.a, slice.rgb, slice.a);
+        lastDist = currentDist;
+		_VolumeTex[pos] = accum;
+	}
+}

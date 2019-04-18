@@ -1,0 +1,169 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel ClusterCull
+#pragma kernel ClearCluster
+#pragma kernel UnsafeCull
+#pragma kernel MoveVertex
+#pragma kernel MoveCluster
+#pragma kernel FrustumFilter
+#pragma kernel OcclusionRecheck
+#pragma kernel ClearOcclusionData
+#define COMPUTESHADER
+#include "UnityCG.cginc"
+#include "CGINC/Procedural.cginc"
+shared float4 planes[PLANECOUNT];
+struct ClusterMeshData
+{
+    float3 extent;
+    float3 position;
+};
+RWStructuredBuffer<ClusterMeshData> clusterBuffer;
+RWStructuredBuffer<uint> instanceCountBuffer;
+RWStructuredBuffer<uint> resultBuffer;
+Texture2D<half> _HizDepthTex;  SamplerState sampler_HizDepthTex;
+uint _Count;
+float3 _CameraUpVector;
+float4x4 _NonJitterVP;
+float PlaneTest(ClusterMeshData info){
+    float3 position = info.position;
+    float3 extent = info.extent;
+    [unroll]
+    for(uint i = 0; i < 6; ++i)
+    {
+        float4 plane = planes[i];
+        float3 absNormal = abs(plane.xyz);
+        if((dot(position, plane.xyz) - dot(absNormal, extent)) > -plane.w)
+        {
+            return 0;
+        }
+    }
+    return 1;
+}
+static const float3 aggressiveExtentArray[6] =
+{
+    float3(0, 1, 0),
+    float3(0, -1, 0),
+    float3(1, 0, 0),
+    float3(-1, 0, 0),
+    float3(0, 0, 1),
+    float3(0, 0, -1)
+};
+
+float OcclusionTest(ClusterMeshData info, float4x4 vpMat)
+{
+    float3 farPoint = info.position + length(info.extent) * _CameraUpVector;
+    float4 centerClipPos = mul(vpMat, float4(info.position, 1));
+    centerClipPos /= centerClipPos.w;
+    float4 farClipPos = mul(vpMat, float4(farPoint, 1));
+    farClipPos /= farClipPos.w;
+    float screenDist = distance(farClipPos.xy, centerClipPos.xy);
+    float lodLevel = min(log2(screenDist * 64), 7.4);
+    [unroll]
+    for(uint i = 0; i < 6; ++i)
+    {
+        float3 worldPoint = info.position + info.extent * aggressiveExtentArray[i];
+        float4 clipPos = mul(vpMat, float4(worldPoint, 1));
+        clipPos /= clipPos.w;
+        float2 uv = clipPos.xy;
+        uv = uv * 0.5 + 0.5;
+        float depth = _HizDepthTex.SampleLevel(sampler_HizDepthTex, uv, lodLevel);
+        float dist = Linear01Depth(clipPos.z);
+        if(depth > dist) return 1;
+    }
+    return 0;
+}
+
+[numthreads(64, 1, 1)]
+void ClusterCull (uint id : SV_DISPATCHTHREADID)
+{
+    if(id >= _Count) return; 
+    ClusterMeshData currentObject = clusterBuffer[id];
+    float result =  PlaneTest(currentObject);
+    if(result > 0.5){
+        uint currentIndex;
+        InterlockedAdd(instanceCountBuffer[1], 1, currentIndex);
+        resultBuffer[currentIndex] = id;
+    }
+}
+
+[numthreads(1,1,1)]
+void ClearCluster(uint id : SV_DISPATCHTHREADID)
+{
+    instanceCountBuffer[1] = 0;
+}
+
+[numthreads(64, 1, 1)]
+void UnsafeCull(uint id : SV_DISPATCHTHREADID)
+{
+    if(id >= _Count) return; 
+    ClusterMeshData currentObject = clusterBuffer[id];
+    if((PlaneTest(currentObject) * OcclusionTest(currentObject, _NonJitterVP)) > 0.5)
+    {
+        uint currentIndex;
+        InterlockedAdd(instanceCountBuffer[1], 1, currentIndex);
+        resultBuffer[currentIndex] = id;
+    }
+}
+RWStructuredBuffer<Point> verticesBuffer;
+float3 _SceneOffset;
+uint _OffsetIndex;
+[numthreads(1, CLUSTERCLIPCOUNT, 1)]
+void MoveVertex(uint2 id : SV_DISPATCHTHREADID)
+{
+    verticesBuffer[(id.x + _OffsetIndex) * CLUSTERCLIPCOUNT + id.y].vertex += _SceneOffset;
+}
+
+[numthreads(64, 1, 1)]
+void MoveCluster(uint id : SV_DISPATCHTHREADID)
+{
+    if(id >= _Count) return; 
+    clusterBuffer[id + _OffsetIndex].position += _SceneOffset;
+}
+
+
+RWStructuredBuffer<uint> reCheckResult;
+RWStructuredBuffer<uint> reCheckCount;
+RWStructuredBuffer<uint> dispatchBuffer;
+float4x4 _LastVp;
+[numthreads(64, 1, 1)]
+void FrustumFilter(uint id : SV_DISPATCHTHREADID)
+{
+    if(id >= _Count) return; 
+    ClusterMeshData currentObject = clusterBuffer[id];
+    if(PlaneTest(currentObject) > 0.5)
+    {
+        uint currentIndex;
+        [branch]
+        if(OcclusionTest(currentObject, _LastVp) > 0.5){
+            InterlockedAdd(instanceCountBuffer[1], 1, currentIndex);
+            resultBuffer[currentIndex] = id;
+        } else{
+            InterlockedAdd(dispatchBuffer[4], 1, currentIndex);
+            reCheckResult[currentIndex] = id;
+        }
+    }
+}
+
+[numthreads(64, 1, 1)]
+void OcclusionRecheck(uint id : SV_DISPATCHTHREADID)
+{
+    if(id >= dispatchBuffer[3]) return;
+    int index = reCheckResult[id];
+    ClusterMeshData currentObject = clusterBuffer[index];
+    [branch]
+    if(OcclusionTest(currentObject, _NonJitterVP) > 0.5)
+    {
+        uint currentIndex;
+        InterlockedAdd(reCheckCount[1], 1, currentIndex);
+        resultBuffer[currentIndex] = index;
+    }
+}
+
+[numthreads(1,1,1)]
+void ClearOcclusionData(uint id : SV_DISPATCHTHREADID)
+{
+    uint threadCount = dispatchBuffer[4];
+    dispatchBuffer[0] = uint(ceil(threadCount / 64.0));
+    dispatchBuffer[3] = threadCount;
+    dispatchBuffer[4] = 0;
+    reCheckCount[1] = 0;
+}

@@ -1,0 +1,38 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2e775adbe5c3cbd48b975152ac4b81a5, type: 3}
+  m_Name: Irradiance
+  m_EditorClassIdentifier: 
+  allVolume:
+  - resolution:
+      x: 50
+      y: 30
+      z: 50
+    localToWorld:
+      c0:
+        x: 77.52404
+        y: 0
+        z: 0
+      c1:
+        x: 0
+        y: 38.176685
+        z: 0
+      c2:
+        x: 0
+        y: 0
+        z: 54.61357
+    position:
+      x: -8.25
+      y: 20.7
+      z: 7.1
+    volumeName: OutDoor
+    path: Assets/BinaryData/Irradiance/OutDoor.mpipe

@@ -1,0 +1,26 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel Update
+#pragma kernel Init
+#include "CGINC/Random.cginc"
+#define RESOLUTION 48
+RWTexture3D<float4> _VolumetricNoise;
+[numthreads(4,4,4)]
+void Update (uint3 id : SV_DispatchThreadID)
+{
+   float3 uv = id / (float)RESOLUTION;
+   float noise = cellNoise_Single(MNoise(uv));
+   float4 v = _VolumetricNoise[id];
+   v.xyz = v.yzw;
+   v.w = noise;
+   _VolumetricNoise[id] = v;
+}
+
+[numthreads(4,4,4)]
+void Init (uint3 id : SV_DispatchThreadID)
+{
+   float3 uv = id / (float)RESOLUTION;
+   float4 noise = 0;
+   noise.xyz = MNoise(uv) * 2 - 1 ;
+   noise.w = cellNoise_Single(noise.xyz);
+   _VolumetricNoise[id] = noise;
+}

@@ -1,0 +1,28 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel ClusterFunc
+#pragma kernel PointFunc
+#define COMPUTESHADER
+#include "CGINC/Procedural.cginc"
+struct ClusterMeshData
+{
+    float3 extent;
+    float3 position;
+};
+RWStructuredBuffer<ClusterMeshData> clusterBuffer;
+RWStructuredBuffer<Point> verticesBuffer;
+uint _Count;
+RWStructuredBuffer<uint2> _IndexBuffer;
+[numthreads(64, 1, 1)]
+void ClusterFunc(uint id : SV_DISPATCHTHREADID)
+{
+    if(id >= _Count) return;
+    uint2 index = _IndexBuffer[id];
+    clusterBuffer[index.x] = clusterBuffer[index.y];
+}
+
+[numthreads(1, CLUSTERCLIPCOUNT, 1)]
+void PointFunc(uint2 id : SV_DISPATCHTHREADID)
+{
+    uint2 index = _IndexBuffer[id.x] * CLUSTERCLIPCOUNT + id.y;
+    verticesBuffer[index.x] = verticesBuffer[index.y];
+}

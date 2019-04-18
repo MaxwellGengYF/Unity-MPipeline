@@ -1,0 +1,92 @@
+﻿#pragma kernel AnimationUpdate
+#pragma kernel BoneUpdate
+#pragma kernel SkinUpdate
+#define COMPUTESHADER
+#define THREAD 256
+#include "CGINC/Procedural.cginc"
+uint _Count;
+uint2 _ModelBones; // X: bones count Y: vertices count
+float2 _TimeVar;    //x: delta Time y : animation length
+struct AnimState
+{
+    float3x4 localToWorldMatrix;
+    float frame;
+};
+struct SkinPoint
+{
+    float3 position;
+    float3 normal;
+    float4 tangent;
+    float2 uv;
+    float4 boneWeight;
+    uint4 boneIndex;
+};
+Texture2D<float4> _AnimTex;
+StructuredBuffer<float3x4> bindBuffer;
+RWStructuredBuffer<AnimState> objBuffer;
+RWStructuredBuffer<float3x4> bonesBuffer;
+StructuredBuffer<SkinPoint> verticesBuffer;
+RWStructuredBuffer<Point> resultBuffer;
+Point GPUSkinning(uint vertexID, uint instanceID)
+{
+	Point pt = (Point)0;
+/*	uint offset = _ModelBones.x * instanceID;
+	SkinPoint skinPt = verticesBuffer[vertexID];
+	float3x4 combineTex = mul(bonesBuffer[offset + skinPt.boneIndex.x], skinPt.boneWeight.x) + 
+						  mul(bonesBuffer[offset + skinPt.boneIndex.y], skinPt.boneWeight.y) + 
+						  mul(bonesBuffer[offset + skinPt.boneIndex.z], skinPt.boneWeight.z) + 
+						  mul(bonesBuffer[offset + skinPt.boneIndex.w], skinPt.boneWeight.w);
+	pt.vertex = mul(combineTex, float4(skinPt.position, 1));
+	pt.normal = mul(combineTex, float4(skinPt.normal, 0));
+	pt.tangent.xyz = mul(combineTex, float4(skinPt.tangent.xyz, 0));
+	pt.tangent.w = skinPt.tangent.w;
+	pt.texcoord = skinPt.uv;
+	pt.objIndex = 0;
+    pt.lightmapUV = 0;
+    pt.lightmapIndex = -1;*/
+	return pt;
+}
+[numthreads(THREAD,1,1)]
+void AnimationUpdate(uint id : SV_DISPATCHTHREADID)
+{
+    if(id >= _Count) return;
+    float frame = objBuffer[id].frame;
+    frame += _TimeVar.x;
+    if(frame >= _TimeVar.y)
+    {
+        frame -= _TimeVar.y;
+    }
+    objBuffer[id].frame = frame;
+}
+
+[numthreads(THREAD,1,1)]
+void BoneUpdate (uint id : SV_DISPATCHTHREADID)
+{
+    if(id >= _Count) return;
+    uint currentObjectIndex = id / _ModelBones.x;
+    uint boneIndex = id - currentObjectIndex * _ModelBones.x;
+    AnimState state = objBuffer[currentObjectIndex];
+    float4x4 localToWorld = float4x4(state.localToWorldMatrix, float4(0,0,0,1));
+   float4x4 bonesMatrix0 = float4x4(_AnimTex[uint2((uint)state.frame, boneIndex * 3)]
+                                    ,_AnimTex[uint2((uint)state.frame, boneIndex * 3 + 1)]
+                                    ,_AnimTex[uint2((uint)state.frame, boneIndex * 3 + 2)]
+                                    ,float4(0,0,0,1));
+    uint nextValue = (uint)min(state.frame + 1, _TimeVar.y);
+    float4x4 bonesMatrix1 = float4x4(_AnimTex[uint2(nextValue, boneIndex * 3)]
+                                    ,_AnimTex[uint2(nextValue, boneIndex * 3 + 1)]
+                                    ,_AnimTex[uint2(nextValue, boneIndex * 3 + 2)]
+                                    ,float4(0,0,0,1));
+    bonesMatrix0 = lerp(bonesMatrix0, bonesMatrix1, frac(state.frame));
+    float4x4 bindMatrix = float4x4(bindBuffer[boneIndex], float4(0,0,0,1));
+    float4x4 finalMatrix = mul(localToWorld, bonesMatrix0);
+    bonesBuffer[id] = mul(finalMatrix, bindMatrix);
+}
+
+[numthreads(THREAD,1,1)]
+void SkinUpdate (uint id : SV_DISPATCHTHREADID)
+{
+    if(id >= _Count) return;
+    uint instanceID = id / _ModelBones.y;
+    uint vertexID = id - instanceID * _ModelBones.y;
+    resultBuffer[id] = GPUSkinning(vertexID, instanceID);
+}
