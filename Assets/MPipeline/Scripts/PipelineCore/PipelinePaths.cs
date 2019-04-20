@@ -1,6 +1,5 @@
 ﻿using System;
 using UnityEngine;
-using System.Collections.Generic;
 namespace MPipeline
 {
     [Serializable]
@@ -41,8 +40,18 @@ namespace MPipeline
         public Mesh sphereMesh;
     }
 
-    public static class AllEvents
+    public unsafe static class AllEvents
     {
+        [RenderingPath(PipelineResources.CameraRenderingPath.Bake)]
+        public static readonly Type[] bakeType =
+{
+        typeof(PropertySetEvent),
+        typeof(GeometryEvent),
+        typeof(LightingEvent),
+        typeof(SkyboxEvent),
+        typeof(DebugEvent)
+        };
+        [RenderingPath(PipelineResources.CameraRenderingPath.GPUDeferred)]
         public static readonly Type[] gpuDeferredType =
         {
        typeof(PropertySetEvent),
@@ -59,21 +68,5 @@ namespace MPipeline
        typeof(FinalPostEvent)
         };
 
-        public static readonly Type[] bakeType =
-        {
-        typeof(PropertySetEvent),
-        typeof(GeometryEvent),
-        typeof(LightingEvent),
-        typeof(SkyboxEvent),
-        typeof(DebugEvent)
-        };
-
-        public static List<Pair<int, Type[]>> GetAllPath()
-        {
-            List<Pair<int, Type[]>> list = new List<Pair<int, Type[]>>();
-            list.Add(new Pair<int, Type[]>((int)PipelineResources.CameraRenderingPath.GPUDeferred, gpuDeferredType));
-            list.Add(new Pair<int, Type[]>((int)PipelineResources.CameraRenderingPath.Bake, bakeType));
-            return list;
-        }
     }
 }

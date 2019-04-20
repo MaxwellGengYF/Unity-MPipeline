@@ -58,16 +58,12 @@ namespace MPipeline
                 K* currentPtr = oldPtr[i];
                 while (currentPtr != null)
                 {
-                    AddTo(*currentPtr, *GetV(currentPtr), targetSize, newData);
-                    currentPtr = *GetNextPtr(currentPtr);
-                }
-                currentPtr = oldPtr[i];
-                while (currentPtr != null)
-                {
-                    K* next = *GetNextPtr(currentPtr);
-                    UnsafeUtility.Free(currentPtr, data->alloc);
-
-                    currentPtr = next;
+                    K* nextPtr = *GetNextPtr(currentPtr);
+                    //AddTo(*currentPtr, *GetV(currentPtr), targetSize, newData);
+                    int hashCode = Mathf.Abs((*currentPtr).GetHashCode()) % targetSize;
+                    *GetNextPtr(currentPtr) = newData[hashCode];
+                    newData[hashCode] = currentPtr;
+                    currentPtr = nextPtr;
                 }
             }
             UnsafeUtility.Free(data->start, data->alloc);

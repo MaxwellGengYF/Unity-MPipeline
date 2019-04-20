@@ -81,24 +81,24 @@ public unsafe static class MUnsafeUtility
         }
     }
 
-    private struct PtrKeeper<T>
+    private struct PtrKeeper
     {
-        public T value;
+        public object value;
     }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void* GetManagedPtr<T>(T obj) where T : class
+    public static void* GetManagedPtr(object obj)
     {
-        PtrKeeper<T> keeper = new PtrKeeper<T> { value = obj };
+        PtrKeeper keeper = new PtrKeeper { value = obj };
         ulong* ptr = (ulong*)AddressOf(ref keeper);
         return (void*)*ptr;
     }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static T GetObject<T>(void* ptr) where T : class
     {
-        PtrKeeper<T> keeper = new PtrKeeper<T>();
+        PtrKeeper keeper = new PtrKeeper();
         ulong* keeperPtr = (ulong*)AddressOf(ref keeper);
         *keeperPtr = (ulong)ptr;
-        return keeper.value;
+        return keeper.value as T;
     }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static T* Malloc<T>(long size, Allocator allocator) where T : unmanaged
