@@ -44,7 +44,7 @@ ENDCG
 			float4x4 _InvVP;    //Inverse View Project Matrix
 			Texture2D<half4> _CameraGBufferTexture0; SamplerState sampler_CameraGBufferTexture0;       //RGB Diffuse A AO
 			Texture2D<half4> _CameraGBufferTexture1; SamplerState sampler_CameraGBufferTexture1;       //RGB Specular A Smoothness
-			Texture2D<half3> _CameraGBufferTexture2; SamplerState sampler_CameraGBufferTexture2;       //RGB Normal
+			Texture2D<float4> _CameraGBufferTexture2; SamplerState sampler_CameraGBufferTexture2;       //RGB Normal
 			Texture2D<float> _CameraDepthTexture; SamplerState sampler_CameraDepthTexture;
 			Texture2D<float2> _AOROTexture; SamplerState sampler_AOROTexture;
             float2 _Jitter;
@@ -62,18 +62,20 @@ ENDCG
                 float4 worldPos = mul(_InvVP, float4(i.uv * 2 - 1, depth, 1));
 				float linearDepth = LinearEyeDepth(depth);
                 worldPos /= worldPos.w;
-
-                float3 normal = normalize(_CameraGBufferTexture2.Sample(sampler_CameraGBufferTexture2, i.uv).xyz * 2 - 1);
-                float occlusion = _CameraGBufferTexture0.Sample(sampler_CameraGBufferTexture0, i.uv).w;
+                float4 gbuffer1 = _CameraGBufferTexture2.Sample(sampler_CameraGBufferTexture2, i.uv);
+                float3 normal = normalize(gbuffer1.xyz * 2 - 1);
+                float4 gbuffer0 = _CameraGBufferTexture0.Sample(sampler_CameraGBufferTexture0, i.uv);
 				float4 specular = _CameraGBufferTexture1.Sample(sampler_CameraGBufferTexture1, i.uv);
 
 #if EnableGTAO
 				float2 aoro = _AOROTexture.Sample(sampler_AOROTexture, i.uv);
-				occlusion = min(occlusion, min(aoro.x, aoro.y));
+				aoro = min(aoro, gbuffer0.ww);
+#else
+                float2 aoro = gbuffer0.ww;
 #endif
                 float3 viewDir = normalize(worldPos.xyz - _WorldSpaceCameraPos);
                 //float3 CalculateReflection(float linearDepth, float3 worldPos, float3 viewDir, float4 specular, float3 normal, float occlusion)
-				return CalculateReflection(linearDepth, worldPos.xyz, viewDir, specular, normal, occlusion, i.uv);
+				return CalculateReflection(linearDepth, worldPos.xyz, viewDir, specular, float4(normal, gbuffer1.w), gbuffer0.xyz, aoro, i.uv);
             }
             ENDCG
         }

@@ -25,7 +25,6 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 2bb796fcf46451949826a32497c5f2ed, type: 2}
   - {fileID: 11400000, guid: 6fe05694a7e3c07469031a6ab5c74e0d, type: 2}
   - {fileID: 11400000, guid: bdee0411038a22f49a6293ec9d53091f, type: 2}
-  - {fileID: 11400000, guid: deff3fb17a799f3489668e79c0c70db4, type: 2}
   - {fileID: 11400000, guid: a419771a386d90742931ac14c01ed40a, type: 2}
   shaders:
     cbdrShader: {fileID: 7200000, guid: 32eda6600c320d948b7c69a6823d3bf9, type: 3}
@@ -42,8 +41,6 @@ MonoBehaviour:
     reflectionCullingShader: {fileID: 7200000, guid: a1fa3016d1a7dba49b1e80f5c5d3139d,
       type: 3}
     voxelNoise: {fileID: 7200000, guid: f7fd67eb107ed9e4cad86e295cbafc9e, type: 3}
-    rainComputingShader: {fileID: 0}
-    rainRenderShader: {fileID: 0}
     minMaxDepthBounding: {fileID: 4800000, guid: 824d4dd9940244f43a887c89dfbfdcd5,
       type: 3}
     taaShader: {fileID: 4800000, guid: 51bcf79c50dc92e47ba87821b61100c3, type: 3}
@@ -70,7 +67,6 @@ MonoBehaviour:
     lightingShader: {fileID: 4800000, guid: b10a195e54d72984783eb1f2f49aa43f, type: 3}
     irradianceVolumeShader: {fileID: 4800000, guid: a4b6cd62c2a13814d993be22ee50d68d,
       type: 3}
-    decalShader: {fileID: 4800000, guid: 7faa4ebe8b6748b4ca97c7130ceb55b9, type: 3}
     ssgiShader: {fileID: 4800000, guid: 96507b1ae4f2e70449d65df7bc0fd3ec, type: 3}
     occluderMesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
     sphereMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}

@@ -4,6 +4,9 @@ using UnityEngine;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine.Rendering;
+using Unity.Mathematics;
+using static Unity.Mathematics.math;
+
 namespace MPipeline
 {
     [CreateAssetMenu(menuName = "GPURP Events/Geometry")]
@@ -17,6 +20,11 @@ namespace MPipeline
         Material clusterMat;
         public Material debugMat;
         private PropertySetEvent proper;
+        public DecalEvent decal;
+        private AOEvents ao;
+        private ReflectionEvent reflection;
+        private Material downSampleMat;
+        private RenderTargetIdentifier[] downSampledGBuffers = new RenderTargetIdentifier[3];
         protected override void Init(PipelineResources resources)
         {
             linearMat = new Material(resources.shaders.linearDepthShader);
@@ -26,7 +34,11 @@ namespace MPipeline
                 hizDepth.InitHiZ(resources, new Vector2(Screen.width, Screen.height));
                 clusterMat = new Material(resources.shaders.clusterRenderShader);
             }
+            ao = RenderPipeline.GetEvent<AOEvents>();
+            reflection = RenderPipeline.GetEvent<ReflectionEvent>();
             proper = RenderPipeline.GetEvent<PropertySetEvent>();
+            decal.Init();
+            downSampleMat = new Material(resources.shaders.depthDownSample);
         }
         public override bool CheckProperty()
         {
@@ -40,6 +52,7 @@ namespace MPipeline
         }
         protected override void Dispose()
         {
+            DestroyImmediate(downSampleMat);
             DestroyImmediate(linearMat);
             DestroyImmediate(linearDrawerMat);
             
@@ -49,6 +62,10 @@ namespace MPipeline
                 DestroyImmediate(clusterMat);
             }
             linearMat = null;
+        }
+        public override void PreRenderFrame(PipelineCamera cam, ref PipelineCommandData data)
+        {
+            decal.PreRenderFrame(cam, ref data);
         }
         public override void FrameUpdate(PipelineCamera cam, ref PipelineCommandData data)
         {
@@ -67,6 +84,24 @@ namespace MPipeline
                 SceneController.DrawClusterOccDoubleCheck(ref options, ref proper.cullResults, ref hizDepth, hizOccData, clusterMat, linearMat, cam, ref data);
             }
             else SceneController.DrawCluster(ref options, ref cam.targets, ref data, cam.cam, ref proper.cullResults);
+            decal.FrameUpdate(cam, ref data);
+            //Generate DownSampled GBuffer
+            if ((ao != null && ao.Enabled) || (reflection != null && reflection.Enabled && reflection.ssrEvents.enabled))
+            {
+                int2 res = int2(cam.cam.pixelWidth, cam.cam.pixelHeight) / 2;
+                data.buffer.GetTemporaryRT(ShaderIDs._DownSampledGBuffer1, res.x, res.y, 0, FilterMode.Point, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear, 1, false);
+                data.buffer.GetTemporaryRT(ShaderIDs._DownSampledGBuffer2, res.x, res.y, 0, FilterMode.Point, RenderTextureFormat.ARGB2101010, RenderTextureReadWrite.Linear, 1, false);
+                data.buffer.GetTemporaryRT(ShaderIDs._DownSampledDepthTexture, res.x, res.y, 0, FilterMode.Point, RenderTextureFormat.RHalf, RenderTextureReadWrite.Linear, 1, false);
+                RenderPipeline.AddTempRtToReleaseList(ShaderIDs._DownSampledGBuffer1);
+                RenderPipeline.AddTempRtToReleaseList(ShaderIDs._DownSampledGBuffer2);
+                RenderPipeline.AddTempRtToReleaseList(ShaderIDs._DownSampledDepthTexture);
+                downSampledGBuffers[0] = ShaderIDs._DownSampledDepthTexture;
+                downSampledGBuffers[1] = ShaderIDs._DownSampledGBuffer1;
+                downSampledGBuffers[2] = ShaderIDs._DownSampledGBuffer2;
+                data.buffer.SetRenderTarget(colors: downSampledGBuffers, depth: downSampledGBuffers[0]);
+                data.buffer.DrawMesh(GraphicsUtility.mesh, Matrix4x4.identity, downSampleMat, 0, 0);
+                //TODO
+            }
         }
     }
     public class HizOcclusionData : IPerCameraData

@@ -66,6 +66,22 @@ namespace MPipeline {
 
         }
 
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static uint ReverseBits32(uint bits)
+        {
+            bits = (bits << 16) | (bits >> 16);
+            bits = ((bits & 0x00ff00ff) << 8) | ((bits & 0xff00ff00) >> 8);
+            bits = ((bits & 0x0f0f0f0f) << 4) | ((bits & 0xf0f0f0f0) >> 4);
+            bits = ((bits & 0x33333333) << 2) | ((bits & 0xcccccccc) >> 2);
+            bits = ((bits & 0x55555555) << 1) | ((bits & 0xaaaaaaaa) >> 1);
+            return bits;
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static float2 Hammersley(uint Index, uint NumSamples)
+        {
+            return float2((float)Index / (float)NumSamples, (float)((double)ReverseBits32(Index) / 0xffffffffu));
+        }
+
         public static bool BoxIntersect(ref float4x4 localToWorld, float3 position, float3 extent, float4* planes, int len)
         {
             position = mul(localToWorld, float4(position, 1)).xyz;

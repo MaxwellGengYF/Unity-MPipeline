@@ -50,9 +50,6 @@ namespace MPipeline
         private float* clipDistances;
         private OrthoCam* sunShadowCams;
         private Material lightingMaterial;
-        private AOEvents ao;
-        private ReflectionEvent reflection;
-        private Material downSampleMat;
         private PropertySetEvent proper;
 
         public override bool CheckProperty()
@@ -77,10 +74,8 @@ namespace MPipeline
         protected override void Init(PipelineResources resources)
         {
             proper = RenderPipeline.GetEvent<PropertySetEvent>();
-            ao = RenderPipeline.GetEvent<AOEvents>();
             if (useTBDR)
                 minMaxBoundMat = new Material(resources.shaders.minMaxDepthBounding);
-            reflection = RenderPipeline.GetEvent<ReflectionEvent>();
             needCheckedShadows = new NativeList<ShadowAvaliable>(20, Allocator.Persistent);
             cbdr = new CBDRSharedData(resources);
             for (int i = 0; i < cascadeShadowMapVP.Length; ++i)
@@ -91,7 +86,6 @@ namespace MPipeline
             spotBuffer = new RenderSpotShadowCommand();
             spotBuffer.Init(resources.shaders.spotLightDepthShader);
             lightingMaterial = new Material(resources.shaders.lightingShader);
-            downSampleMat = new Material(resources.shaders.depthDownSample);
         }
 
         protected override void Dispose()
@@ -99,7 +93,6 @@ namespace MPipeline
             needCheckedShadows.Dispose();
             DestroyImmediate(cubeDepthMaterial);
             DestroyImmediate(lightingMaterial);
-            DestroyImmediate(downSampleMat);
             spotBuffer.Dispose();
             cbdr.Dispose();
         }
@@ -189,7 +182,6 @@ namespace MPipeline
                 csmHandle = csmStruct.ScheduleRefBurst(SunLight.CASCADELEVELCOUNT, 1);
             }
         }
-        private RenderTargetIdentifier[] downSampledGBuffers = new RenderTargetIdentifier[3];
         public override void FrameUpdate(PipelineCamera cam, ref PipelineCommandData data)
         {
             RenderTargetIdentifier source, dest;
@@ -201,23 +193,6 @@ namespace MPipeline
             //Calculate Lighting
             data.buffer.BlitSRTWithDepth(cam.targets.renderTargetIdentifier, cam.targets.depthBuffer, lightingMaterial, 1);
             LightFilter.Clear();
-            //Generate DownSampled GBuffer
-            if ((ao != null && ao.Enabled) || (reflection != null && reflection.Enabled && reflection.ssrEvents.enabled))
-            {
-                int2 res = int2(cam.cam.pixelWidth, cam.cam.pixelHeight) / 2;
-                data.buffer.GetTemporaryRT(ShaderIDs._DownSampledGBuffer1, res.x, res.y, 0, FilterMode.Point, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear, 1, false);
-                data.buffer.GetTemporaryRT(ShaderIDs._DownSampledGBuffer2, res.x, res.y, 0, FilterMode.Point, RenderTextureFormat.ARGB2101010, RenderTextureReadWrite.Linear, 1, false);
-                data.buffer.GetTemporaryRT(ShaderIDs._DownSampledDepthTexture, res.x, res.y, 0, FilterMode.Point, RenderTextureFormat.RHalf, RenderTextureReadWrite.Linear, 1, false);
-                RenderPipeline.AddTempRtToReleaseList(ShaderIDs._DownSampledGBuffer1);
-                RenderPipeline.AddTempRtToReleaseList(ShaderIDs._DownSampledGBuffer2);
-                RenderPipeline.AddTempRtToReleaseList(ShaderIDs._DownSampledDepthTexture);
-                downSampledGBuffers[0] = ShaderIDs._DownSampledDepthTexture;
-                downSampledGBuffers[1] = ShaderIDs._DownSampledGBuffer1;
-                downSampledGBuffers[2] = ShaderIDs._DownSampledGBuffer2;
-                data.buffer.SetRenderTarget(colors: downSampledGBuffers, depth: downSampledGBuffers[0]);
-                data.buffer.DrawMesh(GraphicsUtility.mesh, Matrix4x4.identity, downSampleMat, 0, 0);
-                //TODO
-            }
         }
         private void DirLight(PipelineCamera cam, ref PipelineCommandData data)
         {

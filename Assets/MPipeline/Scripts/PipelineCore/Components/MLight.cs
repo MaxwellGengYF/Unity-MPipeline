@@ -20,7 +20,7 @@ public class MLightEditor : Editor
         if (!target.enabled || !target.gameObject.activeSelf) return;
         target.useShadow = EditorGUILayout.Toggle("Use Shadow", target.useShadow);
         target.useShadowCache = EditorGUILayout.Toggle("Use Shadow Cache", target.useShadowCache);
-        target.spotNearClip = EditorGUILayout.Slider("Spot Nearclip", target.spotNearClip, 0, target.light.range);
+        target.spotNearClip = EditorGUILayout.Slider("Spot Nearclip", target.spotNearClip, 0.05f, target.light.range);
         target.smallSpotAngle = EditorGUILayout.Slider("Small Spotangle", target.smallSpotAngle, 0, target.light.spotAngle);
         if (GUILayout.Button("Destroy ShadowCamera"))
             target.DestroyCamera();

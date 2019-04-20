@@ -191,42 +191,42 @@ float4 SSGi_MultiSPP(PixelInput i) : SV_Target
 	float2 UV = i.uv.xy;
 
 	float SceneDepth = tex2Dlod(_CameraDepthTexture, float4(UV, 0, 0)).r;
-	float Roughness = clamp(1 - tex2D(_CameraGBufferTexture1, UV).a, 0.02, 1);
-	float3 WorldNormal = tex2D(_CameraGBufferTexture2, UV) * 2 - 1;
+	float EyeDepth = LinearEyeDepth(SceneDepth);
+	
+	float3 WorldNormal = normalize(tex2D(_CameraGBufferTexture2, UV).xyz * 2 - 1);
 	float3 ViewNormal = mul((float3x3)(_SSGi_WorldToCameraMatrix), WorldNormal);
 
-	float3 ScreenPos = GetScreenPos(UV, SceneDepth);
-	float3 WorldPos = GetWorlPos(ScreenPos, _SSGi_InverseViewProjectionMatrix);
-	float3 ViewPos = GetViewPos(ScreenPos, _SSGi_InverseProjectionMatrix);
-	float3 ViewDir = GetViewDir(WorldPos, ViewPos);
+	float4 ScreenPos = float4(UV * 2 - 1, SceneDepth, 1);
+	ScreenPos /= ScreenPos.w;
+	float4 WorldPos = mul(_SSGi_InverseViewProjectionMatrix, ScreenPos);
+	WorldPos /= WorldPos.w;
+	float4 ViewPos = mul(_SSGi_InverseProjectionMatrix, ScreenPos);
+	ViewPos /= ViewPos.w;
+	float3x3 TangentBasis = GetTangentBasis( WorldNormal );
+	uint3 p1 = Rand3DPCG16( uint3( (float)0xffba * abs(WorldPos.xyz) ) );
+	uint2 p = (uint2(UV * 3) ^ 0xa3c75a5cu) ^ (p1.xy);
 
 	//-----Consten Property-------------------------------------------------------------------------
 	float Out_Mask = 0;
-	float3 Out_Color = 0;
-
-	float3x3 TangentBasis = GetTangentBasis( WorldNormal );
-	//uint3 p1 = Rand3DPCG16( uint3( (float)0xffba * abs(WorldPos) ) );
-	//uint2 p = (uint2(UV * 3) ^ 0xa3c75a5cu) ^ (p1.xy);
+	float3 Out_Color = 0; 
 	
 	for (uint i = 0; i < (uint)_SSGi_NumRays; i++)
 	{
 		//-----Trace Dir-----------------------------------------------------------------------------
-		//uint3 Random = Rand3DPCG16( int3( p, ReverseBits32(i) ) );
-		//float2 Hash = float2(Random.xy ^ Random.z) / 0xffffu;
-		float2 Hash = tex2Dlod(_SSGi_Noise, float4((UV + sin( i + _SSGi_Jitter.zw )) * _SSGi_RayCastSize.xy / _SSGi_NoiseSize.xy, 0, 0)).xy;
+		uint3 Random = Rand3DPCG16( int3( p, ReverseBits32(i) ) );
+		float2 Hash = float2(Random.xy ^ Random.z) / 0xffffu;
 
 		float3 L;
 		L.xy = UniformSampleDiskConcentric( Hash );
-		
 		L.z = sqrt( 1 - dot( L.xy, L.xy ) );
+
 		float3 World_L = mul( L, TangentBasis );
-		float3 View_L = mul((float3x3)(_SSGi_WorldToCameraMatrix),  World_L);
-
+		float3 View_L = normalize(mul((float3x3)(_SSGi_WorldToCameraMatrix),  World_L));
 		float3 rayStart = float3(UV, ScreenPos.z);
-		float4 rayProj = mul ( _SSGi_ProjectionMatrix, float4(ViewPos + View_L, 1.0) );
-		float3 rayDir = normalize( (rayProj.xyz / rayProj.w) - ScreenPos);
+		float4 rayProj = mul ( _SSGi_ProjectionMatrix, float4(ViewPos.xyz + View_L, 1.0) );
+		float3 rayDir = normalize( (rayProj.xyz / rayProj.w) - ScreenPos.xyz);
 		rayDir.xy *= 0.5;
-
+		return float4(rayProj.xyz, 1.0);
 		float4 RayHitData = Hierarchical_Z_Trace_SSGI(_SSGi_HiZ_MaxLevel, _SSGi_HiZ_StartLevel, _SSGi_HiZ_StopLevel, _SSGi_NumSteps_HiZ, _SSGi_Thickness, 1 / _SSGi_RayCastSize.xy, rayStart, rayDir, _SSGi_HierarchicalDepth_RT, sampler_SSGi_HierarchicalDepth_RT);
 
 		float3 SampleColor = tex2Dlod(_SSGi_SceneColor_RT, float4(RayHitData.xy, 0, 0));
@@ -244,8 +244,8 @@ float4 SSGi_MultiSPP(PixelInput i) : SV_Target
 	Out_Mask /= _SSGi_NumRays;
 
 	//-----Output-----------------------------------------------------------------------------
-	float EyeDepth = LinearEyeDepth(SceneDepth);
-	return float4( Out_Color * saturate(Out_Mask * 2), EyeDepth );
+	//return float4( Out_Color * saturate(Out_Mask * 2), EyeDepth );
+	return float4( Out_Color, EyeDepth );
 }
 
 

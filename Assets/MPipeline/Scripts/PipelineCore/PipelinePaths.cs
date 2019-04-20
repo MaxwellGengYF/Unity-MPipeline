@@ -56,9 +56,8 @@ namespace MPipeline
         {
        typeof(PropertySetEvent),
        typeof(GeometryEvent),
-       typeof(DecalEvent),
-       typeof(LightingEvent),
        typeof(AOEvents),
+       typeof(LightingEvent),
        typeof(ScreenSpaceIndirectDiffuse),
        typeof(SkyboxEvent),
        typeof(ReflectionEvent),

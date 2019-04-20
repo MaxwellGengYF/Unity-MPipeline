@@ -9,29 +9,23 @@ using Unity.Collections;
 using UnityEngine.Rendering;
 namespace MPipeline
 {
-    [CreateAssetMenu(menuName = "GPURP Events/Decal")]
-    [RequireEvent(typeof(PropertySetEvent))]
-    public unsafe sealed class DecalEvent : PipelineEvent
+    [System.Serializable]
+    public unsafe struct DecalEvent
     {
         private const int maxDecalPerCluster = 16;
         private DecalCullJob cullJob;
         private NativeArray<DecalData> decalCullResults;
         private JobHandle handle;
-        public float availiableDistance = 30;
+        public float availiableDistance;
         private RenderTargetIdentifier[] decalTargets;
         private PropertySetEvent proper;
-        public override bool CheckProperty()
-        {
-            return true;
-        }
-
-        protected override void Init(PipelineResources resources)
+        public void Init()
         {
             proper = RenderPipeline.GetEvent<PropertySetEvent>();
             decalTargets = new RenderTargetIdentifier[2];
         }
 
-        public override void PreRenderFrame(PipelineCamera cam, ref PipelineCommandData data)
+        public void PreRenderFrame(PipelineCamera cam, ref PipelineCommandData data)
         {
             decalCullResults = new NativeArray<DecalData>(DecalBase.allDecalCount, Allocator.Temp);
             cullJob = new DecalCullJob
@@ -45,7 +39,7 @@ namespace MPipeline
             handle = cullJob.ScheduleRef(DecalBase.allDecalCount, 32);
         }
 
-        public override void FrameUpdate(PipelineCamera cam, ref PipelineCommandData data)
+        public void FrameUpdate(PipelineCamera cam, ref PipelineCommandData data)
         {
             CommandBuffer buffer = data.buffer;
             handle.Complete();
@@ -63,10 +57,6 @@ namespace MPipeline
                 DecalBase dec = MUnsafeUtility.GetObject<DecalBase>(decal.comp);
                 dec.DrawDecal(buffer);
             }
-        }
-
-        protected override void Dispose()
-        {
         }
         private struct DecalCullJob : IJobParallelFor
         {

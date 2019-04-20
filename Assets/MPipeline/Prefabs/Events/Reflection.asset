@@ -17,7 +17,7 @@ MonoBehaviour:
   culler:
     targetResoures: {fileID: 11400000, guid: 64bb376764f5c9848bbb1a526b40051d, type: 2}
   ssrEvents:
-    enabled: 1
+    enabled: 0
     Thickness: 0.3
     brdfBias: 0.7
     ScreenFade: 0

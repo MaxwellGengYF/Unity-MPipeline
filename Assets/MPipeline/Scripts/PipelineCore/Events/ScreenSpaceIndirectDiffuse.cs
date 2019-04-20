@@ -10,11 +10,7 @@ namespace MPipeline
     [RequireEvent(typeof(PropertySetEvent))]
     public class ScreenSpaceIndirectDiffuse : PipelineEvent
     {
-        private enum RenderResolution
-        {
-            Full = 1,
-            Half = 2
-        };
+
 
         private enum DebugPass
         {
@@ -24,10 +20,6 @@ namespace MPipeline
 
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
         [Header("Common Property")]
-
-        [SerializeField]
-        RenderResolution RayCastingResolution = RenderResolution.Full;
-
 
         [Range(1, 16)]
         [SerializeField]
@@ -122,9 +114,6 @@ namespace MPipeline
 
         private Vector2 RandomSampler = new Vector2(1, 1);
         private Vector2 CameraSize;
-        private Matrix4x4 SSGi_ProjectionMatrix;
-        private Matrix4x4 SSGi_WorldToCameraMatrix;
-        private Matrix4x4 SSGi_CameraToWorldMatrix;
 
         private static int SSGi_Jitter_ID = Shader.PropertyToID("_SSGi_Jitter");
         private static int SSGi_GiIntensity_ID = Shader.PropertyToID("_SSGi_GiIntensity");
@@ -221,7 +210,7 @@ namespace MPipeline
         {
             buffer.SetGlobalTexture(SSGi_Noise_ID, BlueNoise_LUT);
             buffer.SetGlobalVector(SSGi_ScreenSize_ID, CameraSize);
-            buffer.SetGlobalVector(SSGi_RayCastSize_ID, CameraSize / (int)RayCastingResolution);
+            buffer.SetGlobalVector(SSGi_RayCastSize_ID, CameraSize);
             buffer.SetGlobalVector(SSGi_NoiseSize_ID, new Vector2(1024, 1024));
             buffer.SetGlobalFloat(SSGi_ScreenFade_ID, ScreenFade);
             buffer.SetGlobalFloat(SSGi_Thickness_ID, Thickness);
@@ -238,24 +227,21 @@ namespace MPipeline
         private void SSR_UpdateVariable(Camera RenderCamera, ref PipelineCommandData data)
         {
             CommandBuffer buffer = data.buffer;
-            Vector2 HalfCameraSize = new Vector2(CameraSize.x / 2, CameraSize.y / 2);
             Vector2 CurrentCameraSize = new Vector2(RenderCamera.pixelWidth, RenderCamera.pixelHeight);
             SSR_UpdateUniformVariable(buffer);
             buffer.SetGlobalVector(SSGi_Jitter_ID, new Vector4((float)CameraSize.x / 1024, (float)CameraSize.y / 1024, RandomSampler.x, RandomSampler.y));
-            SSGi_WorldToCameraMatrix = RenderCamera.worldToCameraMatrix;
-            SSGi_ProjectionMatrix = GL.GetGPUProjectionMatrix(RenderCamera.projectionMatrix, false);
+            Matrix4x4 SSGi_ProjectionMatrix = GL.GetGPUProjectionMatrix(RenderCamera.projectionMatrix, false);
             buffer.SetGlobalMatrix(SSGi_ProjectionMatrix_ID, SSGi_ProjectionMatrix);
             buffer.SetGlobalMatrix(SSGi_ViewProjectionMatrix_ID, proper.VP);
             buffer.SetGlobalMatrix(SSGi_InverseProjectionMatrix_ID, SSGi_ProjectionMatrix.inverse);
             buffer.SetGlobalMatrix(SSGi_InverseViewProjectionMatrix_ID, proper.inverseVP);
-            buffer.SetGlobalMatrix(SSGi_WorldToCameraMatrix_ID, SSGi_WorldToCameraMatrix);
+            buffer.SetGlobalMatrix(SSGi_WorldToCameraMatrix_ID, RenderCamera.worldToCameraMatrix);
             buffer.SetGlobalMatrix(SSGi_CameraToWorldMatrix_ID, RenderCamera.cameraToWorldMatrix);
             buffer.SetGlobalMatrix(SSGi_LastFrameViewProjectionMatrix_ID, proper.lastViewProjection);
 
             Matrix4x4 warpToScreenSpaceMatrix = Matrix4x4.identity;
-            warpToScreenSpaceMatrix.m00 = HalfCameraSize.x; warpToScreenSpaceMatrix.m03 = HalfCameraSize.x;
-            warpToScreenSpaceMatrix.m11 = HalfCameraSize.y; warpToScreenSpaceMatrix.m13 = HalfCameraSize.y;
-
+            warpToScreenSpaceMatrix.m00 = CurrentCameraSize.x; warpToScreenSpaceMatrix.m03 = CurrentCameraSize.x;
+            warpToScreenSpaceMatrix.m11 = CurrentCameraSize.y; warpToScreenSpaceMatrix.m13 = CurrentCameraSize.y;
             Matrix4x4 SSGi_ProjectToPixelMatrix = warpToScreenSpaceMatrix * SSGi_ProjectionMatrix;
             buffer.SetGlobalMatrix(SSGi_ProjectToPixelMatrix_ID, SSGi_ProjectToPixelMatrix);
         }
@@ -268,7 +254,7 @@ namespace MPipeline
             SSGIData data = IPerCameraData.GetProperty(cam, (cc) => new SSGIData(int2(cc.cam.pixelWidth, cc.cam.pixelHeight)));
             data.UpdateResolution(int2(cam.cam.pixelWidth, cam.cam.pixelHeight));
             //////Set HierarchicalDepthRT//////
-            SSGi_Buffer.CopyTexture(targets.depthTexture,0,0, data.SSGi_HierarchicalDepth_RT,0,0);
+            SSGi_Buffer.CopyTexture(targets.depthTexture, 0, 0, data.SSGi_HierarchicalDepth_RT, 0, 0);
             for (int i = 1; i < HiZ_MaxLevel; ++i)
             {
                 SSGi_Buffer.SetGlobalInt(SSGi_HiZ_PrevDepthLevel_ID, i - 1);
@@ -283,65 +269,9 @@ namespace MPipeline
 
 
             //////RayCasting//////
-            SSGi_Buffer.GetTemporaryRT(SSGi_Trace_ID, RenderCamera.pixelWidth / (int)RayCastingResolution, RenderCamera.pixelHeight / (int)RayCastingResolution, 0, FilterMode.Point, RenderTextureFormat.ARGBHalf);
-            SSGi_Buffer.BlitSRT(SSGi_Trace_ID, SSGi_Material, (RayNums > 1) ? RenderPass_HiZ3D_MultiSpp : RenderPass_HiZ3D_SingelSpp);
+            SSGi_Buffer.GetTemporaryRT(SSGi_Trace_ID, RenderCamera.pixelWidth, RenderCamera.pixelHeight, 0, FilterMode.Point, RenderTextureFormat.ARGBHalf);
+            SSGi_Buffer.BlitSRT(SSGi_Trace_ID, SSGi_Material, RenderPass_HiZ3D_MultiSpp);
             SSGi_Buffer.Blit(SSGi_Trace_ID, targets.renderTargetIdentifier);
-            /*
-            if (Denoise)
-            {
-                SSGi_Buffer.GetTemporaryRT(SSGi_TemporalCurr_ID_01, RenderCamera.pixelWidth, RenderCamera.pixelHeight, 0, FilterMode.Bilinear, RenderTextureFormat.ARGBHalf);
-                //////Temporal filter_01//////
-                SSGi_Buffer.BlitSRT(SSGi_TemporalCurr_ID_01, SSGi_Material, RenderPass_Temporalfilter_01);
-
-                SSGi_Buffer.SetGlobalTexture(SSGi_TemporalPrev_ID_01, data.SSGi_TemporalPrev_RT_01);
-                SSGi_Buffer.CopyTexture(SSGi_TemporalCurr_ID_01, 0, 0, data.SSGi_TemporalPrev_RT_01, 0, 0);
-                SSGi_Buffer.GetTemporaryRT(SSGi_Bilateral_ID_01, RenderCamera.pixelWidth, RenderCamera.pixelHeight, 0, FilterMode.Bilinear, RenderTextureFormat.ARGBHalf);
-                SSGi_Buffer.BlitSRT(SSGi_Bilateral_ID_01, SSGi_Material, RenderPass_Bilateralfilter_X_01);
-                SSGi_Buffer.CopyTexture(SSGi_Bilateral_ID_01, 0, 0, data.SSGi_TemporalPrev_RT_01, 0, 0);
-
-                SSGi_Buffer.BlitSRT(SSGi_Bilateral_ID_01, SSGi_Material, RenderPass_Bilateralfilter_Y_01);
-                SSGi_Buffer.CopyTexture(SSGi_Bilateral_ID_01, 0, 0, data.SSGi_TemporalPrev_RT_01, 0, 0);
-
-                if (TwoPass_Denoise)
-                {
-                    //////Temporal filter_02//////
-                    SSGi_Buffer.SetGlobalTexture(SSGi_TemporalCurr_ID_02, SSGi_TemporalCurr_ID_01);
-                    SSGi_Buffer.BlitSRT(SSGi_TemporalCurr_ID_01, SSGi_Material, RenderPass_Temporalfilter_02);
-
-                    SSGi_Buffer.SetGlobalTexture(SSGi_TemporalPrev_ID_02, data.SSGi_TemporalPrev_RT_01);
-                    //////Bilateral filter_02//////  
-                    SSGi_Buffer.SetGlobalTexture(SSGi_Bilateral_ID_02, SSGi_Bilateral_ID_01);
-                    SSGi_Buffer.BlitSRT(SSGi_Bilateral_ID_01, SSGi_Material, RenderPass_Bilateralfilter_X_02);
-                    SSGi_Buffer.CopyTexture(SSGi_Bilateral_ID_01, 0, 0, data.SSGi_TemporalPrev_RT_01, 0, 0);
-
-                    SSGi_Buffer.BlitSRT(SSGi_Bilateral_ID_01, SSGi_Material, RenderPass_Bilateralfilter_Y_02);
-                    SSGi_Buffer.CopyTexture(SSGi_Bilateral_ID_01, 0, 0, data.SSGi_TemporalPrev_RT_01, 0, 0);
-                }
-                else
-                {
-                    SSGi_Buffer.SetGlobalTexture(SSGi_Bilateral_ID_02, SSGi_Bilateral_ID_01);
-                }
-
-            }
-            else
-            {
-                SSGi_Buffer.SetGlobalTexture(SSGi_Bilateral_ID_02, SSGi_Bilateral_ID_01);
-                if (RayCastingResolution == RenderResolution.Full)
-                {
-                    SSGi_Buffer.CopyTexture(SSGi_Trace_ID, 0, 0, SSGi_Bilateral_ID_01, 0, 0);
-                }
-                else
-                {
-                    SSGi_Buffer.Blit(SSGi_Trace_ID, SSGi_Bilateral_ID_01);
-                }
-            }
-
-#if UNITY_EDITOR
-            SSGi_Buffer.BlitSRT(targets.renderTargetIdentifier, SSGi_Material, (int)DeBugPass);
-#else
-            SSGi_Buffer.BlitSRT(targets.renderTargetIdentifier, SSGi_Material, 9);
-#endif
-*/
         }
     }
     public class SSGIData : IPerCameraData
@@ -351,20 +281,16 @@ namespace MPipeline
         public SSGIData(int2 resolution)
         {
             this.resolution = resolution;
-            RenderTexture.ReleaseTemporary(SSGi_HierarchicalDepth_RT);
             SSGi_HierarchicalDepth_RT = new RenderTexture(resolution.x, resolution.y, 0, RenderTextureFormat.RHalf, RenderTextureReadWrite.Linear);
             SSGi_HierarchicalDepth_RT.filterMode = FilterMode.Point;
             SSGi_HierarchicalDepth_RT.useMipMap = true;
-            SSGi_HierarchicalDepth_RT.autoGenerateMips = true;
+            SSGi_HierarchicalDepth_RT.autoGenerateMips = false;
 
-            RenderTexture.ReleaseTemporary(SSGi_HierarchicalDepth_BackUp_RT);
             SSGi_HierarchicalDepth_BackUp_RT = new RenderTexture(resolution.x, resolution.y, 0, RenderTextureFormat.RHalf, RenderTextureReadWrite.Linear);
             SSGi_HierarchicalDepth_BackUp_RT.filterMode = FilterMode.Point;
             SSGi_HierarchicalDepth_BackUp_RT.useMipMap = true;
             SSGi_HierarchicalDepth_BackUp_RT.autoGenerateMips = false;
 
-            ////////////Temporal RT_01
-            RenderTexture.ReleaseTemporary(SSGi_TemporalPrev_RT_01);
             SSGi_TemporalPrev_RT_01 = new RenderTexture(resolution.x, resolution.y, 0, RenderTextureFormat.ARGBHalf);
             SSGi_TemporalPrev_RT_01.filterMode = FilterMode.Bilinear;
             SSGi_TemporalPrev_RT_01.useMipMap = false;

@@ -13,8 +13,7 @@ MonoBehaviour:
   m_Name: SSGI
   m_EditorClassIdentifier: 
   enabled: 0
-  RayCastingResolution: 1
-  RayNums: 1
+  RayNums: 16
   Thickness: 0.05
   ScreenFade: 0.05
   HiZ_RaySteps: 58

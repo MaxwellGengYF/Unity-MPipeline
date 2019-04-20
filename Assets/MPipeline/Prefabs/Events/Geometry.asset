@@ -14,3 +14,5 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   enabled: 1
   debugMat: {fileID: 2100000, guid: 45a4e92f2e6293c42815ba6a64defff2, type: 2}
+  decal:
+    availiableDistance: 30
