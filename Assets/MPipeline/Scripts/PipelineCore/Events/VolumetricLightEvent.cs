@@ -18,9 +18,9 @@ namespace MPipeline
         [Range(0.01f, 100f)]
         public float indirectIntensity = 1;
         const int marchStep = 64;
-        const int scatterPass = 8;
-        const int clearPass = 9;
-        const int calculateGI = 10;
+        const int scatterPass = 16;
+        const int clearPass = 17;
+        const int calculateGI = 18;
         const bool useEmissionGeometry = true;
         const bool useNoiseEvents = false;
         static readonly int3 downSampledSize = new int3(160, 90, 128);
@@ -33,6 +33,7 @@ namespace MPipeline
         private VolumetricGeometry geometry;
         private VolumetricNoise noiseEvents;
         private PropertySetEvent proper;
+        private ComputeBuffer cameraNormalBuffer;
 
         public override bool CheckProperty()
         {
@@ -56,6 +57,7 @@ namespace MPipeline
             lightingData = RenderPipeline.GetEvent<LightingEvent>();
             reflectData = RenderPipeline.GetEvent<ReflectionEvent>();
             lightingMat = new Material(resources.shaders.volumetricShader);
+            cameraNormalBuffer = new ComputeBuffer(3, sizeof(float3));
         }
 
         public override void PreRenderFrame(PipelineCamera cam, ref PipelineCommandData data)
@@ -87,16 +89,19 @@ namespace MPipeline
         }
         public override void FrameUpdate(PipelineCamera cam, ref PipelineCommandData data)
         {
+            bool useIBLIndirect = reflectData.reflectionCount > 0;
             CommandBuffer buffer = data.buffer;
             ComputeShader scatter = data.resources.shaders.volumetricScattering;
             ref CBDRSharedData cbdr = ref lightingData.cbdr;
             int pass = 0;
             if (cbdr.dirLightShadowmap != null)
-                pass |= 0b010;
+                pass |= 0b0010;
             if (cbdr.pointshadowCount > 0)
-                pass |= 0b001;
+                pass |= 0b0001;
             if (cbdr.spotShadowCount > 0)
-                pass |= 0b100;
+                pass |= 0b0100;
+            if (useIBLIndirect)
+                pass |= 0b1000;
             //TODO
             //Enable fourth bit as Global Illumination
 
@@ -143,12 +148,13 @@ namespace MPipeline
                 else
                     buffer.SetGlobalFloat(ShaderIDs._TemporalWeight, 0.85f);
             }
+
             jobHandle.Complete();
             if (fogCount > 0)
             {
                 cbdr.allFogVolumeBuffer.SetData(resultVolume, 0, 0, fogCount);
             }
-
+            buffer.SetGlobalFloat(ShaderIDs._IndirectIntensity, indirectIntensity);
             buffer.SetGlobalVector(ShaderIDs._NearFarClip, new Vector4(cam.cam.farClipPlane / availableDistance, cam.cam.nearClipPlane / availableDistance, cam.cam.nearClipPlane));
             buffer.SetGlobalVector(ShaderIDs._Screen_TexelSize, new Vector4(1f / cam.cam.pixelWidth, 1f / cam.cam.pixelHeight, cam.cam.pixelWidth, cam.cam.pixelHeight));
             buffer.SetComputeBufferParam(scatter, pass, ShaderIDs._AllFogVolume, cbdr.allFogVolumeBuffer);
@@ -162,6 +168,17 @@ namespace MPipeline
             buffer.SetComputeTextureParam(scatter, pass, ShaderIDs._DirShadowMap, cbdr.dirLightShadowmap);
             buffer.SetComputeTextureParam(scatter, pass, ShaderIDs._SpotMapArray, cbdr.spotArrayMap);
             buffer.SetComputeTextureParam(scatter, pass, ShaderIDs._CubeShadowMapArray, cbdr.cubeArrayMap);
+            if (useIBLIndirect)
+            {
+                NativeArray<float3> cameraNormals = new NativeArray<float3>(3, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
+                cameraNormals[0] = cam.cam.transform.forward;
+                cameraNormals[1] = cam.cam.transform.right;
+                cameraNormals[2] = cam.cam.transform.up;
+                cameraNormalBuffer.SetData(cameraNormals);
+                cameraNormals.Dispose();
+                buffer.SetComputeBufferParam(scatter, pass, ShaderIDs._CameraNormals, cameraNormalBuffer);
+                reflectData.SetComputeShaderIBLBuffer(scatter, pass, buffer);
+            }
             if (useNoiseEvents)
             {
                 noiseEvents.Update(Time.deltaTime * 0.3f, buffer);
@@ -179,27 +196,6 @@ namespace MPipeline
             buffer.SetComputeIntParam(scatter, ShaderIDs._LightFlag, (int)cbdr.lightFlag);
             int3 dispatchCount = int3(downSampledSize.x / 2, downSampledSize.y / 2, downSampledSize.z / marchStep);
             buffer.DispatchCompute(scatter, clearPass, dispatchCount.x, dispatchCount.y, dispatchCount.z);
-            NativeList<int> cullingResult = reflectData.culler.cullingResult;
-            if (cullingResult.isCreated && cullingResult.Length > 0)
-            {
-                buffer.SetComputeTextureParam(scatter, calculateGI, ShaderIDs._VolumeTex, ShaderIDs._VolumeTex);
-                buffer.SetComputeFloatParam(scatter, ShaderIDs._IndirectIntensity, indirectIntensity);
-                foreach (var i in cullingResult)
-                {
-                    ref LoadedIrradiance irr = ref IrradianceVolumeController.current.loadedIrradiance[i];
-                    Matrix4x4 localToWorld = new Matrix4x4(float4(irr.localToWorld.c0, 0), float4(irr.localToWorld.c1, 0), float4(irr.localToWorld.c2, 0), float4(irr.position, 1));
-                    CoeffTexture currentTexture = IrradianceVolumeController.current.coeffTextures[irr.renderTextureIndex];
-                    buffer.SetComputeTextureParam(scatter, calculateGI, IrradianceVolumeController.current._CoeffIDs[0], currentTexture.coeff0);
-                    buffer.SetComputeTextureParam(scatter, calculateGI, IrradianceVolumeController.current._CoeffIDs[1], currentTexture.coeff1);
-                    buffer.SetComputeTextureParam(scatter, calculateGI, IrradianceVolumeController.current._CoeffIDs[2], currentTexture.coeff2);
-                    buffer.SetComputeTextureParam(scatter, calculateGI, IrradianceVolumeController.current._CoeffIDs[3], currentTexture.coeff3);
-                    buffer.SetComputeTextureParam(scatter, calculateGI, IrradianceVolumeController.current._CoeffIDs[4], currentTexture.coeff4);
-                    buffer.SetComputeTextureParam(scatter, calculateGI, IrradianceVolumeController.current._CoeffIDs[5], currentTexture.coeff5);
-                    buffer.SetComputeTextureParam(scatter, calculateGI, IrradianceVolumeController.current._CoeffIDs[6], currentTexture.coeff6);
-                    buffer.SetComputeMatrixParam(scatter, ShaderIDs._WorldToLocalMatrix, localToWorld.inverse);
-                    buffer.DispatchCompute(scatter, calculateGI, dispatchCount.x, dispatchCount.y, dispatchCount.z);
-                }
-            }
             buffer.DispatchCompute(scatter, pass, dispatchCount.x, dispatchCount.y, dispatchCount.z);
             buffer.CopyTexture(ShaderIDs._VolumeTex, historyVolume.lastVolume);
             buffer.DispatchCompute(scatter, scatterPass, downSampledSize.x / 32, downSampledSize.y / 2, 1);
@@ -230,6 +226,7 @@ namespace MPipeline
             if (useNoiseEvents)
                 noiseEvents.Dispose();
             DestroyImmediate(lightingMat);
+            cameraNormalBuffer.Dispose();
         }
         [Unity.Burst.BurstCompile]
         public unsafe struct FogVolumeCalculate : IJobParallelFor

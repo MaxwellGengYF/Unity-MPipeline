@@ -35,6 +35,7 @@ public static partial class ShaderIDs
     public static readonly int _LastFrameModel = Shader.PropertyToID("_LastFrameModel");
     public static readonly int _RainTexture = Shader.PropertyToID("_RainTexture");
     public static readonly int _LastFrameDepthTexture = Shader.PropertyToID("_LastFrameDepthTexture");
+    public static readonly int _CameraNormals = Shader.PropertyToID("_CameraNormals");
 
     public static readonly int _Jitter = Shader.PropertyToID("_Jitter");
     public static readonly int _LastJitter = Shader.PropertyToID("_LastJitter");

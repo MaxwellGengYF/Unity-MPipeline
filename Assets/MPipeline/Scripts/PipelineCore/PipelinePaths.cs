@@ -12,7 +12,6 @@ namespace MPipeline
         public ComputeShader pointLightFrustumCulling;
         public ComputeShader terrainCompute;
         public ComputeShader volumetricScattering;
-        public ComputeShader probeCoeffShader;
         public ComputeShader texCopyShader;
         public ComputeShader reflectionCullingShader;
         public ComputeShader voxelNoise;
@@ -34,7 +33,6 @@ namespace MPipeline
         public Shader spotLightDepthShader;
         public Shader gtaoShader;
         public Shader lightingShader;
-        public Shader irradianceVolumeShader;
         public Shader ssgiShader;
         public Mesh occluderMesh;
         public Mesh sphereMesh;

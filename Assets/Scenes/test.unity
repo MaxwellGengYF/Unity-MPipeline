@@ -264,9 +264,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 963983e5f353b7041afafc01d316898f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  res: {fileID: 11400000, guid: ff676bd8e36713d49b98c69d61c6ac0e, type: 2}
-  resources: {fileID: 11400000, guid: 64bb376764f5c9848bbb1a526b40051d, type: 2}
-  loadCount: 0
 --- !u!4 &237902041
 Transform:
   m_ObjectHideFlags: 0
@@ -894,15 +891,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 32c6ab144630643439e769a75bc4f130, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  probeCount:
-    x: 3
-    y: 2
-    z: 4
-  considerRange: 30
-  resources: {fileID: 11400000, guid: ff676bd8e36713d49b98c69d61c6ac0e, type: 2}
-  saveTarget: {fileID: 11400000, guid: 64bb376764f5c9848bbb1a526b40051d, type: 2}
-  volumeName: TestIrr
-  sampleMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 3}
 --- !u!4 &945518186
 Transform:
   m_ObjectHideFlags: 0

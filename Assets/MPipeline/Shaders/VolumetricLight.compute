@@ -9,15 +9,28 @@
 #pragma kernel CSMain CUBEMAP  SPOTMAP
 #pragma kernel CSMain DIRMAP  SPOTMAP
 #pragma kernel CSMain CUBEMAP DIRMAP  SPOTMAP
+#pragma kernel CSMain IBL
+#pragma kernel CSMain CUBEMAP IBL
+#pragma kernel CSMain DIRMAP IBL
+#pragma kernel CSMain CUBEMAP DIRMAP IBL
+#pragma kernel CSMain SPOTMAP IBL
+#pragma kernel CSMain CUBEMAP  SPOTMAP IBL
+#pragma kernel CSMain DIRMAP  SPOTMAP IBL
+#pragma kernel CSMain CUBEMAP DIRMAP  SPOTMAP IBL
 #pragma kernel Scatter
 #pragma kernel Clear
 #pragma kernel CalculateGI
 #include "CGINC/Shader_Include/Include_HLSL.hlsl"
 #include "CGINC/VoxelLight.cginc"
 #include "UnityCG.cginc"
+#include "UnityGBuffer.cginc"
+#include "UnityPBSLighting.cginc"
 #include "GI/GlobalIllumination.cginc"
 #include "GI/SHRuntime.cginc"
+#define FROXEL_LIGHT
+#include "CGINC/Reflection.cginc"
 #define EMISSION_GEOMETRY
+
 //#define NOISE
 float4x4 _InvVP;
 float4x4 _ShadowMapVPs[4];
@@ -42,6 +55,7 @@ StructuredBuffer<FogVolume> _AllFogVolume;
 Texture2DArray<float> _DirShadowMap; SamplerComparisonState sampler_DirShadowMap;
 RWTexture3D<float4> _VolumeTex;
 Texture3D<float4> _LastVolume; SamplerState sampler_LastVolume;
+StructuredBuffer<float3> _CameraNormals;
 float3 _DirLightPos;
 uint _FogVolumeCount; 
 float _IndirectIntensity;
@@ -131,7 +145,6 @@ float3 RayleighScatter(float3 ray, float lengthRay, float HeightFalloff, float R
 #define MieScattering(cosAngle, g) g.w * (g.x / (pow(g.y - g.z * cosAngle, 1.25)))
 // x: 1 - g^2, y: 1 + g^2, z: 2*g, w: 1/4pi   g = 0.36
 static const float4 _MieG = float4(0.8704, 1.1296,0.72,0.7853981633974483);
-float2 _CameraClipDistance; //X: Near Y: Far - Near
 float3 GetColor(float3 targetWorldPos, float linearDepth, float2 uv)
 {
     float3 color = 0;
@@ -280,10 +293,13 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     float2 uv = saturate(float2(id.xy + 0.5) / (float2)(_ScreenSize.xy));
     float2 projCoord = uv * 2 - 1;
     float lerpPos = (id.z +  0.5) / ((float)_ScreenSize.z);
-    float linearDepth = lerp(_NearFarClip.z, _MaxDistance, pow(lerpPos, FROXELRATE));
+    float linearDepth = lerp(_NearFarClip.z, _MaxDistance, pow(lerpPos, FROXELRATE));\
     float4 targetWorldPos = mul(_InvVP, float4(projCoord, EyeDepthToProj(linearDepth), 1));
     targetWorldPos /= targetWorldPos.w;
     float3 currentCol = _VolumeTex[id].xyz;
+    #ifdef IBL
+    col.rgb += FroxelIndirect(linearDepth, targetWorldPos.xyz, uv, _CameraNormals) * _IndirectIntensity;
+    #endif
     [loop]
     for(uint c = 0; c < _FogVolumeCount; c++)
     {

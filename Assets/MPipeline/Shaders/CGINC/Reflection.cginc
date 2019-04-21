@@ -1,7 +1,6 @@
 #ifndef REFLECTION
 #define REFLECTION
 #define MAXIMUM_PROBE 8
-#include "UnityStandardBRDF.cginc"
     int DownDimension(uint3 id, const uint2 size, const int multiply){
         const uint3 multiValue = uint3(1, size.x, size.x * size.y) * multiply;
         return dot(id, multiValue);
@@ -53,6 +52,7 @@
             break;
         }
     }
+  
     struct ReflectionData
     {
         float3 position;
@@ -64,60 +64,123 @@
     };
 
 #ifndef COMPUTE_SHADER
-inline half3 MPipelineGI_IndirectSpecular(UnityGIInput data, float2 occlusion, Unity_GlossyEnvironmentData glossIn, ReflectionData reflData, int currentIndex, float lod, float3 normal, out float3 albedo)
+
+float3 GetFroxelColor(float4 hdr, int index, StructuredBuffer<float3> normals, const int sampleTime)
+    {
+        int i;
+        float3 color = 0;
+        switch(index)
+        {
+            case 0:
+            [unroll]
+            for(i = 0; i < sampleTime; ++i)
+            {
+                float3 n = normals[i];
+                color += DecodeHDR(_ReflectionCubeMap0.SampleLevel(sampler_ReflectionCubeMap0, n, 10), hdr);
+                color += DecodeHDR(_ReflectionCubeMap0.SampleLevel(sampler_ReflectionCubeMap0, -n, 10), hdr);
+            }
+            return color;
+            case 1:
+            [unroll]
+            for(i = 0; i < sampleTime; ++i)
+            {
+                float3 n = normals[i];
+                color += DecodeHDR(_ReflectionCubeMap1.SampleLevel(sampler_ReflectionCubeMap1, n, 10), hdr);
+                color += DecodeHDR(_ReflectionCubeMap1.SampleLevel(sampler_ReflectionCubeMap1, -n, 10), hdr);
+            }
+            return color;
+            case 2:
+            [unroll]
+            for(i = 0; i < sampleTime; ++i)
+            {
+                float3 n = normals[i];
+                color += DecodeHDR(_ReflectionCubeMap2.SampleLevel(sampler_ReflectionCubeMap2, n, 10), hdr);
+                color += DecodeHDR(_ReflectionCubeMap2.SampleLevel(sampler_ReflectionCubeMap2, -n, 10), hdr);
+            }
+            return color;
+            case 3:
+            [unroll]
+            for(i = 0; i < sampleTime; ++i)
+            {
+                float3 n = normals[i];
+                color += DecodeHDR(_ReflectionCubeMap3.SampleLevel(sampler_ReflectionCubeMap3, n, 10), hdr);
+                color += DecodeHDR(_ReflectionCubeMap3.SampleLevel(sampler_ReflectionCubeMap3, -n, 10), hdr);
+            }
+            return color;
+            case 4:
+            [unroll]
+            for(i = 0; i < sampleTime; ++i)
+            {
+                float3 n = normals[i];
+                color += DecodeHDR(_ReflectionCubeMap4.SampleLevel(sampler_ReflectionCubeMap4, n, 10), hdr);
+                color += DecodeHDR(_ReflectionCubeMap4.SampleLevel(sampler_ReflectionCubeMap4, -n, 10), hdr);
+            }
+            return color;
+            case 5:
+            [unroll]
+            for(i = 0; i < sampleTime; ++i)
+            {
+                float3 n = normals[i];
+                color += DecodeHDR(_ReflectionCubeMap5.SampleLevel(sampler_ReflectionCubeMap5, n, 10), hdr);
+                color += DecodeHDR(_ReflectionCubeMap5.SampleLevel(sampler_ReflectionCubeMap5, -n, 10), hdr);
+            }
+            return color;
+            case 6:
+            [unroll]
+            for(i = 0; i < sampleTime; ++i)
+            {
+                float3 n = normals[i];
+                color += DecodeHDR(_ReflectionCubeMap6.SampleLevel(sampler_ReflectionCubeMap6, n, 10), hdr);
+                color += DecodeHDR(_ReflectionCubeMap6.SampleLevel(sampler_ReflectionCubeMap6, -n, 10), hdr);
+            }
+            return color;
+            default:
+            [unroll]
+            for(i = 0; i < sampleTime; ++i)
+            {
+                float3 n = normals[i];
+                color += DecodeHDR(_ReflectionCubeMap7.SampleLevel(sampler_ReflectionCubeMap7, n, 10), hdr);
+                color += DecodeHDR(_ReflectionCubeMap7.SampleLevel(sampler_ReflectionCubeMap7, -n, 10), hdr);
+            }
+            return color;
+        }
+        
+    }
+#ifndef FROXEL_LIGHT
+float3 MPipelineGI_IndirectSpecular(UnityGIInput data, float2 occlusion, Unity_GlossyEnvironmentData glossIn, ReflectionData reflData, int currentIndex, float lod, float3 normal, out float3 albedo)
 {
     if(reflData.boxProjection > 0)
     {
         glossIn.reflUVW = BoxProjectedCubemapDirection (glossIn.reflUVW, data.worldPos, data.probePosition[0], data.boxMin[0], data.boxMax[0]);
+        normal =  BoxProjectedCubemapDirection (normal, data.worldPos, data.probePosition[0], data.boxMin[0], data.boxMax[0]);
     }
     float4 env0;
     float4 env1;
     GetColor(currentIndex, glossIn.reflUVW, normal, lod, 10, env0, env1);
-    
-    /*
-        #ifdef UNITY_SPECCUBE_BLENDING
-            const float kBlendFactor = 0.99999;
-            float blendLerp = data.boxMin[0].w;
-            UNITY_BRANCH
-            if (blendLerp < kBlendFactor)
-            {
-                #ifdef UNITY_SPECCUBE_BOX_PROJECTION
-                    glossIn.reflUVW = BoxProjectedCubemapDirection (originalReflUVW, data.worldPos, data.probePosition[1], data.boxMin[1], data.boxMax[1]);
-                #endif
-
-                half3 env1 = Unity_GlossyEnvironment (UNITY_PASS_TEXCUBE_SAMPLER(unity_SpecCube1,unity_SpecCube0), data.probeHDR[1], glossIn);
-                specular = lerp(env1, env0, blendLerp);
-            }
-            else
-            {
-                specular = env0;
-            }
-        #else
-            specular = env0;
-        #endif
-        */
-        albedo = DecodeHDR(env1, data.probeHDR[0]) * occlusion.x;
+    albedo = DecodeHDR(env1, data.probeHDR[0]) * occlusion.x;
     return DecodeHDR(env0, data.probeHDR[0]) * occlusion.y;
 }
+#endif
 #ifndef __LOCALLIGHTING_INCLUDE__
 float2 _CameraClipDistance; //X: Near Y: Far - Near
 #endif
 StructuredBuffer<uint> _ReflectionIndices;
 StructuredBuffer<ReflectionData> _ReflectionData;
+#ifndef FROXEL_LIGHT
 float3 CalculateReflection(float linearDepth, float3 worldPos, float3 viewDir, float4 specular, float4 gbuffer1, float3 albedo, float2 aoro, float2 screenUV)
 {
     float3 normal = gbuffer1.xyz;
 	Unity_GlossyEnvironmentData g = UnityGlossyEnvironmentSetup(specular.w, -viewDir, normal, specular.xyz);
-	half perceptualRoughness = g.roughness;
+	float perceptualRoughness = g.roughness;
 	perceptualRoughness = perceptualRoughness * (1.7 - 0.7*perceptualRoughness);
 	float lod = perceptualRoughnessToMipmapLevel(perceptualRoughness);;
-	half oneMinusReflectivity = 1 - SpecularStrength(specular.xyz);
+	float oneMinusReflectivity = 1 - SpecularStrength(specular.xyz);
 	UnityGIInput d;
 	d.worldPos = worldPos.xyz;
 	d.worldViewDir = -viewDir;
 	UnityLight light;
-	light.color = half3(0, 0, 0);
-	light.dir = half3(0, 1, 0);
+	light.color = float3(0, 0, 0);
+	light.dir = float3(0, 1, 0);
 	UnityIndirect ind;
 	ind.diffuse = 0;
     ind.specular = 0;
@@ -147,7 +210,7 @@ float3 CalculateReflection(float linearDepth, float3 worldPos, float3 viewDir, f
 		float3 specColor = MPipelineGI_IndirectSpecular(d, aoro, g, data, currentIndex, lod, normal, diffuseIndirect);
 		float3 distanceToMin = saturate((abs(worldPos.xyz - data.position) - data.minExtent) / data.blendDistance);
         float lerpValue = max(distanceToMin.x, max(distanceToMin.y, distanceToMin.z));
-		ind.specular = lerp(specColor * data.hdr.r, ind.specular, lerpValue);
+		ind.specular = lerp(specColor, ind.specular, lerpValue);
        ind.diffuse = lerp(diffuseIndirect, ind.diffuse, lerpValue);
 	}
     }
@@ -157,6 +220,34 @@ float3 CalculateReflection(float linearDepth, float3 worldPos, float3 viewDir, f
     #endif
     float3 rgb = BRDF1_Unity_PBS(0, specular.xyz, oneMinusReflectivity, specular.w, normal, -viewDir, light, ind).rgb;
 	return rgb + ind.diffuse * albedo;
+}
+#endif
+float3 FroxelIndirect(float linearDepth, float3 worldPos, float2 screenUV, StructuredBuffer<float3> normals)
+{
+    float rate = pow(max(0, (linearDepth - _CameraClipDistance.x) / _CameraClipDistance.y), 1.0 / CLUSTERRATE);
+    float3 color = 0;
+    if(rate <= 1.0)
+    {
+        float3 uv = float3(screenUV, rate);
+	    uint3 intUV = uv * float3(XRES, YRES, ZRES);
+	    int index = DownDimension(intUV, uint2(XRES, YRES), MAXIMUM_PROBE + 1);
+	    int target = _ReflectionIndices[index];
+        [loop]
+	    for (int a = 1; a < target; ++a)
+	    {
+		    int currentIndex = _ReflectionIndices[index + a];
+		    ReflectionData data = _ReflectionData[currentIndex];
+		    float3 leftDown = data.position - data.maxExtent;
+		    float3 cubemapUV = (worldPos.xyz - leftDown) / (data.maxExtent * 2);
+		    if (dot(abs(cubemapUV - saturate(cubemapUV)), 1) > 1e-8) continue;
+		    //float3 specColor = MPipelineGI_IndirectSpecular(d, aoro, g, data, currentIndex, lod, normal, diffuseIndirect);
+		    float3 distanceToMin = saturate((abs(worldPos.xyz - data.position) - data.minExtent) / data.blendDistance);
+            float lerpValue = max(distanceToMin.x, max(distanceToMin.y, distanceToMin.z));
+            float3 curCol = GetFroxelColor(data.hdr, currentIndex, normals, 3);
+            color = lerp(curCol, color, lerpValue);
+	    }
+    }
+    return color;
 }
 #endif
 #endif

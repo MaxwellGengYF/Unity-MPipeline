@@ -110,7 +110,7 @@
 					#endif
 					#endif
 					#if ENABLE_REFLECTION
-					finalColor += CalculateReflection(linearEyeDepth, i.worldPos, viewDir, specular, float4(normal, 1), color.rgb, 1, screenUV);
+					finalColor += CalculateReflection(linearEyeDepth, worldPos, viewDir, specular, float4(normal, 1), color.rgb, 1, screenUV);
 					#endif
 					finalColor += max(0, CalculateLocalLight(screenUV, float4(worldPos, 1), linearEyeDepth, standardData.diffuseColor, normal, specular, Roughness, -viewDir));
 					#if ENABLE_VOLUMETRIC
