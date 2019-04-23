@@ -72,13 +72,13 @@ public unsafe static class PipelineFunctions
     public static void InitBaseBuffer(PipelineBaseBuffer baseBuffer, ClusterMatResources materialResources, string name, int maximumLength)
     {
         if (maximumLength <= 0) return;
-        baseBuffer.clusterBuffer = new ComputeBuffer(maximumLength, sizeof(CullBox));
+        baseBuffer.clusterBuffer = new ComputeBuffer(maximumLength, sizeof(Cluster));
         baseBuffer.resultBuffer = new ComputeBuffer(maximumLength, sizeof(uint));
         baseBuffer.instanceCountBuffer = new ComputeBuffer(5, 4, ComputeBufferType.IndirectArguments);
         NativeArray<uint> instanceCountBufferValue = new NativeArray<uint>(5, Allocator.Temp);
         instanceCountBufferValue[0] = PipelineBaseBuffer.CLUSTERVERTEXCOUNT;
         baseBuffer.instanceCountBuffer.SetData(instanceCountBufferValue);
-
+        baseBuffer.moveCountBuffer = new ComputeBuffer(5, sizeof(int), ComputeBufferType.IndirectArguments);
         baseBuffer.verticesBuffer = new ComputeBuffer(maximumLength * PipelineBaseBuffer.CLUSTERCLIPCOUNT, sizeof(Point));
         baseBuffer.clusterCount = 0;
         if (GeometryEvent.useHiZ)
@@ -185,6 +185,7 @@ public unsafe static class PipelineFunctions
         }
         DisposeBuffer(baseBuffer.instanceCountBuffer);
         DisposeBuffer(baseBuffer.resultBuffer);
+        DisposeBuffer(baseBuffer.moveCountBuffer);
     }
     /// <summary>
     /// Set Basement buffers

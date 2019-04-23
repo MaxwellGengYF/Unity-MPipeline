@@ -162,7 +162,7 @@ namespace MPipeline
                 }
             }
             CombinedModel model = ProcessCluster(GetComponentsInChildren<MeshRenderer>(), lowLevelDict);
-            property.clusterCount = ClusterGenerator.GenerateCluster(model.allPoints, model.triangles, model.bound, modelName, voxelCount);
+            property.clusterCount = ClusterGenerator.GenerateCluster(model.allPoints, model.triangles, model.bound, modelName, voxelCount, res.clusterProperties.Count);
             res.clusterProperties.Add(property);
             if (save)
                 AssetDatabase.CreateAsset(res, "Assets/Resources/MapMat/SceneManager.asset");

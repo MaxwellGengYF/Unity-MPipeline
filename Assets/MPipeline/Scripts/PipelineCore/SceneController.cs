@@ -37,7 +37,6 @@ namespace MPipeline
         public static PipelineBaseBuffer baseBuffer { get; private set; }
         private static ClusterMatResources clusterResources;
         private static List<SceneStreaming> allScenes;
-        public static NativeList<ulong> pointerContainer;
         public static NativeList<ulong> addList;
         private static Dictionary<int, ComputeBuffer> allTempBuffers = new Dictionary<int, ComputeBuffer>(11);
         public static void SetState()
@@ -56,7 +55,6 @@ namespace MPipeline
             ComputeBuffer target;
             if (allTempBuffers.TryGetValue(stride, out target))
             {
-                if (target == null) Debug.Log("Null");
                 if (target.count < length)
                 {
                     target.Dispose();
@@ -81,13 +79,13 @@ namespace MPipeline
             clusterResources = Resources.Load<ClusterMatResources>("MapMat/" + mapResources);
             int clusterCount = 0;
             allScenes = new List<SceneStreaming>(clusterResources.clusterProperties.Count);
-            foreach (var i in clusterResources.clusterProperties)
+            for(int i = 0; i < clusterResources.clusterProperties.Count; ++i)
             {
-                clusterCount += i.clusterCount;
-                allScenes.Add(new SceneStreaming(i));
+                var cur = clusterResources.clusterProperties[i];
+                clusterCount += cur.clusterCount;
+                allScenes.Add(new SceneStreaming(cur, i));
             }
             PipelineFunctions.InitBaseBuffer(baseBuffer, clusterResources, mapResources, clusterCount);
-            pointerContainer = new NativeList<ulong>(clusterCount, Allocator.Persistent);
 
         }
 
@@ -95,7 +93,6 @@ namespace MPipeline
         {
             singletonReady = false;
             PipelineFunctions.Dispose(baseBuffer);
-            pointerContainer.Dispose();
 
             addList.Dispose();
             var values = allTempBuffers.Values;

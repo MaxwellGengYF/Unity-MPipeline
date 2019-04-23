@@ -7,17 +7,29 @@ struct ClusterMeshData
 {
     float3 extent;
     float3 position;
+    int index;
 };
 RWStructuredBuffer<ClusterMeshData> clusterBuffer;
 RWStructuredBuffer<Point> verticesBuffer;
+RWStructuredBuffer<int2> _IndexBuffer;
+RWStructuredBuffer<int> instanceCountBuffer;//0, 1, 2: x, y, z    3: offset 4:targetScene
 uint _Count;
-RWStructuredBuffer<uint2> _IndexBuffer;
 [numthreads(64, 1, 1)]
 void ClusterFunc(uint id : SV_DISPATCHTHREADID)
 {
     if(id >= _Count) return;
-    uint2 index = _IndexBuffer[id];
-    clusterBuffer[index.x] = clusterBuffer[index.y];
+    ClusterMeshData meshData = clusterBuffer[id];
+    if(meshData.index == instanceCountBuffer[4])
+    {
+        int currentIndex;
+        do{
+            InterlockedAdd(instanceCountBuffer[3], 1, currentIndex);
+        }while(clusterBuffer[currentIndex].index == instanceCountBuffer[4]);
+        int2 indexLead = int2(id, currentIndex);
+        clusterBuffer[indexLead.x] = clusterBuffer[indexLead.y];
+        InterlockedAdd(instanceCountBuffer[0], 1, currentIndex);
+        _IndexBuffer[currentIndex] = indexLead;
+    }
 }
 
 [numthreads(1, CLUSTERCLIPCOUNT, 1)]

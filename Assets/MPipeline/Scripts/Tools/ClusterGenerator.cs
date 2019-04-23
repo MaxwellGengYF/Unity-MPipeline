@@ -47,13 +47,17 @@ namespace MPipeline
             }
         }
         /// <returns></returns> Cluster Count
-        public static int GenerateCluster(NativeList<Point> pointsFromMesh, NativeList<int> triangles, Bounds bd, string fileName, int voxelCount)
+        public static int GenerateCluster(NativeList<Point> pointsFromMesh, NativeList<int> triangles, Bounds bd, string fileName, int voxelCount, int sceneCount)
         {
-            NativeList<CullBox> boxes; NativeList<Point> points;
+            NativeList<Cluster> boxes; NativeList<Point> points;
             GetCluster(pointsFromMesh, triangles, bd, out boxes, out points, voxelCount);
 
             string filenameWithExtent = fileName + ".mpipe";
-            byte[] bytes = new byte[boxes.Length * sizeof(CullBox)];
+            byte[] bytes = new byte[boxes.Length * sizeof(Cluster)];
+            for(int i = 0; i < boxes.Length; ++i)
+            {
+                boxes[i].index = sceneCount;
+            }
             UnsafeUtility.MemCpy(bytes.Ptr(), boxes.unsafePtr, bytes.Length);
             File.WriteAllBytes("Assets/BinaryData/MapInfos/" + filenameWithExtent, bytes);
             bytes = new byte[points.Length * sizeof(Point)];
@@ -63,7 +67,7 @@ namespace MPipeline
             return boxes.Length;
         }
 
-        public static void GetCluster(NativeList<Point> pointsFromMesh, NativeList<int> triangles, Bounds bd, out NativeList<CullBox> boxes, out NativeList<Point> points, int voxelCount)
+        public static void GetCluster(NativeList<Point> pointsFromMesh, NativeList<int> triangles, Bounds bd, out NativeList<Cluster> boxes, out NativeList<Point> points, int voxelCount)
         {
             NativeList<Triangle> trs = GenerateTriangle(triangles, pointsFromMesh);
             Voxel[,,] voxels = GetVoxelData(trs, voxelCount, bd);
@@ -110,14 +114,14 @@ namespace MPipeline
             return voxels;
         }
 
-        private static void GetClusterFromVoxel(Voxel[,,] voxels, out NativeList<CullBox> cullBoxes, out NativeList<Point> points, int vertexCount, int voxelSize)
+        private static void GetClusterFromVoxel(Voxel[,,] voxels, out NativeList<Cluster> Clusteres, out NativeList<Point> points, int vertexCount, int voxelSize)
         {
             int3 voxelCoord = 0;
             float3 lessPoint = float.MaxValue;
             float3 morePoint = float.MinValue;
             int clusterCount = Mathf.CeilToInt((float)vertexCount / PipelineBaseBuffer.CLUSTERCLIPCOUNT);
             points = new NativeList<Point>(clusterCount * PipelineBaseBuffer.CLUSTERCLIPCOUNT, Allocator.Temp);
-            cullBoxes = new NativeList<CullBox>(clusterCount, Allocator.Temp);
+            Clusteres = new NativeList<Cluster>(clusterCount, Allocator.Temp);
             //Collect all full
             for (int i = 0; i < clusterCount - 1; ++i)
             {
@@ -182,12 +186,12 @@ namespace MPipeline
                     if (j.position.z < lessPoint.z) lessPoint.z = j.position.z;
                     else if (j.position.z > morePoint.z) morePoint.z = j.position.z;
                 }
-                CullBox cb = new CullBox
+                Cluster cb = new Cluster
                 {
                     extent = (morePoint - lessPoint) / 2,
                     position = (morePoint + lessPoint) / 2
                 };
-                cullBoxes.Add(cb);
+                Clusteres.Add(cb);
                 currentPoints.Dispose();
             }
             //Collect and degenerate
@@ -219,12 +223,12 @@ namespace MPipeline
                 if (j.position.z < lessPoint.z) lessPoint.z = j.position.z;
                 else if (j.position.z > morePoint.z) morePoint.z = j.position.z;
             }
-            CullBox lastBox = new CullBox
+            Cluster lastBox = new Cluster
             {
                 extent = (morePoint - lessPoint) / 2,
                 position = (morePoint + lessPoint) / 2
             };
-            cullBoxes.Add(lastBox);
+            Clusteres.Add(lastBox);
             for (int i = leftedPoints.Length; i < PipelineBaseBuffer.CLUSTERCLIPCOUNT; i++)
             {
                 leftedPoints.Add(new Point());

@@ -15,6 +15,7 @@ struct ClusterMeshData
 {
     float3 extent;
     float3 position;
+    int index;
 };
 RWStructuredBuffer<ClusterMeshData> clusterBuffer;
 RWStructuredBuffer<uint> instanceCountBuffer;

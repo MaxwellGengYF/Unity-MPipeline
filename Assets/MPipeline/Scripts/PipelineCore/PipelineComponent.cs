@@ -161,6 +161,7 @@ namespace MPipeline
         public ComputeBuffer resultBuffer;          //uint
         public ComputeBuffer verticesBuffer;        //Point
         public ComputeBuffer reCheckCount;        //Point
+        public ComputeBuffer moveCountBuffer;
         public int clusterCount;
         public const int INDIRECTSIZE = 20;
         public const int CLUSTERCLIPCOUNT = 255;
@@ -250,6 +251,12 @@ namespace MPipeline
     {
         public Vector3 extent;
         public Vector3 position;
+    }
+    public struct Cluster
+    {
+        public Vector3 extent;
+        public Vector3 position;
+        public int index;
     }
     public struct PerObjectData
     {
