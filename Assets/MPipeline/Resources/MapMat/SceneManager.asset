@@ -15,3 +15,5 @@ MonoBehaviour:
   clusterProperties:
   - name: TestFile
     clusterCount: 721
+  - name: TestFile1
+    clusterCount: 1

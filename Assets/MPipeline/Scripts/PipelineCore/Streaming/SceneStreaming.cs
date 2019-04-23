@@ -18,18 +18,14 @@ namespace MPipeline
         public State state;
         private NativeArray<Cluster> clusterBuffer;
         private NativeArray<Point> pointsBuffer;
-       
+
         private int resultLength;
         private static Action<object> generateAsyncFunc = (obj) =>
         {
             SceneStreaming str = obj as SceneStreaming;
             str.GenerateAsync();
         };
-        private static Action<object> deleteAsyncFunc = (obj) =>
-        {
-            SceneStreaming str = obj as SceneStreaming;
-            str.DeleteAsync();
-        };
+
         ClusterProperty property;
         int propertyCount;
         public SceneStreaming(ClusterProperty property, int propertyCount)
@@ -120,34 +116,7 @@ namespace MPipeline
                 }
                 loading = true;
                 resultLength = 0;
-                LoadingThread.AddCommand(deleteAsyncFunc, this);
-            }
-        }
-
-        public void DeleteInEditor()
-        {
-            resultLength = 0;
-            DeleteAsync(false);
-            IEnumerator syncFunc = DeleteRun();
-            while (syncFunc.MoveNext()) ;
-        }
-
-        public void GenerateInEditor()
-        {
-            GenerateAsync(false);
-            IEnumerator syncFunc = GenerateRun();
-            while (syncFunc.MoveNext()) ;
-        }
-
-        public void DeleteAsync(bool listCommand = true)
-        {
-            LoadingCommandQueue commandQueue = LoadingThread.commandQueue;
-            if (listCommand)
-            {
-                lock (commandQueue)
-                {
-                    commandQueue.Queue(DeleteRun());
-                }
+                DeleteRun();
             }
         }
 
@@ -155,30 +124,30 @@ namespace MPipeline
         private const int MAXIMUMINTCOUNT = 5000;
         private const int MAXIMUMVERTCOUNT = 100;
 
-        private IEnumerator DeleteRun()
+        public void DeleteRun()
         {
             PipelineResources resources = RenderPipeline.current.resources;
             PipelineBaseBuffer baseBuffer = SceneController.baseBuffer;
-            ComputeShader shader = resources.shaders.streamingShader;
-            NativeArray<int> indirectArgs = new NativeArray<int>(5, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
             int result = baseBuffer.clusterCount - property.clusterCount;
-            indirectArgs[0] = 0;
-            indirectArgs[1] = 1;
-            indirectArgs[2] = 1;
-            indirectArgs[3] = result;
-            indirectArgs[4] = propertyCount;
-            baseBuffer.moveCountBuffer.SetData(indirectArgs);
-            ComputeBuffer indexBuffer = SceneController.GetTempPropertyBuffer(property.clusterCount, 8);
-            indirectArgs.Dispose();
-            shader.SetBuffer(0, ShaderIDs.instanceCountBuffer, baseBuffer.moveCountBuffer);
-            shader.SetBuffer(0, ShaderIDs.clusterBuffer, baseBuffer.clusterBuffer);
-            shader.SetBuffer(0, ShaderIDs._IndexBuffer, indexBuffer);
-            shader.SetBuffer(1, ShaderIDs._IndexBuffer, indexBuffer);
-            shader.SetBuffer(1, ShaderIDs.verticesBuffer, baseBuffer.verticesBuffer);
+            ComputeShader shader = resources.shaders.streamingShader;
             if (result > 0)
             {
+                NativeArray<int> indirectArgs = new NativeArray<int>(5, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
+                indirectArgs[0] = 0;
+                indirectArgs[1] = 1;
+                indirectArgs[2] = 1;
+                indirectArgs[3] = result;
+                indirectArgs[4] = propertyCount;
+                baseBuffer.moveCountBuffer.SetData(indirectArgs);
+                ComputeBuffer indexBuffer = SceneController.GetTempPropertyBuffer(property.clusterCount, 8);
+                indirectArgs.Dispose();
+                shader.SetBuffer(0, ShaderIDs.instanceCountBuffer, baseBuffer.moveCountBuffer);
+                shader.SetBuffer(0, ShaderIDs.clusterBuffer, baseBuffer.clusterBuffer);
+                shader.SetBuffer(0, ShaderIDs._IndexBuffer, indexBuffer);
+                shader.SetBuffer(1, ShaderIDs._IndexBuffer, indexBuffer);
+                shader.SetBuffer(1, ShaderIDs.verticesBuffer, baseBuffer.verticesBuffer);
+
                 ComputeShaderUtility.Dispatch(shader, 0, result);
-                yield return null;
                 shader.DispatchIndirect(1, baseBuffer.moveCountBuffer);
             }
             baseBuffer.clusterCount = result;
