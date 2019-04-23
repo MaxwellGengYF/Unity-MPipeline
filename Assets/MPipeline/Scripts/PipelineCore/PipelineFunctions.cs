@@ -239,13 +239,13 @@ public unsafe static class PipelineFunctions
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void RunCullDispatching(PipelineBaseBuffer baseBuffer, ComputeShader computeShader, CommandBuffer buffer)
     {
-        ComputeShaderUtility.Dispatch(computeShader, buffer, PipelineBaseBuffer.ClusterCull_Kernel, baseBuffer.clusterCount, 64);
+        ComputeShaderUtility.Dispatch(computeShader, buffer, PipelineBaseBuffer.ClusterCull_Kernel, baseBuffer.clusterCount);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void RunCullDispatchingOcc(PipelineBaseBuffer baseBuffer, ComputeShader computeShader, CommandBuffer buffer)
     {
-        ComputeShaderUtility.Dispatch(computeShader, buffer, PipelineBaseBuffer.UnsafeCull_Kernel, baseBuffer.clusterCount, 64);
+        ComputeShaderUtility.Dispatch(computeShader, buffer, PipelineBaseBuffer.UnsafeCull_Kernel, baseBuffer.clusterCount);
     }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void RenderProceduralCommand(PipelineBaseBuffer buffer, Material material, CommandBuffer cb)
@@ -320,7 +320,7 @@ PipelineBaseBuffer basebuffer
         buffer.SetComputeBufferParam(coreShader, PipelineBaseBuffer.FrustumFilter_Kernel, ShaderIDs.resultBuffer, basebuffer.resultBuffer);
         buffer.SetComputeBufferParam(coreShader, PipelineBaseBuffer.FrustumFilter_Kernel, ShaderIDs.instanceCountBuffer, basebuffer.instanceCountBuffer);
         buffer.SetComputeBufferParam(coreShader, PipelineBaseBuffer.FrustumFilter_Kernel, ShaderIDs.reCheckResult, basebuffer.reCheckResult);
-        ComputeShaderUtility.Dispatch(coreShader, buffer, PipelineBaseBuffer.FrustumFilter_Kernel, basebuffer.clusterCount, 64);
+        ComputeShaderUtility.Dispatch(coreShader, buffer, PipelineBaseBuffer.FrustumFilter_Kernel, basebuffer.clusterCount);
     }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void ClearOcclusionData(

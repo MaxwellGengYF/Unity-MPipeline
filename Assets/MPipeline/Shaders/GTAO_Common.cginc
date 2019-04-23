@@ -181,7 +181,7 @@ float4 GTAO(float2 uv, int NumCircle, int NumSlice, inout float Depth)
 {
 	float3 vPos = GetPosition(uv);
 	float3 viewNormal = GetNormal(uv);
-	float3 viewDir = normalize(0 - vPos);
+	float3 viewDir = normalize(-vPos);
 
 	//float2 radius_thickness = lerp(, 0, ComputeDistanceFade(vPos.b).xx);
 	float2 radius_thickness = float2(DATA.radius, 1);

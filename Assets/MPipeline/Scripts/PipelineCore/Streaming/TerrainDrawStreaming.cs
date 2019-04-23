@@ -175,7 +175,7 @@ namespace MPipeline
             removebuffer.SetData(transformList, 0, 0, len);
             transformShader.SetBuffer(0, ShaderIDs._IndexBuffer, removebuffer);
             transformShader.SetBuffer(0, ShaderIDs.clusterBuffer, clusterBuffer);
-            ComputeShaderUtility.Dispatch(transformShader, 0, len, 64);
+            ComputeShaderUtility.Dispatch(transformShader, 0, len);
             transformList.Dispose();
         }
 
@@ -206,7 +206,7 @@ namespace MPipeline
             bf.SetComputeVectorArrayParam(sh, ShaderIDs.planes, ops.frustumPlanes);
             bf.SetGlobalInt(ShaderIDs._MeshSize, meshSize);
             bf.DispatchCompute(sh, clearCullKernel, 1, 1, 1);
-            ComputeShaderUtility.Dispatch(sh, bf, frustumCullKernel, referenceBuffer.Length, 64);
+            ComputeShaderUtility.Dispatch(sh, bf, frustumCullKernel, referenceBuffer.Length);
             bf.SetGlobalBuffer(ShaderIDs.heightMapBuffer, heightMapBuffer);
             bf.SetGlobalBuffer(ShaderIDs.triangleBuffer, triangleBuffer);
             bf.SetGlobalBuffer(ShaderIDs.verticesBuffer, verticesBuffer);

@@ -1,0 +1,20 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+#include "CGINC/Shader_Include/Montcalo_Library.hlsl"
+uint _Count;
+float3 _VoxelPosition;
+float _Radius;
+TextureCube<float> _DepthCubemap; SamplerState sampler_DepthCubemap;
+inline float calculateOcclusion(float dist, float radius)
+{
+    return ( 3 * dist * dist) / (radius * radius * radius);
+}
+[numthreads(64, 1 ,1)]
+void CSMain (uint id : SV_DispatchThreadID)
+{
+    if(id >= _Count) return;
+    float2 rand = Hammersley(id, _Count);
+    float3 normal = UniformSampleSphere(rand).xyz;
+    float dist = _DepthCubemap.Sample(sampler_DepthCubemap, normal);
+    
+}

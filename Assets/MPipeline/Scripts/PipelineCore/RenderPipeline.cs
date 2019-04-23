@@ -40,11 +40,10 @@ namespace MPipeline
             public NativeList<float4x4> projection;
             public PipelineCamera pipelineCamera;
             public RenderTexture texArray;
-            public RenderTexture tempTex;
             public CommandBuffer buffer;
         }
         private static List<EditorBakeCommand> bakeList = new List<EditorBakeCommand>();
-        public static void AddRenderingMissionInEditor(NativeList<float4x4> worldToCameras, NativeList<float4x4> projections, PipelineCamera targetCameras, RenderTexture texArray, RenderTexture tempTexture, CommandBuffer buffer)
+        public static void AddRenderingMissionInEditor(NativeList<float4x4> worldToCameras, NativeList<float4x4> projections, PipelineCamera targetCameras, RenderTexture texArray, CommandBuffer buffer)
         {
             bakeList.Add(new EditorBakeCommand
             {
@@ -52,7 +51,6 @@ namespace MPipeline
                 projection = projections,
                 texArray = texArray,
                 pipelineCamera = targetCameras,
-                tempTex = tempTexture,
                 buffer = buffer
             });
         }
@@ -148,6 +146,7 @@ namespace MPipeline
             UnsafeUtility.MemClear(propertyCheckedFlags, resources.allEvents.Length);
             GraphicsSettings.useScriptableRenderPipelineBatching = resources.useSRPBatcher;
             SceneController.SetState();
+            int tempID = Shader.PropertyToID("_TempRT");
 #if UNITY_EDITOR
             foreach (var pair in bakeList)
             {
@@ -156,9 +155,12 @@ namespace MPipeline
                 {
                     pipelineCam.cam.worldToCameraMatrix = pair.worldToCamera[i];
                     pipelineCam.cam.projectionMatrix = pair.projection[i];
+                    pipelineCam.cam.cullingMatrix = pair.projection[i] * pair.worldToCamera[i];
                     Render(pipelineCam, ref renderContext, pipelineCam.cam, propertyCheckedFlags);
-                    data.buffer.Blit(pipelineCam.targets.renderTargetIdentifier, pair.tempTex);
-                    data.buffer.CopyTexture(pair.tempTex, 0, 0, pair.texArray, i, 0);
+                    data.buffer.GetTemporaryRT(tempID, pair.texArray.width, pair.texArray.height, pair.texArray.depth, FilterMode.Point, pair.texArray.format, RenderTextureReadWrite.Linear);
+                    data.buffer.Blit(BuiltinRenderTextureType.CameraTarget, tempID);
+                    data.buffer.CopyTexture(tempID, 0, 0, pair.texArray, i, 0);
+                    data.buffer.ReleaseTemporaryRT(tempID);
                     data.ExecuteCommandBuffer();
                     renderContext.Submit();
                 }
@@ -171,33 +173,35 @@ namespace MPipeline
             bakeList.Clear();
 #endif
 
-            if (!PipelineCamera.allCamera.isCreated) return;
-
-            foreach (var cam in cameras)
+            if (PipelineCamera.allCamera.isCreated)
             {
-                PipelineCamera pipelineCam;
-                UIntPtr pipelineCamPtr;
-                if (!PipelineCamera.allCamera.Get(cam.gameObject.GetInstanceID(), out pipelineCamPtr))
+
+                foreach (var cam in cameras)
                 {
+                    PipelineCamera pipelineCam;
+                    UIntPtr pipelineCamPtr;
+                    if (!PipelineCamera.allCamera.Get(cam.gameObject.GetInstanceID(), out pipelineCamPtr))
+                    {
 #if UNITY_EDITOR
-                    renderingEditor = true;
-                    var pos = cam.transform.eulerAngles;
-                    pos.z = 0;
-                    cam.transform.eulerAngles = pos;
-                    if (!PipelineCamera.allCamera.Get(Camera.main.gameObject.GetInstanceID(), out pipelineCamPtr))
-                        continue;
+                        renderingEditor = true;
+                        var pos = cam.transform.eulerAngles;
+                        pos.z = 0;
+                        cam.transform.eulerAngles = pos;
+                        if (!PipelineCamera.allCamera.Get(Camera.main.gameObject.GetInstanceID(), out pipelineCamPtr))
+                            continue;
 #else
                     continue;
 #endif
+                    }
+                    else
+                    {
+                        renderingEditor = false;
+                    }
+                    pipelineCam = MUnsafeUtility.GetObject<PipelineCamera>(pipelineCamPtr.ToPointer());
+                    Render(pipelineCam, ref renderContext, cam, propertyCheckedFlags);
+                    data.ExecuteCommandBuffer();
+                    renderContext.Submit();
                 }
-                else
-                {
-                    renderingEditor = false;
-                }
-                pipelineCam = MUnsafeUtility.GetObject<PipelineCamera>(pipelineCamPtr.ToPointer());
-                Render(pipelineCam, ref renderContext, cam, propertyCheckedFlags);
-                data.ExecuteCommandBuffer();
-                renderContext.Submit();
             }
             if (bufferAfterFrame.Count > 0)
             {

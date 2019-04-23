@@ -109,10 +109,9 @@ namespace MPipeline
             shader.SetBuffer(SkinUpdateKernel, ShaderIDs.verticesBuffer, verticesBuffer);
             shader.SetBuffer(SkinUpdateKernel, ShaderIDs.resultBuffer, resultBuffer);
             shader.SetBuffer(SkinUpdateKernel, ShaderIDs.objBuffer, objBuffer); //Debug
-            const int THREAD = 256;
-            ComputeShaderUtility.Dispatch(shader, buffer, AnimationUpdateKernel, characterPoints.Length, THREAD);
-            ComputeShaderUtility.Dispatch(shader, buffer, BoneUpdateKernel, bonesBuffer.count, THREAD);
-            ComputeShaderUtility.Dispatch(shader, buffer, SkinUpdateKernel, resultBuffer.count, THREAD);
+            ComputeShaderUtility.Dispatch(shader, buffer, AnimationUpdateKernel, characterPoints.Length);
+            ComputeShaderUtility.Dispatch(shader, buffer, BoneUpdateKernel, bonesBuffer.count);
+            ComputeShaderUtility.Dispatch(shader, buffer, SkinUpdateKernel, resultBuffer.count);
             buffer.SetRenderTarget(cam.targets.gbufferIdentifier, cam.targets.depthBuffer);
             buffer.ClearRenderTarget(true, true, Color.black);
             buffer.DrawProcedural(Matrix4x4.identity, animationMaterial, 0, MeshTopology.Triangles, resultBuffer.count, characterPoints.Length, block);

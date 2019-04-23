@@ -26,6 +26,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: 6fe05694a7e3c07469031a6ab5c74e0d, type: 2}
   - {fileID: 11400000, guid: bdee0411038a22f49a6293ec9d53091f, type: 2}
   - {fileID: 11400000, guid: a419771a386d90742931ac14c01ed40a, type: 2}
+  - {fileID: 11400000, guid: f7267997fb1d08d44a48b6d32dd56920, type: 2}
   shaders:
     cbdrShader: {fileID: 7200000, guid: 32eda6600c320d948b7c69a6823d3bf9, type: 3}
     gpuFrustumCulling: {fileID: 7200000, guid: 27a4a69f28f2cb946a2de4928422fcd8, type: 3}
@@ -36,7 +37,6 @@ MonoBehaviour:
     terrainCompute: {fileID: 7200000, guid: df2ca219aec3d6c4dbd51730f91bcf0a, type: 3}
     volumetricScattering: {fileID: 7200000, guid: f0b93ef950efeed42866aebefd835cc2,
       type: 3}
-    probeCoeffShader: {fileID: 7200000, guid: 3f0b233c58577844abc54359d2126894, type: 3}
     texCopyShader: {fileID: 7200000, guid: f6e116db19c13064cad38faa281ae1c4, type: 3}
     reflectionCullingShader: {fileID: 7200000, guid: a1fa3016d1a7dba49b1e80f5c5d3139d,
       type: 3}
@@ -65,8 +65,6 @@ MonoBehaviour:
       type: 3}
     gtaoShader: {fileID: 4800000, guid: 2dbab40b5193e7640a8d53163872d2f7, type: 3}
     lightingShader: {fileID: 4800000, guid: b10a195e54d72984783eb1f2f49aa43f, type: 3}
-    irradianceVolumeShader: {fileID: 4800000, guid: a4b6cd62c2a13814d993be22ee50d68d,
-      type: 3}
     ssgiShader: {fileID: 4800000, guid: 96507b1ae4f2e70449d65df7bc0fd3ec, type: 3}
     occluderMesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
     sphereMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}

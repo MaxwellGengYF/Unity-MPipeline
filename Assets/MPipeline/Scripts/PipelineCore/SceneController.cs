@@ -151,7 +151,7 @@ namespace MPipeline
             return result.clusterCount > 0;
         }
 
-        private static void RenderScene(ref PipelineCommandData data, Camera cam, ref CullingResults cullResults)
+        public static void RenderScene(ref PipelineCommandData data, Camera cam, ref CullingResults cullResults, string passName, UnityEngine.Rendering.PerObjectData settings = UnityEngine.Rendering.PerObjectData.Lightmaps)
         {
             data.ExecuteCommandBuffer();
             FilteringSettings renderSettings = new FilteringSettings();
@@ -160,11 +160,11 @@ namespace MPipeline
             renderSettings.renderingLayerMask = 1;
             SortingSettings sortSettings = new SortingSettings(cam);
             sortSettings.criteria = SortingCriteria.CommonOpaque;
-            DrawingSettings dsettings = new DrawingSettings(new ShaderTagId("GBuffer"), sortSettings)
+            DrawingSettings dsettings = new DrawingSettings(new ShaderTagId(passName), sortSettings)
             {
                 enableDynamicBatching = true,
                 enableInstancing = false,
-                perObjectData = UnityEngine.Rendering.PerObjectData.MotionVectors | UnityEngine.Rendering.PerObjectData.Lightmaps
+                perObjectData = settings
             };
             data.context.DrawRenderers(cullResults, ref dsettings, ref renderSettings);
         }
@@ -172,7 +172,7 @@ namespace MPipeline
         {
             data.buffer.SetRenderTarget(targets.gbufferIdentifier, targets.depthBuffer);
             data.buffer.ClearRenderTarget(true, true, Color.black);
-            RenderScene(ref data, cam, ref result);
+            RenderScene(ref data, cam, ref result, "GBuffer");
         }
         public static void DrawSpotLight(CommandBuffer buffer, MLight mlight, int mask, ComputeShader cullingShader, ref PipelineCommandData data, Camera currentCam, ref SpotLight spotLights, ref RenderSpotShadowCommand spotcommand, bool inverseRender)
         {
@@ -404,7 +404,7 @@ namespace MPipeline
             buffer.ClearRenderTarget(true, true, Color.black);
             if (!gpurpEnabled)
             {
-                RenderScene(ref data, cam, ref result);
+                RenderScene(ref data, cam, ref result, "GBuffer");
                 return;
             }
             ComputeShader gpuFrustumShader = options.cullingShader;
@@ -422,7 +422,7 @@ options.frustumPlanes);
             //Update Vector，Depth Mip Map
 
             //TODO Draw others
-            RenderScene(ref data, cam, ref result);
+            RenderScene(ref data, cam, ref result, "GBuffer");
             //TODO
             buffer.BlitSRT(hizOpts.historyDepth, linearLODMaterial, 0);
             hizDepth.GetMipMap(hizOpts.historyDepth, buffer);

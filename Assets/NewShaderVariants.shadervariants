@@ -109,6 +109,8 @@ ShaderVariantCollection:
       variants:
       - keywords: SHADOWS_SPLIT_SPHERES
         passType: 0
+      - keywords: SHADOWS_SINGLE_CASCADE SHADOWS_SPLIT_SPHERES
+        passType: 0
   - first: {fileID: 74, guid: 0000000000000000f000000000000000, type: 0}
     second:
       variants:
@@ -275,6 +277,11 @@ ShaderVariantCollection:
       variants:
       - keywords: 
         passType: 0
+  - first: {fileID: 4800000, guid: 0ef78d24e85a44f4da9d5b5eaa00e50b, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
   - first: {fileID: 4800000, guid: 2c459b89a7c8b1a4fbefe0d81341651c, type: 3}
     second:
       variants:
@@ -294,6 +301,8 @@ ShaderVariantCollection:
       - keywords: BLOOM CHROMATIC_ABERRATION COLOR_GRADING_HDR_3D DISTORT
         passType: 0
       - keywords: BLOOM CHROMATIC_ABERRATION COLOR_GRADING_HDR_3D DISTORT RENDERING_TEXTURE
+        passType: 0
+      - keywords: BLOOM CHROMATIC_ABERRATION COLOR_GRADING_HDR_3D DISTORT VIGNETTE
         passType: 0
       - keywords: BLOOM CHROMATIC_ABERRATION COLOR_GRADING_HDR_3D DISTORT ENABLE_CYBERCOLOR
         passType: 0
@@ -362,6 +371,11 @@ ShaderVariantCollection:
       variants:
       - keywords: 
         passType: 0
+  - first: {fileID: 4800000, guid: f75014305794b3948a3c6d5ccd550e05, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
   - first: {fileID: 4800000, guid: f7f0d8bc677efcc44b8b3ea293d2b74f, type: 3}
     second:
       variants:
@@ -373,15 +387,19 @@ ShaderVariantCollection:
         passType: 13
       - keywords: CUT_OFF LIGHTMAP_ON
         passType: 13
-      - keywords: DETAIL_ON
-        passType: 13
-      - keywords: DETAIL_ON LIGHTMAP_ON
-        passType: 13
       - keywords: ENABLE_RAINNING
         passType: 13
       - keywords: CUT_OFF ENABLE_RAINNING
         passType: 13
+      - keywords: ENABLE_RAINNING POINT_LIGHT_SHADOW
+        passType: 13
+      - keywords: DETAIL_ON
+        passType: 13
+      - keywords: DETAIL_ON LIGHTMAP_ON
+        passType: 13
       - keywords: DETAIL_ON ENABLE_RAINNING
+        passType: 13
+      - keywords: DETAIL_ON ENABLE_RAINNING POINT_LIGHT_SHADOW
         passType: 13
       - keywords: ENABLE_RAINNING USE_RANNING
         passType: 13
@@ -418,6 +436,8 @@ ShaderVariantCollection:
       variants:
       - keywords: 
         passType: 0
+      - keywords: ENABLE_SUNSHADOW
+        passType: 0
       - keywords: EnableGTAO
         passType: 0
       - keywords: ENABLE_SUNSHADOW EnableGTAO
@@ -441,13 +461,6 @@ ShaderVariantCollection:
       - keywords: EnableGTAO POINTLIGHT SPOTLIGHT
         passType: 0
       - keywords: ENABLE_SUNSHADOW EnableGTAO POINTLIGHT SPOTLIGHT
-        passType: 0
-  - first: {fileID: 4800000, guid: a4b6cd62c2a13814d993be22ee50d68d, type: 3}
-    second:
-      variants:
-      - keywords: 
-        passType: 0
-      - keywords: EnableGTAO
         passType: 0
   - first: {fileID: 4800000, guid: cbaa9fe6466c82840b218b6e5a550dd9, type: 3}
     second:
@@ -555,6 +568,8 @@ ShaderVariantCollection:
         passType: 5
       - keywords: LIGHTPROBE_SH
         passType: 10
+      - keywords: LIGHTMAP_ON UNITY_HDR_ON
+        passType: 10
       - keywords: LIGHTPROBE_SH UNITY_HDR_ON
         passType: 10
       - keywords: CUT_OFF LIGHTPROBE_SH
@@ -562,6 +577,8 @@ ShaderVariantCollection:
       - keywords: CUT_OFF LIGHTPROBE_SH UNITY_HDR_ON
         passType: 10
       - keywords: DETAIL_ON LIGHTPROBE_SH
+        passType: 10
+      - keywords: DETAIL_ON LIGHTMAP_ON UNITY_HDR_ON
         passType: 10
       - keywords: DETAIL_ON LIGHTPROBE_SH UNITY_HDR_ON
         passType: 10
@@ -576,31 +593,6 @@ ShaderVariantCollection:
       variants:
       - keywords: 
         passType: 0
-  - first: {fileID: 4800000, guid: 20cf64477973022498e44b932e804288, type: 3}
-    second:
-      variants:
-      - keywords: 
-        passType: 0
-  - first: {fileID: 4800000, guid: 44078aff4de957844a86ead7ad169295, type: 3}
-    second:
-      variants:
-      - keywords: 
-        passType: 0
-  - first: {fileID: 4800000, guid: 966cd9feaf442e64b9154c34e29787e1, type: 3}
-    second:
-      variants:
-      - keywords: 
-        passType: 0
-  - first: {fileID: 4800000, guid: 98e1b190bbdc3a740a9d358c3d446747, type: 3}
-    second:
-      variants:
-      - keywords: 
-        passType: 0
-  - first: {fileID: 4800000, guid: e6fa4030aa9e5fd499a934ca8bf68034, type: 3}
-    second:
-      variants:
-      - keywords: 
-        passType: 11
   - first: {fileID: 4800000, guid: 769bf4b077be0eb43b6c0c07d36d2bab, type: 3}
     second:
       variants:
@@ -617,6 +609,11 @@ ShaderVariantCollection:
       - keywords: ENABLE_REFLECTION ENABLE_VOLUMETRIC
         passType: 13
   - first: {fileID: 4800000, guid: 824d4dd9940244f43a887c89dfbfdcd5, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 4800000, guid: 96507b1ae4f2e70449d65df7bc0fd3ec, type: 3}
     second:
       variants:
       - keywords: 

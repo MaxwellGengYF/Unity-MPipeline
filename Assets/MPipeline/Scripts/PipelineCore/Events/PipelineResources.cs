@@ -25,7 +25,7 @@ namespace MPipeline
         }
         public enum CameraRenderingPath
         {
-            GPUDeferred, Bake
+            GPUDeferred, Bake, Unlit
         }
         public PipelineEvent[] availiableEvents;
         public PipelineShaders shaders = new PipelineShaders();

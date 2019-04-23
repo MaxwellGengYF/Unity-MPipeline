@@ -123,7 +123,6 @@ ENDCG
 			// Upgrade NOTE: excluded shader from OpenGL ES 2.0 because it uses non-square matrices
 			#pragma exclude_renderers gles
 			#include "UnityCG.cginc"
-			#include "CGINC/Procedural.cginc"
 			#pragma multi_compile __ POINT_LIGHT_SHADOW
 			
 			float4x4 _ShadowMapVP;
@@ -169,6 +168,67 @@ ENDCG
 				#endif
 				#if POINT_LIGHT_SHADOW
 				return distance(i.worldPos, _LightPos.xyz) / _LightPos.w;
+				#else
+				return i.vertex.z;
+				#endif
+			}
+
+			ENDCG
+		}
+		Pass
+		{
+			ZTest less
+			Cull back
+			Tags {"LightMode" = "Depth"}
+			CGPROGRAM
+			#pragma vertex vert
+			#pragma fragment frag
+			// Upgrade NOTE: excluded shader from OpenGL ES 2.0 because it uses non-square matrices
+			#pragma exclude_renderers gles
+			#include "UnityCG.cginc"
+			#pragma multi_compile __ POINT_LIGHT_SHADOW
+			
+			struct appdata_shadow
+			{
+				float4 vertex : POSITION;
+				#if CUT_OFF
+				float2 texcoord : TEXCOORD0;
+				#endif
+			};
+			struct v2f
+			{
+				float4 vertex : SV_POSITION;
+				#if CUT_OFF
+				float2 texcoord : TEXCOORD0;
+				#endif
+				#if POINT_LIGHT_SHADOW
+				float3 worldPos : TEXCOORD1;
+				#endif
+			};
+
+			v2f vert (appdata_shadow v)
+			{
+				v2f o;
+				o.vertex = UnityObjectToClipPos(v.vertex);
+				#if POINT_LIGHT_SHADOW
+				o.worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
+				#endif
+				#if CUT_OFF
+				o.texcoord = v.texcoord;
+				#endif
+				return o;
+			}
+
+			
+			float4 frag (v2f i)  : SV_TARGET
+			{
+				#if CUT_OFF
+				i.texcoord = TRANSFORM_TEX(i.texcoord, _MainTex);
+				float4 c = tex2D(_MainTex, i.texcoord);
+				clip(c.a * _Color.a - _Cutoff);
+				#endif
+				#if POINT_LIGHT_SHADOW
+				return distance(i.worldPos, _WorldSpaceCameraPos);
 				#else
 				return i.vertex.z;
 				#endif

@@ -98,6 +98,7 @@
 					#endif
 					#endif
 					#if ENABLE_REFLECTION
+					finalColor += CalculateGI(linearEyeDepth, i.worldPos, normal, color.rgb, 1, screenUV);
 					finalColor += CalculateReflection(linearEyeDepth, i.worldPos, viewDir, specular, float4(normal, 1), color.rgb, 1, screenUV);
 					#endif
 					finalColor += max(0, CalculateLocalLight(screenUV, float4(i.worldPos, 1), linearEyeDepth, standardData.diffuseColor, normal, specular, Roughness, -viewDir));

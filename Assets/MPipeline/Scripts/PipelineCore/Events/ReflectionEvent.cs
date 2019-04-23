@@ -140,6 +140,7 @@ namespace MPipeline
             {
                 buffer.SetGlobalTexture(reflectionCubemapIDs[i], reflectProbes[i].texture);
             }
+            buffer.BlitSRTWithDepth(cam.targets.renderTargetIdentifier, cam.targets.depthBuffer, reflectionMat, 1);
             if (ssrEvents.enabled && !RenderPipeline.renderingEditor)
             {
                 ssrEvents.Render(ref data, cam, proper);

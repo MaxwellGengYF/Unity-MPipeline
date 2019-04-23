@@ -341,22 +341,7 @@ void Clear(uint3 id : SV_DISPATCHTHREADID)
 [numthreads(2, 2, VOXELZ)]
 void CalculateGI(uint3 id : SV_DISPATCHTHREADID)
 {
-    float3 value = (float3)id / (float3)_ScreenSize;
-    float3 jitterCoord = MNoise(value);
-    jitterCoord *= float3(0.7, 0.7, 0.5);
-    jitterCoord += float3(0.15, 0.15, 0.25);
-    float2 uv = saturate(float2(id.xy + jitterCoord.xy) / (float2)(_ScreenSize.xy));
-    float2 projCoord = uv * 2 - 1;
-    float lerpPos = (id.z+  jitterCoord.z) / ((float)_ScreenSize.z);
-    float linearDepth = lerp(_NearFarClip.z, _MaxDistance, pow(lerpPos, FROXELRATE));
-    float4 targetWorldPos = mul(_InvVP, float4(projCoord, EyeDepthToProj(linearDepth), 1));
-    targetWorldPos /= targetWorldPos.w;
-    float3 shUV = GetSHUV(targetWorldPos.xyz);
-    shUV = shUV;
-    float offset = dot(abs(shUV - saturate(shUV)), 1);
-    if(offset > 1e-6) return;
-    SHColor sh = GetSHFromTex(shUV);
-    _VolumeTex[id] += float4((GetSHColor(sh.c, _CameraForward) + GetSHColor(sh.c, -_CameraForward)) * _IndirectIntensity, 0);
+  
 }
 
 [numthreads(32, 2, 1)]

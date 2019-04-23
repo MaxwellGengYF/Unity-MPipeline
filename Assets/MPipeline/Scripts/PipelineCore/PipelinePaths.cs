@@ -64,6 +64,11 @@ namespace MPipeline
        typeof(TemporalAAEvent),
        typeof(FinalPostEvent)
         };
+        [RenderingPath(PipelineResources.CameraRenderingPath.Unlit)]
+        public static readonly Type[] unlitType =
+        {
+            typeof(UnlitEvent)
+        };
 
     }
 }

@@ -222,7 +222,7 @@ namespace MPipeline
                 shader.SetBuffer(1, ShaderIDs.verticesBuffer, baseBuffer.verticesBuffer);
                 shader.SetBuffer(0, ShaderIDs._IndexBuffer, indexBuffer);
                 shader.SetBuffer(1, ShaderIDs._IndexBuffer, indexBuffer);
-                ComputeShaderUtility.Dispatch(shader, 0, resultLength, 64);
+                ComputeShaderUtility.Dispatch(shader, 0, resultLength);
                 shader.Dispatch(1, resultLength, 1, 1);
             }
             baseBuffer.clusterCount -= indicesBuffer.Length;
