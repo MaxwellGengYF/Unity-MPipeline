@@ -184,11 +184,11 @@ float AngleFalloff(float cd, float lightAngleScale, float lightAngleOffset)
     attenuation *= attenuation;
     return attenuation;
 }
-
 /*
-float IESFalloff(float3 L)
+
+float IESFalloff(float3 L, float4x4 worldToLightMatrix, sampler3D iesTex)
 {
-    float3 iesSampleDirection = mul (light  worldToLight , -L);
+    float3 iesSampleDirection = mul (worldToLightMatrix , -L);
 
     // Cartesian to spherical
     // Texture encoded with cos(phi), scale from -1 - >1 to 0 - >1

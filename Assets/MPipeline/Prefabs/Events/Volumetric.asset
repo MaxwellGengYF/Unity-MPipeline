@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Volumetric
   m_EditorClassIdentifier: 
   enabled: 1
-  availableDistance: 50
+  availableDistance: 32
   indirectIntensity: 0.3

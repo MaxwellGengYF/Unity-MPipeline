@@ -15,6 +15,7 @@ namespace MPipeline
         public ComputeShader texCopyShader;
         public ComputeShader reflectionCullingShader;
         public ComputeShader voxelNoise;
+        public ComputeShader occlusionProbeCalculate;
         public Shader minMaxDepthBounding;
         public Shader taaShader;
         public Shader ssrShader;

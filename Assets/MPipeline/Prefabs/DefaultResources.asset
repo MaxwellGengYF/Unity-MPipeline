@@ -41,6 +41,8 @@ MonoBehaviour:
     reflectionCullingShader: {fileID: 7200000, guid: a1fa3016d1a7dba49b1e80f5c5d3139d,
       type: 3}
     voxelNoise: {fileID: 7200000, guid: f7fd67eb107ed9e4cad86e295cbafc9e, type: 3}
+    occlusionProbeCalculate: {fileID: 7200000, guid: 4251ad5f26891974885cb27d7ebccb7a,
+      type: 3}
     minMaxDepthBounding: {fileID: 4800000, guid: 824d4dd9940244f43a887c89dfbfdcd5,
       type: 3}
     taaShader: {fileID: 4800000, guid: 51bcf79c50dc92e47ba87821b61100c3, type: 3}

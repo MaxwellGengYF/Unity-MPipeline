@@ -300,11 +300,8 @@ namespace MPipeline
                         ref SpotLight spot = ref allSpotLightPtr[index.x];
                         mlight.CheckShadowCamera();
                         ref SpotLightMatrix spotLightMatrix = ref spotBuffer.shadowMatrices[spot.shadowIndex];
-                        if (mlight.useShadowCache && !mlight.updateShadowCache)
-                        {
-                            spot.vpMatrix = GL.GetGPUProjectionMatrix(spotLightMatrix.projectionMatrix, false) * spotLightMatrix.worldToCamera;
-                        }
-                        else
+                        spot.vpMatrix = GL.GetGPUProjectionMatrix(spotLightMatrix.projectionMatrix, false) * spotLightMatrix.worldToCamera;
+                        if (!mlight.useShadowCache || mlight.updateShadowCache)
                         {
                             mlight.updateShadowCache = false;
                             SceneController.DrawSpotLight(buffer, mlight, localLightShadowLayer, data.resources.shaders.gpuFrustumCulling, ref data, mlight.shadowCam, ref spot, ref spotBuffer, cam.inverseRender);

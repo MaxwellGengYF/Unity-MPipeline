@@ -175,7 +175,6 @@ namespace MPipeline
         {
             if (mlight.ShadowIndex < 0) return;
             ref SpotLightMatrix spotLightMatrix = ref spotcommand.shadowMatrices[spotLights.shadowIndex];
-            spotLights.vpMatrix = GL.GetGPUProjectionMatrix(spotLightMatrix.projectionMatrix, false) * spotLightMatrix.worldToCamera;
             buffer.SetInvertCulling(true);
             buffer.DisableShaderKeyword("POINT_LIGHT_SHADOW");
             currentCam.orthographic = false;

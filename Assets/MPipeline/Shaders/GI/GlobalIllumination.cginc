@@ -33,11 +33,6 @@ struct SH9
     float c[9];
 };
 
-struct SHColor
-{
-    float3 c[9];
-};
-
 SH9 SHCosineLobe(float3 normal)
 {
     float x = normal.x; float y = normal.y; float z = normal.z;

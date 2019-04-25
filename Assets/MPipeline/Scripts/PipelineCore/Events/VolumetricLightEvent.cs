@@ -19,8 +19,6 @@ namespace MPipeline
         public float indirectIntensity = 1;
         const int marchStep = 64;
         const int scatterPass = 16;
-        const int clearPass = 17;
-        const int calculateGI = 18;
         const bool useEmissionGeometry = true;
         const bool useNoiseEvents = false;
         static readonly int3 downSampledSize = new int3(160, 90, 128);
@@ -163,7 +161,6 @@ namespace MPipeline
             buffer.SetComputeIntParam(scatter, ShaderIDs._FogVolumeCount, fogCount);
             buffer.SetComputeTextureParam(scatter, pass, ShaderIDs._VolumeTex, ShaderIDs._VolumeTex);
             buffer.SetComputeTextureParam(scatter, scatterPass, ShaderIDs._VolumeTex, ShaderIDs._VolumeTex);
-            buffer.SetComputeTextureParam(scatter, clearPass, ShaderIDs._VolumeTex, ShaderIDs._VolumeTex);
             buffer.SetComputeTextureParam(scatter, pass, ShaderIDs._LastVolume, historyVolume.lastVolume);
             buffer.SetComputeTextureParam(scatter, pass, ShaderIDs._DirShadowMap, cbdr.dirLightShadowmap);
             buffer.SetComputeTextureParam(scatter, pass, ShaderIDs._SpotMapArray, cbdr.spotArrayMap);
@@ -195,7 +192,6 @@ namespace MPipeline
             cbdr.dirLightShadowmap = null;
             buffer.SetComputeIntParam(scatter, ShaderIDs._LightFlag, (int)cbdr.lightFlag);
             int3 dispatchCount = int3(downSampledSize.x / 2, downSampledSize.y / 2, downSampledSize.z / marchStep);
-            buffer.DispatchCompute(scatter, clearPass, dispatchCount.x, dispatchCount.y, dispatchCount.z);
             buffer.DispatchCompute(scatter, pass, dispatchCount.x, dispatchCount.y, dispatchCount.z);
             buffer.CopyTexture(ShaderIDs._VolumeTex, historyVolume.lastVolume);
             buffer.DispatchCompute(scatter, scatterPass, downSampledSize.x / 32, downSampledSize.y / 2, 1);

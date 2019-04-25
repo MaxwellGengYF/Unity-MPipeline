@@ -11,12 +11,14 @@ namespace MPipeline
 {
     public unsafe sealed class AOProbe : MonoBehaviour
     {
-        public int3 resolution;
+        public int3 resolution = int3(1, 1, 1);
         public static NativeList<UIntPtr> allProbe { get; private set; }
         private int index;
         public RenderTexture src0 { get; private set; }
         public RenderTexture src1 { get; private set; }
         public RenderTexture src2 { get; private set; }
+        public PipelineResources resources;
+        public float radius;
         [HideInInspector]
         [SerializeField]
         private string fileName;
@@ -38,7 +40,16 @@ namespace MPipeline
         private PipelineCamera bakeCamera;
         private RenderTexture cameraTarget;
         private Action<CommandBuffer> bakeAction;
+        private Action<AsyncGPUReadbackRequest> readBackAction;
         private CommandBuffer buffer;
+        private ComputeBuffer occlusionBuffer;
+        private ComputeBuffer finalBuffer;
+        private NativeList<float> finalData;
+        [EasyButtons.Button]
+        private void BakeTest()
+        {
+            StartCoroutine(BakeOcclusion());
+        }
         private void InitBake()
         {
             GameObject obj = new GameObject("BakeCam", typeof(Camera), typeof(PipelineCamera));
@@ -46,17 +57,22 @@ namespace MPipeline
             bakeCamera.cam = obj.GetComponent<Camera>();
             bakeCamera.renderingPath = PipelineResources.CameraRenderingPath.Unlit;
             bakeCamera.inverseRender = true;
+            bakeAction = BakeOcclusionData;
+            readBackAction = ReadBack;
+            finalData = new NativeList<float>(resolution.x * resolution.y * resolution.z * 9, Allocator.Persistent);
             cameraTarget = new RenderTexture(new RenderTextureDescriptor
             {
                 msaaSamples = 1,
-                width = 256, 
+                width = 256,
                 height = 256,
                 depthBufferBits = 16,
                 colorFormat = RenderTextureFormat.RHalf,
-                dimension = TextureDimension.Tex2DArray,
-                volumeDepth = 6
+                dimension = TextureDimension.Cube,
+                volumeDepth = 1
             });
             buffer = new CommandBuffer();
+            occlusionBuffer = new ComputeBuffer(1024 * 1024, sizeof(float) * 9);
+            finalBuffer = new ComputeBuffer(1024, sizeof(float) * 9);
         }
         private static void CalculateCubemapMatrix(float3 position, float farClipPlane, float nearClipPlane, out NativeList<float4x4> viewMatrices, out NativeList<float4x4> projMatrices)
         {
@@ -110,31 +126,59 @@ namespace MPipeline
             cam.UpdateTRSMatrix();
             viewMatrices[0] = mul(proj, cam.worldToCameraMatrix);
         }
+        private float3 currentPos;
         private IEnumerator BakeOcclusion()
         {
+            InitBake();
+            yield return null;
+            yield return null;
             float3 left = transform.position - transform.localScale * 0.5f;
             float3 right = transform.position + transform.localScale * 0.5f;
-            for(int x = 0; x < resolution.x;++x)
+            for (int x = 0; x < resolution.x; ++x)
             {
-                for(int y = 0; y < resolution.y; ++y)
+                for (int y = 0; y < resolution.y; ++y)
                 {
-                    for(int z = 0; z < resolution.z; ++z)
+                    for (int z = 0; z < resolution.z; ++z)
                     {
                         float3 uv = (float3(x, y, z) + 0.5f) / resolution;
-                        float3 currentPos = lerp(left, right, uv);
+                        currentPos = lerp(left, right, uv);
                         NativeList<float4x4> view, proj;
                         CalculateCubemapMatrix(currentPos, 20, 0.01f, out view, out proj);
                         RenderPipeline.AddRenderingMissionInEditor(view, proj, bakeCamera, cameraTarget, buffer);
-                        
-                        //TODO
+                        RenderPipeline.ExecuteBufferAtFrameEnding(bakeAction);
                         yield return null;
                     }
                 }
             }
+            yield return null;
+            yield return null;
+            DisposeBake();
         }
-        
+        private void BakeOcclusionData(CommandBuffer buffer)
+        {
+            ComputeShader shader = resources.shaders.occlusionProbeCalculate;
+            buffer.SetComputeTextureParam(shader, 0, "_DepthCubemap", cameraTarget);
+            buffer.SetComputeBufferParam(shader, 0, "_OcclusionResult", occlusionBuffer);
+            buffer.SetComputeBufferParam(shader, 1, "_OcclusionResult", occlusionBuffer);
+            buffer.SetComputeBufferParam(shader, 1, "_FinalBuffer", finalBuffer);
+            buffer.SetComputeVectorParam(shader, "_VoxelPosition", float4(currentPos, 1));
+            buffer.SetComputeFloatParam(shader, "_Radius", radius);
+            buffer.DispatchCompute(shader, 0, 1024, 1, 1);
+            buffer.DispatchCompute(shader, 1, 1, 1, 1);
+            buffer.RequestAsyncReadback(finalBuffer, readBackAction);
+        }
+
+        private void ReadBack(AsyncGPUReadbackRequest request)
+        {
+            NativeArray<float> values = request.GetData<float>();
+            finalData.AddRange(values.Ptr(), values.Length);
+        }
+
         private void DisposeBake()
         {
+            finalData.Dispose();
+            occlusionBuffer.Dispose();
+            finalBuffer.Dispose();
             DestroyImmediate(bakeCamera.gameObject);
             DestroyImmediate(cameraTarget);
             buffer.Dispose();

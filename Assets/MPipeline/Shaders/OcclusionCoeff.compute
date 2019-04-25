@@ -1,20 +1,51 @@
 ﻿// Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel CSMain
+#pragma kernel FinalResult
+#include "GI/GlobalIllumination.cginc"
 #include "CGINC/Shader_Include/Montcalo_Library.hlsl"
-uint _Count;
 float3 _VoxelPosition;
 float _Radius;
 TextureCube<float> _DepthCubemap; SamplerState sampler_DepthCubemap;
+RWStructuredBuffer<SH9> _OcclusionResult;
+RWStructuredBuffer<SH9> _FinalResult;
 inline float calculateOcclusion(float dist, float radius)
 {
-    return ( 3 * dist * dist) / (radius * radius * radius);
+    float v = (dist / radius); 
+    return v * v * v;
 }
-[numthreads(64, 1 ,1)]
-void CSMain (uint id : SV_DispatchThreadID)
+
+[numthreads(1024, 1 ,1)]
+void CSMain (uint id : SV_DISPATCHTHREADID)
 {
-    if(id >= _Count) return;
-    float2 rand = Hammersley(id, _Count);
+    uint i;
+    float2 rand = Hammersley(id, 1024 * 1024);
     float3 normal = UniformSampleSphere(rand).xyz;
-    float dist = _DepthCubemap.Sample(sampler_DepthCubemap, normal);
-    
+    float dist = _DepthCubemap.SampleLevel(sampler_DepthCubemap, normal, 0);
+    dist = calculateOcclusion(dist, _Radius);
+    SH9 shConst = SHCosineLobe(normal);
+    for(i = 0; i < 9; ++i)
+    {
+        shConst.c[i] *= dist;
+    }
+    _OcclusionResult[id] = shConst;
+}
+
+
+[numthreads(64, 1, 1)]
+void FinalResult(uint id : SV_GROUPTHREADID)
+{
+    uint startID = id * 1024;
+    uint a;
+    SH9 sh = (SH9)0;
+    [loop]
+    for(uint i = 0; i < 1024; ++i)
+    {
+        SH9 newSH = _OcclusionResult[startID];
+        startID++;
+        for(a = 0; a < 9; ++a)
+        {
+            sh.c[a] += newSH.c[a] / 1024.0;
+        }
+    }
+    _OcclusionResult[id] = sh;
 }

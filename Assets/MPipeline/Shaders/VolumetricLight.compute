@@ -18,8 +18,6 @@
 #pragma kernel CSMain DIRMAP  SPOTMAP IBL
 #pragma kernel CSMain CUBEMAP DIRMAP  SPOTMAP IBL
 #pragma kernel Scatter
-#pragma kernel Clear
-#pragma kernel CalculateGI
 #include "CGINC/Shader_Include/Include_HLSL.hlsl"
 #include "CGINC/VoxelLight.cginc"
 #include "UnityCG.cginc"
@@ -272,7 +270,7 @@ float _MaxDistance;
 
 #include "CGINC/Random.cginc"
 
-float3 RenderVoxel(uint3 id, inout float3 jitterCoord, const float zAxisOffset)
+float3 RenderVoxel(uint3 id, inout float3 jitterCoord, const float zAxisOffset, inout float3 worldPos)
 {
     jitterCoord = MNoise(jitterCoord);
     jitterCoord.z = jitterCoord.z * 0.5 + zAxisOffset;
@@ -282,6 +280,7 @@ float3 RenderVoxel(uint3 id, inout float3 jitterCoord, const float zAxisOffset)
     float linearDepth = lerp(_NearFarClip.z, _MaxDistance, pow(lerpPos, FROXELRATE));
     float4 targetWorldPos = mul(_InvVP, float4(projCoord, EyeDepthToProj(linearDepth), 1));
     targetWorldPos /= targetWorldPos.w;
+    worldPos += targetWorldPos.xyz;
     float3 col = GetColor(targetWorldPos.xyz, linearDepth, uv);
     return col;
 }
@@ -289,14 +288,15 @@ float3 RenderVoxel(uint3 id, inout float3 jitterCoord, const float zAxisOffset)
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
     float3 value = (float3)id / (float3)_ScreenSize;
-    float4 col = float4((RenderVoxel(id, value, 0) + RenderVoxel(id, value, 0.5)) * 0.5, 0);
+    float3 sampleWorldPos = 0;
+    float4 col = float4((RenderVoxel(id, value, 0, sampleWorldPos) + RenderVoxel(id, value, 0.5, sampleWorldPos)) * 0.5, 0);
+    sampleWorldPos *= 0.5;
     float2 uv = saturate(float2(id.xy + 0.5) / (float2)(_ScreenSize.xy));
     float2 projCoord = uv * 2 - 1;
     float lerpPos = (id.z +  0.5) / ((float)_ScreenSize.z);
     float linearDepth = lerp(_NearFarClip.z, _MaxDistance, pow(lerpPos, FROXELRATE));\
     float4 targetWorldPos = mul(_InvVP, float4(projCoord, EyeDepthToProj(linearDepth), 1));
     targetWorldPos /= targetWorldPos.w;
-    float3 currentCol = _VolumeTex[id].xyz;
     #ifdef IBL
     col.rgb += FroxelIndirect(linearDepth, targetWorldPos.xyz, uv, _CameraNormals) * _IndirectIntensity;
     #endif
@@ -304,18 +304,15 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     for(uint c = 0; c < _FogVolumeCount; c++)
     {
         FogVolume vol = _AllFogVolume[c];
-        float3 localPos = mul(vol.worldToLocal, targetWorldPos).xyz;
-        bool3 b = abs(localPos) < vol.extent;
+        float3 localPos = (mul(vol.worldToLocal, float4(sampleWorldPos, 1)).xyz / vol.extent) * 0.5;
+        bool3 b = abs(localPos) < 0.5;
         if(b.x && b.y && b.z){
             
             col.rgb += vol.emissionColor;
             col.rgb *= vol.color;
-            currentCol *= vol.color;
             #ifdef NOISE
             float4 noiseValue = 0;
-            float3 pos = mul(vol.worldToLocal, float4(targetWorldPos.xyz + MNoise(targetWorldPos.xyz) * 2 - 1, 1).xyz * 2 - 1)+ vol.extent / (vol.extent * 2);
-            noiseValue = _VolumetricNoise.SampleLevel(sampler_VolumetricNoise, (pos + vol.extent * 0.3) / (vol.extent * 2), 0);
-            noiseValue = noiseValue * 0.5 + 0.5;
+            noiseValue = _VolumetricNoise.SampleLevel(sampler_VolumetricNoise, localPos + 0.5, 0);
             col.a += vol.targetVolume * Cubic_Interpolate(noiseValue, _TimeVar);
             #else
             col.a += vol.targetVolume;
@@ -329,21 +326,8 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     lastFrameUV.z = pow(lastFrameUV.z, 1 / FROXELRATE);
     float4 lastFrameColor = _LastVolume.SampleLevel(sampler_LastVolume, lastFrameUV, 0);
     float reprojectionValid = lerp(_TemporalWeight * (dot(abs(lastFrameUV - saturate(lastFrameUV)), 1) < 1e-4), 0.999, _SceneOffset.w);
-    _VolumeTex[id] = lerp(float4(col.xyz + currentCol, col.w), lastFrameColor, reprojectionValid);
+    _VolumeTex[id] = lerp(float4(col.xyz, col.w), lastFrameColor, reprojectionValid);
 }
-
-[numthreads(2,2,VOXELZ)]
-void Clear(uint3 id : SV_DISPATCHTHREADID)
-{
-	_VolumeTex[id] = 0;
-}
-
-[numthreads(2, 2, VOXELZ)]
-void CalculateGI(uint3 id : SV_DISPATCHTHREADID)
-{
-  
-}
-
 [numthreads(32, 2, 1)]
 void Scatter(uint2 id : SV_DISPATCHTHREADID)
 {
