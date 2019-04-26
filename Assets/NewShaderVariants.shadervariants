@@ -304,6 +304,9 @@ ShaderVariantCollection:
         passType: 0
       - keywords: BLOOM CHROMATIC_ABERRATION COLOR_GRADING_HDR_3D DISTORT VIGNETTE
         passType: 0
+      - keywords: BLOOM CHROMATIC_ABERRATION COLOR_GRADING_HDR_3D DISTORT RENDERING_TEXTURE
+          VIGNETTE
+        passType: 0
       - keywords: BLOOM CHROMATIC_ABERRATION COLOR_GRADING_HDR_3D DISTORT ENABLE_CYBERCOLOR
         passType: 0
   - first: {fileID: 4800000, guid: 4117fce9491711c4094d33a048e36e73, type: 3}
@@ -437,6 +440,8 @@ ShaderVariantCollection:
       - keywords: 
         passType: 0
       - keywords: ENABLE_SUNSHADOW
+        passType: 0
+      - keywords: ENABLE_SUN ENABLE_SUNSHADOW
         passType: 0
       - keywords: EnableGTAO
         passType: 0
@@ -607,6 +612,8 @@ ShaderVariantCollection:
     second:
       variants:
       - keywords: ENABLE_REFLECTION ENABLE_VOLUMETRIC
+        passType: 13
+      - keywords: ENABLE_REFLECTION ENABLE_SUN ENABLE_SUNSHADOW ENABLE_VOLUMETRIC
         passType: 13
   - first: {fileID: 4800000, guid: 824d4dd9940244f43a887c89dfbfdcd5, type: 3}
     second:

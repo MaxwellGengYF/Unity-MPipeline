@@ -242,7 +242,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 237902041}
-  - component: {fileID: 237902040}
   - component: {fileID: 237902042}
   - component: {fileID: 237902043}
   m_Layer: 0
@@ -252,18 +251,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
   m_IsActive: 1
---- !u!114 &237902040
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 237902039}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 963983e5f353b7041afafc01d316898f, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!4 &237902041
 Transform:
   m_ObjectHideFlags: 0
@@ -762,7 +749,6 @@ GameObject:
   serializedVersion: 6
   m_Component:
   - component: {fileID: 945518186}
-  - component: {fileID: 945518185}
   m_Layer: 0
   m_Name: IrradianceBake
   m_TagString: Untagged
@@ -770,18 +756,6 @@ GameObject:
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 4294967295
   m_IsActive: 1
---- !u!114 &945518185
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 945518184}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 32c6ab144630643439e769a75bc4f130, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: 
 --- !u!4 &945518186
 Transform:
   m_ObjectHideFlags: 0
@@ -1283,6 +1257,7 @@ GameObject:
   - component: {fileID: 1751587465}
   - component: {fileID: 1751587464}
   - component: {fileID: 1751587463}
+  - component: {fileID: 1751587468}
   m_Layer: 8
   m_Name: Cube (1)
   m_TagString: Untagged
@@ -1376,6 +1351,25 @@ Transform:
   m_Father: {fileID: 0}
   m_RootOrder: 13
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &1751587468
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1751587462}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 94eb4283172b1134f8833baf8f30d57a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  resolution:
+    x: 1
+    y: 1
+    z: 1
+  resources: {fileID: 11400000, guid: ff676bd8e36713d49b98c69d61c6ac0e, type: 2}
+  radius: 10
+  fileName: 
 --- !u!1 &2135279637
 GameObject:
   m_ObjectHideFlags: 0

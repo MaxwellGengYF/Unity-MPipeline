@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Mathematics;
 using Unity.Collections;
+using Unity.Jobs;
 using System;
 using Unity.Collections.LowLevel.Unsafe;
 using static Unity.Mathematics.math;
@@ -37,6 +38,7 @@ namespace MPipeline
             prb.index = index;
         }
         #region BAKE
+#if UNITY_EDITOR
         private PipelineCamera bakeCamera;
         private RenderTexture cameraTarget;
         private Action<CommandBuffer> bakeAction;
@@ -44,7 +46,8 @@ namespace MPipeline
         private CommandBuffer buffer;
         private ComputeBuffer occlusionBuffer;
         private ComputeBuffer finalBuffer;
-        private NativeList<float> finalData;
+        private NativeList<float3x3> finalData;
+        private JobHandle lastHandle;
         [EasyButtons.Button]
         private void BakeTest()
         {
@@ -59,7 +62,7 @@ namespace MPipeline
             bakeCamera.inverseRender = true;
             bakeAction = BakeOcclusionData;
             readBackAction = ReadBack;
-            finalData = new NativeList<float>(resolution.x * resolution.y * resolution.z * 9, Allocator.Persistent);
+            finalData = new NativeList<float3x3>(resolution.x * resolution.y * resolution.z * 1024, Allocator.Persistent);
             cameraTarget = new RenderTexture(new RenderTextureDescriptor
             {
                 msaaSamples = 1,
@@ -143,7 +146,7 @@ namespace MPipeline
                         float3 uv = (float3(x, y, z) + 0.5f) / resolution;
                         currentPos = lerp(left, right, uv);
                         NativeList<float4x4> view, proj;
-                        CalculateCubemapMatrix(currentPos, 20, 0.01f, out view, out proj);
+                        CalculateCubemapMatrix(currentPos, 50, 0.01f, out view, out proj);
                         RenderPipeline.AddRenderingMissionInEditor(view, proj, bakeCamera, cameraTarget, buffer);
                         RenderPipeline.ExecuteBufferAtFrameEnding(bakeAction);
                         yield return null;
@@ -170,12 +173,36 @@ namespace MPipeline
 
         private void ReadBack(AsyncGPUReadbackRequest request)
         {
-            NativeArray<float> values = request.GetData<float>();
+            NativeArray<float3x3> values = request.GetData<float3x3>();
+            Debug.Log(values.Length);
             finalData.AddRange(values.Ptr(), values.Length);
+            ProcessJob jb = new ProcessJob
+            {
+                finalData = finalData,
+                count = values.Length
+            };
+            lastHandle = jb.Schedule(lastHandle);
+            JobHandle.ScheduleBatchedJobs();
+        }
+        private struct ProcessJob : IJob
+        {
+            public NativeList<float3x3> finalData;
+            public int count;
+            public void Execute()
+            {
+                int start = finalData.Length - count;
+                finalData[start] /= count;
+                for(int i = start; i < finalData.Length; ++i)
+                {
+                    finalData[start] += finalData[i] / count;
+                }
+                finalData.RemoveLast(count - 1);
+            }
         }
 
         private void DisposeBake()
         {
+            Debug.Log(finalData[0]);
             finalData.Dispose();
             occlusionBuffer.Dispose();
             finalBuffer.Dispose();
@@ -184,6 +211,7 @@ namespace MPipeline
             buffer.Dispose();
             bakeCamera = null;
         }
-        #endregion
+#endif
+#endregion
     }
 }

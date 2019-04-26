@@ -259,7 +259,7 @@ namespace MPipeline
         public PreviousDepthData(Vector2Int currentSize)
         {
             CameraSize = currentSize;
-            SSR_PrevDepth_RT = new RenderTexture(currentSize.x, currentSize.y, 0, RenderTextureFormat.RHalf);
+            SSR_PrevDepth_RT = new RenderTexture(currentSize.x, currentSize.y, 0, RenderTextureFormat.RFloat);
             SSR_PrevDepth_RT.filterMode = FilterMode.Bilinear;
             SSR_PrevDepth_RT.Create();
         }
@@ -267,7 +267,7 @@ namespace MPipeline
         {
             if (CameraSize == currentSize) return false;
             CameraSize = currentSize;
-            SSRCameraData.ChangeSet(SSR_PrevDepth_RT, currentSize.x, currentSize.y, 0, RenderTextureFormat.RHalf);
+            SSRCameraData.ChangeSet(SSR_PrevDepth_RT, currentSize.x, currentSize.y, 0, RenderTextureFormat.RFloat);
             return true;
         }
         public override void DisposeProperty()
@@ -299,12 +299,12 @@ namespace MPipeline
             SSR_SceneColor_RT.useMipMap = true;
             SSR_SceneColor_RT.autoGenerateMips = false;
 
-            SSR_HierarchicalDepth_RT = new RenderTexture(currentSize.x, currentSize.y, 0, RenderTextureFormat.RHalf, RenderTextureReadWrite.Linear);
+            SSR_HierarchicalDepth_RT = new RenderTexture(currentSize.x, currentSize.y, 0, RenderTextureFormat.RFloat, RenderTextureReadWrite.Linear);
             SSR_HierarchicalDepth_RT.filterMode = FilterMode.Point;
             SSR_HierarchicalDepth_RT.useMipMap = true;
             SSR_HierarchicalDepth_RT.autoGenerateMips = false;
 
-            SSR_HierarchicalDepth_BackUp_RT = new RenderTexture(currentSize.x, currentSize.y, 0, RenderTextureFormat.RHalf, RenderTextureReadWrite.Linear);
+            SSR_HierarchicalDepth_BackUp_RT = new RenderTexture(currentSize.x, currentSize.y, 0, RenderTextureFormat.RFloat, RenderTextureReadWrite.Linear);
             SSR_HierarchicalDepth_BackUp_RT.filterMode = FilterMode.Point;
             SSR_HierarchicalDepth_BackUp_RT.useMipMap = true;
             SSR_HierarchicalDepth_BackUp_RT.autoGenerateMips = false;
@@ -334,8 +334,8 @@ namespace MPipeline
             CameraSize = currentSize;
             RayCastingResolution = targetResolution;
             ChangeSet(SSR_SceneColor_RT, currentSize.x, currentSize.y, 0, RenderTextureFormat.DefaultHDR);
-            ChangeSet(SSR_HierarchicalDepth_RT, currentSize.x, currentSize.y, 0, RenderTextureFormat.RHalf);
-            ChangeSet(SSR_HierarchicalDepth_BackUp_RT, currentSize.x, currentSize.y, 0, RenderTextureFormat.RHalf);
+            ChangeSet(SSR_HierarchicalDepth_RT, currentSize.x, currentSize.y, 0, RenderTextureFormat.RFloat);
+            ChangeSet(SSR_HierarchicalDepth_BackUp_RT, currentSize.x, currentSize.y, 0, RenderTextureFormat.RFloat);
             ChangeSet(SSR_TemporalPrev_RT, currentSize.x, currentSize.y, 0, RenderTextureFormat.ARGBHalf);
             return true;
         }

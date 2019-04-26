@@ -119,9 +119,10 @@ void frag_surf (v2f_surf IN,
 	#endif
 
 	float4 velocity = float4(IN.nonJitterScreenPos.xy, IN.lastScreenPos.xy) / float4(IN.nonJitterScreenPos.zz, IN.lastScreenPos.zz);
-	outMotionVector = velocity.xy - velocity.zw;
   #if UNITY_UV_STARTS_AT_TOP
-	outMotionVector.y = -outMotionVector.y;
+	outMotionVector = velocity.xw - velocity.zy;
+	#else
+	outMotionVector = velocity.xy - velocity.zw;
 	#endif
 }
 

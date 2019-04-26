@@ -14,4 +14,3 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   enabled: 1
   passName: Depth
-  defaultColor: {r: 0, g: 0, b: 0, a: 1}
