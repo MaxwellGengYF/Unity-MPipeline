@@ -94,7 +94,7 @@ float2 Hammersley(uint a) {
 
 float2 Hammersley(uint Index, uint NumSamples)
 {
-	return float2((float)Index / (float)NumSamples, ReverseBits32(Index));
+	return float2((float)Index / (float)NumSamples, ReverseBits32(Index) / 0xffffffffu);
 }
 
 float2 Hammersley(uint Index, uint NumSamples, uint2 Random)

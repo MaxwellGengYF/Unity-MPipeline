@@ -10,7 +10,7 @@ RWStructuredBuffer<SH9> _OcclusionResult;
 RWStructuredBuffer<SH9> _FinalBuffer;
 inline float calculateOcclusion(float dist, float radius)
 {
-    float v = (dist / radius); 
+    float v = saturate(dist / radius); 
     return v * v * v;
 }
 
@@ -19,19 +19,19 @@ void CSMain (uint id : SV_DISPATCHTHREADID)
 {
     uint i;
     float2 rand = Hammersley(id, 1024 * 1024);
-    float3 normal = UniformSampleSphere(rand).xyz;
+    float3 normal = normalize(UniformSampleSphere(rand).xyz);
     float dist = _DepthCubemap.SampleLevel(sampler_DepthCubemap, normal, 0);
-    //dist = calculateOcclusion(dist, _Radius);
+    dist = calculateOcclusion(dist, _Radius);
     SH9 shConst = SHCosineLobe(normal);
     for(i = 0; i < 9; ++i)
     {
-        shConst.c[i] = dist;
+        shConst.c[i] *= dist;
     }
     _OcclusionResult[id] = shConst;
 }
 
 
-[numthreads(64, 1, 1)]
+[numthreads(1024, 1, 1)]
 void FinalResult(uint id : SV_GROUPTHREADID)
 {
     uint startID = id * 1024;

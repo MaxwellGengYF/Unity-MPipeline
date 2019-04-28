@@ -83,13 +83,13 @@ namespace MPipeline
         {
             if (!enabledPost)
             {
-                data.buffer.Blit(cam.targets.renderTargetIdentifier, BuiltinRenderTextureType.CameraTarget);
+                data.buffer.Blit(cam.targets.renderTargetIdentifier, cam.cameraTarget);
                 return;
             }
 #if UNITY_EDITOR
             if (!enableInEditor && RenderPipeline.renderingEditor)
             {
-                data.buffer.Blit(cam.targets.renderTargetIdentifier, BuiltinRenderTextureType.CameraTarget);
+                data.buffer.Blit(cam.targets.renderTargetIdentifier, cam.cameraTarget);
                 return;
             }
 #endif
@@ -118,9 +118,9 @@ namespace MPipeline
                 }
             };
             cyberColor.FrameUpdate(data.buffer);
-          //  data.buffer.SetGlobalVector("_ScreenSize", new Vector2(cam.cam.pixelWidth / 16, cam.cam.pixelHeight / 16));
-          //  data.buffer.Blit(null, BuiltinRenderTextureType.CameraTarget, debugMat);
-            data.buffer.BlitSRT(cam.targets.renderTargetIdentifier, BuiltinRenderTextureType.CameraTarget, postContext.uberSheet.material, 0, postContext.uberSheet.properties);
+            //  data.buffer.SetGlobalVector("_ScreenSize", new Vector2(cam.cam.pixelWidth / 16, cam.cam.pixelHeight / 16));
+            //  data.buffer.Blit(null, cam.cameraTarget, debugMat);
+            data.buffer.BlitSRT(cam.targets.renderTargetIdentifier, cam.cameraTarget, postContext.uberSheet.material, 0, postContext.uberSheet.properties);
             if (postContext.bloomBufferNameID > -1) data.buffer.ReleaseTemporaryRT(postContext.bloomBufferNameID);
         }
     }

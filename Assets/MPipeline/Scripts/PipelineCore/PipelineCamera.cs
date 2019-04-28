@@ -27,6 +27,7 @@ namespace MPipeline
         public PipelineResources.CameraRenderingPath renderingPath = PipelineResources.CameraRenderingPath.GPUDeferred;
         public Dictionary<Type, IPerCameraData> allDatas = new Dictionary<Type, IPerCameraData>(17);
         public bool inverseRender = false;
+        public RenderTargetIdentifier cameraTarget = BuiltinRenderTextureType.CameraTarget;
         public static NativeDictionary<int, UIntPtr, IntEqual> allCamera;
         [HideInInspector]
         public float[] layerCullDistance = new float[32];

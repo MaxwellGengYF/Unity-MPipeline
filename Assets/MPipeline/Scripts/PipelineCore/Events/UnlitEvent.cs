@@ -28,7 +28,7 @@ namespace MPipeline
             if (!cam.cam.TryGetCullingParameters(out cullParams)) return;
             cullParams.cullingOptions = cam.cam.useOcclusionCulling ? CullingOptions.OcclusionCull: CullingOptions.None;
             CullingResults cullReslt = data.context.Cull(ref cullParams);
-            data.buffer.SetRenderTarget(BuiltinRenderTextureType.CameraTarget);
+            data.buffer.SetRenderTarget(cam.cameraTarget);
             data.buffer.ClearRenderTarget(true, true, new Color(float.MaxValue, float.MaxValue, float.MaxValue, float.MaxValue));
             SceneController.RenderScene(ref data, cam.cam, ref cullReslt, passName, UnityEngine.Rendering.PerObjectData.None);
         }

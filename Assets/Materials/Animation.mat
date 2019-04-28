@@ -8,12 +8,12 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Animation
-  m_Shader: {fileID: 4800000, guid: ad4d4395140a5da4cae8f9d28b78e9cd, type: 3}
+  m_Shader: {fileID: 4800000, guid: c28b28b8ae9887645b7ea83498201e85, type: 3}
   m_ShaderKeywords: USE_ALBEDO
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
-  m_CustomRenderQueue: -1
+  m_CustomRenderQueue: 3000
   stringTagMap: {}
   disabledShaderPasses: []
   m_SavedProperties:

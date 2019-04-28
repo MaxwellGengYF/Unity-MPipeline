@@ -24,7 +24,7 @@ namespace MPipeline
 
         public override void FrameUpdate(PipelineCamera cam, ref PipelineCommandData data)
         {
-            data.buffer.Blit(cam.targets.renderTargetIdentifier, BuiltinRenderTextureType.CameraTarget);
+            data.buffer.Blit(cam.targets.renderTargetIdentifier, cam.cameraTarget);
         }
     }
 }

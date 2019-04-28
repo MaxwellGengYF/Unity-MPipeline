@@ -12,7 +12,7 @@ namespace MPipeline
 {
     public unsafe sealed class AOProbe : MonoBehaviour
     {
-        public int3 resolution = int3(1, 1, 1);
+        public Vector3Int resolution = Vector3Int.one;
         public static NativeList<UIntPtr> allProbe { get; private set; }
         private int index;
         public RenderTexture src0 { get; private set; }
@@ -51,6 +51,7 @@ namespace MPipeline
         [EasyButtons.Button]
         private void BakeTest()
         {
+            InitBake();
             StartCoroutine(BakeOcclusion());
         }
         private void InitBake()
@@ -58,6 +59,7 @@ namespace MPipeline
             GameObject obj = new GameObject("BakeCam", typeof(Camera), typeof(PipelineCamera));
             bakeCamera = obj.GetComponent<PipelineCamera>();
             bakeCamera.cam = obj.GetComponent<Camera>();
+            bakeCamera.cam.enabled = false;
             bakeCamera.renderingPath = PipelineResources.CameraRenderingPath.Unlit;
             bakeCamera.inverseRender = true;
             bakeAction = BakeOcclusionData;
@@ -68,8 +70,8 @@ namespace MPipeline
                 msaaSamples = 1,
                 width = 256,
                 height = 256,
-                depthBufferBits = 16,
-                colorFormat = RenderTextureFormat.RHalf,
+                depthBufferBits = 32,
+                colorFormat = RenderTextureFormat.RFloat,
                 dimension = TextureDimension.Cube,
                 volumeDepth = 1
             });
@@ -95,44 +97,42 @@ namespace MPipeline
             cam.UpdateProjectionMatrix();
             for (int i = 0; i < 6; ++i)
                 projMatrices[i] = cam.projectionMatrix;
-            float4x4 proj = GraphicsUtility.GetGPUProjectionMatrix(cam.projectionMatrix, true);
-            viewMatrices[5] = mul(proj, cam.worldToCameraMatrix);
+            viewMatrices[5] = cam.worldToCameraMatrix;
             //Back
             cam.right = float3(-1, 0, 0);
             cam.up = float3(0, 1, 0);
             cam.forward = float3(0, 0, -1);
             cam.UpdateTRSMatrix();
 
-            viewMatrices[4] = mul(proj, cam.worldToCameraMatrix);
+            viewMatrices[4] = cam.worldToCameraMatrix;
             //Up
             cam.right = float3(-1, 0, 0);
             cam.up = float3(0, 0, 1);
             cam.forward = float3(0, 1, 0);
             cam.UpdateTRSMatrix();
-            viewMatrices[3] = mul(proj, cam.worldToCameraMatrix);
+            viewMatrices[3] = cam.worldToCameraMatrix;
             //Down
             cam.right = float3(-1, 0, 0);
             cam.up = float3(0, 0, -1);
             cam.forward = float3(0, -1, 0);
             cam.UpdateTRSMatrix();
-            viewMatrices[2] = mul(proj, cam.worldToCameraMatrix);
+            viewMatrices[2] = cam.worldToCameraMatrix;
             //Right
             cam.up = float3(0, 1, 0);
             cam.right = float3(0, 0, -1);
             cam.forward = float3(1, 0, 0);
             cam.UpdateTRSMatrix();
-            viewMatrices[1] = mul(proj, cam.worldToCameraMatrix);
+            viewMatrices[1] = cam.worldToCameraMatrix;
             //Left
             cam.up = float3(0, 1, 0);
             cam.right = float3(0, 0, 1);
             cam.forward = float3(-1, 0, 0);
             cam.UpdateTRSMatrix();
-            viewMatrices[0] = mul(proj, cam.worldToCameraMatrix);
+            viewMatrices[0] = cam.worldToCameraMatrix;
         }
         private float3 currentPos;
         private IEnumerator BakeOcclusion()
         {
-            InitBake();
             yield return null;
             yield return null;
             float3 left = transform.position - transform.localScale * 0.5f;
@@ -143,7 +143,7 @@ namespace MPipeline
                 {
                     for (int z = 0; z < resolution.z; ++z)
                     {
-                        float3 uv = (float3(x, y, z) + 0.5f) / resolution;
+                        float3 uv = (float3(x, y, z) + 0.5f) / float3(resolution.x, resolution.y, resolution.z);
                         currentPos = lerp(left, right, uv);
                         NativeList<float4x4> view, proj;
                         CalculateCubemapMatrix(currentPos, 50, 0.01f, out view, out proj);
@@ -153,9 +153,7 @@ namespace MPipeline
                     }
                 }
             }
-            yield return null;
-            yield return null;
-            DisposeBake();
+            
         }
         private void BakeOcclusionData(CommandBuffer buffer)
         {
@@ -170,48 +168,35 @@ namespace MPipeline
             buffer.DispatchCompute(shader, 1, 1, 1, 1);
             buffer.RequestAsyncReadback(finalBuffer, readBackAction);
         }
+        private void OnDestroy()
+        {
+            DisposeBake();
+        }
 
         private void ReadBack(AsyncGPUReadbackRequest request)
         {
             NativeArray<float3x3> values = request.GetData<float3x3>();
-            Debug.Log(values.Length);
             finalData.AddRange(values.Ptr(), values.Length);
-            ProcessJob jb = new ProcessJob
+            int start = finalData.Length - values.Length;
+            finalData[start] /= values.Length;
+            for (int i = start; i < finalData.Length; ++i)
             {
-                finalData = finalData,
-                count = values.Length
-            };
-            lastHandle = jb.Schedule(lastHandle);
-            JobHandle.ScheduleBatchedJobs();
-        }
-        private struct ProcessJob : IJob
-        {
-            public NativeList<float3x3> finalData;
-            public int count;
-            public void Execute()
-            {
-                int start = finalData.Length - count;
-                finalData[start] /= count;
-                for(int i = start; i < finalData.Length; ++i)
-                {
-                    finalData[start] += finalData[i] / count;
-                }
-                finalData.RemoveLast(count - 1);
+                finalData[start] += finalData[i] / values.Length;
             }
+            finalData.RemoveLast(values.Length - 1);
+            Debug.Log(finalData[start]);
         }
-
         private void DisposeBake()
         {
-            Debug.Log(finalData[0]);
             finalData.Dispose();
             occlusionBuffer.Dispose();
             finalBuffer.Dispose();
+            buffer.Dispose();
             DestroyImmediate(bakeCamera.gameObject);
             DestroyImmediate(cameraTarget);
-            buffer.Dispose();
             bakeCamera = null;
         }
 #endif
-#endregion
+        #endregion
     }
 }
