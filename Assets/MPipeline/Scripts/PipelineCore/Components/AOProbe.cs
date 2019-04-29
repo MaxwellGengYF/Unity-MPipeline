@@ -48,10 +48,12 @@ namespace MPipeline
         private ComputeBuffer finalBuffer;
         private NativeList<float3x3> finalData;
         private JobHandle lastHandle;
+        private int count;
         [EasyButtons.Button]
         private void BakeTest()
         {
             InitBake();
+            count = 0;
             StartCoroutine(BakeOcclusion());
         }
         private void InitBake()
@@ -64,7 +66,7 @@ namespace MPipeline
             bakeCamera.inverseRender = true;
             bakeAction = BakeOcclusionData;
             readBackAction = ReadBack;
-            finalData = new NativeList<float3x3>(resolution.x * resolution.y * resolution.z * 1024, Allocator.Persistent);
+            finalData = new NativeList<float3x3>(resolution.x * resolution.y * resolution.z + 1024, Allocator.Persistent);
             cameraTarget = new RenderTexture(new RenderTextureDescriptor
             {
                 msaaSamples = 1,
@@ -133,8 +135,6 @@ namespace MPipeline
         private float3 currentPos;
         private IEnumerator BakeOcclusion()
         {
-            yield return null;
-            yield return null;
             float3 left = transform.position - transform.localScale * 0.5f;
             float3 right = transform.position + transform.localScale * 0.5f;
             for (int x = 0; x < resolution.x; ++x)
@@ -153,7 +153,6 @@ namespace MPipeline
                     }
                 }
             }
-            
         }
         private void BakeOcclusionData(CommandBuffer buffer)
         {
@@ -168,11 +167,6 @@ namespace MPipeline
             buffer.DispatchCompute(shader, 1, 1, 1, 1);
             buffer.RequestAsyncReadback(finalBuffer, readBackAction);
         }
-        private void OnDestroy()
-        {
-            DisposeBake();
-        }
-
         private void ReadBack(AsyncGPUReadbackRequest request)
         {
             NativeArray<float3x3> values = request.GetData<float3x3>();
@@ -184,10 +178,13 @@ namespace MPipeline
                 finalData[start] += finalData[i] / values.Length;
             }
             finalData.RemoveLast(values.Length - 1);
-            Debug.Log(finalData[start]);
+            count++;
+            if (count >= resolution.x * resolution.y * resolution.z)
+                DisposeBake();
         }
         private void DisposeBake()
         {
+            Debug.Log(finalData[0]);
             finalData.Dispose();
             occlusionBuffer.Dispose();
             finalBuffer.Dispose();

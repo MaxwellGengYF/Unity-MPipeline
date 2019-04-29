@@ -23,11 +23,12 @@ namespace MPipeline
         private LightingEvent lightingEvents;
         private ComputeBuffer reflectionIndices;
         private Material reflectionMat;
+
         private NativeList<int> reflectionCubemapIDs;
         public int reflectionCount { get; private set; }
         private StoreReflectionData storeRef;
         private PropertySetEvent proper;
-
+        public Cubemap backgroundCubemap;
         public float availiableDistance = 50;
         public StochasticScreenSpaceReflection ssrEvents = new StochasticScreenSpaceReflection();
         private static readonly int _ReflectionCubeMap = Shader.PropertyToID("_ReflectionCubeMap");
@@ -133,6 +134,7 @@ namespace MPipeline
             buffer.SetComputeBufferParam(cullingShader, 0, ShaderIDs._ReflectionIndices, reflectionIndices);
             buffer.SetComputeBufferParam(cullingShader, 0, ShaderIDs._ReflectionData, probeBuffer);
             buffer.SetComputeIntParam(cullingShader, ShaderIDs._Count, reflectionCount);
+            buffer.SetGlobalTexture(_ReflectionCubeMap, backgroundCubemap);
             buffer.DispatchCompute(cullingShader, 0, 1, 1, CBDRSharedData.ZRES);
             buffer.SetGlobalBuffer(ShaderIDs._ReflectionIndices, reflectionIndices);
             buffer.SetGlobalBuffer(ShaderIDs._ReflectionData, probeBuffer);

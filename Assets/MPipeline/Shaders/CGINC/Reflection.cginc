@@ -5,6 +5,7 @@
         const uint3 multiValue = uint3(1, size.x, size.x * size.y) * multiply;
         return dot(id, multiValue);
     }
+    TextureCube<float4> _ReflectionCubeMap; SamplerState sampler_ReflectionCubeMap;
     TextureCube<float4> _ReflectionCubeMap0; SamplerState sampler_ReflectionCubeMap0;
     TextureCube<float4> _ReflectionCubeMap1; SamplerState sampler_ReflectionCubeMap1;
     TextureCube<float4> _ReflectionCubeMap2; SamplerState sampler_ReflectionCubeMap2;
@@ -164,7 +165,7 @@ float3 CalculateGI(float linearDepth, float3 worldPos, float3 normal, float3 alb
 	uint3 intUV = uv * float3(XRES, YRES, ZRES);
 	int index = DownDimension(intUV, uint2(XRES, YRES), MAXIMUM_PROBE + 1);
 	int target = _ReflectionIndices[index];
-    float3 color = 0;
+    float3 color = _ReflectionCubeMap.SampleLevel(sampler_ReflectionCubeMap, normal, 10).xyz;
 	[loop]
 	for (int a = 1; a < target; ++a)
 	{
@@ -199,7 +200,7 @@ float3 CalculateReflection(float linearDepth, float3 worldPos, float3 viewDir, f
 	light.dir = float3(0, 1, 0);
 	UnityIndirect ind;
 	ind.diffuse = 0;
-    ind.specular = 0;
+    ind.specular =  _ReflectionCubeMap.SampleLevel(sampler_ReflectionCubeMap, g.reflUVW, lod).xyz;;
 	float rate = pow(max(0, (linearDepth - _CameraClipDistance.x) / _CameraClipDistance.y), 1.0 / CLUSTERRATE);
     if(rate <= 1.0){
 	float3 uv = float3(screenUV, rate);

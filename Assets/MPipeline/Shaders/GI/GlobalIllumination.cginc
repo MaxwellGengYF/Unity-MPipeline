@@ -38,15 +38,15 @@ SH9 SHCosineLobe(float3 normal)
     float x = normal.x; float y = normal.y; float z = normal.z;
 	float x2 = x * x; float y2 = y * y; float z2 = z * z;
     SH9 sh;
-				sh.c[0] = 1.0 / 2.0 * sqrt(1.0 / Pi);
-				sh.c[1] = sqrt( 3.0 / (4.0 * Pi) ) * y;
-				sh.c[2] = sqrt( 3.0 / (4.0 * Pi) ) * z;
-				sh.c[3] = sqrt( 3.0 / (4.0 * Pi) ) * x;
-				sh.c[4] = 1.0 / 2.0 * sqrt(15.0 / Pi) * x * y;
-				sh.c[5] = 1.0 / 2.0 * sqrt(15.0 / Pi) * y * z;
-				sh.c[6] = 1.0 / 4.0 * sqrt(5.0 / Pi) * (-x2 - y2 + 2.0 * z2);
-				sh.c[7] = 1.0 / 2.0 * sqrt(15.0 / Pi) * z * x;
-				sh.c[8] = 1.0 / 4.0 * sqrt(15.0 / Pi) * (x2 - y2);
+				sh.c[0] = 1.0 / (2.0 * sqrt(Pi));
+				sh.c[1] = 0.5 * sqrt(3 / Pi) * z;
+				sh.c[2] = 0.5 * sqrt(3 / Pi) * x;
+				sh.c[3] = 0.5 * sqrt(3 / Pi) * y;
+				sh.c[4] = 0.25 * sqrt(5 / Pi) * (2 * z2 - x2 - y2);
+				sh.c[5] = 0.5 * sqrt(15/Pi) * z * x;
+				sh.c[6] = 0.5 * sqrt(15/Pi) * z * y;
+				sh.c[7] = 0.25 * sqrt(15 / Pi) * (x2 - y2);
+				sh.c[8] = 0.5 * sqrt(15/Pi) * y * x;
 
     return sh;
 }

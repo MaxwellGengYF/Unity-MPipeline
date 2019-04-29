@@ -18,12 +18,12 @@ inline float calculateOcclusion(float dist, float radius)
 void CSMain (uint id : SV_DISPATCHTHREADID)
 {
     uint i;
-    float2 rand = Hammersley(id, 1024 * 1024);
+    float2 rand = float2(id / (1024.0 * 1024.0), (id % 1024) / 1024.0);
     float3 normal = normalize(UniformSampleSphere(rand).xyz);
     float dist = _DepthCubemap.SampleLevel(sampler_DepthCubemap, normal, 0);
     dist = calculateOcclusion(dist, _Radius);
     SH9 shConst = SHCosineLobe(normal);
-    for(i = 0; i < 9; ++i)
+    for(uint i = 0; i < 9; ++i)
     {
         shConst.c[i] *= dist;
     }
