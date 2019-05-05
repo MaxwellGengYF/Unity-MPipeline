@@ -12,7 +12,7 @@ namespace MPipeline
 {
     public unsafe sealed class AOProbe : MonoBehaviour
     {
-        public Vector3Int resolution = Vector3Int.one;
+        public int3 resolution = int3(1,1,1);
         public static NativeList<UIntPtr> allProbe { get; private set; }
         private int index;
         public RenderTexture src0 { get; private set; }
@@ -20,9 +20,87 @@ namespace MPipeline
         public RenderTexture src2 { get; private set; }
         public PipelineResources resources;
         public float radius;
-        [HideInInspector]
+        private ComputeBuffer shBuffer;
         [SerializeField]
-        private string fileName;
+        private string probeName;
+        private static MStringBuilder msb;
+        private static int[] resolutionArray = new int[3];
+        private static byte[] reuseByteArray = null;
+        
+        private static byte[] GetByteArray(long targetLength)
+        {
+            if(reuseByteArray == null || reuseByteArray.Length < targetLength)
+            {
+                reuseByteArray = new byte[targetLength];
+            }
+            return reuseByteArray;
+        }
+        private void Awake()
+        {
+            if (!msb.isCreated)
+                msb = new MStringBuilder(30);
+            msb.Clear();
+            msb.Add("Assets/BinaryData/Irradiance/");
+            msb.Add(probeName);
+            msb.Add(".mpipe");
+            if (!System.IO.File.Exists(msb.str))
+            {
+                Debug.LogError("Probe: " + probeName + "read Error! ");
+                Destroy(gameObject);
+                return;
+            }
+            else
+            {
+                using (System.IO.FileStream fs = new System.IO.FileStream(msb.str, System.IO.FileMode.Open, System.IO.FileAccess.Read))
+                {
+                    byte[] arr = GetByteArray(fs.Length);
+                    fs.Read(arr, 0, (int)fs.Length);
+                    int3* res = (int3*)arr.Ptr();
+                    resolution = *res;
+                    if(resolution.x * resolution.y * resolution.z * sizeof(float3x3) != fs.Length - sizeof(int3))
+                    {
+                        Debug.LogError("Data size incorrect!");
+                        Destroy(gameObject);
+                        return;
+                    }
+                    NativeArray<float3x3> allDatas = new NativeArray<float3x3>(resolution.x * resolution.y * resolution.z, Allocator.Temp);
+                    UnsafeUtility.MemCpy(allDatas.GetUnsafePtr(), res + 1, sizeof(float3x3) * allDatas.Length);
+                    RenderTextureDescriptor desc = new RenderTextureDescriptor
+                    {
+                        colorFormat = RenderTextureFormat.ARGBHalf,
+                        dimension = TextureDimension.Tex3D,
+                        enableRandomWrite = true,
+                        width = resolution.x,
+                        height = resolution.y,
+                        volumeDepth = resolution.z,
+                        msaaSamples = 1
+                    };
+                    src0 = new RenderTexture(desc);
+                    src1 = new RenderTexture(desc);
+                    desc.colorFormat = RenderTextureFormat.RHalf;
+                    src2 = new RenderTexture(desc);
+                    shBuffer = new ComputeBuffer(allDatas.Length, sizeof(float3x3));
+                    shBuffer.SetData(allDatas);
+                    ComputeShader shader = resources.shaders.occlusionProbeCalculate;
+                    int3* arrPtr = (int3*)resolutionArray.Ptr();
+                    *arrPtr = resolution;
+                    shader.SetBuffer(2, "_SHBuffer", shBuffer);
+                    shader.SetTexture(2, "_Src0", src0);
+                    shader.SetTexture(2, "_Src1", src1);
+                    shader.SetTexture(2, "_Src2", src2);
+                    shader.SetInts("_Resolution", resolutionArray);
+                    shader.Dispatch(2, Mathf.CeilToInt(resolution.x / 4f), Mathf.CeilToInt(resolution.y / 4f), Mathf.CeilToInt(resolution.z / 4f));
+                    shBuffer.Dispose();
+                    allDatas.Dispose();
+                }
+            }
+        }
+        private void OnDestroy()
+        {
+            Destroy(src0);
+            Destroy(src1);
+            Destroy(src2);
+        }
         private void OnEnable()
         {
             if (!allProbe.isCreated) allProbe = new NativeList<UIntPtr>(10, Allocator.Persistent);
@@ -70,16 +148,16 @@ namespace MPipeline
             cameraTarget = new RenderTexture(new RenderTextureDescriptor
             {
                 msaaSamples = 1,
-                width = 256,
-                height = 256,
+                width = 1024,
+                height = 1024,
                 depthBufferBits = 32,
                 colorFormat = RenderTextureFormat.RFloat,
                 dimension = TextureDimension.Cube,
                 volumeDepth = 1
             });
             buffer = new CommandBuffer();
-            occlusionBuffer = new ComputeBuffer(1024 * 1024, sizeof(float) * 9);
-            finalBuffer = new ComputeBuffer(1024, sizeof(float) * 9);
+            occlusionBuffer = new ComputeBuffer(1024 * 1024, sizeof(float3x3));
+            finalBuffer = new ComputeBuffer(1024, sizeof(float3x3));
         }
         private static void CalculateCubemapMatrix(float3 position, float farClipPlane, float nearClipPlane, out NativeList<float4x4> viewMatrices, out NativeList<float4x4> projMatrices)
         {
@@ -146,7 +224,7 @@ namespace MPipeline
                         float3 uv = (float3(x, y, z) + 0.5f) / float3(resolution.x, resolution.y, resolution.z);
                         currentPos = lerp(left, right, uv);
                         NativeList<float4x4> view, proj;
-                        CalculateCubemapMatrix(currentPos, 50, 0.01f, out view, out proj);
+                        CalculateCubemapMatrix(currentPos, radius, 0.01f, out view, out proj);
                         RenderPipeline.AddRenderingMissionInEditor(view, proj, bakeCamera, cameraTarget, buffer);
                         RenderPipeline.ExecuteBufferAtFrameEnding(bakeAction);
                         yield return null;
@@ -180,11 +258,22 @@ namespace MPipeline
             finalData.RemoveLast(values.Length - 1);
             count++;
             if (count >= resolution.x * resolution.y * resolution.z)
-                DisposeBake();
+               DisposeBake();
         }
+        private void OutputData()
+        {
+            int len = resolution.x * resolution.y * resolution.z * sizeof(float3x3);
+            byte[] allBytes = new byte[len + sizeof(int3)];
+            int3* startPtr = (int3*)allBytes.Ptr();
+            *startPtr = resolution;
+            ++startPtr;
+            UnsafeUtility.MemCpy(startPtr, finalData.unsafePtr, len);
+            System.IO.File.WriteAllBytes("Assets/BinaryData/Irradiance/" + probeName + ".mpipe", allBytes);
+        }
+
         private void DisposeBake()
         {
-            Debug.Log(finalData[0]);
+            OutputData();
             finalData.Dispose();
             occlusionBuffer.Dispose();
             finalBuffer.Dispose();
@@ -192,6 +281,7 @@ namespace MPipeline
             DestroyImmediate(bakeCamera.gameObject);
             DestroyImmediate(cameraTarget);
             bakeCamera = null;
+            Debug.Log("Baking Finished");
         }
 #endif
         #endregion

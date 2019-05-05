@@ -23,7 +23,7 @@ namespace MPipeline
         private Random rand;
         private CalculateMatrixJob calculateJob;
         private JobHandle handle;
-        // public Matrix4x4 inverseNonJitterVP { get; private set; }
+        public Matrix4x4 inverseNonJitterVP { get; private set; }
         private System.Func<PipelineCamera, LastVPData> getLastVP = (c) => {
             float4x4 p = GraphicsUtility.GetGPUProjectionMatrix(c.cam.projectionMatrix, false);
             float4x4 vp = mul(p, c.cam.worldToCameraMatrix);
@@ -73,6 +73,7 @@ namespace MPipeline
             buffer.SetGlobalMatrix(ShaderIDs._LastVp, lastViewProjection);
             buffer.SetGlobalMatrix(ShaderIDs._NonJitterVP, calculateJob.nonJitterVP);
             buffer.SetGlobalMatrix(ShaderIDs._NonJitterTextureVP, calculateJob.nonJitterTextureVP);
+            buffer.SetGlobalMatrix(ShaderIDs._InvNonJitterVP, calculateJob.nonJitterInverseVP);
             buffer.SetGlobalMatrix(ShaderIDs._InvVP, inverseVP);
             buffer.SetGlobalVector(ShaderIDs._RandomSeed, calculateJob.randNumber);
             lastData.lastVP = calculateJob.nonJitterVP;
@@ -102,6 +103,7 @@ namespace MPipeline
             public float4x4* VP;
             public float4x4* inverseVP;
             public float4x4 nonJitterVP;
+            public float4x4 nonJitterInverseVP;
             public float4x4 nonJitterTextureVP;
             public float4x4 lastInverseVP;
             public float4 randNumber;
@@ -109,6 +111,7 @@ namespace MPipeline
             {
                 randNumber = (float4)(rand->NextDouble4());
                 nonJitterVP = mul(GraphicsUtility.GetGPUProjectionMatrix(nonJitterP, false, isD3D), worldToView);
+                nonJitterInverseVP = inverse(nonJitterVP);
                 nonJitterTextureVP = mul(GraphicsUtility.GetGPUProjectionMatrix(nonJitterP, true, isD3D), worldToView);
                 lastInverseVP = inverse(lastVP);
                 *VP = mul(GraphicsUtility.GetGPUProjectionMatrix(p, false, isD3D), worldToView);

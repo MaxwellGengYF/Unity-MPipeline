@@ -1,10 +1,12 @@
 ﻿using Unity.Collections.LowLevel.Unsafe;
 public unsafe struct MStringBuilder
 {
+    public bool isCreated { get; private set; }
     public string str { get; private set; }
     public int capacity { get; private set; }
     public MStringBuilder(int capacity)
     {
+        isCreated = true;
         this.capacity = capacity;
         str = new string(' ', capacity);
         fixed (char* c = str)
@@ -13,9 +15,47 @@ public unsafe struct MStringBuilder
             ptrInt[-1] = 0;
         }
     }
+    public void Clear()
+    {
+        fixed (char* c = str)
+        {
+            int* ptrInt = (int*)c;
+            ptrInt[-1] = 0;
+        }
+    }
     public void Add(string tar)
     {
-        Combine(str, tar);
+        int lastLength = str.Length;
+        int targetLength = str.Length + tar.Length;
+        if (targetLength > capacity)
+        {
+            capacity = targetLength;
+            string lastStr = str;
+            str = new string(' ', capacity);
+            fixed (char* dest = str)
+            {
+                fixed (char* src = lastStr)
+                {
+                    UnsafeUtility.MemCpy(dest, src, sizeof(char) * lastStr.Length);
+                }
+            }
+        }
+        else
+        {
+            fixed (char* c = str)
+            {
+                int* ptrInt = (int*)c;
+                ptrInt[-1] = targetLength;
+            }
+        }
+        fixed (char* dest = str)
+        {
+            fixed (char* src = tar)
+            {
+                char* ptr = dest + lastLength;
+                UnsafeUtility.MemCpy(ptr, src, sizeof(char) * tar.Length);
+            }
+        }
     }
     public void Combine(string a, string b)
     {
@@ -44,7 +84,7 @@ public unsafe struct MStringBuilder
                 UnsafeUtility.MemCpy(dest + a.Length, source, b.Length * sizeof(char));
             }
         }
-        fixed(char* dest = str)
+        fixed (char* dest = str)
         {
             int* it = (int*)dest;
             it[-1] = targetLength;
@@ -86,14 +126,14 @@ public unsafe struct MStringBuilder
     }
     public void Copy(string source)
     {
-        if(source.Length > capacity)
+        if (source.Length > capacity)
         {
             capacity = source.Length;
             str = new string(' ', capacity);
         }
-        fixed(void* dest = str)
+        fixed (void* dest = str)
         {
-            fixed(void* src = source)
+            fixed (void* src = source)
             {
                 UnsafeUtility.MemCpy(dest, src, source.Length * sizeof(char));
             }

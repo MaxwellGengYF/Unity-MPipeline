@@ -148,15 +148,27 @@ namespace MPipeline
             return result.clusterCount > 0;
         }
 
-        public static void RenderScene(ref PipelineCommandData data, Camera cam, ref CullingResults cullResults, string passName, UnityEngine.Rendering.PerObjectData settings = UnityEngine.Rendering.PerObjectData.Lightmaps)
+        public static void RenderScene(ref PipelineCommandData data, Camera cam, ref CullingResults cullResults, string passName, UnityEngine.Rendering.PerObjectData settings = UnityEngine.Rendering.PerObjectData.Lightmaps, SortingCriteria criteria = SortingCriteria.CommonOpaque)
         {
             data.ExecuteCommandBuffer();
             FilteringSettings renderSettings = new FilteringSettings();
             renderSettings.renderQueueRange = RenderQueueRange.opaque;
             renderSettings.layerMask = cam.cullingMask;
             renderSettings.renderingLayerMask = 1;
-            SortingSettings sortSettings = new SortingSettings(cam);
-            sortSettings.criteria = SortingCriteria.CommonOpaque;
+            SortingSettings sortSettings;
+            if (criteria == SortingCriteria.None)
+            {
+                sortSettings = new SortingSettings
+                {
+                    criteria = SortingCriteria.None
+                };
+            }
+            else
+            {
+                sortSettings = new SortingSettings(cam);
+                sortSettings.criteria = criteria;
+            }
+            
             DrawingSettings dsettings = new DrawingSettings(new ShaderTagId(passName), sortSettings)
             {
                 enableDynamicBatching = true,

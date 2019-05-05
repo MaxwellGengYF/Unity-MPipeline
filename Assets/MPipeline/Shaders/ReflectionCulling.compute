@@ -1,5 +1,5 @@
 ﻿// Each #kernel tells which function to compile; you can have many kernels
-#pragma kernel CSMain
+#pragma kernel ReflectionCull
 #include "CGINC/VoxelLight.cginc"
 #define COMPUTE_SHADER
 #include "CGINC/Reflection.cginc"
@@ -12,7 +12,7 @@ TextureCubeArray<float4> _ReflectionTextures;
 int _Count;
 
 [numthreads(XRES, YRES, 1)]
-void CSMain (uint3 id : SV_DispatchThreadID)
+void ReflectionCull (uint3 id : SV_DispatchThreadID)
 {
     int i;
     int index = DownDimension(id, uint2(XRES, YRES), MAXIMUM_PROBE + 1);

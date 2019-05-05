@@ -2,6 +2,8 @@
 {
     SubShader
     {
+        ZTest Always Cull off ZWrite off
+        Blend one one
        Tags{ "LightMode" = "Transparent" "Queue" = "Transparent"}
         Pass
         {
@@ -10,33 +12,27 @@
             #pragma fragment frag
             #pragma target 5.0
             #include "UnityCG.cginc"
+            #include "GI/GlobalIllumination.cginc"
             #include "CGINC/Random.cginc"
-            samplerCUBE _Cubemap;
             struct appdata
             {
                 float4 vertex : POSITION;
-                float2 uv : TEXCOORD0;
-                float3 normal : NORMAL;
             };
 
             struct v2f
             {
-                float2 uv : TEXCOORD0;
                 float4 vertex : SV_POSITION;
-                float3 normal : NORMAL;
             };
 
             v2f vert (appdata v)
             {
                 v2f o;
-                o.vertex = UnityObjectToClipPos(v.vertex);
-                o.uv = v.uv;
-                o.normal = v.normal;
+                o.vertex = v.vertex;
                 return o;
             }
-            float4 frag (v2f i) : SV_Target
+            void frag (v2f i, out float4 first : SV_TARGET0)
             {
-                return texCUBE(_Cubemap, i.normal);
+                first = 0.01;
             }
             ENDCG
         }

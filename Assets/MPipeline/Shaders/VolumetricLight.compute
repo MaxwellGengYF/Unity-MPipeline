@@ -24,7 +24,6 @@
 #include "UnityGBuffer.cginc"
 #include "UnityPBSLighting.cginc"
 #include "GI/GlobalIllumination.cginc"
-#include "GI/SHRuntime.cginc"
 #define FROXEL_LIGHT
 #include "CGINC/Reflection.cginc"
 #define EMISSION_GEOMETRY

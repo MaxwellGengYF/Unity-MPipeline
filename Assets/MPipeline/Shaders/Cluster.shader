@@ -33,15 +33,13 @@
     out float4 outGBuffer1 : SV_Target1,
     out float4 outGBuffer2 : SV_Target2,
     out float4 outEmission : SV_Target3,
-	out float2 outMotionVector : SV_Target4,
-  out float depth : SV_TARGET5
+  out float depth : SV_TARGET4
 ) 
 			{
 				outGBuffer0 = float4(0.5,0.5,0.5,1);
 				outGBuffer1 = float4(0.5,0.5,0.5,0.3);
 				outGBuffer2 = float4(0, 0, 1, 1);
 				outEmission = i.vertex.z;
-				outMotionVector = 0;
 				depth = i.vertex.z;
 			}
 			ENDCG

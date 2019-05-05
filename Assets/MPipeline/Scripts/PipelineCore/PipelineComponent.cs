@@ -358,11 +358,10 @@ namespace MPipeline
                 Shader.PropertyToID("_CameraGBufferTexture1"),
                 Shader.PropertyToID("_CameraGBufferTexture2"),
                 Shader.PropertyToID("_CameraGBufferTexture3"),
-                Shader.PropertyToID("_CameraMotionVectorsTexture"),
                 Shader.PropertyToID("_CameraDepthTexture"),
             };
-            rt.gbufferIdentifier = new RenderTargetIdentifier[6];
-            for (int i = 0; i < 6; ++i)
+            rt.gbufferIdentifier = new RenderTargetIdentifier[5];
+            for (int i = 0; i < 5; ++i)
             {
                 rt.gbufferIdentifier[i] = rt.gbufferIndex[i];
             }
@@ -373,10 +372,6 @@ namespace MPipeline
             return rt;
         }
         public RenderTargetIdentifier depthTexture
-        {
-            get { return gbufferIndex[5]; }
-        }
-        public RenderTargetIdentifier motionVectorTexture
         {
             get { return gbufferIndex[4]; }
         }

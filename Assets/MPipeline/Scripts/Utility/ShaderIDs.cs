@@ -10,6 +10,7 @@ public static partial class ShaderIDs
     public static readonly int _Color = Shader.PropertyToID("_Color");
     public static readonly int _CubeShadowMap = Shader.PropertyToID("_CubeShadowMap");
     public static readonly int _InvVP = Shader.PropertyToID("_InvVP");
+    public static readonly int _InvNonJitterVP = Shader.PropertyToID("_InvNonJitterVP");
     public static readonly int _LastVp = Shader.PropertyToID("_LastVp");
     public static readonly int _ShadowMapVP = Shader.PropertyToID("_ShadowMapVP");
     public static readonly int _ShadowMapVPs = Shader.PropertyToID("_ShadowMapVPs");
@@ -107,6 +108,7 @@ public static partial class ShaderIDs
     public static readonly int _FogVolumeCount = Shader.PropertyToID("_FogVolumeCount");
     public static readonly int _SceneOffset = Shader.PropertyToID("_SceneOffset");
     public static readonly int _BackupMap = Shader.PropertyToID("_BackupMap");
+    public static readonly int _CameraMotionVectorsTexture = Shader.PropertyToID("_CameraMotionVectorsTexture");
     public static readonly int _LightMap = Shader.PropertyToID("_LightMap");
     public static readonly int _ReflectionIndices = Shader.PropertyToID("_ReflectionIndices");
     public static readonly int _ReflectionData = Shader.PropertyToID("_ReflectionData");

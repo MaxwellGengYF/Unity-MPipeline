@@ -100,6 +100,7 @@ pass
 {
 	stencil{
   Ref 1
+	WriteMask 3
   comp always
   pass replace
 }
@@ -223,6 +224,78 @@ ENDCG
 				clip(c.a * _Color.a - _Cutoff);
 				#endif
 				return distance(i.worldPos, _WorldSpaceCameraPos);
+			}
+
+			ENDCG
+		}
+
+		Pass
+		{
+			Stencil
+			{
+				Ref 4
+				WriteMask 4
+				Comp always
+				Pass replace
+			}
+			ZTest Equal
+			Cull back
+			Tags {"LightMode" = "MotionVector"}
+			CGPROGRAM
+			#pragma vertex vert
+			#pragma fragment frag
+			// Upgrade NOTE: excluded shader from OpenGL ES 2.0 because it uses non-square matrices
+			#pragma exclude_renderers gles
+			#include "UnityCG.cginc"
+			
+			struct appdata_shadow
+			{
+				float4 vertex : POSITION;
+				#if CUT_OFF
+				float2 texcoord : TEXCOORD0;
+				#endif
+			};
+			struct v2f
+			{
+				float4 vertex : SV_POSITION;
+				#if CUT_OFF
+				float2 texcoord : TEXCOORD0;
+				#endif
+				float3 nonJitterScreenPos : TEXCOORD1;
+				float3 lastScreenPos : TEXCOORD2;
+			};
+
+			v2f vert (appdata_shadow v)
+			{
+				v2f o;
+				o.vertex = UnityObjectToClipPos(v.vertex);
+			  float4 worldPos = mul(unity_ObjectToWorld, v.vertex);
+				o.nonJitterScreenPos = ComputeScreenPos(mul(_NonJitterVP, worldPos)).xyw;
+				float4 lastWorldPos =  mul(_LastFrameModel, v.vertex);
+				lastWorldPos = lerp(worldPos, lastWorldPos, _LastFrameModel[3][3]);
+        o.lastScreenPos = ComputeScreenPos(mul(_LastVp, lastWorldPos)).xyw;
+				#if CUT_OFF
+				o.texcoord = v.texcoord;
+				#endif
+				return o;
+			}
+
+			
+			float2 frag (v2f i)  : SV_TARGET
+			{
+				#if CUT_OFF
+				i.texcoord = TRANSFORM_TEX(i.texcoord, _MainTex);
+				float4 c = tex2D(_MainTex, i.texcoord);
+				clip(c.a * _Color.a - _Cutoff);
+				#endif
+				
+	float4 velocity = float4(i.nonJitterScreenPos.xy, i.lastScreenPos.xy) / float4(i.nonJitterScreenPos.zz, i.lastScreenPos.zz);
+  #if UNITY_UV_STARTS_AT_TOP
+	return velocity.xw - velocity.zy;
+	#else
+	return velocity.xy - velocity.zw;
+	#endif
+
 			}
 
 			ENDCG

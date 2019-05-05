@@ -40,9 +40,6 @@ struct v2f_surf {
 	#if LIGHTMAP_ON
 	float2 lightmapUV : TEXCOORD5;
 	#endif
-  float3 lastScreenPos : TEXCOORD6;
-	float3 nonJitterScreenPos : TEXCOORD7;
-	float3 screenPos : TEXCOORD8;
 };
 struct appdata
 {
@@ -75,6 +72,7 @@ v2f_surf vert_surf (appdata v)
 		#if LIGHTMAP_ON 
 		o.lightmapUV = v.lightmapUV * unity_LightmapST.xy + unity_LightmapST.zw;
 		#endif
+		/*
 				o.nonJitterScreenPos = ComputeScreenPos(mul(_NonJitterVP, worldPos)).xyw;
 				#ifdef MOTION_VECTOR
 				float4 lastWorldPos =  mul(_LastFrameModel, v.vertex);
@@ -83,7 +81,7 @@ v2f_surf vert_surf (appdata v)
         #else
 				o.lastScreenPos = ComputeScreenPos(mul(_LastVp, worldPos)).xyw;
 				#endif
-				o.screenPos = ComputeScreenPos(o.pos).xyw;
+				o.screenPos = ComputeScreenPos(o.pos).xyw;*/
   	return o;
 }
 
@@ -92,11 +90,9 @@ void frag_surf (v2f_surf IN,
     out float4 outGBuffer1 : SV_Target1,
     out float4 outGBuffer2 : SV_Target2,
     out float4 outEmission : SV_Target3,
-	out float2 outMotionVector : SV_Target4,
-  out float depth : SV_TARGET5
+  out float depth : SV_TARGET4
 ) {
 	depth = IN.pos.z;
-	float2 screenUV = IN.screenPos.xy / IN.screenPos.z;
   // prepare and unpack data
   Input surfIN;
   surfIN.uv_MainTex = IN.pack0.xy;
@@ -117,13 +113,13 @@ void frag_surf (v2f_surf IN,
 	outEmission.xyz += giResult.indirect.diffuse;
   //outEmission.xyz += unity_Lightmap.Sample(samplerunity_Lightmap, IN.lightmapUV).xyz* o.Albedo;
 	#endif
-
+/*
 	float4 velocity = float4(IN.nonJitterScreenPos.xy, IN.lastScreenPos.xy) / float4(IN.nonJitterScreenPos.zz, IN.lastScreenPos.zz);
   #if UNITY_UV_STARTS_AT_TOP
 	outMotionVector = velocity.xw - velocity.zy;
 	#else
 	outMotionVector = velocity.xy - velocity.zw;
-	#endif
+	#endif*/
 }
 
 #endif

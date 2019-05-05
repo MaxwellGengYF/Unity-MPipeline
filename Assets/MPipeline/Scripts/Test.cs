@@ -8,6 +8,7 @@ using MPipeline;
 using static Unity.Collections.LowLevel.Unsafe.UnsafeUtility;
 using Unity.Mathematics;
 using Unity.Collections;
+using UnityEngine.Rendering;
 using Random = UnityEngine.Random;
 public unsafe class Test : MonoBehaviour
 {
@@ -26,15 +27,10 @@ public unsafe class Test : MonoBehaviour
               deltaAcc = 0;
           }
       }*/
-    public GameObject sphere;
-    [EasyButtons.Button]
-    void Run()
+    private void Update()
     {
-        for(int i = 0; i < 1000; ++i)
-        {
-            Transform newTrans = (Instantiate(sphere) as GameObject).transform;
-            float3 pos = VectorUtility.GetSphereRandom(VectorUtility.Hammersley((uint)i, 1000)) * 100;
-            newTrans.position = pos;
-        }
+        Vector3 pos = transform.position;
+        pos.y = sin(Time.time * 10) * 2;
+        transform.position = pos;
     }
 }

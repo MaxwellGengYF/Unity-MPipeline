@@ -43,7 +43,12 @@ namespace MPipeline
             public CommandBuffer buffer;
         }
         private static List<EditorBakeCommand> bakeList = new List<EditorBakeCommand>();
-        public static void AddRenderingMissionInEditor(NativeList<float4x4> worldToCameras, NativeList<float4x4> projections, PipelineCamera targetCameras, RenderTexture texArray, CommandBuffer buffer)
+        public static void AddRenderingMissionInEditor(
+            NativeList<float4x4> worldToCameras, 
+            NativeList<float4x4> projections, 
+            PipelineCamera targetCameras, 
+            RenderTexture texArray, 
+            CommandBuffer buffer)
         {
             bakeList.Add(new EditorBakeCommand
             {

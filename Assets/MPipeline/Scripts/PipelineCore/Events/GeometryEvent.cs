@@ -24,11 +24,13 @@ namespace MPipeline
         private AOEvents ao;
         private ReflectionEvent reflection;
         private Material downSampleMat;
+        private Material motionVecMat;
         private RenderTargetIdentifier[] downSampledGBuffers = new RenderTargetIdentifier[3];
         protected override void Init(PipelineResources resources)
         {
             linearMat = new Material(resources.shaders.linearDepthShader);
             linearDrawerMat = new Material(resources.shaders.linearDrawerShader);
+            motionVecMat = new Material(resources.shaders.motionVectorShader);
             if (useHiZ)
             {
                 hizDepth.InitHiZ(resources, new Vector2(Screen.width, Screen.height));
@@ -45,10 +47,10 @@ namespace MPipeline
             
             if (useHiZ)
             {
-                return linearMat && linearDrawerMat && hizDepth.Check() && clusterMat;
+                return linearMat && linearDrawerMat && hizDepth.Check() && clusterMat && motionVecMat;
             }
             else
-                return linearMat && linearDrawerMat;
+                return linearMat && linearDrawerMat && motionVecMat;
         }
         protected override void Dispose()
         {
@@ -84,6 +86,8 @@ namespace MPipeline
                 SceneController.DrawClusterOccDoubleCheck(ref options, ref proper.cullResults, ref hizDepth, hizOccData, clusterMat, linearMat, cam, ref data);
             }
             else SceneController.DrawCluster(ref options, ref cam.targets, ref data, cam.cam, ref proper.cullResults);
+            data.buffer.SetRenderTarget(ShaderIDs._CameraMotionVectorsTexture, cam.targets.depthBuffer);
+            SceneController.RenderScene(ref data, cam.cam, ref proper.cullResults, "MotionVector", UnityEngine.Rendering.PerObjectData.None, SortingCriteria.None);
             decal.FrameUpdate(cam, ref data);
             //Generate DownSampled GBuffer
             if ((ao != null && ao.Enabled) || (reflection != null && reflection.Enabled && reflection.ssrEvents.enabled))
@@ -102,6 +106,7 @@ namespace MPipeline
                 data.buffer.DrawMesh(GraphicsUtility.mesh, Matrix4x4.identity, downSampleMat, 0, 0);
                 //TODO
             }
+            data.buffer.BlitSRTWithDepth(ShaderIDs._CameraMotionVectorsTexture, cam.targets.depthBuffer, motionVecMat, 0);
         }
     }
     public class HizOcclusionData : IPerCameraData

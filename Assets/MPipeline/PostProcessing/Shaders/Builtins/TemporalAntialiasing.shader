@@ -3,10 +3,10 @@ Shader "Hidden/PostProcessing/TemporalAntialiasing"
     HLSLINCLUDE
 
         #pragma exclude_renderers gles psp2
-    #define half float
-    #define half2 float2
-    #define half3 float3
-    #define half4 float4
+    #define float float
+    #define float2 float2
+    #define float3 float3
+    #define float4 float4
         #include "../StdLib.hlsl"
         #include "../Colors.hlsl"
 
@@ -29,7 +29,40 @@ Shader "Hidden/PostProcessing/TemporalAntialiasing"
         float2 _Jitter;
         float4 _FinalBlendParameters; // x: static, y: dynamic, z: motion amplification
         float _Sharpness;
+inline float3 RGBToYCoCg(float3 RGB)
+{
+    float Y = dot(RGB, float3(1, 2, 1));
+    float Co = dot(RGB, float3(2, 0, -2));
+    float Cg = dot(RGB, float3(-1, 2, -1));
 
+    float3 YCoCg = float3(Y, Co, Cg);
+    return YCoCg;
+}
+
+inline float3 YCoCgToRGB(float3 YCoCg)
+{
+    float Y = YCoCg.x * 0.25;
+    float Co = YCoCg.y * 0.25;
+    float Cg = YCoCg.z * 0.25;
+
+    float R = Y + Co - Cg;
+    float G = Y + Cg;
+    float B = Y - Co - Cg;
+
+    float3 RGB = float3(R, G, B);
+    return RGB;
+}
+inline float3 Sigmoid(float3 x)
+{
+    x = x * 2;
+    return 1/(1 + exp(-x)) * 2 - 1;
+}
+
+inline float3 AntiSigmoid(float3 x)
+{
+    x = -log(2 / (x + 1) - 1);
+    return x * 0.5;
+}
         float4 ClipToAABB(float4 color, float3 minimum, float3 maximum)
         {
             // Note: only clips towards aabb center (but fast!)
@@ -133,21 +166,21 @@ Shader "Hidden/PostProcessing/TemporalAntialiasing"
             #define AA_Filter 1
         #endif
 
-        inline half Luma4(half3 Color)
+        inline float Luma4(float3 Color)
         {
             return (Color.g * 2) + (Color.r + Color.b);
         }
 
-        inline half HdrWeight4(half3 Color, const half Exposure) 
+        inline float HdrWeight4(float3 Color, const float Exposure) 
         {
             return rcp(Luma4(Color) * Exposure + 4);
         }
         
         #define SAMPLE_DEPTH_OFFSET(x,y,z,a) (x.Sample(y,z,a).r )
-        half2 ReprojectedMotionVectorUV(half2 uv)
+        float2 ReprojectedMotionVectorUV(float2 uv)
         {
             const float2 k = _CameraDepthTexture_TexelSize.xy;
-            half neighborhood[8];
+            float neighborhood[8];
             neighborhood[0] = SAMPLE_DEPTH_OFFSET(_CameraDepthTexture, sampler_CameraDepthTexture, uv, int2(-1, -1));
             neighborhood[1] = SAMPLE_DEPTH_OFFSET(_CameraDepthTexture, sampler_CameraDepthTexture, uv, int2(0, -1));
             neighborhood[2] = SAMPLE_DEPTH_OFFSET(_CameraDepthTexture, sampler_CameraDepthTexture, uv, int2(1, -1));
@@ -162,45 +195,45 @@ Shader "Hidden/PostProcessing/TemporalAntialiasing"
         #else
             #define COMPARE_DEPTH(a, b) step(a, b)
         #endif
-            half3 result = half3(0, 0,  _CameraDepthTexture.Sample(sampler_CameraDepthTexture, uv).x);
+            float3 result = float3(0, 0,  _CameraDepthTexture.Sample(sampler_CameraDepthTexture, uv).x);
 
-            result = lerp(result, half3(-1, -1, neighborhood[0]), COMPARE_DEPTH(neighborhood[0], result.z));
-            result = lerp(result, half3(0, -1, neighborhood[1]), COMPARE_DEPTH(neighborhood[1], result.z));
-            result = lerp(result, half3(1, -1, neighborhood[2]), COMPARE_DEPTH(neighborhood[2], result.z));
-            result = lerp(result, half3(-1, 0, neighborhood[3]), COMPARE_DEPTH(neighborhood[3], result.z));
-            result = lerp(result, half3(1, 1, neighborhood[4]), COMPARE_DEPTH(neighborhood[4], result.z));
-            result = lerp(result, half3(1, 0, neighborhood[5]), COMPARE_DEPTH(neighborhood[5], result.z));
-            result = lerp(result, half3(-1, 1, neighborhood[6]), COMPARE_DEPTH(neighborhood[6], result.z));
-            result = lerp(result, half3(0, -1, neighborhood[7]), COMPARE_DEPTH(neighborhood[7], result.z));
+            result = lerp(result, float3(-1, -1, neighborhood[0]), COMPARE_DEPTH(neighborhood[0], result.z));
+            result = lerp(result, float3(0, -1, neighborhood[1]), COMPARE_DEPTH(neighborhood[1], result.z));
+            result = lerp(result, float3(1, -1, neighborhood[2]), COMPARE_DEPTH(neighborhood[2], result.z));
+            result = lerp(result, float3(-1, 0, neighborhood[3]), COMPARE_DEPTH(neighborhood[3], result.z));
+            result = lerp(result, float3(1, 1, neighborhood[4]), COMPARE_DEPTH(neighborhood[4], result.z));
+            result = lerp(result, float3(1, 0, neighborhood[5]), COMPARE_DEPTH(neighborhood[5], result.z));
+            result = lerp(result, float3(-1, 1, neighborhood[6]), COMPARE_DEPTH(neighborhood[6], result.z));
+            result = lerp(result, float3(0, -1, neighborhood[7]), COMPARE_DEPTH(neighborhood[7], result.z));
 
             return (uv + result.xy * k);
         }
         #define SAMPLE_TEXTURE2D_OFFSET(x,y,z,a) (x.Sample(y,z,a))
         float4 Solver_CGBullTAA(v2f i) : SV_TARGET0
         {
-            const half ExposureScale = 10;
-            half2 uv = (i.texcoord - _Jitter);
-            half2 screenSize = _ScreenParams.xy;
-            half2 closest = ReprojectedMotionVectorUV(i.texcoord);
-            half2 velocity = SAMPLE_TEXTURE2D(_CameraMotionVectorsTexture, sampler_CameraMotionVectorsTexture, closest).xy;
+            const float ExposureScale = 10;
+            float2 uv = (i.texcoord - _Jitter);
+            float2 screenSize = _ScreenParams.xy;
+            float2 closest = ReprojectedMotionVectorUV(i.texcoord);
+            float2 velocity = SAMPLE_TEXTURE2D(_CameraMotionVectorsTexture, sampler_CameraMotionVectorsTexture, closest).xy;
 //////////////////TemporalClamp
-            half4 MiddleCenter = SAMPLE_TEXTURE2D(_MainTex, _MainTexSampler, uv);
-            half2 lastFrameUV = (i.texcoord - velocity);
+            float4 MiddleCenter = SAMPLE_TEXTURE2D(_MainTex, _MainTexSampler, uv);
+            float2 lastFrameUV = (i.texcoord - velocity);
             if (lastFrameUV.x > 1 || lastFrameUV.y > 1 || lastFrameUV.x < 0 || lastFrameUV.y < 0)
             {
                 return MiddleCenter;
             }
-            half4 TopLeft = SAMPLE_TEXTURE2D_OFFSET(_MainTex, _MainTexSampler, uv, int2(-1, -1));
-            half4 TopCenter = SAMPLE_TEXTURE2D_OFFSET(_MainTex, _MainTexSampler, uv, int2(0, -1));
-            half4 TopRight = SAMPLE_TEXTURE2D_OFFSET(_MainTex, _MainTexSampler, uv, int2(1, -1));
-            half4 MiddleLeft = SAMPLE_TEXTURE2D_OFFSET(_MainTex, _MainTexSampler, uv, int2(-1,  0));
+            float4 TopLeft = SAMPLE_TEXTURE2D_OFFSET(_MainTex, _MainTexSampler, uv, int2(-1, -1));
+            float4 TopCenter = SAMPLE_TEXTURE2D_OFFSET(_MainTex, _MainTexSampler, uv, int2(0, -1));
+            float4 TopRight = SAMPLE_TEXTURE2D_OFFSET(_MainTex, _MainTexSampler, uv, int2(1, -1));
+            float4 MiddleLeft = SAMPLE_TEXTURE2D_OFFSET(_MainTex, _MainTexSampler, uv, int2(-1,  0));
             
-            half4 MiddleRight = SAMPLE_TEXTURE2D_OFFSET(_MainTex, _MainTexSampler, uv, int2(1,  0));
-            half4 BottomLeft = SAMPLE_TEXTURE2D_OFFSET(_MainTex, _MainTexSampler, uv, int2(-1, 1));
-            half4 BottomCenter = SAMPLE_TEXTURE2D_OFFSET(_MainTex, _MainTexSampler, uv, int2(0, 1));
-            half4 BottomRight = SAMPLE_TEXTURE2D_OFFSET(_MainTex, _MainTexSampler, uv, int2(1, 1));
+            float4 MiddleRight = SAMPLE_TEXTURE2D_OFFSET(_MainTex, _MainTexSampler, uv, int2(1,  0));
+            float4 BottomLeft = SAMPLE_TEXTURE2D_OFFSET(_MainTex, _MainTexSampler, uv, int2(-1, 1));
+            float4 BottomCenter = SAMPLE_TEXTURE2D_OFFSET(_MainTex, _MainTexSampler, uv, int2(0, 1));
+            float4 BottomRight = SAMPLE_TEXTURE2D_OFFSET(_MainTex, _MainTexSampler, uv, int2(1, 1));
 
-            half SampleWeights[9];
+            float SampleWeights[9];
             SampleWeights[0] = HdrWeight4(TopLeft.rgb, ExposureScale);
             SampleWeights[1] = HdrWeight4(TopCenter.rgb, ExposureScale);
             SampleWeights[2] = HdrWeight4(TopRight.rgb, ExposureScale);
@@ -210,20 +243,20 @@ Shader "Hidden/PostProcessing/TemporalAntialiasing"
             SampleWeights[6] = HdrWeight4(BottomLeft.rgb, ExposureScale);
             SampleWeights[7] = HdrWeight4(BottomCenter.rgb, ExposureScale);
             SampleWeights[8] = HdrWeight4(BottomRight.rgb, ExposureScale);
-            half TotalWeight = SampleWeights[0] + SampleWeights[1] + SampleWeights[2] 
+            float TotalWeight = SampleWeights[0] + SampleWeights[1] + SampleWeights[2] 
                                + SampleWeights[3] + SampleWeights[4] + SampleWeights[5] 
                                + SampleWeights[6] + SampleWeights[7] + SampleWeights[8];  
                                 
-            half4 Filtered = (TopLeft * SampleWeights[0] + TopCenter * SampleWeights[1]
+            float4 Filtered = (TopLeft * SampleWeights[0] + TopCenter * SampleWeights[1]
                             + TopRight * SampleWeights[2] + MiddleLeft * SampleWeights[3] 
                             + MiddleCenter * SampleWeights[4] + MiddleRight * SampleWeights[5] 
                             + BottomLeft * SampleWeights[6] + BottomCenter * SampleWeights[7] 
                             + BottomRight * SampleWeights[8]) / TotalWeight;
             // Resolver Average
-            half4 minColor, maxColor;
-            half4 m1, m2, mean, stddev;
+            float4 minColor, maxColor;
+            float4 m1, m2, mean, stddev;
             float lenOfVelocity = length(velocity);
-            half AABBScale = lerp(_TemporalClipBounding.x, _TemporalClipBounding.y, saturate(lenOfVelocity * _TemporalClipBounding.z));
+            float AABBScale = lerp(_TemporalClipBounding.x, _TemporalClipBounding.y, saturate(lenOfVelocity * _TemporalClipBounding.z));
             m1 = TopLeft + TopCenter + TopRight + MiddleLeft + MiddleCenter + MiddleRight + BottomLeft + BottomCenter + BottomRight;
             m2 = TopLeft * TopLeft + TopCenter * TopCenter
                 + TopRight * TopRight + MiddleLeft * MiddleLeft
@@ -237,17 +270,20 @@ Shader "Hidden/PostProcessing/TemporalAntialiasing"
             maxColor = max(maxColor, Filtered);
 
 //////////////////TemporalResolver
-            half4 currColor = MiddleCenter;
+            float4 currColor = MiddleCenter;
             // Sharpen output
-            half4 corners = ((TopLeft + BottomRight + TopRight + BottomLeft) - currColor) * 2;
+            float4 corners = ((TopLeft + BottomRight + TopRight + BottomLeft) - currColor) * 2;
             currColor += (currColor - (corners * 0.166667)) * 2.718282 * _Sharpness;
             currColor = clamp(currColor, 0, HALF_MAX_MINUS1);
             // HistorySample
-            half4 lastColor = SAMPLE_TEXTURE2D(_HistoryTex, sampler_HistoryTex, lastFrameUV);
+            float4 lastColor = SAMPLE_TEXTURE2D(_HistoryTex, sampler_HistoryTex, lastFrameUV);
             lastColor = clamp(lastColor, minColor, maxColor);
             // HistoryBlend
-            half weight = clamp(lerp(_FinalBlendParameters.x, _FinalBlendParameters.y, lenOfVelocity * _FinalBlendParameters.z), _FinalBlendParameters.y, _FinalBlendParameters.x);
-            half4 temporalColor = lerp(currColor, lastColor, weight);
+            float weight = clamp(lerp(_FinalBlendParameters.x, _FinalBlendParameters.y, lenOfVelocity * _FinalBlendParameters.z), _FinalBlendParameters.y, _FinalBlendParameters.x);
+            currColor.xyz = RGBToYCoCg(Sigmoid(currColor.xyz));
+            lastColor.xyz = RGBToYCoCg(Sigmoid(lastColor.xyz));
+            float4 temporalColor = lerp(currColor, lastColor, weight);
+            temporalColor.xyz = AntiSigmoid(YCoCgToRGB(temporalColor.xyz));
             return temporalColor;
         }
 

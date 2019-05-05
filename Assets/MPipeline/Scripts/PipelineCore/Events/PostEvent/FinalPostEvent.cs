@@ -32,7 +32,7 @@ namespace MPipeline
         {
             T renderer = new T();
             renderer.Init();
-            allPostEffects.Add(new PostEffect { renderer = renderer, needBlit = useBlit , type = typeof(S) });
+            allPostEffects.Add(new PostEffect { renderer = renderer, needBlit = useBlit, type = typeof(S) });
             return renderer;
         }
         protected override void Init(PipelineResources res)
@@ -57,7 +57,7 @@ namespace MPipeline
             Shader.SetGlobalFloat("_RenderViewportScaleFactor", 1);
             motionBlurRenderer = new MotionBlurRenderer();
             cyberColor.Init();
-            foreach(var i in profile.settings)
+            foreach (var i in profile.settings)
             {
                 allSettings.Add(i.GetType(), i);
             }
@@ -119,7 +119,7 @@ namespace MPipeline
             };
             cyberColor.FrameUpdate(data.buffer);
             //  data.buffer.SetGlobalVector("_ScreenSize", new Vector2(cam.cam.pixelWidth / 16, cam.cam.pixelHeight / 16));
-            //  data.buffer.Blit(null, cam.cameraTarget, debugMat);
+            //data.buffer.Blit(ShaderIDs._CameraMotionVectorsTexture, cam.cameraTarget);
             data.buffer.BlitSRT(cam.targets.renderTargetIdentifier, cam.cameraTarget, postContext.uberSheet.material, 0, postContext.uberSheet.properties);
             if (postContext.bloomBufferNameID > -1) data.buffer.ReleaseTemporaryRT(postContext.bloomBufferNameID);
         }

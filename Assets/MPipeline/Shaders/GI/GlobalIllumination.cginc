@@ -51,6 +51,21 @@ SH9 SHCosineLobe(float3 normal)
     return sh;
 }
 
+void SHCosineLobe(float3 normal, out float4 first, out float4 second, out float third)
+{
+    float x = normal.x; float y = normal.y; float z = normal.z;
+	float x2 = x * x; float y2 = y * y; float z2 = z * z;
+				first = float4(1.0 / (2.0 * sqrt(Pi)),
+				 0.5 * sqrt(3 / Pi) * z,
+				 0.5 * sqrt(3 / Pi) * x,
+				 0.5 * sqrt(3 / Pi) * y);
+				second =float4( 0.25 * sqrt(5 / Pi) * (2 * z2 - x2 - y2),
+				 0.5 * sqrt(15/Pi) * z * x,
+				 0.5 * sqrt(15/Pi) * z * y,
+				 0.25 * sqrt(15 / Pi) * (x2 - y2));
+				third = 0.5 * sqrt(15/Pi) * y * x;
+}
+
 #define GETCOEFF(normal)\
 float Y00     = 0.282095;\
 float Y11     = 0.488603 * normal.x;\

@@ -51,9 +51,10 @@
         {
             Stencil
             {
-                Ref 0
-                Comp Less
+                Ref 1
+                Comp Equal
                 Pass keep
+                ReadMask 3
             }
             Cull Off ZWrite Off ZTest Greater
             CGPROGRAM
@@ -75,6 +76,7 @@
                 Ref 1
                 Comp Equal
                 Pass keep
+                ReadMask 3
             }
             Cull Off ZWrite Off ZTest Greater
             Blend one one

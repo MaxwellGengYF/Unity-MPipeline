@@ -1,9 +1,9 @@
 ﻿// Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel CSMain
 #pragma kernel FinalResult
+#pragma kernel LoadRT
 #include "GI/GlobalIllumination.cginc"
 #include "CGINC/Shader_Include/Montcalo_Library.hlsl"
-float3 _VoxelPosition;
 float _Radius;
 TextureCube<float> _DepthCubemap; SamplerState sampler_DepthCubemap;
 RWStructuredBuffer<SH9> _OcclusionResult;
@@ -11,21 +11,21 @@ RWStructuredBuffer<SH9> _FinalBuffer;
 inline float calculateOcclusion(float dist, float radius)
 {
     float v = saturate(dist / radius); 
-    return v * v * v;
+    return pow(v, 0.8);
 }
+inline uint GetIndex(uint3 id, uint3 size);
 
 [numthreads(1024, 1 ,1)]
 void CSMain (uint id : SV_DISPATCHTHREADID)
 {
-    uint i;
-    float2 rand = float2(id / (1024.0 * 1024.0), (id % 1024) / 1024.0);
+    float2 rand = Hammersley(id, 1024 * 1024);
     float3 normal = normalize(UniformSampleSphere(rand).xyz);
-    float dist = _DepthCubemap.SampleLevel(sampler_DepthCubemap, normal, 0);
-    dist = calculateOcclusion(dist, _Radius);
     SH9 shConst = SHCosineLobe(normal);
+    float dist = _DepthCubemap.SampleLevel(sampler_DepthCubemap, -normal, 0);
+    dist = calculateOcclusion(dist, _Radius);
     for(uint i = 0; i < 9; ++i)
     {
-        shConst.c[i] *= dist;
+        shConst.c[i] *= dist * 9;
     }
     _OcclusionResult[id] = shConst;
 }
@@ -48,4 +48,23 @@ void FinalResult(uint id : SV_GROUPTHREADID)
         }
     }
     _FinalBuffer[id] = sh;
+}
+uint3 _Resolution;
+RWTexture3D<float4> _Src0;
+RWTexture3D<float4> _Src1;
+RWTexture3D<float> _Src2;
+StructuredBuffer<SH9> _SHBuffer;
+[numthreads(4, 4, 4)]
+void LoadRT(uint3 id : SV_DISPATCHTHREADID)
+{
+    if(dot(id >= _Resolution, 1) >= 1) return;
+    uint index = GetIndex(id, _Resolution);
+    SH9 sh = _SHBuffer[index];
+    _Src0[id] = float4(sh.c[0], sh.c[1] ,sh.c[2], sh.c[3]);
+    _Src1[id] = float4(sh.c[4], sh.c[5], sh.c[6], sh.c[7]);
+    _Src2[id] = sh.c[8];
+}
+inline uint GetIndex(uint3 id, uint3 size){
+    uint3 multiValue = uint3(1, size.x, size.x * size.y);
+    return dot(id, multiValue);
 }

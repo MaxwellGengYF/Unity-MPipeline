@@ -106,6 +106,7 @@ pass
 {
 	stencil{
   Ref 1
+	WriteMask 3
   comp always
   pass replace
 }

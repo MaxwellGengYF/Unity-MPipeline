@@ -3,8 +3,14 @@
     SubShader
     {
         // No culling or depth
-        Cull Off ZWrite Off ZTest Greater
-
+        Cull Off ZWrite Off ZTest Always
+        Stencil
+        {
+            Ref 0
+            comp equal
+            pass keep
+            ReadMask 4
+        }
         Pass
         {
             CGPROGRAM
@@ -12,8 +18,8 @@
             #pragma fragment frag
 
             #include "UnityCG.cginc"
-            Texture2D _CameraGBufferTexture2; SamplerState sampler_CameraGBufferTexture2;
-            float4x4 _InvVP;
+            Texture2D<float> _CameraDepthTexture; SamplerState sampler_CameraDepthTexture;
+            float4x4 _InvNonJitterVP;
             float4x4 _LastVp;
             struct appdata
             {
@@ -37,8 +43,8 @@
 
             float2 frag (v2f i) : SV_Target
             {
-                float depth = _CameraGBufferTexture2.Sample(sampler_CameraGBufferTexture2, i.uv).w;
-                float4 worldPos = mul(_InvVP, float4(i.uv * 2 - 1, depth, 1));
+                float depth = _CameraDepthTexture.Sample(sampler_CameraDepthTexture, i.uv);
+                float4 worldPos = mul(_InvNonJitterVP, float4(i.uv * 2 - 1, depth, 1));
                 float4 lastClip = mul(_LastVp, worldPos);
                 float2 uv = lastClip.xy / lastClip.w;
                 uv = uv * 0.5 + 0.5;
