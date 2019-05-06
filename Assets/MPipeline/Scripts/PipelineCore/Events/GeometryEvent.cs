@@ -44,7 +44,7 @@ namespace MPipeline
         }
         public override bool CheckProperty()
         {
-            
+
             if (useHiZ)
             {
                 return linearMat && linearDrawerMat && hizDepth.Check() && clusterMat && motionVecMat;
@@ -57,7 +57,7 @@ namespace MPipeline
             DestroyImmediate(downSampleMat);
             DestroyImmediate(linearMat);
             DestroyImmediate(linearDrawerMat);
-            
+
             if (useHiZ)
             {
                 hizDepth.DisposeHiZ();
@@ -79,16 +79,42 @@ namespace MPipeline
                 cullingShader = data.resources.shaders.gpuFrustumCulling,
                 terrainCompute = data.resources.shaders.terrainCompute
             };
-            
+            data.buffer.SetRenderTarget(cam.targets.gbufferIdentifier, cam.targets.depthBuffer);
+            data.buffer.ClearRenderTarget(true, true, Color.black);
             if (useHiZ)
             {
                 HizOcclusionData hizOccData = IPerCameraData.GetProperty(cam, () => new HizOcclusionData());
                 SceneController.DrawClusterOccDoubleCheck(ref options, ref proper.cullResults, ref hizDepth, hizOccData, clusterMat, linearMat, cam, ref data);
             }
-            else SceneController.DrawCluster(ref options, ref cam.targets, ref data, cam.cam, ref proper.cullResults);
+            else
+            {
+                FilteringSettings filterSettings = new FilteringSettings
+                {
+                    layerMask = cam.cam.cullingMask,
+                    renderingLayerMask = 1,
+                    renderQueueRange = RenderQueueRange.opaque
+                };
+                DrawingSettings drawSettings = new DrawingSettings(new ShaderTagId("GBuffer"), new SortingSettings(cam.cam) { criteria = SortingCriteria.CommonOpaque })
+                {
+                    perObjectData = UnityEngine.Rendering.PerObjectData.Lightmaps
+                };
+                SceneController.RenderScene(ref data, ref filterSettings, ref drawSettings, ref proper.cullResults);
+            }
+            data.buffer.Blit(ShaderIDs._DepthBufferTexture, ShaderIDs._CameraDepthTexture);
+            FilteringSettings mvFilter = new FilteringSettings
+            {
+                layerMask = cam.cam.cullingMask,
+                renderingLayerMask = 1,
+                renderQueueRange = RenderQueueRange.opaque
+            };
+            DrawingSettings mvDraw = new DrawingSettings(new ShaderTagId("MotionVector"), new SortingSettings())
+            {
+                perObjectData = UnityEngine.Rendering.PerObjectData.None
+            };
             data.buffer.SetRenderTarget(ShaderIDs._CameraMotionVectorsTexture, cam.targets.depthBuffer);
-            SceneController.RenderScene(ref data, cam.cam, ref proper.cullResults, "MotionVector", UnityEngine.Rendering.PerObjectData.None, SortingCriteria.None);
+            SceneController.RenderScene(ref data, ref mvFilter, ref mvDraw, ref proper.cullResults);
             decal.FrameUpdate(cam, ref data);
+            data.buffer.BlitSRTWithDepth(ShaderIDs._CameraMotionVectorsTexture, cam.targets.depthBuffer, motionVecMat, 0);
             //Generate DownSampled GBuffer
             if ((ao != null && ao.Enabled) || (reflection != null && reflection.Enabled && reflection.ssrEvents.enabled))
             {
@@ -106,7 +132,6 @@ namespace MPipeline
                 data.buffer.DrawMesh(GraphicsUtility.mesh, Matrix4x4.identity, downSampleMat, 0, 0);
                 //TODO
             }
-            data.buffer.BlitSRTWithDepth(ShaderIDs._CameraMotionVectorsTexture, cam.targets.depthBuffer, motionVecMat, 0);
         }
     }
     public class HizOcclusionData : IPerCameraData

@@ -79,7 +79,7 @@ namespace MPipeline
             clusterResources = Resources.Load<ClusterMatResources>("MapMat/" + mapResources);
             int clusterCount = 0;
             allScenes = new List<SceneStreaming>(clusterResources.clusterProperties.Count);
-            for(int i = 0; i < clusterResources.clusterProperties.Count; ++i)
+            for (int i = 0; i < clusterResources.clusterProperties.Count; ++i)
             {
                 var cur = clusterResources.clusterProperties[i];
                 clusterCount += cur.clusterCount;
@@ -148,40 +148,10 @@ namespace MPipeline
             return result.clusterCount > 0;
         }
 
-        public static void RenderScene(ref PipelineCommandData data, Camera cam, ref CullingResults cullResults, string passName, UnityEngine.Rendering.PerObjectData settings = UnityEngine.Rendering.PerObjectData.Lightmaps, SortingCriteria criteria = SortingCriteria.CommonOpaque)
+        public static void RenderScene(ref PipelineCommandData data, ref FilteringSettings filterSettings, ref DrawingSettings drawSettings, ref CullingResults cullResults)
         {
             data.ExecuteCommandBuffer();
-            FilteringSettings renderSettings = new FilteringSettings();
-            renderSettings.renderQueueRange = RenderQueueRange.opaque;
-            renderSettings.layerMask = cam.cullingMask;
-            renderSettings.renderingLayerMask = 1;
-            SortingSettings sortSettings;
-            if (criteria == SortingCriteria.None)
-            {
-                sortSettings = new SortingSettings
-                {
-                    criteria = SortingCriteria.None
-                };
-            }
-            else
-            {
-                sortSettings = new SortingSettings(cam);
-                sortSettings.criteria = criteria;
-            }
-            
-            DrawingSettings dsettings = new DrawingSettings(new ShaderTagId(passName), sortSettings)
-            {
-                enableDynamicBatching = true,
-                enableInstancing = false,
-                perObjectData = settings
-            };
-            data.context.DrawRenderers(cullResults, ref dsettings, ref renderSettings);
-        }
-        public static void DrawCluster(ref RenderClusterOptions options, ref RenderTargets targets, ref PipelineCommandData data, Camera cam, ref CullingResults result)
-        {
-            data.buffer.SetRenderTarget(targets.gbufferIdentifier, targets.depthBuffer);
-            data.buffer.ClearRenderTarget(true, true, Color.black);
-            RenderScene(ref data, cam, ref result, "GBuffer");
+            data.context.DrawRenderers(cullResults, ref drawSettings, ref filterSettings);
         }
         public static void DrawSpotLight(CommandBuffer buffer, MLight mlight, int mask, ComputeShader cullingShader, ref PipelineCommandData data, Camera currentCam, ref SpotLight spotLights, ref RenderSpotShadowCommand spotcommand, bool inverseRender)
         {
@@ -196,7 +166,7 @@ namespace MPipeline
             currentCam.aspect = 1;
             currentCam.cullingMatrix = spotLightMatrix.projectionMatrix * currentCam.worldToCameraMatrix;
             buffer.SetRenderTarget(spotcommand.renderTarget, 0, CubemapFace.Unknown, mlight.ShadowIndex);
-            buffer.ClearRenderTarget(true, true, new Color(float.PositiveInfinity, 1, 1, 1));
+            buffer.ClearRenderTarget(true, false, new Color(float.PositiveInfinity, 1, 1, 1));
             buffer.SetGlobalMatrix(ShaderIDs._ShadowMapVP, GL.GetGPUProjectionMatrix(spotLightMatrix.projectionMatrix, true) * spotLightMatrix.worldToCamera);
             ScriptableCullingParameters cullParams;
             if (!currentCam.TryGetCullingParameters(out cullParams)) return;
@@ -224,7 +194,7 @@ namespace MPipeline
             };
             DrawingSettings dsettings = new DrawingSettings(new ShaderTagId("Shadow"), new SortingSettings { criteria = SortingCriteria.None })
             {
-                enableDynamicBatching = true,
+                enableDynamicBatching = false,
                 enableInstancing = false,
                 perObjectData = UnityEngine.Rendering.PerObjectData.None
             };
@@ -289,7 +259,7 @@ namespace MPipeline
                 sorting.criteria = SortingCriteria.CommonOpaque;
                 DrawingSettings dsettings = new DrawingSettings(new ShaderTagId("Shadow"), sorting)
                 {
-                    enableDynamicBatching = true,
+                    enableDynamicBatching = false,
                     enableInstancing = false,
                     perObjectData = UnityEngine.Rendering.PerObjectData.None
                 };
@@ -316,7 +286,7 @@ namespace MPipeline
             };
             DrawingSettings dsettings = new DrawingSettings(new ShaderTagId("Shadow"), new SortingSettings { criteria = SortingCriteria.None })
             {
-                enableDynamicBatching = true,
+                enableDynamicBatching = false,
                 enableInstancing = false,
                 perObjectData = UnityEngine.Rendering.PerObjectData.None,
             };
@@ -403,16 +373,26 @@ namespace MPipeline
             data.context.DrawRenderers(results, ref dsettings, ref renderSettings);
             cb.SetInvertCulling(inverseRender);
         }
+
         public static void DrawClusterOccDoubleCheck(ref RenderClusterOptions options, ref CullingResults result, ref HizDepth hizDepth, HizOcclusionData hizOpts, Material targetMat, Material linearLODMaterial, PipelineCamera pipeCam, ref PipelineCommandData data)
         {
+            if (!gpurpEnabled) return;
             ref RenderTargets rendTargets = ref pipeCam.targets;
             Camera cam = pipeCam.cam;
             CommandBuffer buffer = options.command;
-            buffer.SetRenderTarget(rendTargets.gbufferIdentifier, rendTargets.depthBuffer);
-            buffer.ClearRenderTarget(true, true, Color.black);
+            FilteringSettings filterSettings = new FilteringSettings
+            {
+                layerMask = cam.cullingMask,
+                renderingLayerMask = 1,
+                renderQueueRange = RenderQueueRange.opaque
+            };
+            DrawingSettings drawSettings = new DrawingSettings(new ShaderTagId("GBuffer"), new SortingSettings(cam) { criteria = SortingCriteria.CommonOpaque })
+            {
+                perObjectData = UnityEngine.Rendering.PerObjectData.Lightmaps
+            };
             if (!gpurpEnabled)
             {
-                RenderScene(ref data, cam, ref result, "GBuffer");
+                RenderScene(ref data, ref filterSettings, ref drawSettings, ref result);
                 return;
             }
             ComputeShader gpuFrustumShader = options.cullingShader;
@@ -430,7 +410,7 @@ options.frustumPlanes);
             //Update Vector，Depth Mip Map
 
             //TODO Draw others
-            RenderScene(ref data, cam, ref result, "GBuffer");
+            RenderScene(ref data, ref filterSettings, ref drawSettings, ref result);
             //TODO
             buffer.BlitSRT(hizOpts.historyDepth, linearLODMaterial, 0);
             hizDepth.GetMipMap(hizOpts.historyDepth, buffer);

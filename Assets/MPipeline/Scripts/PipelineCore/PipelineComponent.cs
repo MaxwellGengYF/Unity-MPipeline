@@ -54,6 +54,26 @@ namespace MPipeline
         R Run(ref A a, ref B b, ref C c, ref D d);
     }
 
+    public interface IFunction<A, B, C, D, E, R>
+    {
+        R Run(ref A a, ref B b, ref C c, ref D d, ref E e);
+    }
+
+    public interface IFunction<A, B, C, D, E, F, R>
+    {
+        R Run(ref A a, ref B b, ref C c, ref D d, ref E e, ref F f);
+    }
+
+    public interface IFunction<A, B, C, D, E, F, G, R>
+    {
+        R Run(ref A a, ref B b, ref C c, ref D d, ref E e, ref F f, ref G g);
+    }
+
+    public interface IFunction<A, B, C, D, E, F, G, H, R>
+    {
+        R Run(ref A a, ref B b, ref C c, ref D d, ref E e, ref F f, ref G g, ref H h);
+    }
+
     public interface IAction
     {
         void Run();
@@ -73,6 +93,27 @@ namespace MPipeline
     public interface IAction<A, B, C, D>
     {
         void Run(ref A a, ref B b, ref C c, ref D d);
+    }
+
+    public interface IAction<A, B, C, D, E>
+    {
+        void Run(ref A a, ref B b, ref C c, ref D d, ref E e);
+    }
+
+    public interface IAction<A, B, C, D, E, F>
+    {
+        void Run(ref A a, ref B b, ref C c, ref D d, ref E e, ref F f);
+    }
+
+    public interface IAction<A, B, C, D, E, F, G>
+    {
+        void Run(ref A a, ref B b, ref C c, ref D d, ref E e, ref F f, ref G g);
+    }
+
+
+    public interface IAction<A, B, C, D, E, F, G, H>
+    {
+        void Run(ref A a, ref B b, ref C c, ref D d, ref E e, ref F f, ref G g, ref H h);
     }
 
     public unsafe struct DecalData
@@ -357,23 +398,18 @@ namespace MPipeline
                 Shader.PropertyToID("_CameraGBufferTexture0"),
                 Shader.PropertyToID("_CameraGBufferTexture1"),
                 Shader.PropertyToID("_CameraGBufferTexture2"),
-                Shader.PropertyToID("_CameraGBufferTexture3"),
-                Shader.PropertyToID("_CameraDepthTexture"),
+                Shader.PropertyToID("_CameraGBufferTexture3")
             };
-            rt.gbufferIdentifier = new RenderTargetIdentifier[5];
-            for (int i = 0; i < 5; ++i)
+            rt.gbufferIdentifier = new RenderTargetIdentifier[4];
+            for (int i = 0; i < 4; ++i)
             {
                 rt.gbufferIdentifier[i] = rt.gbufferIndex[i];
             }
             rt.backupIdentifier = default;
-            rt.depthBuffer = rt.gbufferIdentifier[0];
+            rt.depthBuffer = ShaderIDs._DepthBufferTexture;
             rt.renderTargetIdentifier = default;
             rt.initialized = true;
             return rt;
-        }
-        public RenderTargetIdentifier depthTexture
-        {
-            get { return gbufferIndex[4]; }
         }
         public RenderTargetIdentifier normalIdentifier
         {

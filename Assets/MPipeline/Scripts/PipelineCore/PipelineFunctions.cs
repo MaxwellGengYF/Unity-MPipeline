@@ -255,42 +255,20 @@ public unsafe static class PipelineFunctions
     }
     public static void InitRenderTarget(ref RenderTargets tar, Camera tarcam, CommandBuffer buffer)
     {
-        /*   RenderTextureDescriptor desc = new RenderTextureDescriptor
-           {
-               autoGenerateMips = false,
-               bindMS = false,
-               colorFormat = RenderTextureFormat.ARGB32,
-               depthBufferBits = 24,
-               dimension = TextureDimension.Tex2D,
-               enableRandomWrite = false,
-               width = tarcam.pixelWidth,
-               height = tarcam.pixelHeight,
-               msaaSamples = 1,
-               volumeDepth = 0
-           };
-           buffer.GetTemporaryRT(tar.gbufferIndex[0], desc, FilterMode.Point);
-           desc.depthBufferBits = 0;
-           buffer.GetTemporaryRT(tar.gbufferIndex[1], desc, FilterMode.Point);
-           desc.colorFormat = RenderTextureFormat.ARGB2101010;
-           buffer.GetTemporaryRT(tar.gbufferIndex[2], desc, FilterMode.Point);
-           desc.colorFormat = RenderTextureFormat.ARGBHalf;
-           buffer.GetTemporaryRT(tar.gbufferIndex[3], desc, FilterMode.Bilinear);
-           buffer.GetTemporaryRT(ShaderIDs._BackupMap, desc, FilterMode.Bilinear);
-           desc.colorFormat = RenderTextureFormat.RGHalf;
-           buffer.GetTemporaryRT(tar.gbufferIndex[4], desc, FilterMode.Bilinear);
-           desc.colorFormat = RenderTextureFormat.RHalf;
-           buffer.GetTemporaryRT(tar.gbufferIndex[5], desc, FilterMode.Point);*/
-        buffer.GetTemporaryRT(tar.gbufferIndex[0], tarcam.pixelWidth, tarcam.pixelHeight, 32, FilterMode.Point, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear, 1, false);
+        buffer.GetTemporaryRT(tar.gbufferIndex[0], tarcam.pixelWidth, tarcam.pixelHeight, 0, FilterMode.Point, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear, 1, false);
         buffer.GetTemporaryRT(tar.gbufferIndex[1], tarcam.pixelWidth, tarcam.pixelHeight, 0, FilterMode.Point, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear, 1, false);
         buffer.GetTemporaryRT(tar.gbufferIndex[2], tarcam.pixelWidth, tarcam.pixelHeight, 0, FilterMode.Point, RenderTextureFormat.ARGB2101010, RenderTextureReadWrite.Linear, 1, false);
         buffer.GetTemporaryRT(tar.gbufferIndex[3], tarcam.pixelWidth, tarcam.pixelHeight, 0, FilterMode.Bilinear, RenderTextureFormat.ARGBHalf, RenderTextureReadWrite.Linear, 1, false);
-        buffer.GetTemporaryRT(tar.gbufferIndex[4], tarcam.pixelWidth, tarcam.pixelHeight, 0, FilterMode.Point, RenderTextureFormat.RFloat, RenderTextureReadWrite.Linear, 1, false);
+        buffer.GetTemporaryRT(ShaderIDs._DepthBufferTexture, tarcam.pixelWidth, tarcam.pixelHeight, 32, FilterMode.Point, RenderTextureFormat.Depth, RenderTextureReadWrite.Linear, 1, false);
+        buffer.GetTemporaryRT(ShaderIDs._CameraDepthTexture, tarcam.pixelWidth, tarcam.pixelHeight, 0, FilterMode.Point, RenderTextureFormat.RFloat, RenderTextureReadWrite.Linear, 1, false);
         buffer.GetTemporaryRT(ShaderIDs._BackupMap, tarcam.pixelWidth, tarcam.pixelHeight, 0, FilterMode.Bilinear, RenderTextureFormat.ARGBHalf, RenderTextureReadWrite.Linear, 1, false);
         buffer.GetTemporaryRT(ShaderIDs._CameraMotionVectorsTexture, tarcam.pixelWidth, tarcam.pixelHeight, 0, FilterMode.Bilinear, RenderTextureFormat.RGHalf, RenderTextureReadWrite.Linear, 1, false);
         foreach (var i in tar.gbufferIndex)
             MPipeline.RenderPipeline.AddTempRtToReleaseList(i);
         MPipeline.RenderPipeline.AddTempRtToReleaseList(ShaderIDs._BackupMap);
         MPipeline.RenderPipeline.AddTempRtToReleaseList(ShaderIDs._CameraMotionVectorsTexture);
+        MPipeline.RenderPipeline.AddTempRtToReleaseList(ShaderIDs._CameraDepthTexture);
+        MPipeline.RenderPipeline.AddTempRtToReleaseList(ShaderIDs._DepthBufferTexture);
         tar.renderTargetIdentifier = tar.gbufferIndex[3];
         tar.backupIdentifier = ShaderIDs._BackupMap;
     }

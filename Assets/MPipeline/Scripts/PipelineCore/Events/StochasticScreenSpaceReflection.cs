@@ -212,7 +212,7 @@ namespace MPipeline
             Vector2Int resolution = new Vector2Int(cam.cam.pixelWidth, cam.cam.pixelHeight);
             
             //////Gte HiZ_DEPTHrt//////
-            ScreenSpaceReflectionBuffer.CopyTexture(cam.targets.depthTexture, 0, 0, camData.SSR_HierarchicalDepth_RT, 0, 0);
+            ScreenSpaceReflectionBuffer.CopyTexture(ShaderIDs._CameraDepthTexture, 0, 0, camData.SSR_HierarchicalDepth_RT, 0, 0);
             for (int i = 1; i < 9; ++i)
             {
                 ScreenSpaceReflectionBuffer.SetGlobalInt(SSR_HiZ_PrevDepthLevel_ID, i - 1);
@@ -247,7 +247,7 @@ namespace MPipeline
             if (prevDepthData.targetObject == this)
             {
                 prevDepthData.UpdateCameraSize(resolution);
-                ScreenSpaceReflectionBuffer.CopyTexture(cam.targets.depthTexture, 0, 0, prevDepthData.SSR_PrevDepth_RT, 0, 0);
+                ScreenSpaceReflectionBuffer.CopyTexture(ShaderIDs._CameraDepthTexture, 0, 0, prevDepthData.SSR_PrevDepth_RT, 0, 0);
             }
         }
     }

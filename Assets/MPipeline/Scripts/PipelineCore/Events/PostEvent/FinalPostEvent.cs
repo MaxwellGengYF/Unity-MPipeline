@@ -119,7 +119,6 @@ namespace MPipeline
             };
             cyberColor.FrameUpdate(data.buffer);
             //  data.buffer.SetGlobalVector("_ScreenSize", new Vector2(cam.cam.pixelWidth / 16, cam.cam.pixelHeight / 16));
-            //data.buffer.Blit(ShaderIDs._CameraMotionVectorsTexture, cam.cameraTarget);
             data.buffer.BlitSRT(cam.targets.renderTargetIdentifier, cam.cameraTarget, postContext.uberSheet.material, 0, postContext.uberSheet.properties);
             if (postContext.bloomBufferNameID > -1) data.buffer.ReleaseTemporaryRT(postContext.bloomBufferNameID);
         }

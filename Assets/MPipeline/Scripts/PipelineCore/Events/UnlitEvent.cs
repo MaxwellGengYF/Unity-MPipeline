@@ -30,7 +30,17 @@ namespace MPipeline
             CullingResults cullReslt = data.context.Cull(ref cullParams);
             data.buffer.SetRenderTarget(cam.cameraTarget);
             data.buffer.ClearRenderTarget(true, true, new Color(float.MaxValue, float.MaxValue, float.MaxValue, float.MaxValue));
-            SceneController.RenderScene(ref data, cam.cam, ref cullReslt, passName, UnityEngine.Rendering.PerObjectData.None);
+            FilteringSettings filterSettings = new FilteringSettings
+            {
+                layerMask = cam.cam.cullingMask,
+                renderingLayerMask = 1,
+                renderQueueRange = RenderQueueRange.opaque
+            };
+            DrawingSettings drawSettings = new DrawingSettings(new ShaderTagId("GBuffer"), new SortingSettings(cam.cam) { criteria = SortingCriteria.CommonOpaque })
+            {
+                perObjectData = UnityEngine.Rendering.PerObjectData.Lightmaps
+            };
+            SceneController.RenderScene(ref data, ref filterSettings, ref drawSettings, ref cullReslt);
         }
     }
 }

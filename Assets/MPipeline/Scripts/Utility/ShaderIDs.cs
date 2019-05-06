@@ -109,6 +109,8 @@ public static partial class ShaderIDs
     public static readonly int _SceneOffset = Shader.PropertyToID("_SceneOffset");
     public static readonly int _BackupMap = Shader.PropertyToID("_BackupMap");
     public static readonly int _CameraMotionVectorsTexture = Shader.PropertyToID("_CameraMotionVectorsTexture");
+    public static readonly int _CameraDepthTexture = Shader.PropertyToID("_CameraDepthTexture");
+    public static readonly int _DepthBufferTexture = Shader.PropertyToID("_DepthBufferTexture");
     public static readonly int _LightMap = Shader.PropertyToID("_LightMap");
     public static readonly int _ReflectionIndices = Shader.PropertyToID("_ReflectionIndices");
     public static readonly int _ReflectionData = Shader.PropertyToID("_ReflectionData");

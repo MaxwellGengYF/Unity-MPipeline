@@ -186,6 +186,57 @@ ENDCG
 		{
 			ZTest less
 			Cull back
+			Tags {"LightMode" = "DepthPrePass"}
+			CGPROGRAM
+			#pragma vertex vert
+			#pragma fragment frag
+			// Upgrade NOTE: excluded shader from OpenGL ES 2.0 because it uses non-square matrices
+			#pragma exclude_renderers gles
+			#include "UnityCG.cginc"
+			
+			struct appdata_depthPrePass
+			{
+				float4 vertex : POSITION;
+				#if CUT_OFF
+				float2 texcoord : TEXCOORD0;
+				#endif
+			};
+			struct v2f
+			{
+				float4 vertex : SV_POSITION;
+				#if CUT_OFF
+				float2 texcoord : TEXCOORD0;
+				#endif
+			};
+
+			v2f vert (appdata_depthPrePass v)
+			{
+				v2f o;
+				o.vertex = UnityObjectToClipPos(v.vertex);
+				#if CUT_OFF
+				o.texcoord = v.texcoord;
+				#endif
+				return o;
+			}
+			#if CUT_OFF
+			void frag (v2f i)
+			#else
+			void frag ()
+			#endif
+			{
+				#if CUT_OFF
+				i.texcoord = TRANSFORM_TEX(i.texcoord, _MainTex);
+				float4 c = tex2D(_MainTex, i.texcoord);
+				clip(c.a * _Color.a - _Cutoff);
+				#endif
+			}
+
+			ENDCG
+		}
+		Pass
+		{
+			ZTest less
+			Cull back
 			Tags {"LightMode" = "Depth"}
 			CGPROGRAM
 			#pragma vertex vert

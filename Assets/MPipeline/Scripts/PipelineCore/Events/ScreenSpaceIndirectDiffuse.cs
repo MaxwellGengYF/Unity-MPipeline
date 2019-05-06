@@ -254,7 +254,7 @@ namespace MPipeline
             SSGIData data = IPerCameraData.GetProperty(cam, (cc) => new SSGIData(int2(cc.cam.pixelWidth, cc.cam.pixelHeight)));
             data.UpdateResolution(int2(cam.cam.pixelWidth, cam.cam.pixelHeight));
             //////Set HierarchicalDepthRT//////
-            SSGi_Buffer.CopyTexture(targets.depthTexture, 0, 0, data.SSGi_HierarchicalDepth_RT, 0, 0);
+            SSGi_Buffer.CopyTexture(ShaderIDs._CameraDepthTexture, 0, 0, data.SSGi_HierarchicalDepth_RT, 0, 0);
             for (int i = 1; i < HiZ_MaxLevel; ++i)
             {
                 SSGi_Buffer.SetGlobalInt(SSGi_HiZ_PrevDepthLevel_ID, i - 1);

@@ -12,25 +12,17 @@ using UnityEngine.Rendering;
 using Random = UnityEngine.Random;
 public unsafe class Test : MonoBehaviour
 {
-    /*  public UnityEngine.UI.Text txt;
-      private float deltaAcc = 0;
-      private int count = 0;
-      private void Update()
-      {
-          deltaAcc += Time.deltaTime;
-          count++;
-          if (count >= 20)
-          {
-              deltaAcc /= count;
-              txt.text = (deltaAcc * 1000).ToString();
-              count = 0;
-              deltaAcc = 0;
-          }
-      }*/
-    private void Update()
+
+    public struct Fk
     {
-        Vector3 pos = transform.position;
-        pos.y = sin(Time.time * 10) * 2;
-        transform.position = pos;
+        public int a;
+        public Fk(bool b)
+        {
+            a = 1;
+        }
+    }
+[EasyButtons.Button]
+void Try()
+    {
     }
 }
