@@ -52,16 +52,27 @@ inline float3 YCoCgToRGB(float3 YCoCg)
     float3 RGB = float3(R, G, B);
     return RGB;
 }
-inline float3 Sigmoid(float3 x)
-{
-    x = x * 2;
-    return 1/(1 + exp(-x)) * 2 - 1;
+static const float A = 0.15;
+static const float B = 0.50;
+static const float C = 0.10;
+static const float D = 0.20;
+static const float E = 0.02;
+static const float F = 0.30;
+static const float W = 11.2;
+
+inline float3 Tonemap(float3 x) { 
+    x *= 2;
+    return 1.0-((x*(A*x+C*B)+D*E)/(x*(A*x+B)+D*F)-E/F);
 }
 
-inline float3 AntiSigmoid(float3 x)
+inline float Pow2(float x)
 {
-    x = -log(2 / (x + 1) - 1);
-    return x * 0.5;
+    return x * x;
+}
+
+// Apply this to restore the linear HDR color before writing out the result of the resolve.
+inline float3 TonemapInvert(float3 x) { 
+    return ((sqrt((4*x-4*x*x)*A*D*F*F*F+((4*x-4)*A*D*E+B*B*C*C+(2*x-2)*B*B*C+(x*x-2*x+1)*B*B)*F*F+((2-2*x)*B*B-2*B*B*C)*E*F+B*B*E*E)+((1-x)*B-B*C)*F+B*E)/(2*x*A*F-2*A*E)) * 0.5;
 }
         float4 ClipToAABB(float4 color, float3 minimum, float3 maximum)
         {
@@ -256,7 +267,7 @@ inline float3 AntiSigmoid(float3 x)
             float4 minColor, maxColor;
             float4 m1, m2, mean, stddev;
             float lenOfVelocity = length(velocity);
-            float AABBScale = lerp(_TemporalClipBounding.x, _TemporalClipBounding.y, saturate(lenOfVelocity * _TemporalClipBounding.z));
+            float AABBScale = lerp(_TemporalClipBounding.y, _TemporalClipBounding.x, 1 - Pow2(saturate(lenOfVelocity * _TemporalClipBounding.z)));
             m1 = TopLeft + TopCenter + TopRight + MiddleLeft + MiddleCenter + MiddleRight + BottomLeft + BottomCenter + BottomRight;
             m2 = TopLeft * TopLeft + TopCenter * TopCenter
                 + TopRight * TopRight + MiddleLeft * MiddleLeft
@@ -280,10 +291,10 @@ inline float3 AntiSigmoid(float3 x)
             lastColor = clamp(lastColor, minColor, maxColor);
             // HistoryBlend
             float weight = clamp(lerp(_FinalBlendParameters.x, _FinalBlendParameters.y, lenOfVelocity * _FinalBlendParameters.z), _FinalBlendParameters.y, _FinalBlendParameters.x);
-            currColor.xyz = RGBToYCoCg(Sigmoid(currColor.xyz));
-            lastColor.xyz = RGBToYCoCg(Sigmoid(lastColor.xyz));
+            currColor.xyz = RGBToYCoCg(Tonemap(currColor.xyz));
+            lastColor.xyz = RGBToYCoCg(Tonemap(lastColor.xyz));
             float4 temporalColor = lerp(currColor, lastColor, weight);
-            temporalColor.xyz = AntiSigmoid(YCoCgToRGB(temporalColor.xyz));
+            temporalColor.xyz = TonemapInvert(YCoCgToRGB(temporalColor.xyz));
             return temporalColor;
         }
 

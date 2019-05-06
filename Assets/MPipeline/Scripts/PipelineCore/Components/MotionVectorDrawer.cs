@@ -2,25 +2,23 @@
 using System.Collections.Generic;
 using UnityEngine;
 using MPipeline;
+[ExecuteInEditMode]
 [RequireComponent(typeof(Renderer))]
 public class MotionVectorDrawer : MonoBehaviour
 {
     private Renderer rend;
     private static MaterialPropertyBlock block = null;
     private Matrix4x4 lastLocalToWorld;
-    private void Awake()
-    {
-        rend = GetComponent<Renderer>();
-        if (block == null) block = new MaterialPropertyBlock();
-    }
     private void OnEnable()
     {
+        if (!rend) rend = GetComponent<Renderer>();
+        if (block == null) block = new MaterialPropertyBlock();
         lastLocalToWorld = transform.localToWorldMatrix;
     }
 
     private void OnDisable()
     {
-        rend.SetPropertyBlock(null);
+        if(rend) rend.SetPropertyBlock(null);
     }
 
     private void Update()

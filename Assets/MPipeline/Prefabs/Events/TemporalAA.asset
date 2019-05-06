@@ -16,6 +16,6 @@ MonoBehaviour:
   jitterSpread: 1
   sharpness: 0
   stationaryBlending: 0.95
-  motionBlending: 0.85
-  stationaryAABBScale: 3
+  motionBlending: 0.87
+  stationaryAABBScale: 5
   motionAABBScale: 1.25
