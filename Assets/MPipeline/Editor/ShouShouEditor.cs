@@ -22,10 +22,12 @@ public class ShouShouEditor : ShaderGUI
         if (!targetMatEnabled)
         {
             targetMat.DisableKeyword("CUT_OFF");
+            targetMat.renderQueue = 2000;
         }
         else
         {
             targetMat.EnableKeyword("CUT_OFF");
+            targetMat.renderQueue = 2451;
         }
         base.OnGUI(materialEditor, properties);
         if(targetMat.GetTexture("_DetailAlbedo") == null && targetMat.GetTexture("_DetailNormal") == null)

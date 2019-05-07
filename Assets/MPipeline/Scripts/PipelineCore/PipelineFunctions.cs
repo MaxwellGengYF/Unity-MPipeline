@@ -312,19 +312,7 @@ PipelineBaseBuffer basebuffer
         buffer.SetComputeBufferParam(coreShader, PipelineBaseBuffer.ClearOcclusionData_Kernel, ShaderIDs.reCheckCount, baseBuffer.reCheckCount);
         buffer.DispatchCompute(coreShader, PipelineBaseBuffer.ClearOcclusionData_Kernel, 1, 1, 1);
     }
-    public static void DrawLastFrameCullResult(
-        PipelineBaseBuffer baseBuffer,
-        CommandBuffer buffer, Material mat)
-    {
-        buffer.DrawProceduralIndirect(Matrix4x4.identity, mat, 0, MeshTopology.Triangles, baseBuffer.instanceCountBuffer, 0);
-    }
-    [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void DrawRecheckCullResult(
-        PipelineBaseBuffer occBuffer,
-        Material indirectMaterial, CommandBuffer buffer)
-    {
-        buffer.DrawProceduralIndirect(Matrix4x4.identity, indirectMaterial, 0, MeshTopology.Triangles, occBuffer.reCheckCount, 0);
-    }
+
     public static void OcclusionRecheck(
         PipelineBaseBuffer baseBuffer
         , ComputeShader coreShader, CommandBuffer buffer

@@ -64,7 +64,7 @@ namespace MPipeline
             buffer.SetGlobalTexture(ShaderIDs._HistoryTex, historyTex);
             RenderTargetIdentifier source, dest;
             PipelineFunctions.RunPostProcess(ref cam.targets, out source, out dest);
-            buffer.BlitSRT(source, dest, cam.targets.depthBuffer, taaMat, 0);
+            buffer.BlitSRT(source, dest, ShaderIDs._DepthBufferTexture, taaMat, 0);
             buffer.CopyTexture(dest, historyTex);
             prevDepthData.UpdateCameraSize(new Vector2Int(cam.cam.pixelWidth, cam.cam.pixelHeight));
             buffer.CopyTexture(ShaderIDs._CameraDepthTexture, 0, 0, prevDepthData.SSR_PrevDepth_RT, 0, 0);

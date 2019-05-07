@@ -34,6 +34,7 @@ namespace MPipeline
         public Shader spotLightDepthShader;
         public Shader gtaoShader;
         public Shader lightingShader;
+        public Shader overrideOpaqueShader;
         public Shader ssgiShader;
         public Mesh occluderMesh;
         public Mesh sphereMesh;

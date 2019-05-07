@@ -112,7 +112,7 @@ namespace MPipeline
             ComputeShaderUtility.Dispatch(shader, buffer, AnimationUpdateKernel, characterPoints.Length);
             ComputeShaderUtility.Dispatch(shader, buffer, BoneUpdateKernel, bonesBuffer.count);
             ComputeShaderUtility.Dispatch(shader, buffer, SkinUpdateKernel, resultBuffer.count);
-            buffer.SetRenderTarget(cam.targets.gbufferIdentifier, cam.targets.depthBuffer);
+            buffer.SetRenderTarget(cam.targets.gbufferIdentifier, ShaderIDs._DepthBufferTexture);
             buffer.ClearRenderTarget(true, true, Color.black);
             buffer.DrawProcedural(Matrix4x4.identity, animationMaterial, 0, MeshTopology.Triangles, resultBuffer.count, characterPoints.Length, block);
             data.ExecuteCommandBuffer();

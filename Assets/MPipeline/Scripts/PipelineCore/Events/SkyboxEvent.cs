@@ -53,7 +53,7 @@ namespace MPipeline
             }
             CommandBuffer buffer = data.buffer;
             buffer.SetGlobalMatrix(_InvSkyVP, inverse(viewProj));
-            buffer.SetRenderTarget(color: camera.targets.renderTargetIdentifier, depth: camera.targets.depthBuffer);
+            buffer.SetRenderTarget(color: camera.targets.renderTargetIdentifier, depth: ShaderIDs._DepthBufferTexture);
             buffer.DrawMesh(GraphicsUtility.mesh, Matrix4x4.identity, skyboxMaterial, 0, 0);
         }
     }

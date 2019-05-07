@@ -153,7 +153,7 @@ namespace MPipeline
             data.ExecuteCommandBuffer();
             data.context.DrawRenderers(cullResults, ref drawSettings, ref filterSettings);
         }
-        public static void DrawSpotLight(CommandBuffer buffer, MLight mlight, int mask, ComputeShader cullingShader, ref PipelineCommandData data, Camera currentCam, ref SpotLight spotLights, ref RenderSpotShadowCommand spotcommand, bool inverseRender)
+        public static void DrawSpotLight(CommandBuffer buffer, MLight mlight, int mask, ComputeShader cullingShader, ref PipelineCommandData data, Camera currentCam, ref SpotLight spotLights, ref RenderSpotShadowCommand spotcommand, bool inverseRender, Material opaqueOverride)
         {
             if (mlight.ShadowIndex < 0) return;
             ref SpotLightMatrix spotLightMatrix = ref spotcommand.shadowMatrices[spotLights.shadowIndex];
@@ -188,24 +188,27 @@ namespace MPipeline
             data.ExecuteCommandBuffer();
             FilteringSettings renderSettings = new FilteringSettings()
             {
-                renderQueueRange = RenderQueueRange.opaque,
+                renderQueueRange = new RenderQueueRange(2000, 2449),
                 layerMask = mask,
                 renderingLayerMask = 1
             };
             DrawingSettings dsettings = new DrawingSettings(new ShaderTagId("Shadow"), new SortingSettings { criteria = SortingCriteria.None })
             {
-                enableDynamicBatching = false,
-                enableInstancing = false,
-                perObjectData = UnityEngine.Rendering.PerObjectData.None
+                perObjectData = UnityEngine.Rendering.PerObjectData.None,
+                overrideMaterial = opaqueOverride,
+                overrideMaterialPassIndex = -1
             };
             cullParams.cullingOptions = CullingOptions.ForceEvenIfCameraIsNotActive;
             CullingResults results = data.context.Cull(ref cullParams);
-
+            data.context.DrawRenderers(results, ref dsettings, ref renderSettings);
+            renderSettings.renderQueueRange = new RenderQueueRange(2450, 2499);
+            dsettings.overrideMaterial = null;
+            dsettings.overrideMaterialPassIndex = 0;
             data.context.DrawRenderers(results, ref dsettings, ref renderSettings);
             buffer.SetInvertCulling(inverseRender);
         }
 
-        public static void DrawDirectionalShadow(PipelineCamera cam, ref StaticFit staticFit, ref PipelineCommandData data, ref RenderClusterOptions opts, float* clipDistances, OrthoCam* camCoords, Matrix4x4[] shadowVPs)
+        public static void DrawDirectionalShadow(PipelineCamera cam, ref StaticFit staticFit, ref PipelineCommandData data, ref RenderClusterOptions opts, float* clipDistances, OrthoCam* camCoords, Matrix4x4[] shadowVPs, Material opaqueOverride)
         {
             SunLight sunLight = SunLight.current;
             if (gpurpEnabled)
@@ -250,28 +253,30 @@ namespace MPipeline
                 data.ExecuteCommandBuffer();
                 FilteringSettings renderSettings = new FilteringSettings()
                 {
-                    renderQueueRange = RenderQueueRange.opaque,
+                    renderQueueRange = new RenderQueueRange(2000, 2449),
                     layerMask = sunLight.shadowMask,
-                    renderingLayerMask = 1,
-                    excludeMotionVectorObjects = true
+                    renderingLayerMask = 1       
                 };
                 SortingSettings sorting = new SortingSettings(SunLight.shadowCam);
                 sorting.criteria = SortingCriteria.CommonOpaque;
                 DrawingSettings dsettings = new DrawingSettings(new ShaderTagId("Shadow"), sorting)
                 {
-                    enableDynamicBatching = false,
-                    enableInstancing = false,
-                    perObjectData = UnityEngine.Rendering.PerObjectData.None
+                    perObjectData = UnityEngine.Rendering.PerObjectData.None,
+                    overrideMaterial = opaqueOverride,
+                    overrideMaterialPassIndex = -1
                 };
                 cullParams.cullingOptions = CullingOptions.ForceEvenIfCameraIsNotActive;
                 CullingResults results = data.context.Cull(ref cullParams);
-
+                data.context.DrawRenderers(results, ref dsettings, ref renderSettings);
+                renderSettings.renderQueueRange = new RenderQueueRange(2450, 2499);
+                dsettings.overrideMaterial = null;
+                dsettings.overrideMaterialPassIndex = 0;
                 data.context.DrawRenderers(results, ref dsettings, ref renderSettings);
             }
             opts.command.SetInvertCulling(cam.inverseRender);
         }
 
-        public static void DrawPointLight(MLight lit, int mask, ref PointLightStruct light, Material depthMaterial, CommandBuffer cb, ComputeShader cullingShader, int offset, ref PipelineCommandData data, CubemapViewProjMatrix* vpMatrixArray, RenderTexture renderTarget, bool inverseRender)
+        public static void DrawPointLight(MLight lit, int mask, ref PointLightStruct light, Material depthMaterial, CommandBuffer cb, ComputeShader cullingShader, int offset, ref PipelineCommandData data, CubemapViewProjMatrix* vpMatrixArray, RenderTexture renderTarget, bool inverseRender, Material opaqueOverride)
         {
             if (lit.ShadowIndex < 0) return;
             ref CubemapViewProjMatrix vpMatrices = ref vpMatrixArray[offset];
@@ -280,7 +285,13 @@ namespace MPipeline
             cb.EnableShaderKeyword("POINT_LIGHT_SHADOW");
             FilteringSettings renderSettings = new FilteringSettings()
             {
-                renderQueueRange = RenderQueueRange.opaque,
+                renderQueueRange = new RenderQueueRange(2450, 2499),
+                layerMask = mask,
+                renderingLayerMask = 1
+            };
+            FilteringSettings opaqueRenderSettings = new FilteringSettings()
+            {
+                renderQueueRange = new RenderQueueRange(2000, 2449),
                 layerMask = mask,
                 renderingLayerMask = 1
             };
@@ -290,6 +301,9 @@ namespace MPipeline
                 enableInstancing = false,
                 perObjectData = UnityEngine.Rendering.PerObjectData.None,
             };
+            DrawingSettings opaqueRender = dsettings;
+            opaqueRender.overrideMaterial = opaqueOverride;
+            opaqueRender.overrideMaterialPassIndex = -1;
             //X
             int depthSlice = lit.ShadowIndex * 6;
             cb.SetRenderTarget(renderTarget, 0, CubemapFace.Unknown, depthSlice + 1);
@@ -316,6 +330,7 @@ namespace MPipeline
                 PipelineFunctions.RunCullDispatching(baseBuffer, cullingShader, cb);
                 cb.DrawProceduralIndirect(Matrix4x4.identity, depthMaterial, 0, MeshTopology.Triangles, baseBuffer.instanceCountBuffer);
             }
+            data.context.DrawRenderers(results, ref opaqueRender, ref opaqueRenderSettings);
             data.context.DrawRenderers(results, ref dsettings, ref renderSettings);
             //-X
             cb.SetRenderTarget(renderTarget, 0, CubemapFace.Unknown, depthSlice);
@@ -326,6 +341,7 @@ namespace MPipeline
                 cb.DrawProceduralIndirect(Matrix4x4.identity, depthMaterial, 0, MeshTopology.Triangles, baseBuffer.instanceCountBuffer);
             }
             data.ExecuteCommandBuffer();
+            data.context.DrawRenderers(results, ref opaqueRender, ref opaqueRenderSettings);
             data.context.DrawRenderers(results, ref dsettings, ref renderSettings);
 
             //Y
@@ -337,6 +353,7 @@ namespace MPipeline
                 cb.DrawProceduralIndirect(Matrix4x4.identity, depthMaterial, 0, MeshTopology.Triangles, baseBuffer.instanceCountBuffer);
             }
             data.ExecuteCommandBuffer();
+            data.context.DrawRenderers(results, ref opaqueRender, ref opaqueRenderSettings);
             data.context.DrawRenderers(results, ref dsettings, ref renderSettings);
 
             //-Y
@@ -348,6 +365,7 @@ namespace MPipeline
                 cb.DrawProceduralIndirect(Matrix4x4.identity, depthMaterial, 0, MeshTopology.Triangles, baseBuffer.instanceCountBuffer);
             }
             data.ExecuteCommandBuffer();
+            data.context.DrawRenderers(results, ref opaqueRender, ref opaqueRenderSettings);
             data.context.DrawRenderers(results, ref dsettings, ref renderSettings);
 
             //Z
@@ -359,6 +377,7 @@ namespace MPipeline
                 cb.DrawProceduralIndirect(Matrix4x4.identity, depthMaterial, 0, MeshTopology.Triangles, baseBuffer.instanceCountBuffer);
             }
             data.ExecuteCommandBuffer();
+            data.context.DrawRenderers(results, ref opaqueRender, ref opaqueRenderSettings);
             data.context.DrawRenderers(results, ref dsettings, ref renderSettings);
 
             //-Z
@@ -370,31 +389,16 @@ namespace MPipeline
                 cb.DrawProceduralIndirect(Matrix4x4.identity, depthMaterial, 0, MeshTopology.Triangles, baseBuffer.instanceCountBuffer);
             }
             data.ExecuteCommandBuffer();
+            data.context.DrawRenderers(results, ref opaqueRender, ref opaqueRenderSettings);
             data.context.DrawRenderers(results, ref dsettings, ref renderSettings);
             cb.SetInvertCulling(inverseRender);
         }
-
-        public static void DrawClusterOccDoubleCheck(ref RenderClusterOptions options, ref CullingResults result, ref HizDepth hizDepth, HizOcclusionData hizOpts, Material targetMat, Material linearLODMaterial, PipelineCamera pipeCam, ref PipelineCommandData data)
+        public static void DrawCluster_LastFrameDepthHiZ(ref RenderClusterOptions options, HizOcclusionData hizOpts, Material targetMat, PipelineCamera pipeCam)
         {
             if (!gpurpEnabled) return;
             ref RenderTargets rendTargets = ref pipeCam.targets;
             Camera cam = pipeCam.cam;
             CommandBuffer buffer = options.command;
-            FilteringSettings filterSettings = new FilteringSettings
-            {
-                layerMask = cam.cullingMask,
-                renderingLayerMask = 1,
-                renderQueueRange = RenderQueueRange.opaque
-            };
-            DrawingSettings drawSettings = new DrawingSettings(new ShaderTagId("GBuffer"), new SortingSettings(cam) { criteria = SortingCriteria.CommonOpaque })
-            {
-                perObjectData = UnityEngine.Rendering.PerObjectData.Lightmaps
-            };
-            if (!gpurpEnabled)
-            {
-                RenderScene(ref data, ref filterSettings, ref drawSettings, ref result);
-                return;
-            }
             ComputeShader gpuFrustumShader = options.cullingShader;
             buffer.SetGlobalBuffer(ShaderIDs.resultBuffer, baseBuffer.resultBuffer);
             buffer.SetGlobalBuffer(ShaderIDs.verticesBuffer, baseBuffer.verticesBuffer);
@@ -406,12 +410,17 @@ buffer,
 hizOpts,
 options.frustumPlanes);
             //First Draw
-            PipelineFunctions.DrawLastFrameCullResult(baseBuffer, buffer, targetMat);
-            //Update Vector，Depth Mip Map
+            buffer.DrawProceduralIndirect(Matrix4x4.identity, targetMat, 0, MeshTopology.Triangles, baseBuffer.instanceCountBuffer, 0);
+        }
 
-            //TODO Draw others
-            RenderScene(ref data, ref filterSettings, ref drawSettings, ref result);
-            //TODO
+        public static void DrawCluster_RecheckHiz(ref RenderClusterOptions options, ref HizDepth hizDepth, HizOcclusionData hizOpts, Material targetMat, Material linearLODMaterial, PipelineCamera pipeCam)
+        {
+            if (!gpurpEnabled) return;
+            ref RenderTargets rendTargets = ref pipeCam.targets;
+            Camera cam = pipeCam.cam;
+            CommandBuffer buffer = options.command;
+            ComputeShader gpuFrustumShader = options.cullingShader;
+
             buffer.BlitSRT(hizOpts.historyDepth, linearLODMaterial, 0);
             hizDepth.GetMipMap(hizOpts.historyDepth, buffer);
             //double check
@@ -419,8 +428,8 @@ options.frustumPlanes);
             hizOpts.lastFrameCameraUp = cam.transform.up;
             PipelineFunctions.OcclusionRecheck(baseBuffer, gpuFrustumShader, buffer, hizOpts);
             //double draw
-            buffer.SetRenderTarget(rendTargets.gbufferIdentifier, rendTargets.depthBuffer);
-            PipelineFunctions.DrawRecheckCullResult(baseBuffer, targetMat, buffer);
+            buffer.SetRenderTarget(rendTargets.gbufferIdentifier, ShaderIDs._DepthBufferTexture);
+            buffer.DrawProceduralIndirect(Matrix4x4.identity, targetMat, 0, MeshTopology.Triangles, baseBuffer.reCheckCount, 0);
             buffer.BlitSRT(hizOpts.historyDepth, linearLODMaterial, 0);
             hizDepth.GetMipMap(hizOpts.historyDepth, buffer);
         }

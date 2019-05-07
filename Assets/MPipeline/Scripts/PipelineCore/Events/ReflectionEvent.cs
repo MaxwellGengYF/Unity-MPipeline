@@ -142,7 +142,7 @@ namespace MPipeline
             {
                 buffer.SetGlobalTexture(reflectionCubemapIDs[i], reflectProbes[i].texture);
             }
-            buffer.BlitSRTWithDepth(cam.targets.renderTargetIdentifier, cam.targets.depthBuffer, reflectionMat, 1);
+            buffer.BlitSRTWithDepth(cam.targets.renderTargetIdentifier, ShaderIDs._DepthBufferTexture, reflectionMat, 1);
             if (ssrEvents.enabled && !RenderPipeline.renderingEditor)
             {
                 ssrEvents.Render(ref data, cam, proper);
@@ -153,7 +153,7 @@ namespace MPipeline
             {
                 buffer.DisableShaderKeyword("ENABLE_SSR");
             }
-            buffer.BlitSRTWithDepth(cam.targets.renderTargetIdentifier, cam.targets.depthBuffer, reflectionMat, 0);
+            buffer.BlitSRTWithDepth(cam.targets.renderTargetIdentifier, ShaderIDs._DepthBufferTexture, reflectionMat, 0);
             //TODO
         }
         [Unity.Burst.BurstCompile]

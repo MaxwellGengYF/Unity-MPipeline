@@ -67,6 +67,8 @@ MonoBehaviour:
       type: 3}
     gtaoShader: {fileID: 4800000, guid: 2dbab40b5193e7640a8d53163872d2f7, type: 3}
     lightingShader: {fileID: 4800000, guid: b10a195e54d72984783eb1f2f49aa43f, type: 3}
+    overrideOpaqueShader: {fileID: 4800000, guid: ffeed60062f9fde43bd897fe88a5ad6b,
+      type: 3}
     ssgiShader: {fileID: 4800000, guid: 96507b1ae4f2e70449d65df7bc0fd3ec, type: 3}
     occluderMesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
     sphereMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}

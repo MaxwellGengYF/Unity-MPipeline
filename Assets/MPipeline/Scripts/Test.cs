@@ -12,17 +12,42 @@ using UnityEngine.Rendering;
 using Random = UnityEngine.Random;
 public unsafe class Test : MonoBehaviour
 {
-
-    public struct Fk
+    CommandBuffer bf;
+    public Material testMat;
+    Mesh mesh;
+    private void Awake()
     {
-        public int a;
-        public Fk(bool b)
+        bf = new CommandBuffer();
+        GetComponent<Camera>().AddCommandBuffer(CameraEvent.AfterImageEffects, bf);
+        mesh = new Mesh();
+        List<Vector3> vertices = new List<Vector3>(4000);
+        for (int i = 0; i < 1000; ++i)
         {
-            a = 1;
+            vertices.Add(new Vector3(-1, -1, i / 1000f));
+            vertices.Add(new Vector3(-1, 1, i / 1000f));
+            vertices.Add(new Vector3(1, 1, i / 1000f));
+            vertices.Add(new Vector3(1, -1, i / 1000f));
         }
+        mesh.SetVertices(vertices);
+        List<int> indices = new List<int>(6000);
+        for(int i = 0; i < 1000; ++i)
+        {
+            indices.Add(0 + i * 4);
+            indices.Add(1 + i * 4);
+            indices.Add(2 + i * 4);
+            indices.Add(0 + i * 4);
+            indices.Add(3 + i * 4);
+            indices.Add(2 + i * 4);
+        }
+        mesh.SetTriangles(indices, 0);
+        bf.SetRenderTarget(BuiltinRenderTextureType.CameraTarget);
+        bf.DrawMesh(mesh, Matrix4x4.identity, testMat);
     }
-[EasyButtons.Button]
-void Try()
+
+
+    private void OnDestroy()
     {
+        bf.Dispose();
+        GetComponent<Camera>().RemoveAllCommandBuffers();
     }
 }

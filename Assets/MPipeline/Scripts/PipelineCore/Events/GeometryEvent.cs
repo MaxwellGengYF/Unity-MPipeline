@@ -18,9 +18,9 @@ namespace MPipeline
         Material linearDrawerMat;
         Material linearMat;
         Material clusterMat;
-        public Material debugMat;
         private PropertySetEvent proper;
         public DecalEvent decal;
+        public Material debugMat;
         private AOEvents ao;
         private ReflectionEvent reflection;
         private Material downSampleMat;
@@ -79,27 +79,30 @@ namespace MPipeline
                 cullingShader = data.resources.shaders.gpuFrustumCulling,
                 terrainCompute = data.resources.shaders.terrainCompute
             };
-            data.buffer.SetRenderTarget(cam.targets.gbufferIdentifier, cam.targets.depthBuffer);
+            data.buffer.SetRenderTarget(cam.targets.gbufferIdentifier, ShaderIDs._DepthBufferTexture);
             data.buffer.ClearRenderTarget(true, true, Color.black);
+            HizOcclusionData hizOccData;
             if (useHiZ)
             {
-                HizOcclusionData hizOccData = IPerCameraData.GetProperty(cam, () => new HizOcclusionData());
-                SceneController.DrawClusterOccDoubleCheck(ref options, ref proper.cullResults, ref hizDepth, hizOccData, clusterMat, linearMat, cam, ref data);
+                hizOccData = IPerCameraData.GetProperty(cam, () => new HizOcclusionData());
+                SceneController.DrawCluster_LastFrameDepthHiZ(ref options, hizOccData, clusterMat, cam);
             }
-            else
+            FilteringSettings filterSettings = new FilteringSettings
             {
-                FilteringSettings filterSettings = new FilteringSettings
-                {
-                    layerMask = cam.cam.cullingMask,
-                    renderingLayerMask = 1,
-                    renderQueueRange = RenderQueueRange.opaque
-                };
-                DrawingSettings drawSettings = new DrawingSettings(new ShaderTagId("GBuffer"), new SortingSettings(cam.cam) { criteria = SortingCriteria.CommonOpaque })
-                {
-                    perObjectData = UnityEngine.Rendering.PerObjectData.Lightmaps
-                };
-                SceneController.RenderScene(ref data, ref filterSettings, ref drawSettings, ref proper.cullResults);
+                layerMask = cam.cam.cullingMask,
+                renderingLayerMask = 1,
+                renderQueueRange = RenderQueueRange.opaque
+            };
+            DrawingSettings drawSettings = new DrawingSettings(new ShaderTagId("GBuffer"), new SortingSettings(cam.cam) { criteria = SortingCriteria.CommonOpaque })
+            {
+                perObjectData = UnityEngine.Rendering.PerObjectData.Lightmaps
+            };
+            SceneController.RenderScene(ref data, ref filterSettings, ref drawSettings, ref proper.cullResults);
+            if (useHiZ)
+            {
+                SceneController.DrawCluster_RecheckHiz(ref options, ref hizDepth, hizOccData, clusterMat, linearMat, cam);
             }
+
             data.buffer.Blit(ShaderIDs._DepthBufferTexture, ShaderIDs._CameraDepthTexture);
             FilteringSettings mvFilter = new FilteringSettings
             {
@@ -111,10 +114,10 @@ namespace MPipeline
             {
                 perObjectData = UnityEngine.Rendering.PerObjectData.None
             };
-            data.buffer.SetRenderTarget(ShaderIDs._CameraMotionVectorsTexture, cam.targets.depthBuffer);
+            data.buffer.SetRenderTarget(ShaderIDs._CameraMotionVectorsTexture, ShaderIDs._DepthBufferTexture);
             SceneController.RenderScene(ref data, ref mvFilter, ref mvDraw, ref proper.cullResults);
             decal.FrameUpdate(cam, ref data);
-            data.buffer.BlitSRTWithDepth(ShaderIDs._CameraMotionVectorsTexture, cam.targets.depthBuffer, motionVecMat, 0);
+            data.buffer.BlitSRTWithDepth(ShaderIDs._CameraMotionVectorsTexture, ShaderIDs._DepthBufferTexture, motionVecMat, 0);
             //Generate DownSampled GBuffer
             if ((ao != null && ao.Enabled) || (reflection != null && reflection.Enabled && reflection.ssrEvents.enabled))
             {

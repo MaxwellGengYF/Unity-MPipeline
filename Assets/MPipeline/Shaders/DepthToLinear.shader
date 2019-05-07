@@ -25,8 +25,7 @@
                 return o;
             }
 
-            Texture2D<float> _CameraDepthTexture; SamplerState sampler_CameraDepthTexture; float4 _CameraDepthTexture_TexelSize;
-            float4 _MainTex_TexelSize;
+            Texture2D<float> _DepthBufferTexture; SamplerState sampler_DepthBufferTexture; float4 _DepthBufferTexture_TexelSize;
         ENDCG
         // No culling or depth
         Cull Off ZWrite Off ZTest Always
@@ -40,11 +39,11 @@
             
             float frag (v2f i) : SV_Target
             {
-                float2 offset = _CameraDepthTexture_TexelSize.xy;
-                float4 readDepth = float4(_CameraDepthTexture.SampleLevel(sampler_CameraDepthTexture, i.uv + offset, 0),
-                                        _CameraDepthTexture.SampleLevel(sampler_CameraDepthTexture, i.uv - offset, 0),
-                                        _CameraDepthTexture.SampleLevel(sampler_CameraDepthTexture, i.uv + float2(offset.x, -offset.y), 0),
-                                        _CameraDepthTexture.SampleLevel(sampler_CameraDepthTexture, i.uv + float2(-offset.x, offset.y), 0));
+                float2 offset = _DepthBufferTexture_TexelSize.xy;
+                float4 readDepth = float4(_DepthBufferTexture.SampleLevel(sampler_DepthBufferTexture, i.uv + offset, 0),
+                                        _DepthBufferTexture.SampleLevel(sampler_DepthBufferTexture, i.uv - offset, 0),
+                                        _DepthBufferTexture.SampleLevel(sampler_DepthBufferTexture, i.uv + float2(offset.x, -offset.y), 0),
+                                        _DepthBufferTexture.SampleLevel(sampler_DepthBufferTexture, i.uv + float2(-offset.x, offset.y), 0));
                 #if UNITY_REVERSED_Z
                 readDepth.xy = min(readDepth.xy, readDepth.zw);
                 readDepth.x = min(readDepth.x, readDepth.y);
