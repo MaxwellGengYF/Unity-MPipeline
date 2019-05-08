@@ -26,13 +26,8 @@ namespace MPipeline
         public PipelineResources resources;
         public static bool renderingEditor { get; private set; }
         public static PipelineResources.CameraRenderingPath currentPath { get; private set; }
-        private static NativeList<int> ReleaseList;
         private static NativeDictionary<UIntPtr, int, PtrEqual> eventsGuideBook;
         private static List<Action<CommandBuffer>> bufferAfterFrame = new List<Action<CommandBuffer>>(10);
-        public static void AddTempRtToReleaseList(int tar)
-        {
-            ReleaseList.Add(tar);
-        }
 #if UNITY_EDITOR
         private struct EditorBakeCommand
         {
@@ -93,7 +88,6 @@ namespace MPipeline
 
         public RenderPipeline(PipelineResources resources)
         {
-            ReleaseList = new NativeList<int>(10, Allocator.Persistent);
             eventsGuideBook = new NativeDictionary<UIntPtr, int, PtrEqual>(resources.availiableEvents.Length, Allocator.Persistent, new PtrEqual());
             resources.SetRenderingPath();
             var allEvents = resources.allEvents;
@@ -115,7 +109,6 @@ namespace MPipeline
 
         protected override void Dispose(bool disposing)
         {
-            ReleaseList.Dispose();
             eventsGuideBook.Dispose();
             base.Dispose(disposing);
             if (current == this)
@@ -271,11 +264,6 @@ namespace MPipeline
                     e.FrameUpdate(pipelineCam, ref data);
                 }
             }
-            foreach (var i in ReleaseList)
-            {
-                data.buffer.ReleaseTemporaryRT(i);
-            }
-            ReleaseList.Clear();
         }
     }
 }

@@ -35,9 +35,11 @@ namespace MPipeline
         private int sampleIndex = 0;
         private const int k_SampleCount = 8;
         private Material taaMat;
+        private PropertySetEvent proper;
         protected override void Init(PipelineResources resources)
         {
             taaMat = new Material(resources.shaders.taaShader);
+            proper = RenderPipeline.GetEvent<PropertySetEvent>();
         }
         public override bool CheckProperty()
         {
@@ -62,6 +64,8 @@ namespace MPipeline
             buffer.SetGlobalVector(ShaderIDs._TemporalClipBounding, new Vector4(stationaryAABBScale, motionAABBScale, kMotionAmplification_Bounding, 0f));
             buffer.SetGlobalVector(ShaderIDs._FinalBlendParameters, new Vector4(stationaryBlending, motionBlending, kMotionAmplification_Blending, 0f));
             buffer.SetGlobalTexture(ShaderIDs._HistoryTex, historyTex);
+            buffer.SetGlobalTexture(ShaderIDs._LastFrameDepthTexture, prevDepthData.SSR_PrevDepth_RT);
+            buffer.SetGlobalMatrix(ShaderIDs._InvLastVp, proper.inverseLastViewProjection);
             RenderTargetIdentifier source, dest;
             PipelineFunctions.RunPostProcess(ref cam.targets, out source, out dest);
             buffer.BlitSRT(source, dest, ShaderIDs._DepthBufferTexture, taaMat, 0);
@@ -142,24 +146,27 @@ namespace MPipeline
         public HistoryTexture(Camera cam)
         {
             historyTex = new RenderTexture(cam.pixelWidth, cam.pixelHeight, 0, RenderTextureFormat.ARGBHalf, RenderTextureReadWrite.Linear);
-        }
+                  }
 
         public override void DisposeProperty()
         {
-            historyTex.Release();
             Object.DestroyImmediate(historyTex);
+        }
+        private static void Resize(RenderTexture rt, int width, int height)
+        {
+            if(rt.width != width || rt.height != height)
+            {
+                rt.Release();
+                rt.width = width;
+                rt.height = height;
+                rt.Create();
+            }
         }
         public void UpdateProperty(PipelineCamera camera)
         {
             int camWidth = camera.cam.pixelWidth;
             int camHeight = camera.cam.pixelHeight;
-            if (historyTex.width != camWidth || historyTex.height != camHeight)
-            {
-                historyTex.Release();
-                historyTex.width = camWidth;
-                historyTex.height = camHeight;
-                historyTex.Create();
-            }
+            Resize(historyTex, camWidth, camHeight);
         }
     }
 }

@@ -263,12 +263,6 @@ public unsafe static class PipelineFunctions
         buffer.GetTemporaryRT(ShaderIDs._CameraDepthTexture, tarcam.pixelWidth, tarcam.pixelHeight, 0, FilterMode.Point, RenderTextureFormat.RFloat, RenderTextureReadWrite.Linear, 1, false);
         buffer.GetTemporaryRT(ShaderIDs._BackupMap, tarcam.pixelWidth, tarcam.pixelHeight, 0, FilterMode.Bilinear, RenderTextureFormat.ARGBHalf, RenderTextureReadWrite.Linear, 1, false);
         buffer.GetTemporaryRT(ShaderIDs._CameraMotionVectorsTexture, tarcam.pixelWidth, tarcam.pixelHeight, 0, FilterMode.Bilinear, RenderTextureFormat.RGHalf, RenderTextureReadWrite.Linear, 1, false);
-        foreach (var i in tar.gbufferIndex)
-            MPipeline.RenderPipeline.AddTempRtToReleaseList(i);
-        MPipeline.RenderPipeline.AddTempRtToReleaseList(ShaderIDs._BackupMap);
-        MPipeline.RenderPipeline.AddTempRtToReleaseList(ShaderIDs._CameraMotionVectorsTexture);
-        MPipeline.RenderPipeline.AddTempRtToReleaseList(ShaderIDs._CameraDepthTexture);
-        MPipeline.RenderPipeline.AddTempRtToReleaseList(ShaderIDs._DepthBufferTexture);
         tar.renderTargetIdentifier = tar.gbufferIndex[3];
         tar.backupIdentifier = ShaderIDs._BackupMap;
     }

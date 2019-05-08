@@ -12,6 +12,7 @@ public static partial class ShaderIDs
     public static readonly int _InvVP = Shader.PropertyToID("_InvVP");
     public static readonly int _InvNonJitterVP = Shader.PropertyToID("_InvNonJitterVP");
     public static readonly int _LastVp = Shader.PropertyToID("_LastVp");
+    public static readonly int _InvLastVp = Shader.PropertyToID("_InvLastVp");
     public static readonly int _ShadowMapVP = Shader.PropertyToID("_ShadowMapVP");
     public static readonly int _ShadowMapVPs = Shader.PropertyToID("_ShadowMapVPs");
     public static readonly int _ShadowCamPoses = Shader.PropertyToID("_ShadowCamPoses");

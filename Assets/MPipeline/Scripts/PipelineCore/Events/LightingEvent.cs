@@ -417,8 +417,6 @@ namespace MPipeline
             buffer.ReleaseTemporaryRT(_DownSampledDepth2);
             buffer.ReleaseTemporaryRT(_DownSampledDepth3);
             buffer.SetGlobalVector(ShaderIDs._TileSize, new Vector2(tileSize.x, tileSize.y));
-            RenderPipeline.AddTempRtToReleaseList(ShaderIDs._PointLightTile);
-            RenderPipeline.AddTempRtToReleaseList(ShaderIDs._SpotLightTile);
         }
 
         [Unity.Burst.BurstCompile]

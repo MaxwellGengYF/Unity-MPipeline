@@ -21,36 +21,33 @@ Shader "Hidden/PostProcessing/TemporalAntialiasing"
         TEXTURE2D_SAMPLER2D(_HistoryTex, sampler_HistoryTex);
 
         TEXTURE2D_SAMPLER2D(_CameraDepthTexture, sampler_CameraDepthTexture);
-        Texture2D<float> _LastFrameDepth; SamplerState sampler_LastFrameDepth;
+        Texture2D<float> _LastFrameDepthTexture; SamplerState sampler_LastFrameDepthTexture;
         float4 _CameraDepthTexture_TexelSize;
         float3 _TemporalClipBounding;
         TEXTURE2D_SAMPLER2D(_CameraMotionVectorsTexture, sampler_CameraMotionVectorsTexture);
-
+        sampler2D _CameraGBufferTexture0;
+        sampler2D _HistoryAlbedo;
         float2 _Jitter;
         float4 _FinalBlendParameters; // x: static, y: dynamic, z: motion amplification
         float _Sharpness;
 inline float3 RGBToYCoCg(float3 RGB)
 {
-    float Y = dot(RGB, float3(1, 2, 1));
-    float Co = dot(RGB, float3(2, 0, -2));
-    float Cg = dot(RGB, float3(-1, 2, -1));
-
-    float3 YCoCg = float3(Y, Co, Cg);
-    return YCoCg;
+    const float3x3 mat = float3x3(0.25,0.5,0.25,0.5,0,-0.5,-0.25,0.5,-0.25);
+    return mul(mat, RGB);
+}
+inline float4 RGBToYCoCg(float4 RGB)
+{
+    return float4(RGBToYCoCg(RGB.xyz), RGB.w);
 }
 
 inline float3 YCoCgToRGB(float3 YCoCg)
 {
-    float Y = YCoCg.x * 0.25;
-    float Co = YCoCg.y * 0.25;
-    float Cg = YCoCg.z * 0.25;
-
-    float R = Y + Co - Cg;
-    float G = Y + Cg;
-    float B = Y - Co - Cg;
-
-    float3 RGB = float3(R, G, B);
-    return RGB;
+    const float3x3 mat = float3x3(1,1,-1,1,0,1,1,-1,-1);
+    return mul(mat, YCoCg);
+}
+inline float4 YCoCgToRGB(float4 YCoCg)
+{
+   return float4(YCoCgToRGB(YCoCg.xyz), YCoCg.w); 
 }
 static const float A = 0.15;
 static const float B = 0.50;
@@ -69,7 +66,6 @@ inline float Pow2(float x)
 {
     return x * x;
 }
-
 // Apply this to restore the linear HDR color before writing out the result of the resolve.
 inline float3 TonemapInvert(float3 x) { 
     return ((sqrt((4*x-4*x*x)*A*D*F*F*F+((4*x-4)*A*D*E+B*B*C*C+(2*x-2)*B*B*C+(x*x-2*x+1)*B*B)*F*F+((2-2*x)*B*B-2*B*B*C)*E*F+B*B*E*E)+((1-x)*B-B*C)*F+B*E)/(2*x*A*F-2*A*E)) * 0.5;
@@ -188,7 +184,7 @@ inline float3 TonemapInvert(float3 x) {
         }
         
         #define SAMPLE_DEPTH_OFFSET(x,y,z,a) (x.Sample(y,z,a).r )
-        float2 ReprojectedMotionVectorUV(float2 uv)
+        float2 ReprojectedMotionVectorUV(float2 uv, out float depth)
         {
             const float2 k = _CameraDepthTexture_TexelSize.xy;
             float neighborhood[8];
@@ -207,7 +203,7 @@ inline float3 TonemapInvert(float3 x) {
             #define COMPARE_DEPTH(a, b) step(a, b)
         #endif
             float3 result = float3(0, 0,  _CameraDepthTexture.Sample(sampler_CameraDepthTexture, uv).x);
-
+            depth = result.z;
             result = lerp(result, float3(-1, -1, neighborhood[0]), COMPARE_DEPTH(neighborhood[0], result.z));
             result = lerp(result, float3(0, -1, neighborhood[1]), COMPARE_DEPTH(neighborhood[1], result.z));
             result = lerp(result, float3(1, -1, neighborhood[2]), COMPARE_DEPTH(neighborhood[2], result.z));
@@ -219,13 +215,31 @@ inline float3 TonemapInvert(float3 x) {
 
             return (uv + result.xy * k);
         }
+        float4x4 _InvNonJitterVP;
+        float4x4 _InvLastVp;
+        float2 _LastJitter;
+        float getClampLerp(float2 lastFrameUV, float2 currentUV, float currDepth, float lenOfVelocity)
+        {
+            float lastFrameDepth = _LastFrameDepthTexture.SampleLevel(sampler_LastFrameDepthTexture, lastFrameUV - _LastJitter + _Jitter, 0);
+            float4 lastFrameProj = float4(lastFrameUV * 2 - 1, currDepth, 1);
+            float4 currFrameProj = float4(currentUV * 2 - 1, lastFrameDepth, 1);
+            float4 lastFrameWorld = mul(_InvLastVp, lastFrameProj);
+            float4 currFrameWorld = mul(_InvNonJitterVP, currFrameProj);
+            lastFrameWorld /= lastFrameWorld.w;
+            currFrameWorld /= currFrameWorld.w;
+            currFrameWorld.xyz -= lastFrameWorld.xyz;
+            float diffWeight = abs(dot(currFrameWorld.xyz, currFrameWorld.xyz)) < 0.01;
+            float weight = lerp(0.1, 1, saturate(lenOfVelocity * _FinalBlendParameters.z));
+            return lerp(diffWeight, 1, weight);
+        }
         #define SAMPLE_TEXTURE2D_OFFSET(x,y,z,a) (x.Sample(y,z,a))
         float4 Solver_CGBullTAA(v2f i) : SV_TARGET0
         {
             const float ExposureScale = 10;
             float2 uv = (i.texcoord - _Jitter);
             float2 screenSize = _ScreenParams.xy;
-            float2 closest = ReprojectedMotionVectorUV(i.texcoord);
+            float currDepth;
+            float2 closest = ReprojectedMotionVectorUV(i.texcoord, currDepth);
             float2 velocity = SAMPLE_TEXTURE2D(_CameraMotionVectorsTexture, sampler_CameraMotionVectorsTexture, closest).xy;
 //////////////////TemporalClamp
             float4 MiddleCenter = SAMPLE_TEXTURE2D(_MainTex, _MainTexSampler, uv);
@@ -254,6 +268,7 @@ inline float3 TonemapInvert(float3 x) {
             SampleWeights[6] = HdrWeight4(BottomLeft.rgb, ExposureScale);
             SampleWeights[7] = HdrWeight4(BottomCenter.rgb, ExposureScale);
             SampleWeights[8] = HdrWeight4(BottomRight.rgb, ExposureScale);
+
             float TotalWeight = SampleWeights[0] + SampleWeights[1] + SampleWeights[2] 
                                + SampleWeights[3] + SampleWeights[4] + SampleWeights[5] 
                                + SampleWeights[6] + SampleWeights[7] + SampleWeights[8];  
@@ -267,19 +282,17 @@ inline float3 TonemapInvert(float3 x) {
             float4 minColor, maxColor;
             float4 m1, m2, mean, stddev;
             float lenOfVelocity = length(velocity);
-            float AABBScale = lerp(_TemporalClipBounding.y, _TemporalClipBounding.x, 1 - Pow2(saturate(lenOfVelocity * _TemporalClipBounding.z)));
+            float AABBScale = lerp(_TemporalClipBounding.x, _TemporalClipBounding.y, saturate(lenOfVelocity * _TemporalClipBounding.z));
             m1 = TopLeft + TopCenter + TopRight + MiddleLeft + MiddleCenter + MiddleRight + BottomLeft + BottomCenter + BottomRight;
             m2 = TopLeft * TopLeft + TopCenter * TopCenter
                 + TopRight * TopRight + MiddleLeft * MiddleLeft
                 + MiddleCenter * MiddleCenter + MiddleRight * MiddleRight + BottomLeft * BottomLeft + BottomCenter * BottomCenter + BottomRight * BottomRight;
-                
             mean = m1 / 9;
             stddev = sqrt(m2 / 9 - mean * mean);  
             minColor = mean - AABBScale * stddev;
             maxColor = mean + AABBScale * stddev;
             minColor = min(minColor, Filtered);
             maxColor = max(maxColor, Filtered);
-
 //////////////////TemporalResolver
             float4 currColor = MiddleCenter;
             // Sharpen output
@@ -288,13 +301,15 @@ inline float3 TonemapInvert(float3 x) {
             currColor = clamp(currColor, 0, HALF_MAX_MINUS1);
             // HistorySample
             float4 lastColor = SAMPLE_TEXTURE2D(_HistoryTex, sampler_HistoryTex, lastFrameUV);
-            lastColor = clamp(lastColor, minColor, maxColor);
+            float staticWeight = getClampLerp(lastFrameUV, i.texcoord, currDepth, lenOfVelocity);
+            lastColor = lerp(lastColor, clamp((lastColor), minColor, maxColor), staticWeight);
             // HistoryBlend
-            float weight = clamp(lerp(_FinalBlendParameters.x, _FinalBlendParameters.y, lenOfVelocity * _FinalBlendParameters.z), _FinalBlendParameters.y, _FinalBlendParameters.x);
-            currColor.xyz = RGBToYCoCg(Tonemap(currColor.xyz));
-            lastColor.xyz = RGBToYCoCg(Tonemap(lastColor.xyz));
+            float weight = lerp(_FinalBlendParameters.x, _FinalBlendParameters.y, saturate(lenOfVelocity * _FinalBlendParameters.z));
+            currColor.xyz = Tonemap(currColor.xyz);
+            lastColor.xyz = Tonemap(lastColor.xyz);
             float4 temporalColor = lerp(currColor, lastColor, weight);
-            temporalColor.xyz = TonemapInvert(YCoCgToRGB(temporalColor.xyz));
+            temporalColor.xyz = TonemapInvert(temporalColor.xyz);
+            
             return temporalColor;
         }
 

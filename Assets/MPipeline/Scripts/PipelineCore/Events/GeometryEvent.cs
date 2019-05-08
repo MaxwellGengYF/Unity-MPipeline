@@ -125,9 +125,6 @@ namespace MPipeline
                 data.buffer.GetTemporaryRT(ShaderIDs._DownSampledGBuffer1, res.x, res.y, 0, FilterMode.Point, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear, 1, false);
                 data.buffer.GetTemporaryRT(ShaderIDs._DownSampledGBuffer2, res.x, res.y, 0, FilterMode.Point, RenderTextureFormat.ARGB2101010, RenderTextureReadWrite.Linear, 1, false);
                 data.buffer.GetTemporaryRT(ShaderIDs._DownSampledDepthTexture, res.x, res.y, 0, FilterMode.Point, RenderTextureFormat.RHalf, RenderTextureReadWrite.Linear, 1, false);
-                RenderPipeline.AddTempRtToReleaseList(ShaderIDs._DownSampledGBuffer1);
-                RenderPipeline.AddTempRtToReleaseList(ShaderIDs._DownSampledGBuffer2);
-                RenderPipeline.AddTempRtToReleaseList(ShaderIDs._DownSampledDepthTexture);
                 downSampledGBuffers[0] = ShaderIDs._DownSampledDepthTexture;
                 downSampledGBuffers[1] = ShaderIDs._DownSampledGBuffer1;
                 downSampledGBuffers[2] = ShaderIDs._DownSampledGBuffer2;

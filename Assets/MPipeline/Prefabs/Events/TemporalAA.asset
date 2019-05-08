@@ -17,5 +17,5 @@ MonoBehaviour:
   sharpness: 0
   stationaryBlending: 0.95
   motionBlending: 0.87
-  stationaryAABBScale: 5
+  stationaryAABBScale: 3
   motionAABBScale: 1.25
