@@ -33,7 +33,9 @@ Shader "Hidden/PostProcessing/TemporalAntialiasing"
 inline float3 RGBToYCoCg(float3 RGB)
 {
     const float3x3 mat = float3x3(0.25,0.5,0.25,0.5,0,-0.5,-0.25,0.5,-0.25);
-    return mul(mat, RGB);
+    float3 col =mul(mat, RGB);
+    col.yz += 0.5;
+    return col;
 }
 inline float4 RGBToYCoCg(float4 RGB)
 {
@@ -42,6 +44,7 @@ inline float4 RGBToYCoCg(float4 RGB)
 
 inline float3 YCoCgToRGB(float3 YCoCg)
 {
+    YCoCg.yz -= 0.5;
     const float3x3 mat = float3x3(1,1,-1,1,0,1,1,-1,-1);
     return mul(mat, YCoCg);
 }
@@ -184,10 +187,9 @@ inline float3 TonemapInvert(float3 x) {
         }
         
         #define SAMPLE_DEPTH_OFFSET(x,y,z,a) (x.Sample(y,z,a).r )
-        float2 ReprojectedMotionVectorUV(float2 uv, out float depth)
+        float2 ReprojectedMotionVectorUV(float2 uv, out float neighborhood[9])
         {
             const float2 k = _CameraDepthTexture_TexelSize.xy;
-            float neighborhood[8];
             neighborhood[0] = SAMPLE_DEPTH_OFFSET(_CameraDepthTexture, sampler_CameraDepthTexture, uv, int2(-1, -1));
             neighborhood[1] = SAMPLE_DEPTH_OFFSET(_CameraDepthTexture, sampler_CameraDepthTexture, uv, int2(0, -1));
             neighborhood[2] = SAMPLE_DEPTH_OFFSET(_CameraDepthTexture, sampler_CameraDepthTexture, uv, int2(1, -1));
@@ -203,7 +205,7 @@ inline float3 TonemapInvert(float3 x) {
             #define COMPARE_DEPTH(a, b) step(a, b)
         #endif
             float3 result = float3(0, 0,  _CameraDepthTexture.Sample(sampler_CameraDepthTexture, uv).x);
-            depth = result.z;
+            neighborhood[8] = result.z;
             result = lerp(result, float3(-1, -1, neighborhood[0]), COMPARE_DEPTH(neighborhood[0], result.z));
             result = lerp(result, float3(0, -1, neighborhood[1]), COMPARE_DEPTH(neighborhood[1], result.z));
             result = lerp(result, float3(1, -1, neighborhood[2]), COMPARE_DEPTH(neighborhood[2], result.z));
@@ -218,17 +220,27 @@ inline float3 TonemapInvert(float3 x) {
         float4x4 _InvNonJitterVP;
         float4x4 _InvLastVp;
         float2 _LastJitter;
-        float getClampLerp(float2 lastFrameUV, float2 currentUV, float currDepth, float lenOfVelocity)
+        float getClampLerp(float2 lastFrameUV, float2 currentUV, float currDepth[9], float lenOfVelocity)
         {
-            float lastFrameDepth = _LastFrameDepthTexture.SampleLevel(sampler_LastFrameDepthTexture, lastFrameUV - _LastJitter + _Jitter, 0);
-            float4 lastFrameProj = float4(lastFrameUV * 2 - 1, currDepth, 1);
-            float4 currFrameProj = float4(currentUV * 2 - 1, lastFrameDepth, 1);
-            float4 lastFrameWorld = mul(_InvLastVp, lastFrameProj);
-            float4 currFrameWorld = mul(_InvNonJitterVP, currFrameProj);
-            lastFrameWorld /= lastFrameWorld.w;
-            currFrameWorld /= currFrameWorld.w;
-            currFrameWorld.xyz -= lastFrameWorld.xyz;
-            float diffWeight = abs(dot(currFrameWorld.xyz, currFrameWorld.xyz)) < 0.01;
+            const float2 offset[9] = {float2(-1,-1), float2(0, -1), float2(1, -1), float2(-1, 0), float2(1,1), float2(1,0), float2(-1, 1), float2(0, -1), float2(0, 0)};
+            float maxValue = -1;
+            [unroll]
+            for(uint i = 0; i < 9; ++i)
+            {
+                float2 ofst = offset[i] * _CameraDepthTexture_TexelSize.xy;
+                float2 last = lastFrameUV + ofst;
+                float lastFrameDepth = _LastFrameDepthTexture.SampleLevel(sampler_LastFrameDepthTexture, last - _LastJitter + _Jitter, 0);
+                float4 lastFrameProj = float4(last * 2 - 1, lastFrameDepth, 1);
+                float4 currFrameProj = float4((currentUV + ofst) * 2 - 1, currDepth[i], 1);
+                float4 lastFrameWorld = mul(_InvLastVp, lastFrameProj);
+                float4 currFrameWorld = mul(_InvNonJitterVP, currFrameProj);
+                lastFrameWorld /= lastFrameWorld.w;
+                currFrameWorld /= currFrameWorld.w;
+                currFrameWorld.xyz -= lastFrameWorld.xyz;
+                maxValue = max(maxValue, abs(dot(currFrameWorld.xyz, currFrameWorld.xyz)));
+            }
+           
+            float diffWeight = maxValue < 0.01;
             float weight = lerp(0.1, 1, saturate(lenOfVelocity * _FinalBlendParameters.z));
             return lerp(diffWeight, 1, weight);
         }
@@ -238,7 +250,7 @@ inline float3 TonemapInvert(float3 x) {
             const float ExposureScale = 10;
             float2 uv = (i.texcoord - _Jitter);
             float2 screenSize = _ScreenParams.xy;
-            float currDepth;
+            float currDepth[9];
             float2 closest = ReprojectedMotionVectorUV(i.texcoord, currDepth);
             float2 velocity = SAMPLE_TEXTURE2D(_CameraMotionVectorsTexture, sampler_CameraMotionVectorsTexture, closest).xy;
 //////////////////TemporalClamp
@@ -268,7 +280,15 @@ inline float3 TonemapInvert(float3 x) {
             SampleWeights[6] = HdrWeight4(BottomLeft.rgb, ExposureScale);
             SampleWeights[7] = HdrWeight4(BottomCenter.rgb, ExposureScale);
             SampleWeights[8] = HdrWeight4(BottomRight.rgb, ExposureScale);
-
+            TopLeft = RGBToYCoCg(TopLeft);
+            TopCenter = RGBToYCoCg(TopCenter);
+            TopRight = RGBToYCoCg(TopRight);
+            MiddleLeft = RGBToYCoCg(MiddleLeft);
+            MiddleCenter = RGBToYCoCg(MiddleCenter);
+            MiddleRight = RGBToYCoCg(MiddleRight);
+            BottomLeft = RGBToYCoCg(BottomLeft);
+            BottomCenter = RGBToYCoCg(BottomCenter);
+            BottomRight = RGBToYCoCg(BottomRight);
             float TotalWeight = SampleWeights[0] + SampleWeights[1] + SampleWeights[2] 
                                + SampleWeights[3] + SampleWeights[4] + SampleWeights[5] 
                                + SampleWeights[6] + SampleWeights[7] + SampleWeights[8];  
@@ -294,7 +314,7 @@ inline float3 TonemapInvert(float3 x) {
             minColor = min(minColor, Filtered);
             maxColor = max(maxColor, Filtered);
 //////////////////TemporalResolver
-            float4 currColor = MiddleCenter;
+            float4 currColor = YCoCgToRGB(MiddleCenter);
             // Sharpen output
             float4 corners = ((TopLeft + BottomRight + TopRight + BottomLeft) - currColor) * 2;
             currColor += (currColor - (corners * 0.166667)) * 2.718282 * _Sharpness;
@@ -302,7 +322,7 @@ inline float3 TonemapInvert(float3 x) {
             // HistorySample
             float4 lastColor = SAMPLE_TEXTURE2D(_HistoryTex, sampler_HistoryTex, lastFrameUV);
             float staticWeight = getClampLerp(lastFrameUV, i.texcoord, currDepth, lenOfVelocity);
-            lastColor = lerp(lastColor, clamp((lastColor), minColor, maxColor), staticWeight);
+            lastColor = lerp(lastColor, YCoCgToRGB(clamp(RGBToYCoCg(lastColor), minColor, maxColor)), staticWeight);
             // HistoryBlend
             float weight = lerp(_FinalBlendParameters.x, _FinalBlendParameters.y, saturate(lenOfVelocity * _FinalBlendParameters.z));
             currColor.xyz = Tonemap(currColor.xyz);
