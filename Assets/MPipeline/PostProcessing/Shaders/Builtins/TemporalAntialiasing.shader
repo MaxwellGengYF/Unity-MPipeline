@@ -34,7 +34,7 @@ inline float3 RGBToYCoCg(float3 RGB)
 {
     const float3x3 mat = float3x3(0.25,0.5,0.25,0.5,0,-0.5,-0.25,0.5,-0.25);
     float3 col =mul(mat, RGB);
-    col.yz += 0.5;
+    //col.yz += 0.5;
     return col;
 }
 inline float4 RGBToYCoCg(float4 RGB)
@@ -44,7 +44,7 @@ inline float4 RGBToYCoCg(float4 RGB)
 
 inline float3 YCoCgToRGB(float3 YCoCg)
 {
-    YCoCg.yz -= 0.5;
+  //  YCoCg.yz -= 0.5;
     const float3x3 mat = float3x3(1,1,-1,1,0,1,1,-1,-1);
     return mul(mat, YCoCg);
 }
@@ -316,7 +316,7 @@ inline float3 TonemapInvert(float3 x) {
 //////////////////TemporalResolver
             float4 currColor = YCoCgToRGB(MiddleCenter);
             // Sharpen output
-            float4 corners = ((TopLeft + BottomRight + TopRight + BottomLeft) - currColor) * 2;
+            float4 corners = (YCoCgToRGB(TopLeft + BottomRight + TopRight + BottomLeft) - currColor) * 2;
             currColor += (currColor - (corners * 0.166667)) * 2.718282 * _Sharpness;
             currColor = clamp(currColor, 0, HALF_MAX_MINUS1);
             // HistorySample
