@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   enabled: 1
   jitterSpread: 1
-  sharpness: 0.15
+  sharpness: 0
   stationaryBlending: 0.95
   motionBlending: 0.87
   stationaryAABBScale: 3
