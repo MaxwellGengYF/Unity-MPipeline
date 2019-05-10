@@ -49,7 +49,7 @@ namespace MPipeline
             buffer.CopyTexture(cam.targets.gbufferIndex[0], 0, 0, ShaderIDs._BackupAlbedoMap, 0, 0);
             decalTargets[0] = cam.targets.gbufferIndex[0];
             decalTargets[1] = cam.targets.gbufferIndex[2];
-            buffer.SetRenderTarget(decalTargets, ShaderIDs._DepthBufferTexture);
+            buffer.SetRenderTarget(colors: decalTargets, depth: ShaderIDs._DepthBufferTexture);
             DecalData* resulPtr = decalCullResults.Ptr();
             for (int i = 0; i < cullJob.count; ++i)
             {

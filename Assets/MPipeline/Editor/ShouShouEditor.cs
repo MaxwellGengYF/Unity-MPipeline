@@ -11,7 +11,7 @@ public class ShouShouEditor : ShaderGUI
         targetMatEnabled = EditorGUILayout.Toggle("Cut off", targetMatEnabled);
         bool useRainning = targetMat.IsKeywordEnabled("USE_RANNING");
         useRainning = EditorGUILayout.Toggle("Use Rain", useRainning);
-        if(useRainning)
+        if (useRainning)
         {
             targetMat.EnableKeyword("USE_RANNING");
         }
@@ -19,21 +19,26 @@ public class ShouShouEditor : ShaderGUI
         {
             targetMat.DisableKeyword("USE_RANNING");
         }
+        targetMat.SetInt("ZWrite_On", targetMat.renderQueue == 2000 ? 0 : 1);
         if (!targetMatEnabled)
         {
             targetMat.DisableKeyword("CUT_OFF");
-            targetMat.renderQueue = 2000;
+            if (targetMat.renderQueue > 2450)
+                targetMat.renderQueue = 2000;
         }
         else
         {
+            
             targetMat.EnableKeyword("CUT_OFF");
-            targetMat.renderQueue = 2451;
+            if (targetMat.renderQueue < 2451)
+                targetMat.renderQueue = 2451;
         }
         base.OnGUI(materialEditor, properties);
-        if(targetMat.GetTexture("_DetailAlbedo") == null && targetMat.GetTexture("_DetailNormal") == null)
+        if (targetMat.GetTexture("_DetailAlbedo") == null && targetMat.GetTexture("_DetailNormal") == null)
         {
             targetMat.DisableKeyword("DETAIL_ON");
-        }else
+        }
+        else
         {
             targetMat.EnableKeyword("DETAIL_ON");
         }

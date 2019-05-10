@@ -31,6 +31,9 @@ namespace MPipeline
             public PerObjectData configure;
             public Material clusterMat;
         }
+        public const int overrideShadowmapPass = 0;
+        public const int overrideDepthPrePass = 1;
+        public const int overrideUnlitPass = 2;
         public static bool gpurpEnabled { get; private set; }
         private static bool singletonReady = false;
         private static PipelineResources resources;
@@ -196,7 +199,7 @@ namespace MPipeline
             {
                 perObjectData = UnityEngine.Rendering.PerObjectData.None,
                 overrideMaterial = opaqueOverride,
-                overrideMaterialPassIndex = -1
+                overrideMaterialPassIndex = overrideShadowmapPass
             };
             cullParams.cullingOptions = CullingOptions.ForceEvenIfCameraIsNotActive;
             CullingResults results = data.context.Cull(ref cullParams);
@@ -263,7 +266,7 @@ namespace MPipeline
                 {
                     perObjectData = UnityEngine.Rendering.PerObjectData.None,
                     overrideMaterial = opaqueOverride,
-                    overrideMaterialPassIndex = -1
+                    overrideMaterialPassIndex = overrideShadowmapPass
                 };
                 cullParams.cullingOptions = CullingOptions.ForceEvenIfCameraIsNotActive;
                 CullingResults results = data.context.Cull(ref cullParams);
@@ -303,7 +306,7 @@ namespace MPipeline
             };
             DrawingSettings opaqueRender = dsettings;
             opaqueRender.overrideMaterial = opaqueOverride;
-            opaqueRender.overrideMaterialPassIndex = -1;
+            opaqueRender.overrideMaterialPassIndex = overrideShadowmapPass;
             //X
             int depthSlice = lit.ShadowIndex * 6;
             cb.SetRenderTarget(renderTarget, 0, CubemapFace.Unknown, depthSlice + 1);
@@ -428,7 +431,7 @@ options.frustumPlanes);
             hizOpts.lastFrameCameraUp = cam.transform.up;
             PipelineFunctions.OcclusionRecheck(baseBuffer, gpuFrustumShader, buffer, hizOpts);
             //double draw
-            buffer.SetRenderTarget(rendTargets.gbufferIdentifier, ShaderIDs._DepthBufferTexture);
+            buffer.SetRenderTarget(colors: rendTargets.gbufferIdentifier, depth: ShaderIDs._DepthBufferTexture);
             buffer.DrawProceduralIndirect(Matrix4x4.identity, targetMat, 0, MeshTopology.Triangles, baseBuffer.reCheckCount, 0);
             buffer.BlitSRT(hizOpts.historyDepth, linearLODMaterial, 0);
             hizDepth.GetMipMap(hizOpts.historyDepth, buffer);

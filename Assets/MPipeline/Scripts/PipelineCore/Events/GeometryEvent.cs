@@ -79,8 +79,25 @@ namespace MPipeline
                 cullingShader = data.resources.shaders.gpuFrustumCulling,
                 terrainCompute = data.resources.shaders.terrainCompute
             };
-            data.buffer.SetRenderTarget(cam.targets.gbufferIdentifier, ShaderIDs._DepthBufferTexture);
-            data.buffer.ClearRenderTarget(true, true, Color.black);
+            FilteringSettings depthPrePassFilterSettings = new FilteringSettings
+            {
+                layerMask = cam.cam.cullingMask,
+                renderingLayerMask = 1,
+                renderQueueRange = new RenderQueueRange(2000, 2000)
+            };
+            DrawingSettings depthPrePassDrawSettings = new DrawingSettings(new ShaderTagId("DepthPrePass"), new SortingSettings { criteria = SortingCriteria.None })
+            {
+                perObjectData = UnityEngine.Rendering.PerObjectData.None,
+                overrideMaterial = proper.overrideOpaqueMaterial,
+                overrideMaterialPassIndex = SceneController.overrideDepthPrePass,
+                enableDynamicBatching = false,
+                enableInstancing = false
+            };
+            data.buffer.SetRenderTarget(ShaderIDs._DepthBufferTexture);
+            data.buffer.ClearRenderTarget(true, false, Color.black);
+            SceneController.RenderScene(ref data, ref depthPrePassFilterSettings, ref depthPrePassDrawSettings, ref proper.cullResults);
+            data.buffer.SetRenderTarget(colors: cam.targets.gbufferIdentifier, depth: ShaderIDs._DepthBufferTexture);
+            data.buffer.ClearRenderTarget(false, true, Color.black);
             HizOcclusionData hizOccData;
             if (useHiZ)
             {
@@ -93,10 +110,14 @@ namespace MPipeline
                 renderingLayerMask = 1,
                 renderQueueRange = RenderQueueRange.opaque
             };
-            DrawingSettings drawSettings = new DrawingSettings(new ShaderTagId("GBuffer"), new SortingSettings(cam.cam) { criteria = SortingCriteria.CommonOpaque })
+          
+            DrawingSettings drawSettings = new DrawingSettings(new ShaderTagId("GBuffer"), new SortingSettings { criteria = SortingCriteria.None })
             {
-                perObjectData = UnityEngine.Rendering.PerObjectData.Lightmaps
+                perObjectData = UnityEngine.Rendering.PerObjectData.Lightmaps,
+                enableDynamicBatching = false,
+                enableInstancing = false
             };
+            
             SceneController.RenderScene(ref data, ref filterSettings, ref drawSettings, ref proper.cullResults);
             if (useHiZ)
             {
@@ -110,14 +131,16 @@ namespace MPipeline
                 renderingLayerMask = 1,
                 renderQueueRange = RenderQueueRange.opaque
             };
-            DrawingSettings mvDraw = new DrawingSettings(new ShaderTagId("MotionVector"), new SortingSettings())
+            DrawingSettings mvDraw = new DrawingSettings(new ShaderTagId("MotionVector"), new SortingSettings { criteria = SortingCriteria.None })
             {
-                perObjectData = UnityEngine.Rendering.PerObjectData.None
+                perObjectData = UnityEngine.Rendering.PerObjectData.None,
+                enableDynamicBatching = false,
+                enableInstancing = false
             };
-            data.buffer.SetRenderTarget(ShaderIDs._CameraMotionVectorsTexture, ShaderIDs._DepthBufferTexture);
+            data.buffer.SetRenderTarget(color: ShaderIDs._CameraMotionVectorsTexture, depth: ShaderIDs._DepthBufferTexture);
             SceneController.RenderScene(ref data, ref mvFilter, ref mvDraw, ref proper.cullResults);
+            data.buffer.DrawMesh(GraphicsUtility.mesh, Matrix4x4.identity, motionVecMat, 0, 0);
             decal.FrameUpdate(cam, ref data);
-            data.buffer.BlitSRTWithDepth(ShaderIDs._CameraMotionVectorsTexture, ShaderIDs._DepthBufferTexture, motionVecMat, 0);
             //Generate DownSampled GBuffer
             if ((ao != null && ao.Enabled) || (reflection != null && reflection.Enabled && reflection.ssrEvents.enabled))
             {

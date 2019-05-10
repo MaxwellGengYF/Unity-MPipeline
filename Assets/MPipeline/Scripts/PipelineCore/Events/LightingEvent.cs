@@ -50,7 +50,7 @@ namespace MPipeline
         private float* clipDistances;
         private OrthoCam* sunShadowCams;
         private Material lightingMaterial;
-        private Material overrideOpaqueMaterial;
+        
         private PropertySetEvent proper;
 
         public override bool CheckProperty()
@@ -87,7 +87,6 @@ namespace MPipeline
             spotBuffer = new RenderSpotShadowCommand();
             spotBuffer.Init(resources.shaders.spotLightDepthShader);
             lightingMaterial = new Material(resources.shaders.lightingShader);
-            overrideOpaqueMaterial = new Material(resources.shaders.overrideOpaqueShader);
         }
 
         protected override void Dispose()
@@ -220,7 +219,7 @@ namespace MPipeline
                     SunLight.current.farestDistance));//Only Mask
                 buffer.SetGlobalVector(ShaderIDs._SoftParam, SunLight.current.cascadeSoftValue / SunLight.current.resolution);
                 csmHandle.Complete();
-                SceneController.DrawDirectionalShadow(cam, ref staticFit, ref data, ref opts, clipDistances, sunShadowCams, cascadeShadowMapVP, overrideOpaqueMaterial);
+                SceneController.DrawDirectionalShadow(cam, ref staticFit, ref data, ref opts, clipDistances, sunShadowCams, cascadeShadowMapVP, proper.overrideOpaqueMaterial);
                 buffer.SetGlobalMatrixArray(ShaderIDs._ShadowMapVPs, cascadeShadowMapVP);
                 buffer.SetGlobalTexture(ShaderIDs._DirShadowMap, SunLight.current.shadowmapTexture);
                 cbdr.dirLightShadowmap = SunLight.current.shadowmapTexture;
@@ -268,7 +267,7 @@ namespace MPipeline
                         if (!light.useShadowCache || light.updateShadowCache)
                         {
                             light.updateShadowCache = false;
-                            SceneController.DrawPointLight(light, localLightShadowLayer, ref ptLitStr, cubeDepthMaterial, buffer, cullShader, i, ref data, cubemapVPMatrices.unsafePtr, cbdr.cubeArrayMap, cam.inverseRender, overrideOpaqueMaterial);
+                            SceneController.DrawPointLight(light, localLightShadowLayer, ref ptLitStr, cubeDepthMaterial, buffer, cullShader, i, ref data, cubemapVPMatrices.unsafePtr, cbdr.cubeArrayMap, cam.inverseRender, proper.overrideOpaqueMaterial);
                         }
                         ptLitStr.shadowIndex = light.ShadowIndex;
                         //TODO
@@ -306,7 +305,7 @@ namespace MPipeline
                         if (!mlight.useShadowCache || mlight.updateShadowCache)
                         {
                             mlight.updateShadowCache = false;
-                            SceneController.DrawSpotLight(buffer, mlight, localLightShadowLayer, data.resources.shaders.gpuFrustumCulling, ref data, mlight.shadowCam, ref spot, ref spotBuffer, cam.inverseRender, overrideOpaqueMaterial);
+                            SceneController.DrawSpotLight(buffer, mlight, localLightShadowLayer, data.resources.shaders.gpuFrustumCulling, ref data, mlight.shadowCam, ref spot, ref spotBuffer, cam.inverseRender, proper.overrideOpaqueMaterial);
                         }
                         spot.shadowIndex = mlight.ShadowIndex;
                     }

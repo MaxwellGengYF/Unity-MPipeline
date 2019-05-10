@@ -3,7 +3,10 @@
     SubShader
     {
         // No culling or depth
-        Cull Off ZWrite Off ZTest Always
+
+        Pass
+        {
+            Cull Off ZWrite Off ZTest Always
         Stencil
         {
             Ref 0
@@ -11,8 +14,6 @@
             pass keep
             ReadMask 4
         }
-        Pass
-        {
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
@@ -48,7 +49,7 @@
                 float4 lastClip = mul(_LastVp, worldPos);
                 float2 uv = lastClip.xy / lastClip.w;
                 uv = uv * 0.5 + 0.5;
-                return i.uv - uv;
+                return  i.uv - uv;
             }
             ENDCG
         }

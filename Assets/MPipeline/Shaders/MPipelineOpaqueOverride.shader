@@ -16,6 +16,7 @@
 			#pragma multi_compile __ POINT_LIGHT_SHADOW
 			
 			float4x4 _ShadowMapVP;
+			float4 _LightPos;
 			struct appdata_shadow
 			{
 				float4 vertex : POSITION;
@@ -59,8 +60,6 @@
 			CGPROGRAM
 			#pragma vertex vert
 			#pragma fragment frag
-			// Upgrade NOTE: excluded shader from OpenGL ES 2.0 because it uses non-square matrices
-			#pragma exclude_renderers gles
 			#include "UnityCG.cginc"
 			
 			struct appdata_depthPrePass

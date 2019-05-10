@@ -121,6 +121,7 @@ namespace MPipeline
             /*HizOcclusionData hizOccData;
             hizOccData = IPerCameraData.GetProperty(cam, () => new HizOcclusionData());
             data.buffer.Blit(hizOccData.historyDepth, cam.cameraTarget);*/
+            //data.buffer.Blit(ShaderIDs._CameraMotionVectorsTexture, cam.cameraTarget);
             data.buffer.BlitSRT(cam.targets.renderTargetIdentifier, cam.cameraTarget, postContext.uberSheet.material, 0, postContext.uberSheet.properties);
             if (postContext.bloomBufferNameID > -1) data.buffer.ReleaseTemporaryRT(postContext.bloomBufferNameID);
         }

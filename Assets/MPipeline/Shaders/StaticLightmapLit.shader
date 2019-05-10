@@ -15,6 +15,7 @@
 		_EmissionMultiplier("Emission Multiplier", Range(0, 128)) = 1
 		_EmissionColor("Emission Color", Color) = (0,0,0,1)
 		_EmissionMap("Emission Map", 2D) = "white"{}
+		[HideInInspector]ZWrite_On("zw", Int) = 0
 	}
 	SubShader {
 		Tags { "RenderType"="Opaque" }
@@ -112,7 +113,8 @@ pass
 }
 Name "GBuffer"
 Tags {"LightMode" = "GBuffer" "Name" = "GBuffer"}
-ZTest Less
+ZTest LEqual
+ZWrite [ZWrite_On]
 CGPROGRAM
 
 #pragma vertex vert_surf
