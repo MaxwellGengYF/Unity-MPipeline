@@ -113,9 +113,9 @@ public unsafe struct NativeList<T> : IEnumerable<T> where T : unmanaged
     }
     public void RemoveElement(T target, System.Func<T, T, bool> conditionFunc)
     {
-        for(int i = 0; i < Length; ++i)
+        for (int i = 0; i < Length; ++i)
         {
-            while(conditionFunc(target, this[i]) && i < Length)
+            while (conditionFunc(target, this[i]) && i < Length)
             {
                 this[i] = this[Length - 1];
                 RemoveLast();
@@ -150,10 +150,13 @@ public unsafe struct NativeList<T> : IEnumerable<T> where T : unmanaged
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public void Dispose()
     {
-        isCreated = false;
-        Allocator alloc = data->allocator;
-        UnsafeUtility.Free(data->ptr, alloc);
-        UnsafeUtility.Free(data, alloc);
+        if (isCreated)
+        {
+            isCreated = false;
+            Allocator alloc = data->allocator;
+            UnsafeUtility.Free(data->ptr, alloc);
+            UnsafeUtility.Free(data, alloc);
+        }
     }
     public ref T this[int id]
     {

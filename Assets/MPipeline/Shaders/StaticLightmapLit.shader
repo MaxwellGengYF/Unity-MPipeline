@@ -15,7 +15,8 @@
 		_EmissionMultiplier("Emission Multiplier", Range(0, 128)) = 1
 		_EmissionColor("Emission Color", Color) = (0,0,0,1)
 		_EmissionMap("Emission Map", 2D) = "white"{}
-		[HideInInspector]ZWrite_On("zw", Int) = 0
+		[HideInInspector]_ZTest("zw", Int) = 0
+		[HideInInspector]_ZWrite("zww", Int) = 0
 	}
 	SubShader {
 		Tags { "RenderType"="Opaque" }
@@ -75,9 +76,6 @@ cbuffer UnityPerMaterial
 			uv = TRANSFORM_TEX(uv, _MainTex);
 			float4 spec = tex2D(_SpecularMap,uv);
 			float4 c = tex2D (_MainTex, uv);
-			#if CUT_OFF
-			clip(c.a * _Color.a - _Cutoff);
-			#endif
 #if DETAIL_ON
 			float3 detailNormal = UnpackNormal(tex2D(_DetailNormal, detailUV));
 			float4 detailColor = tex2D(_DetailAlbedo, detailUV);
@@ -113,8 +111,9 @@ pass
 }
 Name "GBuffer"
 Tags {"LightMode" = "GBuffer" "Name" = "GBuffer"}
-ZTest LEqual
-ZWrite [ZWrite_On]
+ZTest [_ZTest]
+ZWrite [_ZWrite]
+Cull back
 CGPROGRAM
 
 #pragma vertex vert_surf
@@ -188,7 +187,7 @@ ENDCG
 		{
 			ZTest less
 			Cull back
-			Tags {"LightMode" = "DepthPrePass"}
+			Tags {"LightMode" = "Depth"}
 			CGPROGRAM
 			#pragma vertex vert
 			#pragma fragment frag
@@ -231,58 +230,6 @@ ENDCG
 				float4 c = tex2D(_MainTex, i.texcoord);
 				clip(c.a * _Color.a - _Cutoff);
 				#endif
-			}
-
-			ENDCG
-		}
-		Pass
-		{
-			ZTest less
-			Cull back
-			Tags {"LightMode" = "Depth"}
-			CGPROGRAM
-			#pragma vertex vert
-			#pragma fragment frag
-			// Upgrade NOTE: excluded shader from OpenGL ES 2.0 because it uses non-square matrices
-			#pragma exclude_renderers gles
-			#include "UnityCG.cginc"
-			
-			struct appdata_shadow
-			{
-				float4 vertex : POSITION;
-				#if CUT_OFF
-				float2 texcoord : TEXCOORD0;
-				#endif
-			};
-			struct v2f
-			{
-				float4 vertex : SV_POSITION;
-				#if CUT_OFF
-				float2 texcoord : TEXCOORD0;
-				#endif
-				float3 worldPos : TEXCOORD1;
-			};
-
-			v2f vert (appdata_shadow v)
-			{
-				v2f o;
-				o.vertex = UnityObjectToClipPos(v.vertex);
-				o.worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
-				#if CUT_OFF
-				o.texcoord = v.texcoord;
-				#endif
-				return o;
-			}
-
-			
-			float4 frag (v2f i)  : SV_TARGET
-			{
-				#if CUT_OFF
-				i.texcoord = TRANSFORM_TEX(i.texcoord, _MainTex);
-				float4 c = tex2D(_MainTex, i.texcoord);
-				clip(c.a * _Color.a - _Cutoff);
-				#endif
-				return distance(i.worldPos, _WorldSpaceCameraPos);
 			}
 
 			ENDCG

@@ -28,7 +28,7 @@ namespace MPipeline
         }
     }
     [System.Serializable]
-    public abstract class PipelineEvent : ScriptableObject
+    public unsafe abstract class PipelineEvent : ScriptableObject
     {
         [HideInInspector]
         [SerializeField]
@@ -50,11 +50,12 @@ namespace MPipeline
                 {
                     if (value)
                     {
-                        if (dependingEvents != null)
+                        if (dependingEvents.isCreated)
                         {
                             foreach (var i in dependingEvents)
                             {
-                                if (!i.enabled)
+                                PipelineEvent evt = MUnsafeUtility.GetObject<PipelineEvent>(i.ToPointer());
+                                if (!evt.enabled)
                                 {
                                     enabled = false;
                                     return;
@@ -64,11 +65,12 @@ namespace MPipeline
                     }
                     else
                     {
-                        if (dependedEvents != null)
+                        if (dependedEvents.isCreated)
                         {
                             foreach (var i in dependedEvents)
                             {
-                                i.Enabled = false;
+                                PipelineEvent evt = MUnsafeUtility.GetObject<PipelineEvent>(i.ToPointer());
+                                evt.Enabled = false;
                             }
                         }
                     }
@@ -76,11 +78,21 @@ namespace MPipeline
             }
         }
 
-        private List<PipelineEvent> dependedEvents = null;
-        private List<PipelineEvent> dependingEvents = null;
+        private NativeList<UIntPtr> dependedEvents;
+        private NativeList<UIntPtr> dependingEvents;
+        public void InitDependEventsList()
+        {
+            dependedEvents = new NativeList<UIntPtr>(10, Unity.Collections.Allocator.Persistent);
+            dependingEvents = new NativeList<UIntPtr>(10, Unity.Collections.Allocator.Persistent);
+        }
+        public void DisposeDependEventsList()
+        {
+            dependedEvents.Dispose();
+            dependingEvents.Dispose();
+        }
         public void CheckInit(PipelineResources resources)
         {
-            
+
             initialized = true;
             Init(resources);
         }
@@ -89,27 +101,33 @@ namespace MPipeline
             if (initialized) return;
             initialized = true;
             Init(resources);
+            
             if (enabled)
             {
-                if (dependingEvents != null)
+
+                if (dependingEvents.isCreated)
                 {
                     foreach (var i in dependingEvents)
                     {
-                        if (!i.enabled)
+                        PipelineEvent evt = MUnsafeUtility.GetObject<PipelineEvent>(i.ToPointer());
+                        if (!evt.enabled)
                         {
                             Enabled = false;
                             return;
                         }
                     }
                 }
+
+
             }
             else
             {
-                if (dependedEvents != null)
+                if (dependedEvents.isCreated)
                 {
                     foreach (var i in dependedEvents)
                     {
-                        i.Enabled = false;
+                        PipelineEvent evt = MUnsafeUtility.GetObject<PipelineEvent>(i.ToPointer());
+                        evt.Enabled = false;
                     }
                 }
             }
@@ -130,17 +148,13 @@ namespace MPipeline
             RequireEventAttribute requireEvt = GetType().GetCustomAttribute<RequireEventAttribute>(true);
             if (requireEvt != null)
             {
-                if (dependingEvents == null)
-                    dependingEvents = new List<PipelineEvent>(requireEvt.events.Length);
                 foreach (var t in requireEvt.events)
                 {
                     PipelineEvent targetevt = RenderPipeline.GetEvent(t);
                     if (targetevt != null)
                     {
-                        if (targetevt.dependedEvents == null)
-                            targetevt.dependedEvents = new List<PipelineEvent>();
-                        targetevt.dependedEvents.Add(this);
-                        dependingEvents.Add(targetevt);
+                        targetevt.dependedEvents.Add(new UIntPtr(MUnsafeUtility.GetManagedPtr(this)));
+                        dependingEvents.Add(new UIntPtr(MUnsafeUtility.GetManagedPtr(targetevt)));
                     }
                 }
             }

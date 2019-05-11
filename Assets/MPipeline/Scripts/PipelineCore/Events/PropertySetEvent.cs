@@ -15,15 +15,19 @@ namespace MPipeline
     {
         public CullingResults cullResults;
         public ScriptableCullingParameters cullParams;
+        [System.NonSerialized]
         public Vector4[] frustumPlanes = new Vector4[6];
         public float4x4 lastViewProjection { get; private set; }
         public float4x4 inverseLastViewProjection { get; private set; }
+        [System.NonSerialized]
         public float4x4 VP;
+        [System.NonSerialized]
         public float4x4 inverseVP;
         private Random rand;
         private CalculateMatrixJob calculateJob;
         private JobHandle handle;
         public Matrix4x4 inverseNonJitterVP { get; private set; }
+        [System.NonSerialized]
         public Material overrideOpaqueMaterial;
         private System.Func<PipelineCamera, LastVPData> getLastVP = (c) =>
         {

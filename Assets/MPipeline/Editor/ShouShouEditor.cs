@@ -19,7 +19,8 @@ public class ShouShouEditor : ShaderGUI
         {
             targetMat.DisableKeyword("USE_RANNING");
         }
-        targetMat.SetInt("ZWrite_On", targetMat.renderQueue == 2000 ? 0 : 1);
+        targetMat.SetInt("_ZTest", targetMatEnabled ? (int)UnityEngine.Rendering.CompareFunction.Equal : (int)UnityEngine.Rendering.CompareFunction.Less);
+        targetMat.SetInt("_ZWrite", targetMatEnabled ? 0 : 1);
         if (!targetMatEnabled)
         {
             targetMat.DisableKeyword("CUT_OFF");

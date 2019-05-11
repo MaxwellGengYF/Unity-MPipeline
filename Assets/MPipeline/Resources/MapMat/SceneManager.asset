@@ -12,4 +12,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fd1947e7bf2da6540a0943c5ce6ab3d9, type: 3}
   m_Name: SceneManager
   m_EditorClassIdentifier: 
-  clusterProperties: []
+  clusterProperties:
+  - name: TestFile
+    clusterCount: 721

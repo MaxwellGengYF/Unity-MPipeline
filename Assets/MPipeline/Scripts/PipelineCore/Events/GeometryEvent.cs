@@ -79,51 +79,50 @@ namespace MPipeline
                 cullingShader = data.resources.shaders.gpuFrustumCulling,
                 terrainCompute = data.resources.shaders.terrainCompute
             };
-            FilteringSettings depthPrePassFilterSettings = new FilteringSettings
+            FilteringSettings alphaTestFilter = new FilteringSettings
             {
                 layerMask = cam.cam.cullingMask,
                 renderingLayerMask = 1,
-                renderQueueRange = new RenderQueueRange(2000, 2000)
+                renderQueueRange = new RenderQueueRange(2450, 2499)
             };
-            DrawingSettings depthPrePassDrawSettings = new DrawingSettings(new ShaderTagId("DepthPrePass"), new SortingSettings { criteria = SortingCriteria.None })
+            DrawingSettings depthPrePassDrawSettings = new DrawingSettings(new ShaderTagId("Depth"), new SortingSettings())
             {
                 perObjectData = UnityEngine.Rendering.PerObjectData.None,
-                overrideMaterial = proper.overrideOpaqueMaterial,
-                overrideMaterialPassIndex = SceneController.overrideDepthPrePass,
                 enableDynamicBatching = false,
                 enableInstancing = false
             };
-            data.buffer.SetRenderTarget(ShaderIDs._DepthBufferTexture);
-            data.buffer.ClearRenderTarget(true, false, Color.black);
-            SceneController.RenderScene(ref data, ref depthPrePassFilterSettings, ref depthPrePassDrawSettings, ref proper.cullResults);
+
             data.buffer.SetRenderTarget(colors: cam.targets.gbufferIdentifier, depth: ShaderIDs._DepthBufferTexture);
-            data.buffer.ClearRenderTarget(false, true, Color.black);
+            data.buffer.ClearRenderTarget(true, true, Color.black);
             HizOcclusionData hizOccData;
             if (useHiZ)
             {
                 hizOccData = IPerCameraData.GetProperty(cam, () => new HizOcclusionData());
                 SceneController.DrawCluster_LastFrameDepthHiZ(ref options, hizOccData, clusterMat, cam);
             }
-            FilteringSettings filterSettings = new FilteringSettings
+            FilteringSettings opaqueFilter = new FilteringSettings
             {
                 layerMask = cam.cam.cullingMask,
                 renderingLayerMask = 1,
-                renderQueueRange = RenderQueueRange.opaque
+                renderQueueRange = new RenderQueueRange(2000, 2449)
             };
           
-            DrawingSettings drawSettings = new DrawingSettings(new ShaderTagId("GBuffer"), new SortingSettings { criteria = SortingCriteria.None })
+            DrawingSettings drawSettings = new DrawingSettings(new ShaderTagId("GBuffer"), new SortingSettings(cam.cam) { criteria = SortingCriteria.CommonOpaque })
             {
                 perObjectData = UnityEngine.Rendering.PerObjectData.Lightmaps,
                 enableDynamicBatching = false,
                 enableInstancing = false
             };
             
-            SceneController.RenderScene(ref data, ref filterSettings, ref drawSettings, ref proper.cullResults);
+            SceneController.RenderScene(ref data, ref opaqueFilter, ref drawSettings, ref proper.cullResults);
             if (useHiZ)
             {
                 SceneController.DrawCluster_RecheckHiz(ref options, ref hizDepth, hizOccData, clusterMat, linearMat, cam);
             }
-
+            data.buffer.SetRenderTarget(ShaderIDs._DepthBufferTexture);
+            SceneController.RenderScene(ref data, ref alphaTestFilter, ref depthPrePassDrawSettings, ref proper.cullResults);
+            data.buffer.SetRenderTarget(colors: cam.targets.gbufferIdentifier, depth: ShaderIDs._DepthBufferTexture);
+            SceneController.RenderScene(ref data, ref alphaTestFilter, ref drawSettings, ref proper.cullResults);
             data.buffer.Blit(ShaderIDs._DepthBufferTexture, ShaderIDs._CameraDepthTexture);
             FilteringSettings mvFilter = new FilteringSettings
             {

@@ -33,7 +33,6 @@ namespace MPipeline
         }
         public const int overrideShadowmapPass = 0;
         public const int overrideDepthPrePass = 1;
-        public const int overrideUnlitPass = 2;
         public static bool gpurpEnabled { get; private set; }
         private static bool singletonReady = false;
         private static PipelineResources resources;

@@ -10,13 +10,19 @@ using Unity.Mathematics;
 using Unity.Collections;
 using UnityEngine.Rendering;
 using Random = UnityEngine.Random;
-[ExecuteInEditMode]
 public unsafe class Test : MonoBehaviour
 {
-    private void Update()
+    public Material mat;
+    public Mesh mesh;
+    public Transform trans;
+    Camera cam;
+    CommandBuffer bf;
+    private void Awake()
     {
-        Vector3 vec = transform.position;
-        vec.y = sin(Time.time * 10) * 3;
-        transform.position = vec;
+        cam = GetComponent<Camera>();
+        bf = new CommandBuffer();
+        bf.SetRenderTarget(BuiltinRenderTextureType.CameraTarget);
+        bf.DrawMesh(GraphicsUtility.mesh, trans.localToWorldMatrix, mat, 0, 0);
+        cam.AddCommandBuffer(CameraEvent.AfterForwardOpaque, bf);
     }
 }

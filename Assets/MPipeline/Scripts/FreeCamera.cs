@@ -51,7 +51,7 @@ public class FreeCamera : MonoBehaviour {
 			ReleaseInput();
 	}
 
-	void Update() {
+    void LateUpdate() {
 		if(!m_inputCaptured) {
 			if(!holdRightMouseCapture && Input.GetMouseButtonDown(0)) 
 				CaptureInput();
@@ -61,7 +61,6 @@ public class FreeCamera : MonoBehaviour {
 
 		if(!m_inputCaptured)
 			return;
-
 		if(m_inputCaptured) {
 			if(!holdRightMouseCapture && Input.GetKeyDown(KeyCode.Escape))
 				ReleaseInput();

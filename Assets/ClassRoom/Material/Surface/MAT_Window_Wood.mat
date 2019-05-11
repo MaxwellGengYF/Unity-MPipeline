@@ -88,6 +88,7 @@ Material:
         m_Scale: {x: 1, y: 1}
         m_Offset: {x: 0, y: 0}
     m_Floats:
+    - ZWrite_On: 0
     - _AlbedoTextureBrigeness: 1
     - _BumpScale: 1
     - _Cutoff: 0
@@ -114,6 +115,7 @@ Material:
     - _UVSec: 0
     - _UseColor: 0
     - _UseTexture: 1
+    - _ZTest: 2
     - _ZWrite: 1
     - __dirty: 0
     m_Colors:

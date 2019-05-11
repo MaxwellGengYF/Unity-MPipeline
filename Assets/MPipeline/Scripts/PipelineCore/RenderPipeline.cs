@@ -39,10 +39,10 @@ namespace MPipeline
         }
         private static List<EditorBakeCommand> bakeList = new List<EditorBakeCommand>();
         public static void AddRenderingMissionInEditor(
-            NativeList<float4x4> worldToCameras, 
-            NativeList<float4x4> projections, 
-            PipelineCamera targetCameras, 
-            RenderTexture texArray, 
+            NativeList<float4x4> worldToCameras,
+            NativeList<float4x4> projections,
+            PipelineCamera targetCameras,
+            RenderTexture texArray,
             CommandBuffer buffer)
         {
             bakeList.Add(new EditorBakeCommand
@@ -98,6 +98,10 @@ namespace MPipeline
             data.buffer = new CommandBuffer();
             for (int i = 0; i < resources.availiableEvents.Length; ++i)
             {
+                resources.availiableEvents[i].InitDependEventsList();
+            }
+            for (int i = 0; i < resources.availiableEvents.Length; ++i)
+            {
                 eventsGuideBook.Add(new UIntPtr(MUnsafeUtility.GetManagedPtr(resources.availiableEvents[i].GetType())), i);
                 resources.availiableEvents[i].Prepare();
             }
@@ -117,15 +121,13 @@ namespace MPipeline
             }
             data.buffer.Dispose();
             var allEvents = resources.allEvents;
-            foreach (var i in allEvents)
+            for (int i = 0; i < resources.availiableEvents.Length; ++i)
             {
-                if (i != null)
-                {
-                    foreach (var j in i)
-                    {
-                        j.DisposeEvent();
-                    }
-                }
+                resources.availiableEvents[i].DisposeEvent();
+            }
+            for (int i = 0; i < resources.availiableEvents.Length; ++i)
+            {
+                resources.availiableEvents[i].DisposeDependEventsList();
             }
             foreach (var i in PipelineCamera.allCamera)
             {
@@ -194,6 +196,7 @@ namespace MPipeline
                     {
                         renderingEditor = false;
                     }
+
                     pipelineCam = MUnsafeUtility.GetObject<PipelineCamera>(pipelineCamPtr.ToPointer());
                     Render(pipelineCam, ref renderContext, cam, propertyCheckedFlags);
                     data.ExecuteCommandBuffer();

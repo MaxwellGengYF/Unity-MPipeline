@@ -56,7 +56,7 @@
 		{
 			ZTest less
 			Cull back
-			Tags {"LightMode" = "DepthPrePass"}
+			Tags {"LightMode" = "Depth"}
 			CGPROGRAM
 			#pragma vertex vert
 			#pragma fragment frag
@@ -83,43 +83,6 @@
 
 			ENDCG
 		}
-		Pass
-		{
-			ZTest less
-			Cull back
-			Tags {"LightMode" = "Depth"}
-			CGPROGRAM
-			#pragma vertex vert
-			#pragma fragment frag
-			// Upgrade NOTE: excluded shader from OpenGL ES 2.0 because it uses non-square matrices
-			#pragma exclude_renderers gles
-			#include "UnityCG.cginc"
-			
-			struct appdata_shadow
-			{
-				float4 vertex : POSITION;
-			};
-			struct v2f
-			{
-				float4 vertex : SV_POSITION;
-				float3 worldPos : TEXCOORD1;
-			};
-
-			v2f vert (appdata_shadow v)
-			{
-				v2f o;
-				o.vertex = UnityObjectToClipPos(v.vertex);
-				o.worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
-				return o;
-			}
-
-			
-			float4 frag (v2f i)  : SV_TARGET
-			{
-				return distance(i.worldPos, _WorldSpaceCameraPos);
-			}
-
-			ENDCG
-		}
+	
     }
 }

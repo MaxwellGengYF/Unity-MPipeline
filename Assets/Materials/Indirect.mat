@@ -77,6 +77,7 @@ Material:
         m_Offset: {x: 0, y: 0}
     m_Floats:
     - SpecularInten: 0.3
+    - ZWrite_On: 0
     - _BumpScale: 1
     - _Cutoff: 0
     - _DetailNormalMapScale: 1
@@ -97,6 +98,7 @@ Material:
     - _SpecularIntensity: 0.095
     - _SrcBlend: 1
     - _UVSec: 0
+    - _ZTest: 2
     - _ZWrite: 1
     m_Colors:
     - _Color: {r: 1, g: 1, b: 1, a: 1}
