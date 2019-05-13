@@ -51,8 +51,8 @@
         {
             Stencil
             {
-                Ref 1
-                Comp Equal
+                Ref 0
+                Comp Less
                 Pass keep
                 ReadMask 3
             }
@@ -65,6 +65,28 @@
             {
                 float4 v = _MainTex.Sample(sampler_MainTex, i.uv);
                 return float4(v.xyz * _CameraGBufferTexture0.Sample(sampler_CameraGBufferTexture0, i.uv).xyz, v.w);
+            }
+            ENDCG
+        }
+
+        Pass
+        {
+            Stencil
+            {
+                Ref 0
+                Comp Equal
+                Pass keep
+                ReadMask 3
+            }
+            Cull Off ZWrite Off ZTest Greater
+            CGPROGRAM
+            #pragma vertex vert
+            #pragma fragment frag
+            Texture2D<float4> _MainTex; SamplerState sampler_MainTex;
+            float4 frag (v2f i) : SV_Target
+            {
+                float4 v = _MainTex.Sample(sampler_MainTex, i.uv);
+                return v;
             }
             ENDCG
         }

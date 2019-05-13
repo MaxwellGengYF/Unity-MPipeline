@@ -85,7 +85,31 @@ namespace MPipeline
                 renderingLayerMask = 1,
                 renderQueueRange = new RenderQueueRange(2450, 2499)
             };
-            DrawingSettings depthPrePassDrawSettings = new DrawingSettings(new ShaderTagId("Depth"), new SortingSettings())
+            FilteringSettings opaqueFilter = new FilteringSettings
+            {
+                layerMask = cam.cam.cullingMask,
+                renderingLayerMask = 1,
+                renderQueueRange = new RenderQueueRange(2000, 2449)
+            };
+            FilteringSettings mvFilter = new FilteringSettings
+            {
+                layerMask = cam.cam.cullingMask,
+                renderingLayerMask = 1,
+                renderQueueRange = RenderQueueRange.opaque
+            };
+            DrawingSettings depthPrePassDrawSettings = new DrawingSettings(new ShaderTagId("Depth"), new SortingSettings(cam.cam) { criteria = SortingCriteria.QuantizedFrontToBack})
+            {
+                perObjectData = UnityEngine.Rendering.PerObjectData.None,
+                enableDynamicBatching = false,
+                enableInstancing = false
+            };
+            DrawingSettings drawSettings = new DrawingSettings(new ShaderTagId("GBuffer"), new SortingSettings(cam.cam) { criteria = SortingCriteria.CommonOpaque })
+            {
+                perObjectData = UnityEngine.Rendering.PerObjectData.Lightmaps,
+                enableDynamicBatching = false,
+                enableInstancing = false
+            };
+            DrawingSettings mvDraw = new DrawingSettings(new ShaderTagId("MotionVector"), new SortingSettings { criteria = SortingCriteria.None })
             {
                 perObjectData = UnityEngine.Rendering.PerObjectData.None,
                 enableDynamicBatching = false,
@@ -100,19 +124,6 @@ namespace MPipeline
                 hizOccData = IPerCameraData.GetProperty(cam, () => new HizOcclusionData());
                 SceneController.DrawCluster_LastFrameDepthHiZ(ref options, hizOccData, clusterMat, cam);
             }
-            FilteringSettings opaqueFilter = new FilteringSettings
-            {
-                layerMask = cam.cam.cullingMask,
-                renderingLayerMask = 1,
-                renderQueueRange = new RenderQueueRange(2000, 2449)
-            };
-          
-            DrawingSettings drawSettings = new DrawingSettings(new ShaderTagId("GBuffer"), new SortingSettings(cam.cam) { criteria = SortingCriteria.CommonOpaque })
-            {
-                perObjectData = UnityEngine.Rendering.PerObjectData.Lightmaps,
-                enableDynamicBatching = false,
-                enableInstancing = false
-            };
             
             SceneController.RenderScene(ref data, ref opaqueFilter, ref drawSettings, ref proper.cullResults);
             if (useHiZ)
@@ -122,20 +133,13 @@ namespace MPipeline
             data.buffer.SetRenderTarget(ShaderIDs._DepthBufferTexture);
             SceneController.RenderScene(ref data, ref alphaTestFilter, ref depthPrePassDrawSettings, ref proper.cullResults);
             data.buffer.SetRenderTarget(colors: cam.targets.gbufferIdentifier, depth: ShaderIDs._DepthBufferTexture);
+            SortingSettings st = drawSettings.sortingSettings;
+            st.criteria = SortingCriteria.SortingLayer | SortingCriteria.RenderQueue;
+            drawSettings.sortingSettings = st;
             SceneController.RenderScene(ref data, ref alphaTestFilter, ref drawSettings, ref proper.cullResults);
             data.buffer.Blit(ShaderIDs._DepthBufferTexture, ShaderIDs._CameraDepthTexture);
-            FilteringSettings mvFilter = new FilteringSettings
-            {
-                layerMask = cam.cam.cullingMask,
-                renderingLayerMask = 1,
-                renderQueueRange = RenderQueueRange.opaque
-            };
-            DrawingSettings mvDraw = new DrawingSettings(new ShaderTagId("MotionVector"), new SortingSettings { criteria = SortingCriteria.None })
-            {
-                perObjectData = UnityEngine.Rendering.PerObjectData.None,
-                enableDynamicBatching = false,
-                enableInstancing = false
-            };
+
+
             data.buffer.SetRenderTarget(color: ShaderIDs._CameraMotionVectorsTexture, depth: ShaderIDs._DepthBufferTexture);
             SceneController.RenderScene(ref data, ref mvFilter, ref mvDraw, ref proper.cullResults);
             data.buffer.DrawMesh(GraphicsUtility.mesh, Matrix4x4.identity, motionVecMat, 0, 0);

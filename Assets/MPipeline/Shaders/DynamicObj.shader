@@ -17,6 +17,7 @@
 		_EmissionMap("Emission Map", 2D) = "white"{}
 		[HideInInspector]_ZTest("zw", Int) = 0
 		[HideInInspector]_ZWrite("zww", Int) = 0
+		[HideInInspector]_Stencil("stenc", Int) = 1
 	}
 	SubShader {
 		Tags { "RenderType"="Opaque" }
@@ -28,6 +29,7 @@ CGINCLUDE
 #pragma shader_feature DETAIL_ON
 #pragma target 5.0
 			#pragma multi_compile __ CUT_OFF
+			#pragma multi_compile __ LIT_ENABLE
 //#define LIGHTMAP
 #define MOTION_VECTOR
 #include "UnityCG.cginc"
@@ -98,7 +100,7 @@ ENDCG
 pass
 {
 	stencil{
-  Ref 1
+  Ref [_Stencil]
 	WriteMask 3
   comp always
   pass replace

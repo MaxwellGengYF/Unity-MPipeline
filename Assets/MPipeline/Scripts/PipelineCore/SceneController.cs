@@ -306,12 +306,7 @@ namespace MPipeline
             DrawingSettings opaqueRender = dsettings;
             opaqueRender.overrideMaterial = opaqueOverride;
             opaqueRender.overrideMaterialPassIndex = overrideShadowmapPass;
-            //X
             int depthSlice = lit.ShadowIndex * 6;
-            cb.SetRenderTarget(renderTarget, 0, CubemapFace.Unknown, depthSlice + 1);
-            cb.ClearRenderTarget(true, true, new Color(float.PositiveInfinity, 1, 1, 1));
-            cb.SetGlobalMatrix(ShaderIDs._ShadowMapVP, vpMatrices.rightProjView);
-            data.ExecuteCommandBuffer();
             float size = light.sphere.w;
             lit.shadowCam.orthographic = true;
             lit.shadowCam.nearClipPlane = -size;
@@ -330,69 +325,33 @@ namespace MPipeline
                 cb.SetGlobalBuffer(ShaderIDs.verticesBuffer, baseBuffer.verticesBuffer);
                 PipelineFunctions.SetBaseBuffer(baseBuffer, cullingShader, vpMatrices.frustumPlanes, cb);
                 PipelineFunctions.RunCullDispatching(baseBuffer, cullingShader, cb);
-                cb.DrawProceduralIndirect(Matrix4x4.identity, depthMaterial, 0, MeshTopology.Triangles, baseBuffer.instanceCountBuffer);
+                
             }
-            data.context.DrawRenderers(results, ref opaqueRender, ref opaqueRenderSettings);
-            data.context.DrawRenderers(results, ref dsettings, ref renderSettings);
+            void DrawFace(int renderSlice, ref Matrix4x4 shadowmapVP, ref PipelineCommandData commandData)
+            {
+                cb.SetRenderTarget(renderTarget, 0, CubemapFace.Unknown, renderSlice);
+                cb.ClearRenderTarget(true, true, new Color(float.PositiveInfinity, 1, 1, 1));
+                cb.SetGlobalMatrix(ShaderIDs._ShadowMapVP, shadowmapVP);
+                if (gpurpEnabled)
+                {
+                    cb.DrawProceduralIndirect(Matrix4x4.identity, depthMaterial, 0, MeshTopology.Triangles, baseBuffer.instanceCountBuffer);
+                }
+                commandData.ExecuteCommandBuffer();
+                commandData.context.DrawRenderers(results, ref opaqueRender, ref opaqueRenderSettings);
+                commandData.context.DrawRenderers(results, ref dsettings, ref renderSettings);
+            }
+            //X
+            DrawFace(depthSlice + 1, ref vpMatrices.rightProjView, ref data);
             //-X
-            cb.SetRenderTarget(renderTarget, 0, CubemapFace.Unknown, depthSlice);
-            cb.ClearRenderTarget(true, true, new Color(float.PositiveInfinity, 1, 1, 1));
-            cb.SetGlobalMatrix(ShaderIDs._ShadowMapVP, vpMatrices.leftProjView);
-            if (gpurpEnabled)
-            {
-                cb.DrawProceduralIndirect(Matrix4x4.identity, depthMaterial, 0, MeshTopology.Triangles, baseBuffer.instanceCountBuffer);
-            }
-            data.ExecuteCommandBuffer();
-            data.context.DrawRenderers(results, ref opaqueRender, ref opaqueRenderSettings);
-            data.context.DrawRenderers(results, ref dsettings, ref renderSettings);
-
+            DrawFace(depthSlice, ref vpMatrices.leftProjView, ref data);
             //Y
-            cb.SetRenderTarget(renderTarget, 0, CubemapFace.Unknown, depthSlice + 3);
-            cb.ClearRenderTarget(true, true, new Color(float.PositiveInfinity, 1, 1, 1));
-            cb.SetGlobalMatrix(ShaderIDs._ShadowMapVP, vpMatrices.upProjView);
-            if (gpurpEnabled)
-            {
-                cb.DrawProceduralIndirect(Matrix4x4.identity, depthMaterial, 0, MeshTopology.Triangles, baseBuffer.instanceCountBuffer);
-            }
-            data.ExecuteCommandBuffer();
-            data.context.DrawRenderers(results, ref opaqueRender, ref opaqueRenderSettings);
-            data.context.DrawRenderers(results, ref dsettings, ref renderSettings);
-
+            DrawFace(depthSlice + 3, ref vpMatrices.upProjView, ref data);
             //-Y
-            cb.SetRenderTarget(renderTarget, 0, CubemapFace.Unknown, depthSlice + 2);
-            cb.ClearRenderTarget(true, true, new Color(float.PositiveInfinity, 1, 1, 1));
-            cb.SetGlobalMatrix(ShaderIDs._ShadowMapVP, vpMatrices.downProjView);
-            if (gpurpEnabled)
-            {
-                cb.DrawProceduralIndirect(Matrix4x4.identity, depthMaterial, 0, MeshTopology.Triangles, baseBuffer.instanceCountBuffer);
-            }
-            data.ExecuteCommandBuffer();
-            data.context.DrawRenderers(results, ref opaqueRender, ref opaqueRenderSettings);
-            data.context.DrawRenderers(results, ref dsettings, ref renderSettings);
-
+            DrawFace(depthSlice + 2, ref vpMatrices.downProjView, ref data);
             //Z
-            cb.SetRenderTarget(renderTarget, 0, CubemapFace.Unknown, depthSlice + 5);
-            cb.ClearRenderTarget(true, true, new Color(float.PositiveInfinity, 1, 1, 1));
-            cb.SetGlobalMatrix(ShaderIDs._ShadowMapVP, vpMatrices.forwardProjView);
-            if (gpurpEnabled)
-            {
-                cb.DrawProceduralIndirect(Matrix4x4.identity, depthMaterial, 0, MeshTopology.Triangles, baseBuffer.instanceCountBuffer);
-            }
-            data.ExecuteCommandBuffer();
-            data.context.DrawRenderers(results, ref opaqueRender, ref opaqueRenderSettings);
-            data.context.DrawRenderers(results, ref dsettings, ref renderSettings);
-
+            DrawFace(depthSlice + 5, ref vpMatrices.forwardProjView, ref data);
             //-Z
-            cb.SetRenderTarget(renderTarget, 0, CubemapFace.Unknown, depthSlice + 4);
-            cb.ClearRenderTarget(true, true, new Color(float.PositiveInfinity, 1, 1, 1));
-            cb.SetGlobalMatrix(ShaderIDs._ShadowMapVP, vpMatrices.backProjView);
-            if (gpurpEnabled)
-            {
-                cb.DrawProceduralIndirect(Matrix4x4.identity, depthMaterial, 0, MeshTopology.Triangles, baseBuffer.instanceCountBuffer);
-            }
-            data.ExecuteCommandBuffer();
-            data.context.DrawRenderers(results, ref opaqueRender, ref opaqueRenderSettings);
-            data.context.DrawRenderers(results, ref dsettings, ref renderSettings);
+            DrawFace(depthSlice + 4, ref vpMatrices.backProjView, ref data);
             cb.SetInvertCulling(inverseRender);
         }
         public static void DrawCluster_LastFrameDepthHiZ(ref RenderClusterOptions options, HizOcclusionData hizOpts, Material targetMat, PipelineCamera pipeCam)

@@ -14,4 +14,4 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   clusterProperties:
   - name: TestFile
-    clusterCount: 721
+    clusterCount: 3041

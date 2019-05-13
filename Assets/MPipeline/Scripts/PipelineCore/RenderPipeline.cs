@@ -146,8 +146,8 @@ namespace MPipeline
             UnsafeUtility.MemClear(propertyCheckedFlags, resources.allEvents.Length);
             GraphicsSettings.useScriptableRenderPipelineBatching = resources.useSRPBatcher;
             SceneController.SetState();
-            int tempID = Shader.PropertyToID("_TempRT");
 #if UNITY_EDITOR
+            int tempID = Shader.PropertyToID("_TempRT");
             foreach (var pair in bakeList)
             {
                 PipelineCamera pipelineCam = pair.pipelineCamera;

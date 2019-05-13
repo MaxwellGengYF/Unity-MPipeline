@@ -18,7 +18,7 @@ MonoBehaviour:
   ssrEvents:
     enabled: 1
     Thickness: 0.3
-    brdfBias: 0.7
+    brdfBias: 0.5
     ScreenFade: 0
     HiZ_RaySteps: 64
     HiZ_MaxLevel: 4

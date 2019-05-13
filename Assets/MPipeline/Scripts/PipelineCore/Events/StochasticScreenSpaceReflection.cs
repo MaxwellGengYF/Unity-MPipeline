@@ -249,6 +249,9 @@ namespace MPipeline
                 prevDepthData.UpdateCameraSize(resolution);
                 ScreenSpaceReflectionBuffer.CopyTexture(ShaderIDs._CameraDepthTexture, 0, 0, prevDepthData.SSR_PrevDepth_RT, 0, 0);
             }
+            ScreenSpaceReflectionBuffer.ReleaseTemporaryRT(SSR_Trace_ID);
+            ScreenSpaceReflectionBuffer.ReleaseTemporaryRT(SSR_GetSSRColor_ID);
+            ScreenSpaceReflectionBuffer.ReleaseTemporaryRT(SSR_TemporalCurr_ID);
         }
     }
     public class PreviousDepthData : IPerCameraData

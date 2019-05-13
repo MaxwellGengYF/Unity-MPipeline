@@ -101,7 +101,7 @@ ENDCG
 #else
                 float2 aoro = gbuffer0.ww;
 #endif
-                return CalculateGI(linearDepth, worldPos.xyz, normal, gbuffer0.xyz, aoro.x, i.uv);
+                return CalculateGI(linearDepth, worldPos.xyz, normal, gbuffer0.xyz, aoro.x, i.uv) * gbuffer1.w;
             }
             ENDCG
         }

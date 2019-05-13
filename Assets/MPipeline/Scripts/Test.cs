@@ -9,20 +9,24 @@ using static Unity.Collections.LowLevel.Unsafe.UnsafeUtility;
 using Unity.Mathematics;
 using Unity.Collections;
 using UnityEngine.Rendering;
+using UnityEngine.SceneManagement;
 using Random = UnityEngine.Random;
+
+#if UNITY_EDITOR
 public unsafe class Test : MonoBehaviour
 {
-    public Material mat;
-    public Mesh mesh;
-    public Transform trans;
-    Camera cam;
-    CommandBuffer bf;
-    private void Awake()
+    public Texture2D tex;
+    public Renderer rend;
+    [EasyButtons.Button]
+    void RunTest()
     {
-        cam = GetComponent<Camera>();
-        bf = new CommandBuffer();
-        bf.SetRenderTarget(BuiltinRenderTextureType.CameraTarget);
-        bf.DrawMesh(GraphicsUtility.mesh, trans.localToWorldMatrix, mat, 0, 0);
-        cam.AddCommandBuffer(CameraEvent.AfterForwardOpaque, bf);
+        LightmapData data = new LightmapData();
+        data.lightmapColor = tex;
+        LightmapSettings.lightmaps = new LightmapData[]
+        {
+            data
+        };
+        rend.lightmapIndex = 0;
     }
 }
+#endif
