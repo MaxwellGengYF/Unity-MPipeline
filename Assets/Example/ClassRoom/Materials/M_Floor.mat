@@ -96,7 +96,7 @@ Material:
     - _DstBlend: 0
     - _EmissionMultiplier: 1
     - _GlossMapScale: 1
-    - _Glossiness: 0.75
+    - _Glossiness: 0.649
     - _GlossyReflections: 1
     - _Keyword0: 0
     - _Metallic: 0
@@ -110,7 +110,7 @@ Material:
     - _Roughness: 0.32
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
-    - _SpecularIntensity: 0.04
+    - _SpecularIntensity: 0.384
     - _SrcBlend: 1
     - _Stencil: 1
     - _ToggleSwitch0: 1

@@ -7,37 +7,92 @@ using System.Collections;
 using System.Collections.Generic;
 namespace MPipeline
 {
+    public unsafe struct PtrList
+    {
+        public int length { get; private set; }
+        public int capacity { get; private set; }
+        public int stride { get; private set; }
+        public UIntPtr dataPtr { get; private set; }
+        public Allocator alloc { get; private set; }
+
+        public bool isCreated { get { return dataPtr.ToPointer() != null; } }
+        public PtrList(int initCapacity, int stride, Allocator alloc)
+        {
+            length = 0;
+            capacity = initCapacity;
+            this.stride = stride;
+            this.alloc = alloc;
+            dataPtr = new UIntPtr(MUnsafeUtility.Malloc(stride * capacity, alloc));
+        }
+        public UIntPtr this[int index]
+        {
+            get
+            {
+                return dataPtr + index * stride;
+            }
+            set
+            {
+                UIntPtr targetPtr = dataPtr + index * stride;
+                UnsafeUtility.MemCpy(targetPtr.ToPointer(), value.ToPointer(), stride);
+            }
+        }
+        public void Add(void* targetPtr)
+        {
+            if (length >= capacity)
+            {
+                int newCapacity = capacity * 2;
+                UIntPtr newPtr = new UIntPtr(MUnsafeUtility.Malloc(newCapacity * stride, alloc));
+                UnsafeUtility.MemCpy(newPtr.ToPointer(), dataPtr.ToPointer(), capacity * stride);
+                UnsafeUtility.Free(dataPtr.ToPointer(), alloc);
+                capacity = newCapacity;
+                dataPtr = newPtr;
+            }
+            this[length++] = new UIntPtr(targetPtr);
+        }
+        public int Add()
+        {
+            if (length >= capacity)
+            {
+                int newCapacity = capacity * 2;
+                UIntPtr newPtr = new UIntPtr(MUnsafeUtility.Malloc(newCapacity * stride, alloc));
+                UnsafeUtility.MemCpy(newPtr.ToPointer(), dataPtr.ToPointer(), capacity * stride);
+                UnsafeUtility.Free(dataPtr.ToPointer(), alloc);
+                capacity = newCapacity;
+                dataPtr = newPtr;
+            }
+            return length++;
+        }
+        public void RemoveAt(int index)
+        {
+            this[index] = this[--length];
+        }
+        public void Clear()
+        {
+            length = 0;
+        }
+        public void Dispose()
+        {
+            if (dataPtr.ToPointer() != null)
+            {
+                length = 0;
+                UnsafeUtility.Free(dataPtr.ToPointer(), alloc);
+                dataPtr = new UIntPtr(null);
+            }
+        }
+    }
     public unsafe struct DictData
     {
         public int capacity;
-        public int length;
-        public void* start;
-        public Allocator alloc;
+        public PtrList* hashArray;
+        public PtrList keyValueList;
     }
-    public unsafe struct NativeDictionary<K, V, F> : IEnumerable<V> where K : unmanaged where V : unmanaged where F : unmanaged, IFunction<K, K, bool>
+    public unsafe struct NativeDictionary<K, V, F> : IEnumerable<Pair<K, V>> where K : unmanaged where V : unmanaged where F : unmanaged, IFunction<K, K, bool>
     {
-        static readonly int stride = sizeof(K) + sizeof(V) + 8;
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static V* GetV(K* ptr)
-        {
-            return (V*)(ptr + 1);
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static K** GetNextPtr(K* ptr)
-        {
-            UIntPtr num = new UIntPtr(ptr);
-            num += (sizeof(K) + sizeof(V));
-            return (K**)num;
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private K** GetK(int index)
-        {
-            return (K**)data->start + index;
-        }
+        static readonly int stride = sizeof(K) + sizeof(int);
         public int Length
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
-            get { return data->length; }
+            get { return data->keyValueList.length; }
         }
         public int Capacity
         {
@@ -47,27 +102,40 @@ namespace MPipeline
         [NativeDisableUnsafePtrRestriction]
         private DictData* data;
         private F equalFunc;
+        public Allocator alloc { get; private set; }
         public bool isCreated { get; private set; }
+        private void AddKey(PtrList* targetHashArray, uint hash, ref K key, int valueIndex)
+        {
+            ref PtrList lst = ref targetHashArray[hash];
+            if (!lst.isCreated)
+            {
+                lst = new PtrList(5, stride, alloc);
+            }
+            K* keyPtr = (K*)lst[lst.Add()];
+            *keyPtr = key;
+            int* valuePtr = (int*)(keyPtr + 1);
+            *valuePtr = valueIndex;
+        }
         private void Resize(int targetSize)
         {
-            K** newData = (K**)MUnsafeUtility.Malloc(targetSize * 8, data->alloc);
-            UnsafeUtility.MemClear(newData, targetSize * 8);
-            K** oldPtr = (K**)data->start;
-            for (int i = 0; i < data->capacity; ++i)
+            if (targetSize <= Capacity) return;
+            PtrList* newHashArray = MUnsafeUtility.Malloc<PtrList>(sizeof(PtrList) * targetSize, alloc);
+            UnsafeUtility.MemClear(newHashArray, sizeof(PtrList) * targetSize);
+            //  
+            for (int i = 0; i < data->keyValueList.length; ++i)
             {
-                K* currentPtr = oldPtr[i];
-                while (currentPtr != null)
-                {
-                    K* nextPtr = *GetNextPtr(currentPtr);
-                    //AddTo(*currentPtr, *GetV(currentPtr), targetSize, newData);
-                    int hashCode = Mathf.Abs((*currentPtr).GetHashCode()) % targetSize;
-                    *GetNextPtr(currentPtr) = newData[hashCode];
-                    newData[hashCode] = currentPtr;
-                    currentPtr = nextPtr;
-                }
+                K* keyPtr = (K*)data->keyValueList[i];
+                V* valuePtr = (V*)(keyPtr + 1);
+                uint hash = (uint)keyPtr->GetHashCode();
+                uint newHash = hash % (uint)targetSize;
+                AddKey(newHashArray, newHash, ref *keyPtr, i);
             }
-            UnsafeUtility.Free(data->start, data->alloc);
-            data->start = newData;
+            for (int i = 0; i < Capacity; ++i)
+            {
+                data->hashArray[i].Dispose();
+            }
+            UnsafeUtility.Free(data->hashArray, alloc);
+            data->hashArray = newHashArray;
             data->capacity = targetSize;
         }
 
@@ -78,59 +146,71 @@ namespace MPipeline
             isCreated = true;
             data = (DictData*)MUnsafeUtility.Malloc(sizeof(DictData), alloc);
             data->capacity = capacity;
-            data->length = 0;
-            data->alloc = alloc;
-            data->start = MUnsafeUtility.Malloc(8 * capacity, alloc);
-            UnsafeUtility.MemClear(data->start, 8 * capacity);
+            data->keyValueList = new PtrList(capacity, sizeof(K) + sizeof(V), alloc);
+            this.alloc = alloc;
+            data->hashArray = MUnsafeUtility.Malloc<PtrList>(sizeof(PtrList) * capacity, alloc);
+            UnsafeUtility.MemClear(data->hashArray, sizeof(PtrList) * capacity);
         }
-
-        private void AddTo(K key, V value, int capacity, K** origin)
+        private void ResetValue(int index)
         {
-            int index = Mathf.Abs(key.GetHashCode()) % capacity;
-            K** currentPos = origin + index;
-            while ((*currentPos) != null)
+            K* targetKey = (K*)data->keyValueList[index];
+            uint hash = (uint)targetKey->GetHashCode() % (uint)Capacity;
+            ref PtrList lst = ref data->hashArray[hash];
+            for (int i = 0; i < lst.length; ++i)
             {
-                currentPos = GetNextPtr(*currentPos);
-            }
-            (*currentPos) = (K*)MUnsafeUtility.Malloc(stride, data->alloc);
-            (**currentPos) = key;
-            (*GetV(*currentPos)) = value;
-            (*GetNextPtr(*currentPos)) = null;
-        }
-
-        public void Remove(K key)
-        {
-            int index = Mathf.Abs(key.GetHashCode()) % data->capacity;
-            K** currentPtr = GetK(index);
-            while ((*currentPtr) != null)
-            {
-                K** next = GetNextPtr(*currentPtr);
-                if (equalFunc.Run(ref **currentPtr, ref key))
+                K* keyPtr = (K*)lst[i];
+                if (equalFunc.Run(ref *keyPtr, ref *targetKey))
                 {
-                    K* prev = *currentPtr;
-                    *currentPtr = *next;
-                    UnsafeUtility.Free(prev, data->alloc);
-                    data->length--;
+                    int* indexPtr = (int*)(keyPtr + 1);
+                    *indexPtr = index;
                     return;
                 }
-                else
+            }
+        }
+        private int GetIndex(ref K key)
+        {
+            uint hash = (uint)key.GetHashCode() % (uint)Capacity;
+            ref PtrList lst = ref data->hashArray[hash];
+            for (int i = 0; i < lst.length; ++i)
+            {
+                K* keyPtr = (K*)lst[i];
+                if (equalFunc.Run(ref *keyPtr, ref key))
                 {
-                    currentPtr = next;
+                    int* indexPtr = (int*)(keyPtr + 1);
+                    return *indexPtr;
+                }
+            }
+            return -1;
+        }
+        public void Remove(K key)
+        {
+            uint hash = (uint)key.GetHashCode() % (uint)Capacity;
+            ref PtrList lst = ref data->hashArray[hash];
+            for (int i = 0; i < lst.length; ++i)
+            {
+                K* keyPtr = (K*)lst[i];
+                if (equalFunc.Run(ref *keyPtr, ref key))
+                {
+                    int index = *(int*)(keyPtr + 1);
+                    data->keyValueList.RemoveAt(index);
+                    ResetValue(index);
+                    lst.RemoveAt(i);
+                    return;
                 }
             }
         }
 
         public bool Contains(K key)
         {
-            int index = Mathf.Abs(key.GetHashCode()) % data->capacity;
-            K** currentPos = GetK(index);
-            while ((*currentPos) != null)
+            uint hash = (uint)key.GetHashCode() % (uint)Capacity;
+            ref PtrList lst = ref data->hashArray[hash];
+            for (int i = 0; i < lst.length; ++i)
             {
-                if (equalFunc.Run(ref **currentPos, ref key))
+                K* keyPtr = (K*)lst[i];
+                if (equalFunc.Run(ref *keyPtr, ref key))
                 {
                     return true;
                 }
-                currentPos = GetNextPtr(*currentPos);
             }
             return false;
         }
@@ -139,94 +219,70 @@ namespace MPipeline
         {
             get
             {
-                int index = Mathf.Abs(key.GetHashCode()) % data->capacity;
-                K** currentPos = GetK(index);
-                while ((*currentPos) != null)
-                {
-                    if (equalFunc.Run(ref **currentPos, ref key))
-                    {
-                        return *GetV(*currentPos);
-                    }
-                    currentPos = GetNextPtr(*currentPos);
-                }
-                return default;
+                int ind = GetIndex(ref key);
+                if (ind < 0) return default;
+                return *(V*)(data->keyValueList[ind] + sizeof(K));
             }
             set
             {
-                int hashCode = key.GetHashCode();
-                hashCode = Mathf.Abs(hashCode);
-                int index = hashCode % data->capacity;
-                K** currentPos = GetK(index);
-                while ((*currentPos) != null)
+                int ind = GetIndex(ref key);
+                if (ind < 0)
                 {
-                    if (equalFunc.Run(ref **currentPos, ref key))
-                    {
-                        *GetV(*currentPos) = value;
-                        return;
-                    }
-                    currentPos = GetNextPtr(*currentPos);
+                    Add(key, value);
                 }
-                Add(ref key, ref value, hashCode);
+                else *(V*)(data->keyValueList[ind] + sizeof(K)) = value;
             }
         }
 
         public void Add(K key, V value)
         {
-            Add(ref key, ref value, Mathf.Abs(key.GetHashCode()));
-        }
-
-        private void Add(ref K key, ref V value, int hashCode)
-        {
-            if (data->capacity <= data->length)
+            Resize(Length + 1);
+            uint hash = (uint)key.GetHashCode() % (uint)Capacity;
+            ref PtrList lst = ref data->hashArray[hash];
+            if (!lst.isCreated) lst = new PtrList(5, stride, alloc);
+            for (int i = 0; i < lst.length; ++i)
             {
-                Resize(Mathf.Max(data->length + 1, (int)(data->length * 1.5f)));
+                K* keyPtr = (K*)lst[i];
+                if (equalFunc.Run(ref *keyPtr, ref key))
+                {
+                    return;
+                }
             }
-            int index = hashCode % data->capacity;
-            K** currentPos = GetK(index);
-            while ((*currentPos) != null)
-            {
-                currentPos = GetNextPtr(*currentPos);
-            }
-            (*currentPos) = (K*)MUnsafeUtility.Malloc(stride, data->alloc);
-            (**currentPos) = key;
-            (*GetV(*currentPos)) = value;
-            (*GetNextPtr(*currentPos)) = null;
-            data->length++;
+            K* newKeyPtr = (K*)lst[lst.Add()];
+            *newKeyPtr = key;
+            int* indPtr = (int*)(newKeyPtr + 1);
+            *indPtr = data->keyValueList.length;
+            K* keyValuePtr = (K*)data->keyValueList[data->keyValueList.Add()];
+            *keyValuePtr = key;
+            V* valuePtr = (V*)(keyValuePtr + 1);
+            *valuePtr = value;
         }
 
         public void Dispose()
         {
-            Allocator alloc = data->alloc;
-            for (int i = 0; i < data->capacity; ++i)
+            if (data == null) return;
+            for (int i = 0; i < Capacity; ++i)
             {
-                K* currentPtr = *GetK(i);
-                while (currentPtr != null)
-                {
-                    K* next = *GetNextPtr(currentPtr);
-                    UnsafeUtility.Free(currentPtr, alloc);
-                    currentPtr = next;
-                }
+                data->hashArray[i].Dispose();
             }
-            UnsafeUtility.Free(data->start, alloc);
-            UnsafeUtility.Free(data, alloc);
+            UnsafeUtility.Free(data->hashArray, alloc);
+            data->keyValueList.Dispose();
             isCreated = false;
+            data->hashArray = null;
+            UnsafeUtility.Free(data, alloc);
+            data = null;
         }
 
         public bool Get(K key, out V value)
         {
-            int index = Mathf.Abs(key.GetHashCode()) % data->capacity;
-            K** currentPos = GetK(index);
-            while ((*currentPos) != null)
+            int ind = GetIndex(ref key);
+            if (ind < 0)
             {
-                if (equalFunc.Run(ref **currentPos, ref key))
-                {
-                    value = *GetV(*currentPos);
-                    return true;
-                }
-                currentPos = GetNextPtr(*currentPos);
+                value = default;
+                return false;
             }
-            value = default;
-            return false;
+            value = *(V*)(data->keyValueList[ind] + sizeof(K));
+            return true;
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         IEnumerator IEnumerable.GetEnumerator()
@@ -234,120 +290,53 @@ namespace MPipeline
             return GetEnumerator();
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public IEnumerator<V> GetEnumerator()
+        public IEnumerator<Pair<K, V>> GetEnumerator()
         {
-            if (!isCreated || Length == 0) return new DictionaryNullIEnumerator<V>();
-            return new DictionaryIenumerator<K, V>((K**)data->start, Capacity);
-        }
-    }
-
-    public unsafe struct DictionaryNullIEnumerator<V> : IEnumerator<V>
-    {
-        public V Current
-        {
-            get
+            DictionaryIEnumerator dict = new DictionaryIEnumerator
             {
-                return default;
-            }
+                keyValueArray = &data->keyValueList,
+                iteIndex = -1
+            };
+            return dict;
         }
-
-        object IEnumerator.Current
+        public struct DictionaryIEnumerator : IEnumerator<Pair<K, V>>
         {
-            get
+            public PtrList* keyValueArray;
+            public int iteIndex;
+            public Pair<K, V> Current
             {
-                return default;
-            }
-        }
-
-        public void Dispose()
-        {
-
-        }
-        public void Reset()
-        {
-
-        }
-        public bool MoveNext() { return false; }
-    }
-
-    public unsafe struct DictionaryIenumerator<K, V> : IEnumerator<V> where V : unmanaged where K : unmanaged
-    {
-        [NativeDisableUnsafePtrRestriction]
-        K** data;
-        [NativeDisableUnsafePtrRestriction]
-        K** start;
-        int offset;
-        int capacity;
-
-        public DictionaryIenumerator(K** data, int capacity)
-        {
-            offset = -1;
-            start = data;
-            this.data = null;
-            this.capacity = capacity;
-        }
-
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static V* GetV(K* ptr)
-        {
-            return (V*)(ptr + 1);
-        }
-        [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        private static K** GetNextPtr(K* ptr)
-        {
-            UIntPtr num = new UIntPtr(ptr);
-            num += (sizeof(K) + sizeof(V));
-            return (K**)num;
-        }
-
-        public V Current
-        {
-            get
-            {
-                return *GetV(*data);
-            }
-        }
-
-        object IEnumerator.Current
-        {
-            get
-            {
-                return *GetV(*data);
-            }
-        }
-
-        public void Reset()
-        {
-            data = null;
-            offset = -1;
-        }
-
-        public bool MoveNext()
-        {
-            if (data == null)
-            {
-                do
+                get
                 {
-                    offset++;
-                    data = start + offset;
-                }
-                while (*data == null);
-            }
-            else
-            {
-                data = GetNextPtr(*data);
-                while (*data == null)
-                {
-                    offset++;
-                    data = start + offset;
+                    Pair<K, V> pair;
+                    K* keyPtr = (K*)(*keyValueArray)[iteIndex];
+                    pair.key = *keyPtr;
+                    pair.value = *(V*)(keyPtr + 1);
+                    return pair;
                 }
             }
-            return offset < capacity;
-        }
+            object IEnumerator.Current
+            {
+                get
+                {
+                    Pair<K, V> pair;
+                    K* keyPtr = (K*)(*keyValueArray)[iteIndex];
+                    pair.key = *keyPtr;
+                    pair.value = *(V*)(keyPtr + 1);
+                    return pair;
+                }
+            }
+            public bool MoveNext()
+            {
+                return (++iteIndex < keyValueArray->length);
+            }
+            public void Reset()
+            {
+                iteIndex = -1;
+            }
+            public void Dispose()
+            {
 
-        public void Dispose()
-        {
-
+            }
         }
     }
 }

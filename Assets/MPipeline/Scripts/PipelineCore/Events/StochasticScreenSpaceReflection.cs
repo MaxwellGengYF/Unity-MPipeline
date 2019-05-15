@@ -210,7 +210,7 @@ namespace MPipeline
         private void RenderScreenSpaceReflection(CommandBuffer ScreenSpaceReflectionBuffer, SSRCameraData camData, PipelineCamera cam)
         {
             Vector2Int resolution = new Vector2Int(cam.cam.pixelWidth, cam.cam.pixelHeight);
-            
+
             //////Gte HiZ_DEPTHrt//////
             ScreenSpaceReflectionBuffer.CopyTexture(ShaderIDs._CameraDepthTexture, 0, 0, camData.SSR_HierarchicalDepth_RT, 0, 0);
             for (int i = 1; i < 9; ++i)
@@ -223,9 +223,8 @@ namespace MPipeline
             ScreenSpaceReflectionBuffer.SetGlobalTexture(SSR_HierarchicalDepth_ID, camData.SSR_HierarchicalDepth_RT);
 
             //////Set SceneColorRT//////
-            ScreenSpaceReflectionBuffer.CopyTexture(cam.targets.renderTargetIdentifier, 0, 0, camData.SSR_SceneColor_RT, 0, 0);
-            ScreenSpaceReflectionBuffer.SetGlobalTexture(SSR_SceneColor_ID, camData.SSR_SceneColor_RT);
-            ScreenSpaceReflectionBuffer.GenerateMips(camData.SSR_SceneColor_RT);
+            ScreenSpaceReflectionBuffer.CopyTexture(cam.targets.renderTargetIdentifier, 0, 0, cam.targets.backupIdentifier, 0, 0);
+            ScreenSpaceReflectionBuffer.SetGlobalTexture(SSR_SceneColor_ID, cam.targets.backupIdentifier);
             ScreenSpaceReflectionBuffer.GetTemporaryRT(SSR_Trace_ID, resolution.x / 2, resolution.y / 2, 0, FilterMode.Point, RenderTextureFormat.ARGBHalf, RenderTextureReadWrite.Linear);
             ScreenSpaceReflectionBuffer.GetTemporaryRT(SSR_GetSSRColor_ID, resolution.x, resolution.y, 0, FilterMode.Bilinear, RenderTextureFormat.ARGBHalf, RenderTextureReadWrite.Linear);
             ScreenSpaceReflectionBuffer.SetRenderTarget(SSR_GetSSRColor_ID);
@@ -282,7 +281,7 @@ namespace MPipeline
     {
         public Vector2 CameraSize { get; private set; }
         public int RayCastingResolution { get; private set; }
-        public RenderTexture SSR_TemporalPrev_RT, SSR_SceneColor_RT, SSR_HierarchicalDepth_RT, SSR_HierarchicalDepth_BackUp_RT;
+        public RenderTexture SSR_TemporalPrev_RT, SSR_HierarchicalDepth_RT, SSR_HierarchicalDepth_BackUp_RT;
         public static void CheckAndRelease(ref RenderTexture targetRT)
         {
             if (targetRT && targetRT.IsCreated())
@@ -297,11 +296,6 @@ namespace MPipeline
             CameraSize = currentSize;
             RayCastingResolution = targetResolution;
 
-            SSR_SceneColor_RT = new RenderTexture(currentSize.x, currentSize.y, 0, RenderTextureFormat.ARGBHalf, RenderTextureReadWrite.Linear);
-            SSR_SceneColor_RT.filterMode = FilterMode.Trilinear;
-            SSR_SceneColor_RT.useMipMap = true;
-            SSR_SceneColor_RT.autoGenerateMips = false;
-
             SSR_HierarchicalDepth_RT = new RenderTexture(currentSize.x, currentSize.y, 0, RenderTextureFormat.RFloat, RenderTextureReadWrite.Linear);
             SSR_HierarchicalDepth_RT.filterMode = FilterMode.Point;
             SSR_HierarchicalDepth_RT.useMipMap = true;
@@ -314,7 +308,6 @@ namespace MPipeline
 
             SSR_TemporalPrev_RT = new RenderTexture(currentSize.x, currentSize.y, 0, RenderTextureFormat.ARGBHalf);
             SSR_TemporalPrev_RT.filterMode = FilterMode.Bilinear;
-            SSR_SceneColor_RT.Create();
             SSR_HierarchicalDepth_RT.Create();
             SSR_HierarchicalDepth_BackUp_RT.Create();
             SSR_TemporalPrev_RT.Create();
@@ -336,7 +329,6 @@ namespace MPipeline
             if (CameraSize == currentSize && RayCastingResolution == targetResolution) return false;
             CameraSize = currentSize;
             RayCastingResolution = targetResolution;
-            ChangeSet(SSR_SceneColor_RT, currentSize.x, currentSize.y, 0, RenderTextureFormat.DefaultHDR);
             ChangeSet(SSR_HierarchicalDepth_RT, currentSize.x, currentSize.y, 0, RenderTextureFormat.RFloat);
             ChangeSet(SSR_HierarchicalDepth_BackUp_RT, currentSize.x, currentSize.y, 0, RenderTextureFormat.RFloat);
             ChangeSet(SSR_TemporalPrev_RT, currentSize.x, currentSize.y, 0, RenderTextureFormat.ARGBHalf);
@@ -345,11 +337,10 @@ namespace MPipeline
 
         public override void DisposeProperty()
         {
-            CheckAndRelease(ref SSR_SceneColor_RT);
             CheckAndRelease(ref SSR_HierarchicalDepth_RT);
             CheckAndRelease(ref SSR_HierarchicalDepth_BackUp_RT);
             CheckAndRelease(ref SSR_TemporalPrev_RT);
-           
+
         }
     }
 }

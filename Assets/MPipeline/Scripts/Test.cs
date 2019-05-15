@@ -15,18 +15,31 @@ using Random = UnityEngine.Random;
 #if UNITY_EDITOR
 public unsafe class Test : MonoBehaviour
 {
-    public Texture2D tex;
-    public Renderer rend;
+    private struct IntEqual : IFunction<int, int, bool>
+    {
+        public bool Run(ref int a, ref int b)
+        { return a == b; }
+    }
     [EasyButtons.Button]
     void RunTest()
     {
-        LightmapData data = new LightmapData();
-        data.lightmapColor = tex;
-        LightmapSettings.lightmaps = new LightmapData[]
+        NativeDictionary<int, int, IntEqual> dict = new NativeDictionary<int, int, IntEqual>(5, Allocator.Temp, new IntEqual());
+        for (int i = 0; i < 50; ++i)
         {
-            data
-        };
-        rend.lightmapIndex = 0;
+            dict.Add(i, i + 5);
+        }
+        for (int i = 0; i < 10; ++i) {
+            dict.Remove(i);
+            }
+        Debug.Log(dict.Length);
+         for (int i = 0; i< 50; ++i)
+        {
+            int value;
+            if(dict.Get(i, out value))
+            {
+                Debug.Log(value);
+            }
+        }
     }
 }
 #endif

@@ -129,15 +129,18 @@ namespace MPipeline
             {
                 resources.availiableEvents[i].DisposeDependEventsList();
             }
-            foreach (var i in PipelineCamera.allCamera)
+            if (PipelineCamera.allCamera.isCreated)
             {
-                PipelineCamera cam = MUnsafeUtility.GetObject<PipelineCamera>(i.ToPointer());
-                var values = cam.allDatas.Values;
-                foreach (var j in values)
+                foreach (var i in PipelineCamera.allCamera)
                 {
-                    j.DisposeProperty();
+                    PipelineCamera cam = MUnsafeUtility.GetObject<PipelineCamera>(i.value.ToPointer());
+                    var values = cam.allDatas.Values;
+                    foreach (var j in values)
+                    {
+                        j.DisposeProperty();
+                    }
+                    cam.allDatas.Clear();
                 }
-                cam.allDatas.Clear();
             }
         }
         protected override void Render(ScriptableRenderContext renderContext, Camera[] cameras)
@@ -226,6 +229,7 @@ namespace MPipeline
                 }
             }
         }
+
         private void Render(PipelineCamera pipelineCam, ref ScriptableRenderContext context, Camera cam, bool* pipelineChecked)
         {
             PipelineResources.CameraRenderingPath path = pipelineCam.renderingPath;

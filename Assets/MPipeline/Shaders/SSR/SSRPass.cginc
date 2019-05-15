@@ -163,7 +163,7 @@ float4 ScreenSpaceReflection_GetColor(PixelInput i) : SV_Target
 
 		///SpatioSampler
 		Weight = SSR_BRDF(normalize(-ViewPos), normalize(Hit_ViewPos - ViewPos), ViewNormal, Roughness);
-		SampleColor.rgb = _SSR_SceneColor_RT.SampleLevel(sampler_SSR_SceneColor_RT, HitUV_PDF.xy,Roughness * 3).rgb  * HitUV_PDF.a;
+		SampleColor.rgb = _SSR_SceneColor_RT.SampleLevel(sampler_SSR_SceneColor_RT, HitUV_PDF.xy,0).rgb  * HitUV_PDF.a;
 		alpha += HitUV_PDF.a;
 		SampleColor.rgb /= 1 + Luminance(SampleColor.rgb);
 		ReflecttionColor += SampleColor * Weight;
