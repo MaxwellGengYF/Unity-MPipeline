@@ -104,12 +104,14 @@ namespace MPipeline
         private F equalFunc;
         public Allocator alloc { get; private set; }
         public bool isCreated { get; private set; }
-        private void AddKey(PtrList* targetHashArray, uint hash, ref K key, int valueIndex)
+        private void AddKey(PtrList* targetHashArray, uint hash, ref K key, int valueIndex, PtrList* pooledList, ref int count)
         {
             ref PtrList lst = ref targetHashArray[hash];
             if (!lst.isCreated)
             {
-                lst = new PtrList(5, stride, alloc);
+                count--;
+                if (count < 0) lst = new PtrList(5, stride, alloc);
+                else lst = pooledList[count];
             }
             K* keyPtr = (K*)lst[lst.Add()];
             *keyPtr = key;
@@ -121,6 +123,18 @@ namespace MPipeline
             if (targetSize <= Capacity) return;
             PtrList* newHashArray = MUnsafeUtility.Malloc<PtrList>(sizeof(PtrList) * targetSize, alloc);
             UnsafeUtility.MemClear(newHashArray, sizeof(PtrList) * targetSize);
+            PtrList* pooledList = stackalloc PtrList[Capacity];
+            int pooledCount = 0;
+            for (int i = 0; i < Capacity; ++i)
+            {
+                ref PtrList poolLst = ref data->hashArray[i];
+                if (poolLst.isCreated)
+                {
+                    poolLst.Clear();
+                    pooledList[pooledCount] = poolLst;
+                    pooledCount++;
+                }
+            }
             //  
             for (int i = 0; i < data->keyValueList.length; ++i)
             {
@@ -128,12 +142,9 @@ namespace MPipeline
                 V* valuePtr = (V*)(keyPtr + 1);
                 uint hash = (uint)keyPtr->GetHashCode();
                 uint newHash = hash % (uint)targetSize;
-                AddKey(newHashArray, newHash, ref *keyPtr, i);
+                AddKey(newHashArray, newHash, ref *keyPtr, i, pooledList, ref pooledCount);
             }
-            for (int i = 0; i < Capacity; ++i)
-            {
-                data->hashArray[i].Dispose();
-            }
+
             UnsafeUtility.Free(data->hashArray, alloc);
             data->hashArray = newHashArray;
             data->capacity = targetSize;

@@ -30,11 +30,21 @@ ShaderVariantCollection:
         passType: 4
       - keywords: DIRECTIONAL LIGHTMAP_ON
         passType: 4
+      - keywords: DIRECTIONAL DIRLIGHTMAP_COMBINED LIGHTMAP_ON
+        passType: 4
       - keywords: DIRECTIONAL LIGHTPROBE_SH
+        passType: 4
+      - keywords: DIRECTIONAL _EMISSION
         passType: 4
       - keywords: DIRECTIONAL LIGHTPROBE_SH _EMISSION
         passType: 4
+      - keywords: DIRECTIONAL LIGHTPROBE_SH SHADOWS_SCREEN _EMISSION
+        passType: 4
+      - keywords: DIRECTIONAL LIGHTPROBE_SH _NORMALMAP
+        passType: 4
       - keywords: DIRECTIONAL LIGHTPROBE_SH _ALPHABLEND_ON
+        passType: 4
+      - keywords: DIRECTIONAL LIGHTPROBE_SH _ALPHABLEND_ON _EMISSION
         passType: 4
       - keywords: DIRECTIONAL LIGHTPROBE_SH _METALLICGLOSSMAP
         passType: 4
@@ -43,6 +53,15 @@ ShaderVariantCollection:
       - keywords: DIRECTIONAL LIGHTPROBE_SH _EMISSION _METALLICGLOSSMAP _NORMALMAP
         passType: 4
       - keywords: DIRECTIONAL LIGHTPROBE_SH _ALPHATEST_ON _EMISSION _METALLICGLOSSMAP
+        passType: 4
+      - keywords: DIRECTIONAL LIGHTPROBE_SH _GLOSSYREFLECTIONS_OFF _SPECULARHIGHLIGHTS_OFF
+        passType: 4
+      - keywords: DIRECTIONAL LIGHTPROBE_SH _EMISSION _GLOSSYREFLECTIONS_OFF _SPECULARHIGHLIGHTS_OFF
+        passType: 4
+      - keywords: DIRECTIONAL LIGHTPROBE_SH _ALPHATEST_ON _GLOSSYREFLECTIONS_OFF _SPECULARHIGHLIGHTS_OFF
+        passType: 4
+      - keywords: DIRECTIONAL LIGHTPROBE_SH _ALPHAPREMULTIPLY_ON _GLOSSYREFLECTIONS_OFF
+          _SPECULARHIGHLIGHTS_OFF
         passType: 4
       - keywords: SPOT
         passType: 5
@@ -53,6 +72,8 @@ ShaderVariantCollection:
       - keywords: POINT SHADOWS_CUBE
         passType: 5
       - keywords: POINT SHADOWS_CUBE SHADOWS_SOFT
+        passType: 5
+      - keywords: DIRECTIONAL _NORMALMAP
         passType: 5
       - keywords: SPOT _ALPHABLEND_ON
         passType: 5
@@ -74,13 +95,23 @@ ShaderVariantCollection:
         passType: 5
       - keywords: DIRECTIONAL _ALPHATEST_ON _METALLICGLOSSMAP
         passType: 5
+      - keywords: DIRECTIONAL _SPECULARHIGHLIGHTS_OFF
+        passType: 5
+      - keywords: DIRECTIONAL _ALPHATEST_ON _SPECULARHIGHLIGHTS_OFF
+        passType: 5
+      - keywords: DIRECTIONAL _ALPHAPREMULTIPLY_ON _SPECULARHIGHLIGHTS_OFF
+        passType: 5
       - keywords: SHADOWS_DEPTH
         passType: 8
       - keywords: SHADOWS_CUBE
         passType: 8
+      - keywords: SHADOWS_DEPTH _ALPHATEST_ON
+        passType: 8
       - keywords: SHADOWS_DEPTH _ALPHABLEND_ON
         passType: 8
       - keywords: SHADOWS_CUBE _ALPHABLEND_ON
+        passType: 8
+      - keywords: SHADOWS_DEPTH _ALPHAPREMULTIPLY_ON
         passType: 8
       - keywords: SHADOWS_DEPTH _METALLICGLOSSMAP
         passType: 8
@@ -101,6 +132,8 @@ ShaderVariantCollection:
       - keywords: LIGHTPROBE_SH UNITY_HDR_ON _ALPHATEST_ON _EMISSION _METALLICGLOSSMAP
         passType: 10
       - keywords: 
+        passType: 11
+      - keywords: _EMISSION
         passType: 11
   - first: {fileID: 47, guid: 0000000000000000f000000000000000, type: 0}
     second:
@@ -133,6 +166,8 @@ ShaderVariantCollection:
       - keywords: DIRECTIONAL
         passType: 0
       - keywords: POINT
+        passType: 0
+      - keywords: DIRECTIONAL SHADOWS_SCREEN
         passType: 0
       - keywords: SPOT UNITY_HDR_ON
         passType: 0
@@ -206,6 +241,16 @@ ShaderVariantCollection:
       - keywords: 
         passType: 0
   - first: {fileID: 10770, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 15100, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 15102, guid: 0000000000000000f000000000000000, type: 0}
     second:
       variants:
       - keywords: 
@@ -365,7 +410,7 @@ ShaderVariantCollection:
     second:
       variants:
       - keywords: 
-        passType: 13
+        passType: 0
   - first: {fileID: 4800000, guid: cdbdb71de5f9c454b980f6d0e87f0afb, type: 3}
     second:
       variants:
@@ -396,9 +441,15 @@ ShaderVariantCollection:
       variants:
       - keywords: 
         passType: 13
+      - keywords: LIGHTMAP_ON
+        passType: 13
       - keywords: CUT_OFF
         passType: 13
       - keywords: DETAIL_ON
+        passType: 13
+      - keywords: LIT_ENABLE
+        passType: 13
+      - keywords: LIGHTMAP_ON LIT_ENABLE
         passType: 13
   - first: {fileID: 4800000, guid: f997a3dc9254c44459323cced085150c, type: 3}
     second:
@@ -422,9 +473,22 @@ ShaderVariantCollection:
         passType: 13
       - keywords: ENABLE_REFLECTION
         passType: 13
+      - keywords: ENABLE_SUN ENABLE_SUNSHADOW
+        passType: 13
+      - keywords: ENABLE_REFLECTION ENABLE_SUN ENABLE_SUNSHADOW
+        passType: 13
       - keywords: ENABLE_REFLECTION ENABLE_VOLUMETRIC
         passType: 13
+      - keywords: ENABLE_REFLECTION ENABLE_SUNSHADOW ENABLE_VOLUMETRIC
+        passType: 13
+      - keywords: ENABLE_REFLECTION ENABLE_SUN ENABLE_SUNSHADOW ENABLE_VOLUMETRIC
+        passType: 13
       - keywords: ENABLE_REFLECTION ENABLE_VOLUMETRIC POINTLIGHT
+        passType: 13
+      - keywords: ENABLE_REFLECTION ENABLE_SUNSHADOW ENABLE_VOLUMETRIC POINTLIGHT
+        passType: 13
+      - keywords: ENABLE_REFLECTION ENABLE_SUN ENABLE_SUNSHADOW ENABLE_VOLUMETRIC
+          POINTLIGHT
         passType: 13
       - keywords: ENABLE_REFLECTION POINTLIGHT SPOTLIGHT
         passType: 13
@@ -572,11 +636,13 @@ ShaderVariantCollection:
         passType: 5
       - keywords: DETAIL_ON POINT SHADOWS_CUBE SHADOWS_SOFT
         passType: 5
-      - keywords: SHADOWS_DEPTH
-        passType: 8
+      - keywords: LIGHTMAP_ON
+        passType: 10
       - keywords: LIGHTPROBE_SH
         passType: 10
       - keywords: LIGHTMAP_ON UNITY_HDR_ON
+        passType: 10
+      - keywords: DIRLIGHTMAP_COMBINED LIGHTMAP_ON UNITY_HDR_ON
         passType: 10
       - keywords: LIGHTPROBE_SH UNITY_HDR_ON
         passType: 10
@@ -632,4 +698,6 @@ ShaderVariantCollection:
     second:
       variants:
       - keywords: 
+        passType: 13
+      - keywords: POINT_LIGHT_SHADOW
         passType: 13
