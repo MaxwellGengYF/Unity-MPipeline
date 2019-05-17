@@ -18,3 +18,6 @@ MonoBehaviour:
   localLightShadowLayer:
     serializedVersion: 2
     m_Bits: 55
+  iesTextures:
+  - {fileID: 2800000, guid: cbf0d861db3074b49a3c0273d3859a29, type: 3}
+  - {fileID: 2800000, guid: 03c22de584cc2f64c90c099cf661b13d, type: 3}

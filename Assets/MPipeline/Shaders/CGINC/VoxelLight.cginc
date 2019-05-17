@@ -28,6 +28,7 @@ static const uint3 _ScreenSize = uint3(160, 90, 128);
                 float smallAngle;
                 float nearClip;
                 int shadowIndex;
+                int iesIndex;
             };
 
             struct FogVolume

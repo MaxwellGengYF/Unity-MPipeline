@@ -22,12 +22,15 @@ public class MLightEditor : Editor
         target.useShadowCache = EditorGUILayout.Toggle("Use Shadow Cache", target.useShadowCache);
         target.spotNearClip = EditorGUILayout.Slider("Spot Nearclip", target.spotNearClip, 0.05f, target.light.range);
         target.smallSpotAngle = EditorGUILayout.Slider("Small Spotangle", target.smallSpotAngle, 0, target.light.spotAngle);
+        if (target.light.type == LightType.Spot)
+            target.iesIndex = EditorGUILayout.IntField("IES Atlas index", target.iesIndex);
         if (GUILayout.Button("Destroy ShadowCamera"))
             target.DestroyCamera();
         Undo.RecordObject(target, System.Guid.NewGuid().ToString());
     }
 }
 #endif
+[DisallowMultipleComponent]
 [ExecuteInEditMode]
 public unsafe class MLight : MonoBehaviour
 {
@@ -96,6 +99,7 @@ public unsafe class MLight : MonoBehaviour
     }
     public float smallSpotAngle = 30;
     public float spotNearClip = 0.3f;
+    public int iesIndex = 0;
     private static Dictionary<Light, MLight> lightDict = new Dictionary<Light, MLight>(47);
     public Light light { get; private set; }
     private bool useCubemap;
@@ -130,7 +134,6 @@ public unsafe class MLight : MonoBehaviour
         else
             mp = light.gameObject.AddComponent<MLight>();
     }
-
     public void CheckShadowCamera()
     {
         if (!shadowCam)

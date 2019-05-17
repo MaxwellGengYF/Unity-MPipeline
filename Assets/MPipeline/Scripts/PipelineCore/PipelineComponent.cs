@@ -158,6 +158,7 @@ namespace MPipeline
         public float smallAngle;
         public float nearClip;
         public int shadowIndex;
+        public int iesIndex;
     };
     public unsafe struct CubemapViewProjMatrix
     {

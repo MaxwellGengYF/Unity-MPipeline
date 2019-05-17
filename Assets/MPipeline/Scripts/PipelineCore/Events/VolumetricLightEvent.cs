@@ -33,6 +33,8 @@ namespace MPipeline
         private PropertySetEvent proper;
         private ComputeBuffer cameraNormalBuffer;
 
+       
+
         public override bool CheckProperty()
         {
             if (useNoiseEvents && !noiseEvents.Check())
@@ -102,7 +104,7 @@ namespace MPipeline
                 pass |= 0b1000;
             //TODO
             //Enable fourth bit as Global Illumination
-
+            
             buffer.SetGlobalFloat(ShaderIDs._MaxDistance, availableDistance);
             HistoryVolumetric historyVolume = IPerCameraData.GetProperty(cam, () => new HistoryVolumetric());
             //Volumetric Light
@@ -164,6 +166,7 @@ namespace MPipeline
             buffer.SetComputeTextureParam(scatter, pass, ShaderIDs._DirShadowMap, cbdr.dirLightShadowmap);
             buffer.SetComputeTextureParam(scatter, pass, ShaderIDs._SpotMapArray, cbdr.spotArrayMap);
             buffer.SetComputeTextureParam(scatter, pass, ShaderIDs._CubeShadowMapArray, cbdr.cubeArrayMap);
+            buffer.SetComputeTextureParam(scatter, pass, ShaderIDs._IESAtlas, lightingData.iesAtlas);
             if (useIBLIndirect)
             {
                 NativeArray<float3> cameraNormals = new NativeArray<float3>(3, Allocator.Temp, NativeArrayOptions.UninitializedMemory);

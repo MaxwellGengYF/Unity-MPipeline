@@ -20,6 +20,9 @@ namespace MPipeline
         public float cbdrDistance = 500;
         public float shadowDistance = 50;
         public LayerMask localLightShadowLayer;
+        public Texture2D[] iesTextures;
+        [System.NonSerialized]
+        public Texture iesAtlas;
         #region DIR_LIGHT
         private static int[] _Count = new int[2];
         private Matrix4x4[] cascadeShadowMapVP = new Matrix4x4[SunLight.CASCADELEVELCOUNT];
@@ -50,7 +53,8 @@ namespace MPipeline
         private float* clipDistances;
         private OrthoCam* sunShadowCams;
         private Material lightingMaterial;
-        
+        private Texture2DArray whiteTex;
+
         private PropertySetEvent proper;
 
         public override bool CheckProperty()
@@ -87,6 +91,30 @@ namespace MPipeline
             spotBuffer = new RenderSpotShadowCommand();
             spotBuffer.Init(resources.shaders.spotLightDepthShader);
             lightingMaterial = new Material(resources.shaders.lightingShader);
+            whiteTex = new Texture2DArray(1, 1, 1, TextureFormat.ARGB32, false, false);
+            whiteTex.SetPixels(new Color[] { Color.white }, 0);
+            if(iesTextures.Length > 0)
+            {
+                ComputeShader texCopyShader = resources.shaders.texCopyShader;
+                iesAtlas = new RenderTexture(new RenderTextureDescriptor
+                {
+                    colorFormat = RenderTextureFormat.R8,
+                    dimension = TextureDimension.Tex2DArray,
+                    width = 256,
+                    height = 1,
+                    volumeDepth = iesTextures.Length,
+                    enableRandomWrite = true,
+                    msaaSamples = 1
+                });
+                ((RenderTexture)iesAtlas).Create();
+                texCopyShader.SetTexture(5, ShaderIDs._IESAtlas,iesAtlas);
+                for (int i = 0; i < iesTextures.Length; ++i)
+                {
+                    texCopyShader.SetTexture(5, "_IESTex", iesTextures[i]);
+                    texCopyShader.SetInt(ShaderIDs._Count, i);
+                    texCopyShader.Dispatch(5, 256 / 64, 1, 1);
+                }
+            }
         }
 
         protected override void Dispose()
@@ -96,6 +124,8 @@ namespace MPipeline
             DestroyImmediate(lightingMaterial);
             spotBuffer.Dispose();
             cbdr.Dispose();
+            if (iesAtlas) DestroyImmediate(iesAtlas);
+            if (whiteTex) DestroyImmediate(whiteTex);
         }
         private static StaticFit DirectionalShadowStaticFit(Camera cam, SunLight sunlight, float* outClipDistance)
         {
@@ -121,6 +151,7 @@ namespace MPipeline
         }
         public override void PreRenderFrame(PipelineCamera cam, ref PipelineCommandData data)
         {
+            
             float shadowDist = clamp(shadowDistance, 0, cam.cam.farClipPlane);
             if (SunLight.current && SunLight.current.enabled && SunLight.current.gameObject.activeSelf)
             {
@@ -189,6 +220,7 @@ namespace MPipeline
             PipelineFunctions.RunPostProcess(ref cam.targets, out source, out dest);
             data.buffer.BlitSRT(source, dest, ShaderIDs._DepthBufferTexture, lightingMaterial, 0);
             data.buffer.BlitSRT(source, dest, ShaderIDs._DepthBufferTexture, lightingMaterial, 1);
+            if (iesAtlas == null) iesAtlas = whiteTex;
             //Calculate CBDR
             DirLight(cam, ref data);
             PointLight(cam, ref data);
@@ -248,6 +280,7 @@ namespace MPipeline
             addMLightCommandList.Clear();
             int count = Mathf.Min(cubemapVPMatrices.Length, CBDRSharedData.MAXIMUMPOINTLIGHTCOUNT);
             cbdr.pointshadowCount = count;
+            //Calculate PointLight Shadow
             if (LightFilter.pointLightCount > 0)
             {
                 if (count > 0)
@@ -285,6 +318,7 @@ namespace MPipeline
             }
             count = Mathf.Min(spotLightMatrices.Length, CBDRSharedData.MAXIMUMSPOTLIGHTCOUNT);
             cbdr.spotShadowCount = count;
+            //Calculate Spotlight Shadow
             if (LightFilter.spotLightCount > 0)
             {
                 if (count > 0)
@@ -363,6 +397,7 @@ namespace MPipeline
             buffer.SetComputeBufferParam(cbdrShader, CBDRSharedData.DeferredCBDR, ShaderIDs._PointLightIndexBuffer, cbdr.pointlightIndexBuffer);
             buffer.SetComputeBufferParam(cbdrShader, CBDRSharedData.DeferredCBDR, ShaderIDs._SpotLightIndexBuffer, cbdr.spotlightIndexBuffer);
             buffer.DispatchCompute(cbdrShader, CBDRSharedData.DeferredCBDR, 1, 1, CBDRSharedData.ZRES);
+            buffer.SetGlobalTexture(ShaderIDs._IESAtlas, iesAtlas);
             buffer.SetGlobalBuffer(ShaderIDs._AllPointLight, cbdr.allPointLightBuffer);
             buffer.SetGlobalBuffer(ShaderIDs._AllSpotLight, cbdr.allSpotLightBuffer);
             buffer.SetGlobalBuffer(ShaderIDs._PointLightIndexBuffer, cbdr.pointlightIndexBuffer);
@@ -638,7 +673,7 @@ namespace MPipeline
                     case LightType.Spot:
                         float3 spotPos = (Vector3)i.localToWorldMatrix.GetColumn(3);
                         float deg = Mathf.Deg2Rad * i.spotAngle * 0.5f;
-                        Cone c = new Cone(spotPos, i.range, normalize((Vector3)i.localToWorldMatrix.GetColumn(2)), deg);
+                        Cone c = new Cone(spotPos, i.range, (Vector3)i.localToWorldMatrix.GetColumn(2), deg);
                         float3 dir = normalize(c.vertex - camPos);
                         if (!VectorUtility.ConeIntersect(c, VectorUtility.GetPlane(dir, camPos + dir * lightDist))) return;
                         if (!MLight.GetPointLight(allLights[index], out mlight))
@@ -657,6 +692,7 @@ namespace MPipeline
                         currentSpot->angle = deg;
                         currentSpot->smallAngle = Mathf.Deg2Rad * mlight.smallSpotAngle * 0.5f;
                         currentSpot->nearClip = mlight.spotNearClip;
+                        currentSpot->iesIndex = mlight.iesIndex;
 
                         if (mlight.useShadow && VectorUtility.ConeIntersect(c, VectorUtility.GetPlane(dir, camPos + dir * shadowDist)))
                         {

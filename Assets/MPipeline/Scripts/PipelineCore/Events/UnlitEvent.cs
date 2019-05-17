@@ -28,19 +28,23 @@ namespace MPipeline
             if (!cam.cam.TryGetCullingParameters(out cullParams)) return;
             cullParams.cullingOptions = cam.cam.useOcclusionCulling ? CullingOptions.OcclusionCull: CullingOptions.None;
             CullingResults cullReslt = data.context.Cull(ref cullParams);
-            data.buffer.SetRenderTarget(cam.cameraTarget);
-            data.buffer.ClearRenderTarget(true, true, new Color(float.MaxValue, float.MaxValue, float.MaxValue, float.MaxValue));
+            data.buffer.GetTemporaryRT(ShaderIDs._DepthBufferTexture, cam.cam.pixelWidth, cam.cam.pixelHeight, 32, FilterMode.Bilinear, RenderTextureFormat.Depth, RenderTextureReadWrite.Linear);
+            data.buffer.SetRenderTarget(ShaderIDs._DepthBufferTexture);
+            data.buffer.ClearRenderTarget(true, false, Color.black);
             FilteringSettings filterSettings = new FilteringSettings
             {
                 layerMask = cam.cam.cullingMask,
                 renderingLayerMask = 1,
                 renderQueueRange = RenderQueueRange.opaque
             };
-            DrawingSettings drawSettings = new DrawingSettings(new ShaderTagId("GBuffer"), new SortingSettings(cam.cam) { criteria = SortingCriteria.CommonOpaque })
+            DrawingSettings drawSettings = new DrawingSettings(new ShaderTagId(passName), new SortingSettings(cam.cam) { criteria = SortingCriteria.CommonOpaque })
             {
-                perObjectData = UnityEngine.Rendering.PerObjectData.Lightmaps
+                perObjectData = UnityEngine.Rendering.PerObjectData.None
             };
             SceneController.RenderScene(ref data, ref filterSettings, ref drawSettings, ref cullReslt);
+            data.buffer.Blit(ShaderIDs._DepthBufferTexture, cam.cameraTarget);
+            data.buffer.ReleaseTemporaryRT(ShaderIDs._DepthBufferTexture);
+
         }
     }
 }

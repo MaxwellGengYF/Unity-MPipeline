@@ -4,6 +4,7 @@
 #pragma kernel TexToBuffer ARGB
 #pragma kernel BufferToTex ARGB
 #pragma kernel TexToBuffer NORM
+#pragma kernel CopyIES
 #include "CGINC/Texture.cginc"
 #include "UnityCG.cginc"
     uint DownDim(uint2 uv, uint width)
@@ -44,4 +45,12 @@ void BufferToTex (uint2 id : SV_DispatchThreadID)
     #ifdef ARGB
    // _OutputTex[uint3(id, _OffsetIndex)] = Decode(_Buffer[index]);
     #endif
+}
+RWTexture2DArray<float> _IESAtlas;
+Texture2D<float> _IESTex;
+uint _Count;
+[numthreads(64, 1, 1)]
+void CopyIES(uint id : SV_DISPATCHTHREADID)
+{
+    _IESAtlas[uint3(id, 0, _Count)] = _IESTex[uint2(id, 0)];
 }

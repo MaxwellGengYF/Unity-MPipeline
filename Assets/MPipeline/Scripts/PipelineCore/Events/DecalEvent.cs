@@ -57,6 +57,8 @@ namespace MPipeline
                 DecalBase dec = MUnsafeUtility.GetObject<DecalBase>(decal.comp);
                 dec.DrawDecal(buffer);
             }
+            buffer.ReleaseTemporaryRT(ShaderIDs._BackupAlbedoMap);
+            buffer.ReleaseTemporaryRT(ShaderIDs._BackupNormalMap);
         }
         private struct DecalCullJob : IJobParallelFor
         {

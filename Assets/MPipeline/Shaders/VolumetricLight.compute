@@ -42,6 +42,7 @@ StructuredBuffer<uint> _PointLightIndexBuffer;
 StructuredBuffer<uint> _SpotLightIndexBuffer;
 
 Texture3D<float4> _VolumetricNoise; SamplerState sampler_VolumetricNoise;
+Texture2DArray<float> _IESAtlas; SamplerState sampler_IESAtlas;
 float _TimeVar;
 
 TextureCubeArray<float> _CubeShadowMapArray; SamplerState sampler_CubeShadowMapArray;
@@ -204,6 +205,12 @@ float3 GetColor(float3 targetWorldPos, float linearDepth, float2 uv)
             float lightAngleScale = 1 / max ( 0.001, (SpotConeAngle.y - SpotConeAngle.x) );
             float lightAngleOffset = -SpotConeAngle.x * lightAngleScale;
             float SpotFalloff = AngleFalloff(ldf, lightAngleScale, lightAngleOffset);
+		    int iesIndex = Light.iesIndex;
+            if(iesIndex >= 0)
+		{
+			float iesUV = ComputeLightProfileMultiplier(targetWorldPos, LightPos, LightForward, LightAngle);
+			Light.lightColor *= _IESAtlas.SampleLevel(sampler_IESAtlas, float3(iesUV, 0.5, iesIndex), 0);
+		}
             float isNear =  dot(-Un_LightDir, SpotCone.direction) > Light.nearClip;
             float ShadowTrem = 1;
             float3 spotColor = SpotFalloff * DistanceFalloff(Un_LightDir, (1 / LightRange)) * MieScattering(-dot(lightDir, viewDir), _MieG) * Light.lightColor * isNear;

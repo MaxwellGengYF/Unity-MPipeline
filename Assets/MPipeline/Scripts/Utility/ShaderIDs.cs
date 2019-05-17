@@ -146,4 +146,5 @@ public static partial class ShaderIDs
     public static readonly int _SpotLightTile = Shader.PropertyToID("_SpotLightTile");
     public static readonly int _CameraPos = Shader.PropertyToID("_CameraPos");
     public static readonly int _TargetDepthTexture = Shader.PropertyToID("_TargetDepthTexture");
+    public static readonly int _IESAtlas = Shader.PropertyToID("_IESAtlas");
 }

@@ -8,6 +8,7 @@ float2 _CameraClipDistance; //X: Near Y: Far - Near
 TextureCubeArray<float> _CubeShadowMapArray; SamplerState sampler_CubeShadowMapArray;
 //UNITY_SAMPLE_SHADOW
 Texture2DArray<float> _SpotMapArray; SamplerComparisonState sampler_SpotMapArray;
+Texture2DArray<float> _IESAtlas; SamplerState sampler_IESAtlas;
 static const float _ShadowSampler = 8.0;
 float3 CalculateLocalLight(float2 uv, float4 WorldPos, float linearDepth, float3 AlbedoColor, float3 WorldNormal, float4 SpecularColor, float Roughness, float3 ViewDir)
 {
@@ -34,7 +35,7 @@ float3 CalculateLocalLight(float2 uv, float4 WorldPos, float linearDepth, float3
 		float LightRange = SpotCone.height;
 		float3 LightPos = SpotCone.vertex;
 		float3 LightColor = Light.lightColor;
-
+		int iesIndex = Light.iesIndex;
 		float LightAngle = cos(Light.angle);
 		float3 LightForward = SpotCone.direction;
 		float3 Un_LightDir = LightPos - WorldPos.xyz;
@@ -43,6 +44,11 @@ float3 CalculateLocalLight(float2 uv, float4 WorldPos, float linearDepth, float3
 		float3 floatDir = normalize(ViewDir + LightDir);
 		float ldh = -dot(LightDir, SpotCone.direction);
 		float isNear =  dot(-Un_LightDir, SpotCone.direction) > Light.nearClip;
+		if(iesIndex >= 0)
+		{
+			float iesUV  = ComputeLightProfileMultiplier(WorldPos.xyz, LightPos, LightForward, Light.angle);
+			LightColor *= _IESAtlas.SampleLevel(sampler_IESAtlas, float3(iesUV, 0.5, iesIndex), 0);
+		}
 		//////BSDF Variable
 		BSDFContext LightData;
 		Init(LightData, WorldNormal, ViewDir, LightDir, floatDir);

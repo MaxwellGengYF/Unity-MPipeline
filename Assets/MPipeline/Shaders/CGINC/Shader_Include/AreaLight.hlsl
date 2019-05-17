@@ -184,48 +184,17 @@ float AngleFalloff(float cd, float lightAngleScale, float lightAngleOffset)
     attenuation *= attenuation;
     return attenuation;
 }
-Texture2D<float>		_IESTexture;
-SamplerState	sampler_IESTexture;
 
 // Apply IES light profile texture
-float ComputeLightProfileMultiplier(float3 WorldPosition, float3 LightPosition, float3 LightDirection, float3 LightTangent)
+float ComputeLightProfileMultiplier(float3 WorldPosition, float3 LightPosition, float3 LightDirection, float lightAngle)
 {
-	float3 LightBitangent = normalize( cross( LightTangent, LightDirection ) );
-
-	float4x4 LightTransform = float4x4( float4(LightDirection.xyz, 0), float4(LightBitangent.xyz, 0), float4(LightTangent.xyz, 0), float4(0, 0, 0, 1) );
-	float4x4 InvLightTransform = transpose(LightTransform);
-
-	float3 ToLight = normalize(LightPosition - WorldPosition);
-	float3 LocalToLight = mul(float4(ToLight.xyz, 0), InvLightTransform).xyz;
-
+	float3 ToLight = normalize(WorldPosition-LightPosition);
 	// -1..1
 	float DotProd = dot(ToLight, LightDirection);
 	// -PI..PI (this distortion could be put into the texture but not without quality loss or more memory)
-	float Angle = asin(DotProd);
-	// 0..1
-	float NormAngle = Angle / PI + 0.5f;
-
-	float TangentAngle = atan2( -LocalToLight.z, -LocalToLight.y ); // -Y represents 0/360 horizontal angle and we're rotating counter-clockwise
-	float NormTangentAngle = TangentAngle / (PI * 2.f) + 0.5f;
-
-	return _IESTexture.SampleLevel(sampler_IESTexture, float2(NormAngle, NormTangentAngle), 0);
+	float Angle = acos(DotProd) / lightAngle;
+    return Angle;
 }
-/*
-
-float IESFalloff(float3 L, float4x4 worldToLightMatrix, sampler3D iesTex)
-{
-    float3 iesSampleDirection = mul (worldToLightMatrix , -L);
-
-    // Cartesian to spherical
-    // Texture encoded with cos(phi), scale from -1 - >1 to 0 - >1
-    float phiCoord = ( iesSampleDirection.z * 0.5) + 0.5;
-    float theta = atan2 ( iesSampleDirection.y , iesSampleDirection.x);
-    float thetaCoord = theta * Inv_Two_PI ;
-    float3 texCoord = float3 (thetaCoord , phiCoord);
-    float iesProfileScale = iesTexture . SampleLevel (sampler , texCoord , 0).r;
-    return iesProfileScale ;
-}
-*/
 
 /////////////////////////////////////////////////////////////////////////***Energy***/////////////////////////////////////////////////////////////////////////
 
