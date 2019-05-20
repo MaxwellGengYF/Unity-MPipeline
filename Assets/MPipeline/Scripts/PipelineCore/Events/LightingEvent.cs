@@ -451,6 +451,8 @@ namespace MPipeline
             buffer.ReleaseTemporaryRT(_DownSampledDepth1);
             buffer.ReleaseTemporaryRT(_DownSampledDepth2);
             buffer.ReleaseTemporaryRT(_DownSampledDepth3);
+            RenderPipeline.ReleaseRTAfterFrame(ShaderIDs._PointLightTile);
+            RenderPipeline.ReleaseRTAfterFrame(ShaderIDs._SpotLightTile);
             buffer.SetGlobalVector(ShaderIDs._TileSize, new Vector2(tileSize.x, tileSize.y));
         }
 

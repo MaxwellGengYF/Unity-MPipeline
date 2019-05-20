@@ -127,6 +127,7 @@ namespace MPipeline
                 vrUsage = VRTextureUsage.None
             };
             buffer.GetTemporaryRT(ShaderIDs._VolumeTex, desc, FilterMode.Bilinear);
+            RenderPipeline.ReleaseRTAfterFrame(ShaderIDs._VolumeTex);
             if (!historyVolume.lastVolume)
             {
                 historyVolume.lastVolume = new RenderTexture(desc);

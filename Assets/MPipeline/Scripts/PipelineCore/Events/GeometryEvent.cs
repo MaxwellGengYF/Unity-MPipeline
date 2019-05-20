@@ -41,6 +41,7 @@ namespace MPipeline
             proper = RenderPipeline.GetEvent<PropertySetEvent>();
             decal.Init();
             downSampleMat = new Material(resources.shaders.depthDownSample);
+            
         }
         public override bool CheckProperty()
         {
@@ -156,6 +157,9 @@ namespace MPipeline
                 downSampledGBuffers[2] = ShaderIDs._DownSampledGBuffer2;
                 data.buffer.SetRenderTarget(colors: downSampledGBuffers, depth: downSampledGBuffers[0]);
                 data.buffer.DrawMesh(GraphicsUtility.mesh, Matrix4x4.identity, downSampleMat, 0, 0);
+                RenderPipeline.ReleaseRTAfterFrame(ShaderIDs._DownSampledGBuffer1);
+                RenderPipeline.ReleaseRTAfterFrame(ShaderIDs._DownSampledGBuffer2);
+                RenderPipeline.ReleaseRTAfterFrame(ShaderIDs._DownSampledDepthTexture);
                 //TODO
             }
         }

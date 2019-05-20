@@ -99,7 +99,7 @@ public unsafe class MLight : MonoBehaviour
     }
     public float smallSpotAngle = 30;
     public float spotNearClip = 0.3f;
-    public int iesIndex = 0;
+    public int iesIndex = -1;
     private static Dictionary<Light, MLight> lightDict = new Dictionary<Light, MLight>(47);
     public Light light { get; private set; }
     private bool useCubemap;

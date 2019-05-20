@@ -272,6 +272,8 @@ namespace MPipeline
             SSGi_Buffer.GetTemporaryRT(SSGi_Trace_ID, RenderCamera.pixelWidth, RenderCamera.pixelHeight, 0, FilterMode.Point, RenderTextureFormat.ARGBHalf);
             SSGi_Buffer.BlitSRT(SSGi_Trace_ID, SSGi_Material, RenderPass_HiZ3D_MultiSpp);
             SSGi_Buffer.Blit(SSGi_Trace_ID, targets.renderTargetIdentifier);
+            SSGi_Buffer.ReleaseTemporaryRT(SSGi_SceneColor_ID);
+            SSGi_Buffer.ReleaseTemporaryRT(SSGi_Trace_ID);
         }
     }
     public class SSGIData : IPerCameraData

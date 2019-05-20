@@ -23,7 +23,6 @@ namespace MPipeline
         private List<PostEffect> allPostEffects;
         private Dictionary<Type, PostProcessEffectSettings> allSettings;
         private PostProcessRenderContext postContext;
-        private MotionBlurRenderer motionBlurRenderer;
         public CyberColor cyberColor;
         public Shader debug;
         private Material debugMat;
@@ -55,7 +54,6 @@ namespace MPipeline
             postContext.logHistogram = new LogHistogram();
             postContext.uberSheet = new PropertySheet(new Material(resources.shaders.uber));
             Shader.SetGlobalFloat("_RenderViewportScaleFactor", 1);
-            motionBlurRenderer = new MotionBlurRenderer();
             cyberColor.Init();
             foreach (var i in profile.settings)
             {
