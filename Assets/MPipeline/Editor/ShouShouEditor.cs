@@ -11,9 +11,8 @@ public class ShouShouEditor : ShaderGUI
         targetMatEnabled = EditorGUILayout.Toggle("Cut off", targetMatEnabled);
         bool useRainning = targetMat.IsKeywordEnabled("USE_RANNING");
         useRainning = EditorGUILayout.Toggle("Use Rain", useRainning);
-        bool useLit = targetMat.GetInt("_Stencil") > 0;
+        bool useLit = targetMat.IsKeywordEnabled("LIT_ENABLE");
         useLit = EditorGUILayout.Toggle("Lit Enable", useLit);
-        targetMat.SetInt("_Stencil", useLit ? 1 :  0);
 
         if (useLit)
         {

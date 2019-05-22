@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: Indirect 1
-  m_Shader: {fileID: 4800000, guid: f7f0d8bc677efcc44b8b3ea293d2b74f, type: 3}
+  m_Shader: {fileID: 4800000, guid: ccefdd4cfe6d5f843b027cb2b1ca6776, type: 3}
   m_ShaderKeywords: CUT_OFF LIT_ENABLE
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 1
@@ -96,7 +96,7 @@ Material:
     - _SpecularHighlights: 1
     - _SpecularIntensity: 0.15
     - _SrcBlend: 1
-    - _Stencil: 1
+    - _Stencil: 0
     - _UVSec: 0
     - _ZTest: 3
     - _ZWrite: 0

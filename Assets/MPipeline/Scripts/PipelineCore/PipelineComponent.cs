@@ -395,13 +395,12 @@ namespace MPipeline
             RenderTargets rt;
             rt.gbufferIndex = new int[]
             {
-                Shader.PropertyToID("_CameraGBufferTexture0"),
                 Shader.PropertyToID("_CameraGBufferTexture1"),
                 Shader.PropertyToID("_CameraGBufferTexture2"),
                 Shader.PropertyToID("_CameraGBufferTexture3")
             };
-            rt.gbufferIdentifier = new RenderTargetIdentifier[4];
-            for (int i = 0; i < 4; ++i)
+            rt.gbufferIdentifier = new RenderTargetIdentifier[3];
+            for (int i = 0; i < 3; ++i)
             {
                 rt.gbufferIdentifier[i] = rt.gbufferIndex[i];
             }

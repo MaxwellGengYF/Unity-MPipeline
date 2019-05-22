@@ -16,9 +16,11 @@ namespace MPipeline {
         private NativeArray<AreaLight> areaCullResult;
         private VolJob job;
         private JobHandle jobHandle;
+        
         public void Init()
         {
             areaLightBuffer = new ComputeBuffer(INIT_BUFFER_CAPACITY, sizeof(AreaLight));
+            
         }
 
         public bool Check()

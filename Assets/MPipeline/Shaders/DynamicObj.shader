@@ -17,7 +17,6 @@
 		_EmissionMap("Emission Map", 2D) = "white"{}
 		[HideInInspector]_ZTest("zw", Int) = 0
 		[HideInInspector]_ZWrite("zww", Int) = 0
-		[HideInInspector]_Stencil("stenc", Int) = 1
 	}
 	SubShader {
 		Tags { "RenderType"="Opaque" }
@@ -99,19 +98,16 @@ ENDCG
 
 pass
 {
-	stencil{
-  Ref [_Stencil]
-	WriteMask 3
-  comp always
-  pass replace
-}
 Name "GBuffer"
 Tags {"LightMode" = "GBuffer" "Name" = "GBuffer"}
 ZTest [_ZTest]
 ZWrite [_ZWrite]
 Cull back
 CGPROGRAM
-
+	#pragma multi_compile _ ENABLE_SUN
+	#pragma multi_compile _ ENABLE_SUNSHADOW
+	#pragma multi_compile _ POINTLIGHT
+	#pragma multi_compile _ SPOTLIGHT
 #pragma vertex vert_surf
 #pragma fragment frag_surf
 ENDCG
@@ -234,8 +230,8 @@ ENDCG
 		{
 			Stencil
 			{
-				Ref 4
-				WriteMask 4
+				Ref 128
+				WriteMask 128
 				Comp always
 				Pass replace
 			}

@@ -46,8 +46,8 @@ namespace MPipeline
         public static readonly Type[] bakeType =
 {
         typeof(PropertySetEvent),
-        typeof(GeometryEvent),
         typeof(LightingEvent),
+        typeof(GeometryEvent),
         typeof(SkyboxEvent),
         typeof(DebugEvent)
         };
@@ -55,10 +55,9 @@ namespace MPipeline
         public static readonly Type[] gpuDeferredType =
         {
        typeof(PropertySetEvent),
+       typeof(LightingEvent),
        typeof(GeometryEvent),
        typeof(AOEvents),
-       typeof(LightingEvent),
-       typeof(ScreenSpaceIndirectDiffuse),
        typeof(SkyboxEvent),
        typeof(ReflectionEvent),
        typeof(VolumetricLightEvent),

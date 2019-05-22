@@ -12,7 +12,7 @@
             Ref 0
             comp equal
             pass keep
-            ReadMask 4
+            ReadMask 128
         }
             CGPROGRAM
             #pragma vertex vert

@@ -108,17 +108,19 @@ namespace MPipeline
                 ssrEvents.PreRender(cam);
             }
         }
-        public void SetComputeShaderIBLBuffer(ComputeShader targetShader, int kernel, CommandBuffer buffer)
+        public void SetComputeShaderIBLBuffer(ComputeShader targetShader, int kernel, CommandBuffer buffer, Cubemap defaultMap)
         {
             buffer.SetComputeBufferParam(targetShader, kernel, ShaderIDs._ReflectionIndices, reflectionIndices);
             buffer.SetComputeBufferParam(targetShader, kernel, ShaderIDs._ReflectionData, probeBuffer);
             for (int i = 0; i < reflectionCount; ++i)
             {
-                buffer.SetComputeTextureParam(targetShader, kernel, reflectionCubemapIDs[i], reflectProbes[i].texture);
+                Texture tx = reflectProbes[i].texture;
+                if (!tx) tx = defaultMap;
+                buffer.SetComputeTextureParam(targetShader, kernel, reflectionCubemapIDs[i], tx);
             }
             for(int i = reflectionCount; i < maximumProbe; ++i)
             {
-                buffer.SetComputeTextureParam(targetShader, kernel, reflectionCubemapIDs[i], reflectProbes[0].texture);
+                buffer.SetComputeTextureParam(targetShader, kernel, reflectionCubemapIDs[i], defaultMap);
             }
         }
         public override void FrameUpdate(PipelineCamera cam, ref PipelineCommandData data)

@@ -19,7 +19,6 @@ namespace MPipeline
         Material linearMat;
         Material clusterMat;
         private PropertySetEvent proper;
-        public DecalEvent decal;
         public Material debugMat;
         private AOEvents ao;
         private ReflectionEvent reflection;
@@ -39,7 +38,6 @@ namespace MPipeline
             ao = RenderPipeline.GetEvent<AOEvents>();
             reflection = RenderPipeline.GetEvent<ReflectionEvent>();
             proper = RenderPipeline.GetEvent<PropertySetEvent>();
-            decal.Init();
             downSampleMat = new Material(resources.shaders.depthDownSample);
             
         }
@@ -66,10 +64,7 @@ namespace MPipeline
             }
             linearMat = null;
         }
-        public override void PreRenderFrame(PipelineCamera cam, ref PipelineCommandData data)
-        {
-            decal.PreRenderFrame(cam, ref data);
-        }
+
         public override void FrameUpdate(PipelineCamera cam, ref PipelineCommandData data)
         {
             CommandBuffer buffer = data.buffer;
@@ -98,7 +93,8 @@ namespace MPipeline
                 renderingLayerMask = 1,
                 renderQueueRange = RenderQueueRange.opaque
             };
-            DrawingSettings depthPrePassDrawSettings = new DrawingSettings(new ShaderTagId("Depth"), new SortingSettings(cam.cam) { criteria = SortingCriteria.QuantizedFrontToBack})
+            DrawingSettings depthPrePassDrawSettings = new DrawingSettings(new ShaderTagId("Depth"),
+                new SortingSettings(cam.cam) { criteria = SortingCriteria.QuantizedFrontToBack})
             {
                 perObjectData = UnityEngine.Rendering.PerObjectData.None,
                 enableDynamicBatching = false,
@@ -144,7 +140,6 @@ namespace MPipeline
             data.buffer.SetRenderTarget(color: ShaderIDs._CameraMotionVectorsTexture, depth: ShaderIDs._DepthBufferTexture);
             SceneController.RenderScene(ref data, ref mvFilter, ref mvDraw, ref proper.cullResults);
             data.buffer.DrawMesh(GraphicsUtility.mesh, Matrix4x4.identity, motionVecMat, 0, 0);
-            decal.FrameUpdate(cam, ref data);
             //Generate DownSampled GBuffer
             if ((ao != null && ao.Enabled) || (reflection != null && reflection.Enabled && reflection.ssrEvents.enabled))
             {

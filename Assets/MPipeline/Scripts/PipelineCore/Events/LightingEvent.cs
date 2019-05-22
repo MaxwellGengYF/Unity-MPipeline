@@ -24,7 +24,6 @@ namespace MPipeline
         [System.NonSerialized]
         public Texture iesAtlas;
         #region DIR_LIGHT
-        private static int[] _Count = new int[2];
         private Matrix4x4[] cascadeShadowMapVP = new Matrix4x4[SunLight.CASCADELEVELCOUNT];
         private Vector4[] shadowFrustumVP = new Vector4[6];
         private struct ShadowAvaliable
@@ -52,7 +51,6 @@ namespace MPipeline
         private StaticFit staticFit;
         private float* clipDistances;
         private OrthoCam* sunShadowCams;
-        private Material lightingMaterial;
         private Texture2DArray whiteTex;
 
         private PropertySetEvent proper;
@@ -90,7 +88,6 @@ namespace MPipeline
             cubeDepthMaterial = new Material(resources.shaders.cubeDepthShader);
             spotBuffer = new RenderSpotShadowCommand();
             spotBuffer.Init(resources.shaders.spotLightDepthShader);
-            lightingMaterial = new Material(resources.shaders.lightingShader);
             whiteTex = new Texture2DArray(1, 1, 1, TextureFormat.ARGB32, false, false);
             whiteTex.SetPixels(new Color[] { Color.white }, 0);
             if(iesTextures.Length > 0)
@@ -121,7 +118,6 @@ namespace MPipeline
         {
             needCheckedShadows.Dispose();
             DestroyImmediate(cubeDepthMaterial);
-            DestroyImmediate(lightingMaterial);
             spotBuffer.Dispose();
             cbdr.Dispose();
             if (iesAtlas) DestroyImmediate(iesAtlas);
@@ -216,16 +212,10 @@ namespace MPipeline
         }
         public override void FrameUpdate(PipelineCamera cam, ref PipelineCommandData data)
         {
-            RenderTargetIdentifier source, dest;
-            PipelineFunctions.RunPostProcess(ref cam.targets, out source, out dest);
-            data.buffer.BlitSRT(source, dest, ShaderIDs._DepthBufferTexture, lightingMaterial, 0);
-            data.buffer.BlitSRT(source, dest, ShaderIDs._DepthBufferTexture, lightingMaterial, 1);
             if (iesAtlas == null) iesAtlas = whiteTex;
             //Calculate CBDR
             DirLight(cam, ref data);
             PointLight(cam, ref data);
-            //Calculate Lighting
-            data.buffer.BlitSRTWithDepth(cam.targets.renderTargetIdentifier, ShaderIDs._DepthBufferTexture, lightingMaterial, 2);
             LightFilter.Clear();
         }
         private void DirLight(PipelineCamera cam, ref PipelineCommandData data)

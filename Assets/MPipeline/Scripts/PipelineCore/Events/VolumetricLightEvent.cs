@@ -32,8 +32,9 @@ namespace MPipeline
         private VolumetricNoise noiseEvents;
         private PropertySetEvent proper;
         private ComputeBuffer cameraNormalBuffer;
+        private Cubemap blackCB;
 
-       
+
 
         public override bool CheckProperty()
         {
@@ -45,7 +46,7 @@ namespace MPipeline
             {
                 return false;
             }
-            return lightingMat;
+            return lightingMat && blackCB;
         }
         protected override void Init(PipelineResources resources)
         {
@@ -58,6 +59,13 @@ namespace MPipeline
             reflectData = RenderPipeline.GetEvent<ReflectionEvent>();
             lightingMat = new Material(resources.shaders.volumetricShader);
             cameraNormalBuffer = new ComputeBuffer(3, sizeof(float3));
+            blackCB = new Cubemap(1, TextureFormat.ARGB32, false);
+            blackCB.SetPixel(CubemapFace.NegativeX, 0, 0, Color.black);
+            blackCB.SetPixel(CubemapFace.NegativeY, 0, 0, Color.black);
+            blackCB.SetPixel(CubemapFace.NegativeZ, 0, 0, Color.black);
+            blackCB.SetPixel(CubemapFace.PositiveX, 0, 0, Color.black);
+            blackCB.SetPixel(CubemapFace.PositiveX, 0, 0, Color.black);
+            blackCB.SetPixel(CubemapFace.PositiveX, 0, 0, Color.black);
         }
 
         public override void PreRenderFrame(PipelineCamera cam, ref PipelineCommandData data)
@@ -177,7 +185,7 @@ namespace MPipeline
                 cameraNormalBuffer.SetData(cameraNormals);
                 cameraNormals.Dispose();
                 buffer.SetComputeBufferParam(scatter, pass, ShaderIDs._CameraNormals, cameraNormalBuffer);
-                reflectData.SetComputeShaderIBLBuffer(scatter, pass, buffer);
+                reflectData.SetComputeShaderIBLBuffer(scatter, pass, buffer, blackCB);
             }
             if (useNoiseEvents)
             {
@@ -226,6 +234,7 @@ namespace MPipeline
                 noiseEvents.Dispose();
             DestroyImmediate(lightingMat);
             cameraNormalBuffer.Dispose();
+            DestroyImmediate(blackCB);
         }
         [Unity.Burst.BurstCompile]
         public unsafe struct FogVolumeCalculate : IJobParallelFor

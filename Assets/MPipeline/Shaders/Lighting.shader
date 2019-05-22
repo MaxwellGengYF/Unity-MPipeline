@@ -18,14 +18,12 @@
 	#pragma multi_compile _ ENABLE_SUNSHADOW
 	#pragma multi_compile _ POINTLIGHT
 	#pragma multi_compile _ SPOTLIGHT
-    #pragma multi_compile _ EnableGTAO
 			float4x4 _InvVP;
 			
 			Texture2D<float4> _CameraGBufferTexture0; SamplerState sampler_CameraGBufferTexture0;
 			Texture2D<float4> _CameraGBufferTexture1; SamplerState sampler_CameraGBufferTexture1;
 			Texture2D<float4> _CameraGBufferTexture2; SamplerState sampler_CameraGBufferTexture2;
 			Texture2D<float> _CameraDepthTexture; SamplerState sampler_CameraDepthTexture;
-            Texture2D<float2> _AOROTexture; SamplerState sampler_AOROTexture;
             struct appdata
             {
                 float4 vertex : POSITION;
@@ -124,7 +122,7 @@
                 float3 worldViewDir = normalize(worldPos.xyz - _WorldSpaceCameraPos);
 	            #if ENABLE_SUN
 					#if ENABLE_SUNSHADOW
-					color +=max(0,  CalculateSunLight(standardData, depth, worldPos, worldViewDir));
+					color +=max(0,  CalculateSunLight(standardData, depth,  worldPos, worldViewDir));
 					#else
 					color +=max(0,  CalculateSunLight_NoShadow(standardData, worldViewDir));
 					#endif

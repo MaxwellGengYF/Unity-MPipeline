@@ -3,6 +3,7 @@
 
 #define UNITY_PASS_DEFERRED
 #include "UnityStandardUtils.cginc"
+#include "Lighting.cginc"
 
 #define GetScreenPos(pos) ((float2(pos.x, pos.y) * 0.5) / pos.w + 0.5)
 
@@ -36,7 +37,7 @@ struct v2f_surf {
   float4 worldTangent : TEXCOORD1;
   float4 worldBinormal : TEXCOORD2;
   float4 worldNormal : TEXCOORD3;
-  float3 worldViewDir : TEXCOORD4;
+	float3 screenUV : TEXCOORD6;
 	#if LIGHTMAP_ON
 	float2 lightmapUV : TEXCOORD5;
 	#endif
@@ -68,7 +69,7 @@ v2f_surf vert_surf (appdata v)
 	  v.normal = mul((float3x3)unity_ObjectToWorld, v.normal);
 		o.worldNormal =float4(v.normal, worldPos.z);
   	o.worldBinormal = float4(cross(v.normal, o.worldTangent.xyz) * v.tangent.w, worldPos.y);
-  	o.worldViewDir = UnityWorldSpaceViewDir(worldPos);
+		o.screenUV = ComputeScreenPos(o.pos).xyw;
 		#if LIGHTMAP_ON 
 		o.lightmapUV = v.lightmapUV * unity_LightmapST.xy + unity_LightmapST.zw;
 		#endif
@@ -86,22 +87,23 @@ v2f_surf vert_surf (appdata v)
 }
 
 void frag_surf (v2f_surf IN,
-    out float4 outGBuffer0 : SV_Target0,
-    out float4 outGBuffer1 : SV_Target1,
-    out float4 outGBuffer2 : SV_Target2,
-    out float4 outEmission : SV_Target3
+    out float4 outGBuffer1 : SV_Target0,
+    out float4 outGBuffer2 : SV_Target1,
+    out float4 outEmission : SV_Target2
 ) {
 	
   // prepare and unpack data
   Input surfIN;
+	float2 screenUV = IN.screenUV.xy / IN.screenUV.z;
   surfIN.uv_MainTex = IN.pack0.xy;
   float3 worldPos = float3(IN.worldTangent.w, IN.worldBinormal.w, IN.worldNormal.w);
-  float3 worldViewDir = normalize(IN.worldViewDir);
+  float3 worldViewDir = normalize(worldPos.xyz - _WorldSpaceCameraPos);
   SurfaceOutputStandardSpecular o;
   float3x3 wdMatrix= float3x3(normalize(IN.worldTangent.xyz), normalize(IN.worldBinormal.xyz), normalize(IN.worldNormal.xyz));
   // call surface function
   surf (surfIN, o);
   o.Normal = normalize(mul(normalize(o.Normal), wdMatrix));
+	float4 outGBuffer0 = 0;
   outEmission = ProceduralStandardSpecular_Deferred (o, worldViewDir, outGBuffer0, outGBuffer1, outGBuffer2); //GI neccessary here!
 	#if LIT_ENABLE
 	#if LIGHTMAP_ON
@@ -111,9 +113,31 @@ void frag_surf (v2f_surf IN,
 	giInput.worldPos = worldPos;
 	giInput.lightmapUV = float4(IN.lightmapUV, 1, 1);
 	UnityGI giResult = UnityGI_Base(giInput, o.Occlusion, o.Normal);
-	outEmission.xyz += giResult.indirect.diffuse;
+	outEmission.xyz += giResult.indirect.diffuse * outGBuffer0;
   //outEmission.xyz += unity_Lightmap.Sample(samplerunity_Lightmap, IN.lightmapUV).xyz* o.Albedo;
 	#endif
+	float depth = IN.pos.z;
+	UnityStandardData standardData;
+	            standardData.occlusion = outGBuffer0.a;
+	            standardData.diffuseColor = outGBuffer0.rgb;
+	            standardData.specularColor = outGBuffer1.rgb;
+	            standardData.smoothness = outGBuffer1.a;
+	            standardData.normalWorld = o.Normal;
+
+	            #if ENABLE_SUN
+					#if ENABLE_SUNSHADOW
+					outEmission.xyz +=max(0,  CalculateSunLight(standardData, depth, float4(worldPos,1 ), worldViewDir));
+					#else
+					outEmission.xyz +=max(0,  CalculateSunLight_NoShadow(standardData, worldViewDir));
+					#endif
+					#endif
+
+					float Roughness = clamp(1 - standardData.smoothness, 0.02, 1);
+
+					#if SPOTLIGHT || POINTLIGHT
+                    float linearEye = LinearEyeDepth(depth);
+                    outEmission.xyz += max(0, CalculateLocalLight(screenUV, float4(worldPos,1 ), linearEye, standardData.diffuseColor, o.Normal, outGBuffer1, Roughness, -worldViewDir));
+					#endif
 	#endif
 }
 

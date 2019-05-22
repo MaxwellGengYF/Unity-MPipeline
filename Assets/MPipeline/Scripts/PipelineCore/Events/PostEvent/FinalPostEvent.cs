@@ -36,7 +36,7 @@ namespace MPipeline
         }
         protected override void Init(PipelineResources res)
         {
-            //      debugMat = new Material(debug);
+         //   debugMat = new Material(debug);
             allSettings = new Dictionary<Type, PostProcessEffectSettings>(10);
             allPostEffects = new List<PostEffect>(10);
             AddEvents<DepthOfField, DepthOfFieldRenderer>(true);
@@ -116,10 +116,6 @@ namespace MPipeline
                 }
             };
             cyberColor.FrameUpdate(data.buffer);
-            /*HizOcclusionData hizOccData;
-            hizOccData = IPerCameraData.GetProperty(cam, () => new HizOcclusionData());
-            data.buffer.Blit(hizOccData.historyDepth, cam.cameraTarget);*/
-            //data.buffer.Blit(ShaderIDs._CameraMotionVectorsTexture, cam.cameraTarget);
             data.buffer.BlitSRT(cam.targets.renderTargetIdentifier, cam.cameraTarget, postContext.uberSheet.material, 0, postContext.uberSheet.properties);
             if (postContext.bloomBufferNameID > -1) data.buffer.ReleaseTemporaryRT(postContext.bloomBufferNameID);
         }

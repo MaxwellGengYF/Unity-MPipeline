@@ -96,7 +96,7 @@ Material:
     - _DstBlend: 0
     - _EmissionMultiplier: 1
     - _GlossMapScale: 1
-    - _Glossiness: 0.431
+    - _Glossiness: 0.655
     - _GlossyReflections: 1
     - _Keyword0: 0
     - _Metallic: 0

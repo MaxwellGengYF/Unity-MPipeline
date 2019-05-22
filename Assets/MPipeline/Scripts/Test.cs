@@ -15,30 +15,49 @@ using Random = UnityEngine.Random;
 #if UNITY_EDITOR
 public unsafe class Test : MonoBehaviour
 {
-    private struct IntEqual : IFunction<int, int, bool>
+    [System.Serializable]
+    public struct renderersData
     {
-        public bool Run(ref int a, ref int b)
-        { return a == b; }
+        public Renderer rend;
+        public float4 scaleOffset;
+        public int index;
+    }
+    public List<renderersData> datas = new List<renderersData>();
+    public Texture2D[] lightmaps;
+    [EasyButtons.Button]
+    void Run()
+    {
+        LightmapData[] ds = LightmapSettings.lightmaps;
+        lightmaps = new Texture2D[ds.Length];
+        for(int i = 0; i < lightmaps.Length; ++i)
+        {
+            lightmaps[i] = ds[i].lightmapColor;
+        }
+        Renderer[] renderers = GetComponentsInChildren<Renderer>();
+        foreach(var i in renderers)
+        {
+            datas.Add(new renderersData
+            {
+                index = i.lightmapIndex,
+                rend = i,
+                scaleOffset = i.lightmapScaleOffset
+            });
+        }
     }
     [EasyButtons.Button]
-    void RunTest()
+    private void Set()
     {
-        NativeDictionary<int, int, IntEqual> dict = new NativeDictionary<int, int, IntEqual>(5, Allocator.Temp, new IntEqual());
-        for (int i = 0; i < 50; ++i)
+        LightmapData[] ds = new LightmapData[lightmaps.Length];
+        for(int i = 0; i < lightmaps.Length; ++i)
         {
-            dict.Add(i, i + 5);
+            ds[i] = new LightmapData();
+            ds[i].lightmapColor = lightmaps[i];
         }
-        for (int i = 0; i < 10; ++i) {
-            dict.Remove(i);
-            }
-        Debug.Log(dict.Length);
-         for (int i = 0; i< 50; ++i)
+        LightmapSettings.lightmaps = ds;
+        foreach(var i in datas)
         {
-            int value;
-            if(dict.Get(i, out value))
-            {
-                Debug.Log(value);
-            }
+            i.rend.lightmapIndex = i.index;
+            i.rend.lightmapScaleOffset = i.scaleOffset;
         }
     }
 }

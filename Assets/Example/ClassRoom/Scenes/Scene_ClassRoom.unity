@@ -1750,8 +1750,8 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 760465893}
-  m_LocalRotation: {x: -0.11841104, y: -0.21219544, z: -0.025911825, w: 0.9696806}
-  m_LocalPosition: {x: 9.192429, y: 3.2751884, z: -29.332369}
+  m_LocalRotation: {x: -0.0043564662, y: 0.9966778, z: -0.07782711, w: -0.023610413}
+  m_LocalPosition: {x: 14.643678, y: 3.2113118, z: -19.176956}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_Children: []
   m_Father: {fileID: 0}
@@ -2573,7 +2573,7 @@ MonoBehaviour:
   shadowMask:
     serializedVersion: 2
     m_Bits: 55
-  cascadeSoftValue: {x: 3, y: 2.5, z: 1.7, w: 1}
+  cascadeSoftValue: {x: 60, y: 50, z: 40, w: 30}
 --- !u!108 &1264696378
 Light:
   m_ObjectHideFlags: 0
