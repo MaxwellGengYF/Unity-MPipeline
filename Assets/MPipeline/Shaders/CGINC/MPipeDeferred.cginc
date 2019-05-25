@@ -4,6 +4,7 @@
 #define UNITY_PASS_DEFERRED
 #include "UnityStandardUtils.cginc"
 #include "Lighting.cginc"
+#include "DecalShading.cginc"
 
 #define GetScreenPos(pos) ((float2(pos.x, pos.y) * 0.5) / pos.w + 0.5)
 
@@ -93,6 +94,8 @@ void frag_surf (v2f_surf IN,
 ) {
 	
   // prepare and unpack data
+	float depth = IN.pos.z;
+	float linearEye = LinearEyeDepth(depth);
   Input surfIN;
 	float2 screenUV = IN.screenUV.xy / IN.screenUV.z;
   surfIN.uv_MainTex = IN.pack0.xy;
@@ -102,9 +105,11 @@ void frag_surf (v2f_surf IN,
   float3x3 wdMatrix= float3x3(normalize(IN.worldTangent.xyz), normalize(IN.worldBinormal.xyz), normalize(IN.worldNormal.xyz));
   // call surface function
   surf (surfIN, o);
+	CalculateDecal(screenUV, linearEye, worldPos, o.Albedo, o.Normal);
   o.Normal = normalize(mul(normalize(o.Normal), wdMatrix));
 	float4 outGBuffer0 = 0;
   outEmission = ProceduralStandardSpecular_Deferred (o, worldViewDir, outGBuffer0, outGBuffer1, outGBuffer2); //GI neccessary here!
+
 	#if LIT_ENABLE
 	#if LIGHTMAP_ON
 	outGBuffer2.w = 0;
@@ -116,7 +121,7 @@ void frag_surf (v2f_surf IN,
 	outEmission.xyz += giResult.indirect.diffuse * outGBuffer0;
   //outEmission.xyz += unity_Lightmap.Sample(samplerunity_Lightmap, IN.lightmapUV).xyz* o.Albedo;
 	#endif
-	float depth = IN.pos.z;
+
 	UnityStandardData standardData;
 	            standardData.occlusion = outGBuffer0.a;
 	            standardData.diffuseColor = outGBuffer0.rgb;
@@ -135,7 +140,6 @@ void frag_surf (v2f_surf IN,
 					float Roughness = clamp(1 - standardData.smoothness, 0.02, 1);
 
 					#if SPOTLIGHT || POINTLIGHT
-                    float linearEye = LinearEyeDepth(depth);
                     outEmission.xyz += max(0, CalculateLocalLight(screenUV, float4(worldPos,1 ), linearEye, standardData.diffuseColor, o.Normal, outGBuffer1, Roughness, -worldViewDir));
 					#endif
 	#endif

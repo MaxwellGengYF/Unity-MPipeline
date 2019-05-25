@@ -46,6 +46,13 @@ static const uint3 _ScreenSize = uint3(160, 90, 128);
                 float4x4 mat;
                 float3 color;
             };
+            struct Decal
+            {
+                float3x3 localToWorldMat;
+                float4x4 worldToLocal;
+                float3 position;
+                int texIndex;
+            };
 float3 _CameraForward;
 float3 _CameraNearPos;
 float3 _CameraFarPos;

@@ -25,7 +25,7 @@ namespace MPipeline {
 
         public bool Check()
         {
-            return areaLightBuffer.IsValid();
+            return areaLightBuffer != null && areaLightBuffer.IsValid();
         }
 
         public void PreRender(ref PipelineCommandData data, PropertySetEvent proper)

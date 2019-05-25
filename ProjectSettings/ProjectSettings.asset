@@ -531,7 +531,7 @@ PlayerSettings:
   il2cppCompilerConfiguration:
     Standalone: 1
   managedStrippingLevel:
-    Standalone: 1
+    Standalone: 2
   incrementalIl2cppBuild: {}
   allowUnsafeCode: 1
   additionalIl2CppArgs: 

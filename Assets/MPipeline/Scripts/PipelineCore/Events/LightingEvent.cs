@@ -74,12 +74,14 @@ namespace MPipeline
         private int[] tileSizeArray = new int[2];
         private Material minMaxBoundMat;
         private const bool useTBDR = false;
+        public DecalEvent decalEvt;
         protected override void Init(PipelineResources resources)
         {
             proper = RenderPipeline.GetEvent<PropertySetEvent>();
             if (useTBDR)
                 minMaxBoundMat = new Material(resources.shaders.minMaxDepthBounding);
             needCheckedShadows = new NativeList<ShadowAvaliable>(20, Allocator.Persistent);
+            decalEvt.Init(resources);
             cbdr = new CBDRSharedData(resources);
             for (int i = 0; i < cascadeShadowMapVP.Length; ++i)
             {
@@ -116,6 +118,7 @@ namespace MPipeline
 
         protected override void Dispose()
         {
+            decalEvt.Dispose();
             needCheckedShadows.Dispose();
             DestroyImmediate(cubeDepthMaterial);
             spotBuffer.Dispose();
@@ -209,6 +212,7 @@ namespace MPipeline
                 };
                 csmHandle = csmStruct.ScheduleRefBurst(SunLight.CASCADELEVELCOUNT, 1);
             }
+            decalEvt.PreRenderFrame(cam, ref data);
         }
         public override void FrameUpdate(PipelineCamera cam, ref PipelineCommandData data)
         {
@@ -217,6 +221,7 @@ namespace MPipeline
             DirLight(cam, ref data);
             PointLight(cam, ref data);
             LightFilter.Clear();
+            decalEvt.FrameUpdate(cam, ref data);
         }
         private void DirLight(PipelineCamera cam, ref PipelineCommandData data)
         {

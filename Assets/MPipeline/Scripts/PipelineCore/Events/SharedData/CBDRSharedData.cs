@@ -27,6 +27,7 @@ namespace MPipeline
         public const int SetZPlaneKernel = 1;
         public const int DeferredCBDR = 2;
         public const int DeferredTBDR = 3;
+        public const int DecalCull = 4;
 
         
         public const int MAXIMUMPOINTLIGHTCOUNT = 6;

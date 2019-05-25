@@ -50,6 +50,7 @@ MonoBehaviour:
     indirectDepthShader: {fileID: 4800000, guid: 2896c2d5ef5101b46942a11a481cb2d6,
       type: 3}
     depthDownSample: {fileID: 4800000, guid: 7061b45a41a45a8439883f503be20210, type: 3}
+    copyShader: {fileID: 4800000, guid: f02d2ab9b1798f54bb5c71b39117b17b, type: 3}
     HizLodShader: {fileID: 4800000, guid: 26c0c9d0c19bd4f4d958db01aa775f53, type: 3}
     motionVectorShader: {fileID: 4800000, guid: af8fd14c9f7a6d941b247fe88b7e37f6,
       type: 3}

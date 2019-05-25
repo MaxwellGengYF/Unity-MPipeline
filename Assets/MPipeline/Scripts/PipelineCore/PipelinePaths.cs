@@ -21,6 +21,7 @@ namespace MPipeline
         public Shader ssrShader;
         public Shader indirectDepthShader;
         public Shader depthDownSample;
+        public Shader copyShader;
         public Shader HizLodShader;
         public Shader motionVectorShader;
         public Shader shadowMaskShader;

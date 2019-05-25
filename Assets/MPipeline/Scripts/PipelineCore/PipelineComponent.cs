@@ -119,7 +119,9 @@ namespace MPipeline
     public unsafe struct DecalData
     {
         public float4x4 rotation;
+        public float4x4 worldToLocal;
         public float3 position;
+        public int index;
         public void* comp;
     }
 

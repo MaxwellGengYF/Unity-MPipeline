@@ -3,6 +3,7 @@
 #pragma kernel SetZPlane
 #pragma kernel CBDR
 #pragma kernel TBDR
+#pragma kernel DecalCull
 
 #include "UnityCG.cginc"
 #include "CGINC/VoxelLight.cginc"
@@ -139,4 +140,30 @@ void TBDR(uint2 id : SV_DISPATCHTHREADID)
 		}
 	}
 	_SpotLightTile[uint3(id, 0)] = lightCount;
+}
+StructuredBuffer<Decal> _AllDecals;
+RWStructuredBuffer<uint> _DecalIndexBuffer;
+uint _DecalCount;
+[numthreads(XRES, YRES, 1)]
+void DecalCull(uint3 id : SV_DISPATCHTHREADID)
+{
+	float4 planes[6];
+	uint i;
+	planes[0] = _ZPlaneTexture[uint2(id.z, 0)];
+	planes[1] = _ZPlaneTexture[uint2(id.z, 1)];
+	planes[2] = _XYPlaneTexture[uint3(id.xy, 0)];
+	planes[3] = _XYPlaneTexture[uint3(id.xy, 1)];
+	planes[4] = _XYPlaneTexture[uint3(id.xy, 2)];
+	planes[5] = _XYPlaneTexture[uint3(id.xy, 3)];
+	uint clusterCount = 0;
+	uint sBufferIndex = GetIndex(id, VOXELSIZE, (MAXLIGHTPERCLUSTER + 1)) + 1;
+	for (uint i = 0; i < _DecalCount; ++i) {
+		Decal dec = _AllDecals[i];
+		//BoxIntersect(float3 extent, float3x3 boxLocalToWorld, float3 position, float4 planes[6])
+		if (BoxIntersect(0.5, dec.localToWorldMat, dec.position, planes) > 0.5) {
+			_DecalIndexBuffer[sBufferIndex + clusterCount] = i;
+			clusterCount++;
+		}
+	}
+	_DecalIndexBuffer[sBufferIndex - 1] = clusterCount + sBufferIndex;
 }

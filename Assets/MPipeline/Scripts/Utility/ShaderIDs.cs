@@ -124,19 +124,12 @@ public static partial class ShaderIDs
     public static readonly int _Coeff = Shader.PropertyToID("_Coeff");
     public static readonly int _Tex3DSize = Shader.PropertyToID("_Tex3DSize");
     public static readonly int _WorldToLocalMatrix = Shader.PropertyToID("_WorldToLocalMatrix");
-
-    public static readonly int _DecalCountBuffer = Shader.PropertyToID("_DecalCountBuffer");
-    public static readonly int _DecalBuffer = Shader.PropertyToID("_DecalBuffer");
     public static readonly int _DecalAtlas = Shader.PropertyToID("_DecalAtlas");
     public static readonly int _DecalNormalAtlas = Shader.PropertyToID("_DecalNormalAtlas");
 
     public static readonly int _AreaLightBuffer = Shader.PropertyToID("_AreaLightBuffer");
     public static readonly int _AreaLightCount = Shader.PropertyToID("_AreaLightCount");
     public static readonly int _VolumetricNoise = Shader.PropertyToID("_VolumetricNoise");
-    public static readonly int _DecalNormal = Shader.PropertyToID("_DecalNormal");
-    public static readonly int _DecalAlbedo = Shader.PropertyToID("_DecalAlbedo");
-    public static readonly int _BackupAlbedoMap = Shader.PropertyToID("_BackupAlbedoMap");
-    public static readonly int _BackupNormalMap = Shader.PropertyToID("_BackupNormalMap");
     public static readonly int _OpaqueScale = Shader.PropertyToID("_OpaqueScale");
     public static readonly int _GrabTexture = Shader.PropertyToID("_GrabTexture");
 
@@ -147,4 +140,7 @@ public static partial class ShaderIDs
     public static readonly int _CameraPos = Shader.PropertyToID("_CameraPos");
     public static readonly int _TargetDepthTexture = Shader.PropertyToID("_TargetDepthTexture");
     public static readonly int _IESAtlas = Shader.PropertyToID("_IESAtlas");
+    public static readonly int _AllDecals = Shader.PropertyToID("_AllDecals");
+    public static readonly int _DecalIndexBuffer = Shader.PropertyToID("_DecalIndexBuffer");
+    public static readonly int _DecalCount = Shader.PropertyToID("_DecalCount");
 }

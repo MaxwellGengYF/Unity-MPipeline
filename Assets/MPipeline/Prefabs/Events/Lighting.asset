@@ -21,3 +21,10 @@ MonoBehaviour:
   iesTextures:
   - {fileID: 2800000, guid: cbf0d861db3074b49a3c0273d3859a29, type: 3}
   - {fileID: 2800000, guid: 03c22de584cc2f64c90c099cf661b13d, type: 3}
+  decalEvt:
+    textures:
+    - albedoTex: {fileID: 2800000, guid: a485b0ff1d934274d9883eef58ed846b, type: 3}
+      normalTex: {fileID: 2800000, guid: 5a1ebe5725ebb444ebafd75a5181ca2e, type: 3}
+    - albedoTex: {fileID: 2800000, guid: c5a53bd9810a6a242835c2a5de4a9655, type: 3}
+      normalTex: {fileID: 2800000, guid: 33a007317e9a95b4e946e72dd94ac9ec, type: 3}
+    atlasSize: 256

@@ -14,68 +14,139 @@ namespace MPipeline
     {
         private const int maxDecalPerCluster = 16;
         private DecalCullJob cullJob;
-        private NativeArray<DecalData> decalCullResults;
+        private NativeArray<DecalStrct> decalCullResults;
         private JobHandle handle;
-        public float availiableDistance;
-        private RenderTargetIdentifier[] decalTargets;
         private PropertySetEvent proper;
-        public void Init()
+        private LightingEvent lightingEvt;
+        private ComputeBuffer decalBuffer;
+        private ComputeBuffer decalIndexBuffer;
+        private ComputeShader cbdrShader;
+        public DecalTexture[] textures;
+        private RenderTexture decalAlbedoAtlas;
+        private RenderTexture decalNormalAtlas;
+        private Material copyMat;
+        const int INITCOUNT = 20;
+        public int atlasSize;
+        private struct DecalStrct
         {
+            public float3x3 rotation;
+            public float4x4 worldToLocal;
+            public float3 position;
+            public int index;
+        }
+        [System.Serializable]
+        public struct DecalTexture
+        {
+            public Texture albedoTex;
+            public Texture normalTex;
+        }
+
+        public void Init(PipelineResources res)
+        {
+            cbdrShader = res.shaders.cbdrShader;
+            copyMat = new Material(res.shaders.copyShader);
             proper = RenderPipeline.GetEvent<PropertySetEvent>();
-            decalTargets = new RenderTargetIdentifier[2];
+            lightingEvt = RenderPipeline.GetEvent<LightingEvent>();
+            decalBuffer = new ComputeBuffer(INITCOUNT, sizeof(DecalStrct));
+            decalIndexBuffer = new ComputeBuffer(CBDRSharedData.XRES * CBDRSharedData.YRES * CBDRSharedData.ZRES * (CBDRSharedData.MAXLIGHTPERCLUSTER + 1), sizeof(int));
+            decalAlbedoAtlas = new RenderTexture(new RenderTextureDescriptor
+            {
+                colorFormat = RenderTextureFormat.ARGB32,
+                dimension = TextureDimension.Tex2DArray,
+                msaaSamples = 1,
+                width = atlasSize,
+                height = atlasSize,
+                volumeDepth = max(1, textures.Length)
+            });
+            decalNormalAtlas = new RenderTexture(new RenderTextureDescriptor
+            {
+                colorFormat = RenderTextureFormat.RGHalf,
+                dimension = TextureDimension.Tex2DArray,
+                msaaSamples = 1,
+                width = atlasSize,
+                height = atlasSize,
+                volumeDepth = max(1, textures.Length)
+            });
+            for(int i = 0; i < textures.Length; ++i)
+            {
+                Graphics.SetRenderTarget(decalAlbedoAtlas, 0, CubemapFace.Unknown, i);
+                copyMat.SetTexture(ShaderIDs._MainTex, textures[i].albedoTex);
+                copyMat.SetPass(0);
+                Graphics.DrawMeshNow(GraphicsUtility.mesh, Matrix4x4.identity);
+                Graphics.SetRenderTarget(decalNormalAtlas, 0, CubemapFace.Unknown, i);
+                copyMat.SetTexture(ShaderIDs._MainTex, textures[i].normalTex);
+                copyMat.SetPass(1);
+                Graphics.DrawMeshNow(GraphicsUtility.mesh, Matrix4x4.identity);
+            }
+            Object.DestroyImmediate(copyMat);
+        }
+
+        public void Dispose()
+        {
+            decalBuffer.Dispose();
+            decalIndexBuffer.Dispose();
+            Object.DestroyImmediate(decalNormalAtlas);
+            Object.DestroyImmediate(decalAlbedoAtlas);
+            
         }
 
         public void PreRenderFrame(PipelineCamera cam, ref PipelineCommandData data)
         {
-            decalCullResults = new NativeArray<DecalData>(DecalBase.allDecalCount, Allocator.Temp);
+            decalCullResults = new NativeArray<DecalStrct>(Decal.allDecalCount, Allocator.Temp);
             cullJob = new DecalCullJob
             {
                 count = 0,
-                decalDatas = (DecalData*)decalCullResults.GetUnsafePtr(),
+                decalDatas = (DecalStrct*)decalCullResults.GetUnsafePtr(),
                 frustumPlanes = (float4*)proper.frustumPlanes.Ptr(),
-                availiableDistanceSqr = availiableDistance * availiableDistance,
+                availiableDistanceSqr = lightingEvt.cbdrDistance,
                 camPos = cam.cam.transform.position
             };
-            handle = cullJob.ScheduleRef(DecalBase.allDecalCount, 32);
+            handle = cullJob.ScheduleRef(Decal.allDecalCount, 32);
         }
 
         public void FrameUpdate(PipelineCamera cam, ref PipelineCommandData data)
         {
             CommandBuffer buffer = data.buffer;
             handle.Complete();
-            buffer.GetTemporaryRT(ShaderIDs._BackupAlbedoMap, cam.cam.pixelWidth, cam.cam.pixelHeight, 0, FilterMode.Point, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear, 1, false);
-            buffer.GetTemporaryRT(ShaderIDs._BackupNormalMap, cam.cam.pixelWidth, cam.cam.pixelHeight, 0, FilterMode.Point, RenderTextureFormat.ARGB2101010, RenderTextureReadWrite.Linear, 1, false);
-            buffer.CopyTexture(cam.targets.gbufferIndex[2], 0, 0, ShaderIDs._BackupNormalMap, 0, 0);
-            buffer.CopyTexture(cam.targets.gbufferIndex[0], 0, 0, ShaderIDs._BackupAlbedoMap, 0, 0);
-            decalTargets[0] = cam.targets.gbufferIndex[0];
-            decalTargets[1] = cam.targets.gbufferIndex[2];
-            buffer.SetRenderTarget(colors: decalTargets, depth: ShaderIDs._DepthBufferTexture);
-            DecalData* resulPtr = decalCullResults.Ptr();
-            for (int i = 0; i < cullJob.count; ++i)
+            DecalStrct* resulPtr = decalCullResults.Ptr();
+            if (cullJob.count > decalBuffer.count)
             {
-                ref DecalData decal = ref resulPtr[i];
-                DecalBase dec = MUnsafeUtility.GetObject<DecalBase>(decal.comp);
-                dec.DrawDecal(buffer);
+                int oldCount = decalBuffer.count;
+                decalBuffer.Dispose();
+                decalBuffer = new ComputeBuffer((int)max(oldCount * 1.5f, cullJob.count), sizeof(DecalStrct));
             }
-            buffer.ReleaseTemporaryRT(ShaderIDs._BackupAlbedoMap);
-            buffer.ReleaseTemporaryRT(ShaderIDs._BackupNormalMap);
+            decalBuffer.SetData(decalCullResults, 0, 0, cullJob.count);
+            buffer.SetComputeTextureParam(cbdrShader, CBDRSharedData.DecalCull, ShaderIDs._XYPlaneTexture, lightingEvt.cbdr.xyPlaneTexture);
+            buffer.SetComputeTextureParam(cbdrShader, CBDRSharedData.DecalCull, ShaderIDs._ZPlaneTexture, lightingEvt.cbdr.zPlaneTexture);
+            buffer.SetComputeBufferParam(cbdrShader, CBDRSharedData.DecalCull, ShaderIDs._AllDecals, decalBuffer);
+            buffer.SetComputeBufferParam(cbdrShader, CBDRSharedData.DecalCull, ShaderIDs._DecalIndexBuffer, decalIndexBuffer);
+            buffer.SetComputeIntParam(cbdrShader, ShaderIDs._DecalCount, cullJob.count);
+            buffer.DispatchCompute(cbdrShader, CBDRSharedData.DecalCull, 1, 1, CBDRSharedData.ZRES);
+            buffer.SetGlobalTexture(ShaderIDs._DecalAtlas, decalAlbedoAtlas);
+            buffer.SetGlobalTexture(ShaderIDs._DecalNormalAtlas, decalNormalAtlas);
+            buffer.SetGlobalBuffer(ShaderIDs._DecalIndexBuffer, decalIndexBuffer);
+            buffer.SetGlobalBuffer(ShaderIDs._AllDecals, decalBuffer);
         }
         private struct DecalCullJob : IJobParallelFor
         {
             [NativeDisableUnsafePtrRestriction]
             public float4* frustumPlanes;
-            public DecalData* decalDatas;
+            public DecalStrct* decalDatas;
             public int count;
             public float availiableDistanceSqr;
             public float3 camPos;
             public void Execute(int index)
             {
-                ref DecalData data = ref DecalBase.GetData(index);
+                ref DecalData data = ref Decal.GetData(index);
                 float3x3 rotation = float3x3(data.rotation.c0.xyz, data.rotation.c1.xyz, data.rotation.c2.xyz);
-                if(lengthsq(camPos - data.position) < availiableDistanceSqr && VectorUtility.BoxIntersect(rotation, data.position, frustumPlanes, 6))
+                if (lengthsq(camPos - data.position) < availiableDistanceSqr && VectorUtility.BoxIntersect(rotation, data.position, frustumPlanes, 6))
                 {
                     int currentInd = System.Threading.Interlocked.Increment(ref count) - 1;
-                    decalDatas[currentInd] = data;
+                    ref DecalStrct str = ref decalDatas[currentInd];
+                    str.rotation = rotation;
+                    str.position = data.position;
+                    str.index = data.index;
+                    str.worldToLocal = data.worldToLocal;
                 }
             }
         }
