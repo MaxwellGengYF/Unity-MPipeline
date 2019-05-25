@@ -25,7 +25,7 @@ namespace MPipeline
         }
         private int index;
         public int texIndex;
-        private void Awake()
+        private void OnEnable()
         {
             if (!decalDatas.isCreated) decalDatas = new NativeList<DecalData>(10, Unity.Collections.Allocator.Persistent);
             index = decalDatas.Length;
@@ -49,7 +49,7 @@ namespace MPipeline
             da.index = texIndex;
         }
 
-        private void OnDestroy()
+        private void OnDisable()
         {
             if (!decalDatas.isCreated) return;
             Decal lastDec = MUnsafeUtility.GetObject<Decal>(decalDatas[decalDatas.Length - 1].comp);
