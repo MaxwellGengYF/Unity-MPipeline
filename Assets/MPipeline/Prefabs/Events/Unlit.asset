@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: b7ba8e49c6d61a248a499678fdc81351, type: 3}
   m_Name: Unlit
   m_EditorClassIdentifier: 
-  enabled: 0
+  enabled: 1
   passName: Depth

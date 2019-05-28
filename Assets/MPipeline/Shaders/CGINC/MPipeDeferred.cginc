@@ -88,9 +88,10 @@ v2f_surf vert_surf (appdata v)
 }
 
 void frag_surf (v2f_surf IN,
-    out float4 outGBuffer1 : SV_Target0,
-    out float4 outGBuffer2 : SV_Target1,
-    out float4 outEmission : SV_Target2
+		out float4 outGBuffer0 : SV_Target0,
+    out float4 outGBuffer1 : SV_Target1,
+    out float4 outGBuffer2 : SV_Target2,
+    out float4 outEmission : SV_Target3
 ) {
 	
   // prepare and unpack data
@@ -107,7 +108,6 @@ void frag_surf (v2f_surf IN,
   surf (surfIN, o);
 	CalculateDecal(screenUV, linearEye, worldPos, o.Albedo, o.Normal);
   o.Normal = normalize(mul(normalize(o.Normal), wdMatrix));
-	float4 outGBuffer0 = 0;
   outEmission = ProceduralStandardSpecular_Deferred (o, worldViewDir, outGBuffer0, outGBuffer1, outGBuffer2); //GI neccessary here!
 
 	#if LIT_ENABLE

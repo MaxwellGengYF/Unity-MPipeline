@@ -256,8 +256,9 @@ public unsafe static class PipelineFunctions
     public static void InitRenderTarget(ref RenderTargets tar, Camera tarcam, CommandBuffer buffer)
     {
         buffer.GetTemporaryRT(tar.gbufferIndex[0], tarcam.pixelWidth, tarcam.pixelHeight, 0, FilterMode.Point, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear, 1, false);
-        buffer.GetTemporaryRT(tar.gbufferIndex[1], tarcam.pixelWidth, tarcam.pixelHeight, 0, FilterMode.Point, RenderTextureFormat.ARGB2101010, RenderTextureReadWrite.Linear, 1, false);
-        buffer.GetTemporaryRT(tar.gbufferIndex[2], tarcam.pixelWidth, tarcam.pixelHeight, 0, FilterMode.Bilinear, RenderTextureFormat.ARGBHalf, RenderTextureReadWrite.Linear, 1, false);
+        buffer.GetTemporaryRT(tar.gbufferIndex[1], tarcam.pixelWidth, tarcam.pixelHeight, 0, FilterMode.Point, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear, 1, false);
+        buffer.GetTemporaryRT(tar.gbufferIndex[2], tarcam.pixelWidth, tarcam.pixelHeight, 0, FilterMode.Point, RenderTextureFormat.ARGB2101010, RenderTextureReadWrite.Linear, 1, false);
+        buffer.GetTemporaryRT(tar.gbufferIndex[3], tarcam.pixelWidth, tarcam.pixelHeight, 0, FilterMode.Bilinear, RenderTextureFormat.ARGBHalf, RenderTextureReadWrite.Linear, 1, false);
         buffer.GetTemporaryRT(ShaderIDs._DepthBufferTexture, tarcam.pixelWidth, tarcam.pixelHeight, 32, FilterMode.Point, RenderTextureFormat.Depth, RenderTextureReadWrite.Linear, 1, false);
         buffer.GetTemporaryRT(ShaderIDs._CameraDepthTexture, tarcam.pixelWidth, tarcam.pixelHeight, 0, FilterMode.Point, RenderTextureFormat.RFloat, RenderTextureReadWrite.Linear, 1, false);
         buffer.GetTemporaryRT(ShaderIDs._BackupMap, tarcam.pixelWidth, tarcam.pixelHeight, 0, FilterMode.Bilinear, RenderTextureFormat.ARGBHalf, RenderTextureReadWrite.Linear, 1, false);
@@ -268,7 +269,7 @@ public unsafe static class PipelineFunctions
         MPipeline.RenderPipeline.ReleaseRTAfterFrame(ShaderIDs._CameraDepthTexture);
         MPipeline.RenderPipeline.ReleaseRTAfterFrame(ShaderIDs._BackupMap);
         MPipeline.RenderPipeline.ReleaseRTAfterFrame(ShaderIDs._CameraMotionVectorsTexture);
-        tar.renderTargetIdentifier = tar.gbufferIndex[2];
+        tar.renderTargetIdentifier = tar.gbufferIndex[3];
         tar.backupIdentifier = ShaderIDs._BackupMap;
     }
     [MethodImpl(MethodImplOptions.AggressiveInlining)]

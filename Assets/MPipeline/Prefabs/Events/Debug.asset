@@ -12,5 +12,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 0061566858b12de4abf33a63d0bfb4dc, type: 3}
   m_Name: Debug
   m_EditorClassIdentifier: 
-  enabled: 1
+  enabled: 0
   debugMat: {fileID: 2100000, guid: 6e6f2f6e0f539774abf0e6ffd9b66fb5, type: 2}
