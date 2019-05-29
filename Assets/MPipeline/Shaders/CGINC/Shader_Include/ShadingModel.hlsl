@@ -17,7 +17,7 @@ half3 Defult_Lit(BSDFContext LightData, half3 Energy, half3 MultiScatterEnergy, 
     return (Diffuse + Specular) * Energy;
 }
 
-half3 Skin_Lit(BSDFContext LightData, half3 Energy, half3 MultiScatterEnergy, half3 AlbedoColor, half3 SpecularColor, half Roughness, half Occlusion)
+half3 Skin_Lit(BSDFContext LightData, half3 Energy, half3 MultiScatterEnergy, half3 AlbedoColor, half3 SpecularColor, half Roughness)
 {
     half3 Diffuse = Diffuse_RenormalizeBurley(LightData.LoH, LightData.NoL, LightData.NoV, AlbedoColor, Roughness);
 
@@ -31,7 +31,7 @@ half3 Skin_Lit(BSDFContext LightData, half3 Energy, half3 MultiScatterEnergy, ha
 	return (Diffuse + Specular) * Energy;
 }
 
-half3 ClearCoat_Lit(BSDFContext LightData, half3 Energy, half3 MultiScatterEnergy, half3 ClearCoat_MultiScatterEnergy, half3 AlbedoColor, half3 SpecularColor, half ClearCoat, half ClearCoat_Roughness, half Roughness, half Occlusion)
+half3 ClearCoat_Lit(BSDFContext LightData, half3 Energy, half3 MultiScatterEnergy, half3 ClearCoat_MultiScatterEnergy, half3 AlbedoColor, half3 SpecularColor, half ClearCoat, half ClearCoat_Roughness, half Roughness)
 {
 	half3 Diffuse = Diffuse_RenormalizeBurley(LightData.LoH, LightData.NoL, LightData.NoV, AlbedoColor, Roughness);
 
@@ -54,7 +54,7 @@ half3 ClearCoat_Lit(BSDFContext LightData, half3 Energy, half3 MultiScatterEnerg
 	return (Diffuse + BaseSpecular + ClearCoat_Specular) * Energy * LayerAttenuation;
 }
 
-half3 Cloth_Cotton(BSDFContext LightData, half3 Energy, half3 AlbedoColor, half3 SpecularColor, half Roughness, half Occlusion)
+half3 Cloth_Cotton(BSDFContext LightData, half3 Energy, half3 AlbedoColor, half3 SpecularColor, half Roughness)
 {
 	half3 Diffuse = Diffuse_Fabric(AlbedoColor, Roughness) * LightData.NoL;
 
@@ -72,7 +72,7 @@ half3 Cloth_Cotton(BSDFContext LightData, half3 Energy, half3 AlbedoColor, half3
 	return (Diffuse + Specular) * Energy;
 }
 
-half3 Cloth_Silk(BSDFContext LightData, AnisoBSDFContext AnisoLightContext, half3 Energy, half3 AlbedoColor, half3 SpecularColor, half Roughness, half RoughnessT, half RoughnessB, half Occlusion)
+half3 Cloth_Silk(BSDFContext LightData, AnisoBSDFContext AnisoLightContext, half3 Energy, half3 AlbedoColor, half3 SpecularColor, half Roughness, half RoughnessT, half RoughnessB)
 {
     
     half3 Diffuse = Diffuse_Fabric(AlbedoColor, Roughness) * LightData.NoL;

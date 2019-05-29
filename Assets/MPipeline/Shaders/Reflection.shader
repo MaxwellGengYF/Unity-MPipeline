@@ -50,7 +50,13 @@ ENDCG
 //Pass 0 Regular Projection
         Pass
         {
-
+        Stencil
+        {
+            Ref 1
+            ReadMask 127
+            Pass keep
+            Comp Equal
+        }
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
@@ -79,7 +85,13 @@ ENDCG
         }
                 Pass
         {
-
+        Stencil
+        {
+            Ref 1
+            ReadMask 127
+            Pass keep
+            Comp Equal
+        }
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag

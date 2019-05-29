@@ -14,7 +14,7 @@ namespace MPipeline
             public FogVolume volume;
             public void* light;
         }
-        
+
         public static NativeList<FogVolumeContainer> allVolumes;
         public int index = 0;
         public float volume = 1;
@@ -83,7 +83,7 @@ namespace MPipeline
             };
             allVolumes[index].volume = volume;
         }
-        
+
 
         private void OnDisable()
         {

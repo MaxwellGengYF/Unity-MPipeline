@@ -17,6 +17,7 @@
 		_EmissionMap("Emission Map", 2D) = "white"{}
 		[HideInInspector]_ZTest("zw", Int) = 0
 		[HideInInspector]_ZWrite("zww", Int) = 0
+		[HideInInspector]_LightingModel("lm", Int) = 1
 	}
 	SubShader {
 		Tags { "RenderType"="Opaque" }
@@ -98,6 +99,13 @@ ENDCG
 
 pass
 {
+	Stencil
+	{
+		Ref [_LightingModel]
+		WriteMask 127
+		Pass replace
+		comp always
+	}
 Name "GBuffer"
 Tags {"LightMode" = "GBuffer" "Name" = "GBuffer"}
 ZTest [_ZTest]

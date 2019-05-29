@@ -332,7 +332,8 @@ void CSMain (uint3 id : SV_DispatchThreadID)
     lastFrameUV.z = pow(lastFrameUV.z, 1 / FROXELRATE);
     float4 lastFrameColor = _LastVolume.SampleLevel(sampler_LastVolume, lastFrameUV, 0);
     float reprojectionValid = lerp(_TemporalWeight * (dot(abs(lastFrameUV - saturate(lastFrameUV)), 1) < 1e-4), 0.999, _SceneOffset.w);
-    _VolumeTex[id] = lerp(float4(col.xyz, col.w), lastFrameColor, reprojectionValid);
+    col.xyz *= col.w;
+    _VolumeTex[id] = lerp(col, lastFrameColor, reprojectionValid);
 }
 [numthreads(32, 2, 1)]
 void Scatter(uint2 id : SV_DISPATCHTHREADID)
@@ -346,7 +347,7 @@ void Scatter(uint2 id : SV_DISPATCHTHREADID)
 		pos.z = z;
 		float4 slice = _VolumeTex[pos];
 		 float currentDist = (z + 1.0) / _ScreenSize.z;
-        currentDist = pow(currentDist, FROXELRATE);
+        currentDist = pow(currentDist, FROXELRATE) * _MaxDistance;
         slice *= (currentDist - lastDist) * _ScreenSize.z;
 		accum = ScatterStep(accum.rgb, accum.a, slice.rgb, slice.a);
         lastDist = currentDist;

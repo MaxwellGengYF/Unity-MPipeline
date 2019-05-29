@@ -4,6 +4,10 @@ using UnityEngine;
 using UnityEditor;
 public class ShouShouEditor : ShaderGUI
 {
+    public enum LightingModelType
+    {
+        Unlit = 0, DefaultLit = 1
+    }
     public override void OnGUI(MaterialEditor materialEditor, MaterialProperty[] properties)
     {
         Material targetMat = materialEditor.target as Material;
@@ -11,10 +15,11 @@ public class ShouShouEditor : ShaderGUI
         targetMatEnabled = EditorGUILayout.Toggle("Cut off", targetMatEnabled);
         bool useRainning = targetMat.IsKeywordEnabled("USE_RANNING");
         useRainning = EditorGUILayout.Toggle("Use Rain", useRainning);
-        bool useLit = targetMat.IsKeywordEnabled("LIT_ENABLE");
-        useLit = EditorGUILayout.Toggle("Lit Enable", useLit);
-
-        if (useLit)
+        LightingModelType currentType = (LightingModelType)targetMat.GetInt("_LightingModel");
+        currentType = (LightingModelType)EditorGUILayout.EnumPopup("Lighting Model", currentType);
+        Undo.RecordObject(targetMat, targetMat.name);
+        targetMat.SetInt("_LightingModel", (int)currentType);
+        if (currentType != LightingModelType.Unlit)
         {
             targetMat.EnableKeyword("LIT_ENABLE");
         }
