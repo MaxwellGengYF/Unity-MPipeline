@@ -7,7 +7,65 @@
 #include "DecalShading.cginc"
 
 #define GetScreenPos(pos) ((float2(pos.x, pos.y) * 0.5) / pos.w + 0.5)
+	struct Input {
+			float2 uv_MainTex;
+		};
+cbuffer UnityPerMaterial
+{
+    float _SpecularIntensity;
+		float _MetallicIntensity;
+    float4 _EmissionColor;
+		float _Occlusion;
+		float _VertexScale;
+		float _VertexOffset;
+		float4 _MainTex_ST;
+		float4 _DetailAlbedo_ST;
+		float _Glossiness;
+		float4 _Color;
+		float _EmissionMultiplier;
+		float _Cutoff;
+		float3 _MultiScatter;
+		float _ClearCoatRoughness;
+		float _ClearCoat;
+		float3 _ClearCoatEnergy;
+}
+		sampler2D _BumpMap;
+		sampler2D _SpecularMap;
+		sampler2D _MainTex; 
+		sampler2D _DetailAlbedo; 
+		sampler2D _DetailNormal;
+		sampler2D _EmissionMap;
+		sampler2D _RainTexture;
 
+		void surf (Input IN, inout SurfaceOutputStandardSpecular o) {
+			// Albedo comes from a texture tinted by color
+			float2 uv = IN.uv_MainTex;// - parallax_mapping(IN.uv_MainTex,IN.viewDir);
+			float2 detailUV = TRANSFORM_TEX(uv, _DetailAlbedo);
+			uv = TRANSFORM_TEX(uv, _MainTex);
+			float4 spec = tex2D(_SpecularMap,uv);
+			float4 c = tex2D (_MainTex, uv);
+#if DETAIL_ON
+			float3 detailNormal = UnpackNormal(tex2D(_DetailNormal, detailUV));
+			float4 detailColor = tex2D(_DetailAlbedo, detailUV);
+#endif
+			o.Normal = UnpackNormal(tex2D(_BumpMap,uv));
+			o.Albedo = c.rgb;
+#if DETAIL_ON
+			o.Albedo = lerp(detailColor.rgb, o.Albedo, c.a) * _Color.rgb;
+			o.Normal = lerp(detailNormal, o.Normal, c.a);
+			
+#else
+			o.Albedo *= _Color.rgb;
+#endif
+#if USE_RANNING && ENABLE_RAINNING
+			o.Normal.xy += tex2D(_RainTexture, uv).xy;
+#endif
+			o.Alpha = 1;
+			o.Occlusion = lerp(1, spec.b, _Occlusion);
+			o.Specular = lerp(_SpecularIntensity * spec.g, o.Albedo * _SpecularIntensity * spec.g, _MetallicIntensity); 
+			o.Smoothness = _Glossiness * spec.r;
+			o.Emission = _EmissionColor * tex2D(_EmissionMap, uv) * _EmissionMultiplier;
+		}
 
 float4 ProceduralStandardSpecular_Deferred (inout SurfaceOutputStandardSpecular s, float3 viewDir, out float4 outGBuffer0, out float4 outGBuffer1, out float4 outGBuffer2)
 {
@@ -127,20 +185,29 @@ void frag_surf (v2f_surf IN,
 	            standardData.diffuseColor = outGBuffer0.rgb;
 	            standardData.specularColor = outGBuffer1.rgb;
 	            standardData.smoothness = outGBuffer1.a;
-	            standardData.normalWorld = o.Normal;
-
+					float Roughness = clamp(1 - standardData.smoothness, 0.02, 1);
+					GeometryBuffer buffer;
+					buffer.AlbedoColor = standardData.diffuseColor;
+					buffer.SpecularColor = standardData.specularColor;
+					buffer.Roughness = Roughness;
+					buffer.MultiScatterEnergy = _MultiScatter;
+					#if CLEARCOAT_LIT
+					buffer.ClearCoat_MultiScatterEnergy = _ClearCoatEnergy;
+					buffer.ClearCoat = _ClearCoat;
+					buffer.ClearCoat_Roughness = _ClearCoatRoughness;
+					#endif
 	            #if ENABLE_SUN
 					#if ENABLE_SUNSHADOW
-					outEmission.xyz +=max(0,  CalculateSunLight(standardData, depth, float4(worldPos,1 ), worldViewDir));
+					outEmission.xyz +=max(0,  CalculateSunLight(o.Normal, depth, float4(worldPos,1 ), -worldViewDir, buffer));
 					#else
-					outEmission.xyz +=max(0,  CalculateSunLight_NoShadow(standardData, worldViewDir));
+					outEmission.xyz +=max(0,  CalculateSunLight_NoShadow(o.Normal, -worldViewDir, buffer));
 					#endif
 					#endif
 
-					float Roughness = clamp(1 - standardData.smoothness, 0.02, 1);
+
 
 					#if SPOTLIGHT || POINTLIGHT
-                    outEmission.xyz += max(0, CalculateLocalLight(screenUV, float4(worldPos,1 ), linearEye, standardData.diffuseColor, o.Normal, outGBuffer1, Roughness, -worldViewDir));
+                    outEmission.xyz += max(0, CalculateLocalLight(screenUV, float4(worldPos,1 ), linearEye, o.Normal, -worldViewDir, buffer));
 					#endif
 	#endif
 }

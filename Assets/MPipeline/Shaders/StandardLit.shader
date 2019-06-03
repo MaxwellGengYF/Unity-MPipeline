@@ -1,7 +1,11 @@
 ﻿
- Shader "Maxwell/StaticLightmapLit" {
+ Shader "Maxwell/StandardLit" {
 	Properties {
 		_Color ("Color", Color) = (1,1,1,1)
+		_MultiScatter("Multi Scatter", Color) = (1,1,1,1)
+		_ClearCoatRoughness("Clearcoat Roughness", Range(0, 1)) = 0.5
+		_ClearCoat("Clearcoat", Range(0, 1)) = 0.5
+		_ClearCoatEnergy("Clearcoat Energy", Color) = (1,1,1,1)
 		_Glossiness ("Smoothness", Range(0,1)) = 0.5
 		_Occlusion("Occlusion Scale", Range(0,1)) = 1
 		_Cutoff("Cut off", Range(0, 1)) = 0
@@ -35,6 +39,8 @@ CGINCLUDE
 #pragma multi_compile __ USE_RANNING
 #pragma multi_compile __ CUT_OFF
 #pragma multi_compile __ LIT_ENABLE
+#pragma multi_compile __ DEFAULT_LIT SKIN_LIT CLOTH_LIT CLEARCOAT_LIT
+
 //#define MOTION_VECTOR
 #include "UnityCG.cginc"
 #include "UnityDeferredLibrary.cginc"
@@ -45,61 +51,6 @@ CGINCLUDE
 #include "CGINC/Shader_Include/AreaLight.hlsl"
 #include "CGINC/Sunlight.cginc"
 #include "CGINC/Lighting.cginc"
-	struct Input {
-			float2 uv_MainTex;
-		};
-cbuffer UnityPerMaterial
-{
-    float _SpecularIntensity;
-		float _MetallicIntensity;
-    float4 _EmissionColor;
-		float _Occlusion;
-		float _VertexScale;
-		float _VertexOffset;
-		float4 _MainTex_ST;
-		float4 _DetailAlbedo_ST;
-		float _Glossiness;
-		float4 _Color;
-		float _EmissionMultiplier;
-		float _Cutoff;
-}
-		sampler2D _BumpMap;
-		sampler2D _SpecularMap;
-		sampler2D _MainTex; 
-		sampler2D _DetailAlbedo; 
-		sampler2D _DetailNormal;
-		sampler2D _EmissionMap;
-		sampler2D _RainTexture;
-
-		void surf (Input IN, inout SurfaceOutputStandardSpecular o) {
-			// Albedo comes from a texture tinted by color
-			float2 uv = IN.uv_MainTex;// - parallax_mapping(IN.uv_MainTex,IN.viewDir);
-			float2 detailUV = TRANSFORM_TEX(uv, _DetailAlbedo);
-			uv = TRANSFORM_TEX(uv, _MainTex);
-			float4 spec = tex2D(_SpecularMap,uv);
-			float4 c = tex2D (_MainTex, uv);
-#if DETAIL_ON
-			float3 detailNormal = UnpackNormal(tex2D(_DetailNormal, detailUV));
-			float4 detailColor = tex2D(_DetailAlbedo, detailUV);
-#endif
-			o.Normal = UnpackNormal(tex2D(_BumpMap,uv));
-			o.Albedo = c.rgb;
-#if DETAIL_ON
-			o.Albedo = lerp(detailColor.rgb, o.Albedo, c.a) * _Color.rgb;
-			o.Normal = lerp(detailNormal, o.Normal, c.a);
-			
-#else
-			o.Albedo *= _Color.rgb;
-#endif
-#if USE_RANNING && ENABLE_RAINNING
-			o.Normal.xy += tex2D(_RainTexture, uv).xy;
-#endif
-			o.Alpha = 1;
-			o.Occlusion = lerp(1, spec.b, _Occlusion);
-			o.Specular = lerp(_SpecularIntensity * spec.g, o.Albedo * _SpecularIntensity * spec.g, _MetallicIntensity); 
-			o.Smoothness = _Glossiness * spec.r;
-			o.Emission = _EmissionColor * tex2D(_EmissionMap, uv) * _EmissionMultiplier;
-		}
 #include "CGINC/MPipeDeferred.cginc"
 ENDCG
 
@@ -185,6 +136,76 @@ ENDCG
 				#else
 				return i.vertex.z;
 				#endif
+			}
+
+			ENDCG
+		}
+				Pass
+		{
+			Stencil
+			{
+				Ref 128
+				WriteMask 128
+				Comp always
+				Pass replace
+			}
+			ZTest Equal
+			Cull back
+			ZWrite off
+			Tags {"LightMode" = "MotionVector"}
+			CGPROGRAM
+			#pragma vertex vert
+			#pragma fragment frag
+			// Upgrade NOTE: excluded shader from OpenGL ES 2.0 because it uses non-square matrices
+			#pragma exclude_renderers gles
+			#include "UnityCG.cginc"
+			
+			struct appdata_shadow
+			{
+				float4 vertex : POSITION;
+#if CUT_OFF
+				float2 texcoord : TEXCOORD0;
+#endif
+			};
+			struct v2f
+			{
+				float4 vertex : SV_POSITION;
+#if CUT_OFF
+				float2 texcoord : TEXCOORD0;
+#endif
+				float3 nonJitterScreenPos : TEXCOORD1;
+				float3 lastScreenPos : TEXCOORD2;
+			};
+
+			v2f vert (appdata_shadow v)
+			{
+				v2f o;
+				o.vertex = UnityObjectToClipPos(v.vertex);
+			  float4 worldPos = mul(unity_ObjectToWorld, v.vertex);
+				o.nonJitterScreenPos = ComputeScreenPos(mul(_NonJitterVP, worldPos)).xyw;
+				float4 lastWorldPos =  mul(_LastFrameModel, v.vertex);
+        o.lastScreenPos = ComputeScreenPos(mul(_LastVp, lastWorldPos)).xyw;
+#if CUT_OFF
+				o.texcoord = v.texcoord;
+#endif
+				return o;
+			}
+
+			
+			float2 frag (v2f i)  : SV_TARGET
+			{
+#if CUT_OFF
+				i.texcoord = TRANSFORM_TEX(i.texcoord, _MainTex);
+				float4 c = tex2D(_MainTex, i.texcoord);
+				clip(c.a * _Color.a - _Cutoff);
+#endif
+				float4 velocity = float4(i.nonJitterScreenPos.xy, i.lastScreenPos.xy) / float4(i.nonJitterScreenPos.zz, i.lastScreenPos.zz);
+#if UNITY_UV_STARTS_AT_TOP
+				return velocity.xw - velocity.zy;
+#else
+				return velocity.xy - velocity.zw;
+#endif
+
 			}
 
 			ENDCG

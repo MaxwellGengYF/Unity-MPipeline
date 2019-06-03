@@ -55,7 +55,7 @@ ENDCG
             Ref 1
             ReadMask 127
             Pass keep
-            Comp Equal
+            Comp LEqual
         }
             CGPROGRAM
             #pragma vertex vert
@@ -90,7 +90,7 @@ ENDCG
             Ref 1
             ReadMask 127
             Pass keep
-            Comp Equal
+            Comp LEqual
         }
             CGPROGRAM
             #pragma vertex vert

@@ -19,14 +19,14 @@ struct BSDFContext
 	float VoH;
 };
 
-void Init(inout BSDFContext LightData, half3 N, half3 V, half3 L, half3 H)
+void Init(inout BSDFContext LightData, float3 N, float3 V, float3 L, float3 H)
 {
-	LightData.NoL = max(dot(N, L), 0);
-	LightData.NoV = max(dot(N, V), 0);
-	LightData.NoH = max(dot(N, H), 0);
-	LightData.LoH = max(dot(L, H), 0);
-	LightData.VoL = max(dot(V, L), 0);
-	LightData.VoH = max(dot(V, H), 0);
+	LightData.NoL = saturate(dot(N, L));
+	LightData.NoV = min(dot(N, V), 1);
+	LightData.NoH = saturate(dot(N, H));
+	LightData.LoH = saturate(dot(L, H));
+	LightData.VoL = saturate(dot(V, L));
+	LightData.VoH = saturate(dot(V, H));
 }
 
 struct AnisoBSDFContext
@@ -39,7 +39,7 @@ struct AnisoBSDFContext
     float BoV; 
 };
 
-void Init_Aniso(inout AnisoBSDFContext LightData, half3 Tangent, half3 Bitangent, half3 H, half3 L, half3 V)
+void Init_Aniso(inout AnisoBSDFContext LightData, float3 Tangent, float3 Bitangent, float3 H, float3 L, float3 V)
 {
     LightData.ToH = dot(Tangent, H);
     LightData.ToL = dot(Tangent, L); 
@@ -175,100 +175,100 @@ float3 Diffuse_Lambert(float3 DiffuseColor)
 	return DiffuseColor * Inv_PI;
 }
 
-half3 Diffuse_Fabric(half3 DiffuseColor, half Roughness)
+float3 Diffuse_Fabric(float3 DiffuseColor, float Roughness)
 {
     return Diffuse_Lambert(DiffuseColor) * lerp(1, 0.5, Roughness);
 }
 
-half Diffuse_Burley_NoPi(half LoH, half NoL, half NoV, half Roughness)
+float Diffuse_Burley_NoPi(float LoH, float NoL, float NoV, float Roughness)
 {
 	Roughness = pow4(Roughness);
-	half FD90 = 0.5 + 2 * pow2(LoH) * Roughness;
-	half viewScatter = 1 + (FD90 - 1) * pow5(1 - NoL);
-	half lightScatter = 1 + (FD90 - 1) * pow5(1 - NoV);
+	float FD90 = 0.5 + 2 * pow2(LoH) * Roughness;
+	float viewScatter = 1 + (FD90 - 1) * pow5(1 - NoL);
+	float lightScatter = 1 + (FD90 - 1) * pow5(1 - NoV);
 	return viewScatter * lightScatter;
 }
 
-half3 Diffuse_Burley(half LoH, half NoL, half NoV, half3 DiffuseColor, half Roughness)
+float3 Diffuse_Burley(float LoH, float NoL, float NoV, float3 DiffuseColor, float Roughness)
 {
 	return Diffuse_Burley_NoPi(LoH, NoL, NoV, Roughness) * DiffuseColor * Inv_PI;
 }
 
-half Diffuse_RenormalizeBurley_NoPi(half LoH, half NoL, half NoV, half Roughness)
+float Diffuse_RenormalizeBurley_NoPi(float LoH, float NoL, float NoV, float Roughness)
 {
 	Roughness = pow4(Roughness);
-	half EnergyBias = lerp(0, 0.5, Roughness);
-	half EnergyFactor = lerp(1, 1 / 0.662, Roughness);
-	half F90 = EnergyBias + 2 * pow2(LoH) * Roughness;
-	half lightScatter = F_Schlick(1, F90, NoL);
-	half viewScatter = F_Schlick(1, F90, NoV);
+	float EnergyBias = lerp(0, 0.5, Roughness);
+	float EnergyFactor = lerp(1, 1 / 0.662, Roughness);
+	float F90 = EnergyBias + 2 * pow2(LoH) * Roughness;
+	float lightScatter = F_Schlick(1, F90, NoL);
+	float viewScatter = F_Schlick(1, F90, NoV);
 	return lightScatter * viewScatter * EnergyFactor;
 }
 
-half3 Diffuse_RenormalizeBurley(half LoH, half NoL, half NoV, half3 DiffuseColor, half Roughness)
+float3 Diffuse_RenormalizeBurley(float LoH, float NoL, float NoV, float3 DiffuseColor, float Roughness)
 {
 	return Diffuse_RenormalizeBurley_NoPi(LoH, NoL, NoV, Roughness) * DiffuseColor * Inv_PI;
 }
 
-half Diffuse_OrenNayar_NoPi(half VoH, half NoL, half NoV, half Roughness)
+float Diffuse_OrenNayar_NoPi(float VoH, float NoL, float NoV, float Roughness)
 {
-	half a = pow2(Roughness);
-	half s = a;
-	half s2 = s * s;
-	half VoL = 2 * VoH * VoH - 1;		
-	half Cosri = VoL - NoV * NoL;
-	half C1 = 1 - 0.5 * s2 / (s2 + 0.33);
-	half C2 = 0.45 * s2 / (s2 + 0.09) * Cosri * ( Cosri >= 0 ? rcp( max( NoL, NoV ) ) : 1 );
+	float a = pow2(Roughness);
+	float s = a;
+	float s2 = s * s;
+	float VoL = 2 * VoH * VoH - 1;		
+	float Cosri = VoL - NoV * NoL;
+	float C1 = 1 - 0.5 * s2 / (s2 + 0.33);
+	float C2 = 0.45 * s2 / (s2 + 0.09) * Cosri * ( Cosri >= 0 ? rcp( max( NoL, NoV ) ) : 1 );
 	return (C1 + C2) * (1 + Roughness * 0.5);
 }
 
-half3 Diffuse_OrenNayar(half VoH, half NoL, half NoV, half3 DiffuseColor, half Roughness)
+float3 Diffuse_OrenNayar(float VoH, float NoL, float NoV, float3 DiffuseColor, float Roughness)
 {
 	return Diffuse_OrenNayar_NoPi(VoH, NoL, NoV, Roughness) * DiffuseColor * Inv_PI;
 }
 
-half TransmissionBRDF_Wrap(half3 L, half3 N, half W) {
+float TransmissionBRDF_Wrap(float3 L, float3 N, float W) {
     return saturate((dot(L, N) + W) / ((1 + W) * (1 + W)));
 }
 
-half3 TransmissionBRDF_UE4(half3 L, half3 V, half3 N, half3 H, half3 SSS_Color, half AO, half SSS_Thickness) {
-	half InScatter = pow(saturate(dot(L, -V)), 12) * lerp(3, 0.1, SSS_Thickness);
-	half NormalContribution = saturate(dot(N, H) * SSS_Thickness + 1 - SSS_Thickness);
-	half BackScatter = AO * NormalContribution / (PI * 2);
+float3 TransmissionBRDF_UE4(float3 L, float3 V, float3 N, float3 H, float3 SSS_Color, float AO, float SSS_Thickness) {
+	float InScatter = pow(saturate(dot(L, -V)), 12) * lerp(3, 0.1, SSS_Thickness);
+	float NormalContribution = saturate(dot(N, H) * SSS_Thickness + 1 - SSS_Thickness);
+	float BackScatter = AO * NormalContribution / (PI * 2);
 	return SSS_Color * lerp(BackScatter, 1, InScatter);
 }
 
-half3 TransmissionBRDF_Foliage(half3 SSS_Color, half3 L, half3 V, half3 N)
+float3 TransmissionBRDF_Foliage(float3 SSS_Color, float3 L, float3 V, float3 N)
 {
-	half Wrap = 0.5;
-	half NoL = saturate((dot(-N, L) + Wrap) / Square(1 + Wrap));
+	float Wrap = 0.5;
+	float NoL = saturate((dot(-N, L) + Wrap) / Square(1 + Wrap));
 
-	half VoL = saturate(dot(V, -L));
-	half a = 0.6;
-	half a2 = a * a;
-	half d = ( VoL * a2 - VoL ) * VoL + 1;	
-	half GGX = (a2 / PI) / (d * d);		
+	float VoL = saturate(dot(V, -L));
+	float a = 0.6;
+	float a2 = a * a;
+	float d = ( VoL * a2 - VoL ) * VoL + 1;	
+	float GGX = (a2 / PI) / (d * d);		
 	return NoL * GGX * SSS_Color;
 }
 
-half3 TransmissionBRDF_Frostbite(half3 L, half3 V, half3 N, half3 SSS_Color, half AO, half SSS_AmbientIntensity, half SSS_Distortion, half SSS_Power, half SSS_Scale, half SSS_Thickness) {
-	half3 newLight = L + N * SSS_Distortion;
-	half newNoL = pow(saturate(dot(V, -newLight)), SSS_Power) * SSS_Scale;
-	half newAtten = (newNoL + (SSS_Color * SSS_AmbientIntensity)) * SSS_Thickness;
+float3 TransmissionBRDF_Frostbite(float3 L, float3 V, float3 N, float3 SSS_Color, float AO, float SSS_AmbientIntensity, float SSS_Distortion, float SSS_Power, float SSS_Scale, float SSS_Thickness) {
+	float3 newLight = L + N * SSS_Distortion;
+	float newNoL = pow(saturate(dot(V, -newLight)), SSS_Power) * SSS_Scale;
+	float newAtten = (newNoL + (SSS_Color * SSS_AmbientIntensity)) * SSS_Thickness;
 	return SSS_Color * newAtten * AO;
 }
 
 
 
 /////////////////////////////////////////////////////////////////Specular
-half D_GGX(half NoH, half Roughness)
+float D_GGX(float NoH, float Roughness)
 {
 	Roughness = pow4(Roughness);
-	half D = (NoH * Roughness - NoH) * NoH + 1;
+	float D = (NoH * Roughness - NoH) * NoH + 1;
 	return Roughness / (PI * pow2(D));
 }
 
-float D_Beckmann(half NoH, half Roughness)
+float D_Beckmann(float NoH, float Roughness)
 {
 	Roughness = pow4(clamp(Roughness, 0.08, 1));
 	NoH = pow2(NoH);
@@ -318,7 +318,7 @@ float D_InverseGGX_Charlie(float NoH, float Roughness)
 
 
 /////////////////////////////////////////////////////////////////GeomtryVis
-float Vis_Neumann(half NoL, half NoV)
+float Vis_Neumann(float NoL, float NoV)
 {
 	return 1 / (4 * max(NoL, NoV));
 }
@@ -328,7 +328,7 @@ float Vis_Kelemen(float VoH)
 	return rcp( 4 * VoH * VoH + 1e-5);
 }
 
-float Vis_Schlick(half NoL, half NoV, half Roughness)
+float Vis_Schlick(float NoL, float NoV, float Roughness)
 {
 	float k = pow2(Roughness) * 0.5;
 	float Vis_SchlickV = NoV * (1 - k) + k;
@@ -336,15 +336,15 @@ float Vis_Schlick(half NoL, half NoV, half Roughness)
 	return 0.25 / (Vis_SchlickV * Vis_SchlickL);
 }
 
-half Vis_SmithGGX(half NoL, half NoV, half Roughness)
+float Vis_SmithGGX(float NoL, float NoV, float Roughness)
 {
-	half a = pow2(Roughness);
-	half LambdaL = NoV * (NoL * (1 - a) + a);
-	half LambdaV = NoL * (NoV * (1 - a) + a);
+	float a = pow2(Roughness);
+	float LambdaL = NoV * (NoL * (1 - a) + a);
+	float LambdaV = NoL * (NoV * (1 - a) + a);
 	return (0.5 * rcp(LambdaV + LambdaL)) / PI;
 }
 
-float Vis_SmithGGXCorrelated(half NoL, half NoV, half Roughness)
+float Vis_SmithGGXCorrelated(float NoL, float NoV, float Roughness)
 {
 	float a = pow2(Roughness);
 	float LambdaV = NoV * sqrt((-NoL * a + NoL) * NoL + a);
@@ -352,11 +352,11 @@ float Vis_SmithGGXCorrelated(half NoL, half NoV, half Roughness)
 	return (0.5 / (LambdaL + LambdaV)) / PI;
 }
 
-float Vis_InverseGGX_Ashikhmin(half NoL, half NoV) {
+float Vis_InverseGGX_Ashikhmin(float NoL, float NoV) {
 	return rcp(4 * (NoL + NoV - NoL * NoV));
 }
 
-float Vis_InverseGGX_Charlie(half NoL, half NoV, half Roughness)
+float Vis_InverseGGX_Charlie(float NoL, float NoV, float Roughness)
 {
     float lambdaV = NoV < 0.5 ? exp(CharlieL(NoV, Roughness)) : exp(2 * CharlieL(0.5, Roughness) - CharlieL(1 - NoV, Roughness));
     float lambdaL = NoL < 0.5 ? exp(CharlieL(NoL, Roughness)) : exp(2 * CharlieL(0.5, Roughness) - CharlieL(1 - NoL, Roughness));

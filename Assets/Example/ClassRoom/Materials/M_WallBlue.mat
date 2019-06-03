@@ -9,13 +9,14 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: M_WallBlue
   m_Shader: {fileID: 4800000, guid: f7f0d8bc677efcc44b8b3ea293d2b74f, type: 3}
-  m_ShaderKeywords: LIT_ENABLE _USEALBEDOTEXTURE_ON _USETEXTURE_ON
+  m_ShaderKeywords: DEFAULT_LIT LIT_ENABLE _USEALBEDOTEXTURE_ON _USETEXTURE_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
   stringTagMap: {}
-  disabledShaderPasses: []
+  disabledShaderPasses:
+  - MotionVector
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -95,6 +96,7 @@ Material:
     - _Glossiness: 0.195
     - _GlossyReflections: 1
     - _Keyword0: 0
+    - _LightingModel: 1
     - _Metallic: 0
     - _MetallicIntensity: 0
     - _Mode: 0

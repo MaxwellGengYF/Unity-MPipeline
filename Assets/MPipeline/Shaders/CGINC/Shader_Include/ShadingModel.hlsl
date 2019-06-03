@@ -3,90 +3,90 @@
 
 #include "BSDF_Library.hlsl"
 
-half3 Defult_Lit(BSDFContext LightData, half3 Energy, half3 MultiScatterEnergy, half3 AlbedoColor, half3 SpecularColor, half Roughness)
+float3 Defult_Lit(BSDFContext LightData, float3 Energy, float3 MultiScatterEnergy, float3 AlbedoColor, float3 SpecularColor, float Roughness)
 {
-    half3 Diffuse = Diffuse_RenormalizeBurley(LightData.LoH, LightData.NoL, LightData.NoV, AlbedoColor, Roughness);
+    float3 Diffuse = Diffuse_RenormalizeBurley(LightData.LoH, LightData.NoL, LightData.NoV, AlbedoColor, Roughness);
 
-    half pbr_GGX = D_GGX(LightData.NoH, Roughness);     
-    half pbr_Vis = Vis_SmithGGXCorrelated(LightData.NoL, LightData.NoV, Roughness); 
-    half3 pbr_Fresnel = F_Schlick(SpecularColor, 1, LightData.LoH);     
+    float pbr_GGX = D_GGX(LightData.NoH, Roughness);     
+    float pbr_Vis = Vis_SmithGGXCorrelated(LightData.NoL, LightData.NoV, Roughness); 
+    float3 pbr_Fresnel = F_Schlick(SpecularColor, 1, LightData.LoH);     
 
-    half3 Specular = (pbr_Vis * pbr_GGX) * pbr_Fresnel;
+    float3 Specular = (pbr_Vis * pbr_GGX) * pbr_Fresnel;
 	Specular *= MultiScatterEnergy;
 
     return (Diffuse + Specular) * Energy;
 }
 
-half3 Skin_Lit(BSDFContext LightData, half3 Energy, half3 MultiScatterEnergy, half3 AlbedoColor, half3 SpecularColor, half Roughness)
+float3 Skin_Lit(BSDFContext LightData, float3 Energy, float3 MultiScatterEnergy, float3 AlbedoColor, float3 SpecularColor, float Roughness)
 {
-    half3 Diffuse = Diffuse_RenormalizeBurley(LightData.LoH, LightData.NoL, LightData.NoV, AlbedoColor, Roughness);
+    float3 Diffuse = Diffuse_RenormalizeBurley(LightData.LoH, LightData.NoL, LightData.NoV, AlbedoColor, Roughness);
 
-	half pbr_GGX = lerp(D_Beckmann(LightData.NoH, Roughness), D_Beckmann(LightData.NoH, Roughness * 0.5), 0.85);
-	half pbr_Vis = Vis_SmithGGXCorrelated(LightData.NoL, LightData.NoV, Roughness);
-	half3 pbr_Fresnel = F_Schlick(SpecularColor, 1, LightData.LoH);
+	float pbr_GGX = lerp(D_Beckmann(LightData.NoH, Roughness), D_Beckmann(LightData.NoH, Roughness * 0.5), 0.85);
+	float pbr_Vis = Vis_SmithGGXCorrelated(LightData.NoL, LightData.NoV, Roughness);
+	float3 pbr_Fresnel = F_Schlick(SpecularColor, 1, LightData.LoH);
 
-	half3 Specular = (pbr_Vis * pbr_GGX) * pbr_Fresnel;
+	float3 Specular = (pbr_Vis * pbr_GGX) * pbr_Fresnel;
 	Specular *= MultiScatterEnergy;
 
 	return (Diffuse + Specular) * Energy;
 }
 
-half3 ClearCoat_Lit(BSDFContext LightData, half3 Energy, half3 MultiScatterEnergy, half3 ClearCoat_MultiScatterEnergy, half3 AlbedoColor, half3 SpecularColor, half ClearCoat, half ClearCoat_Roughness, half Roughness)
+float3 ClearCoat_Lit(BSDFContext LightData, float3 Energy, float3 MultiScatterEnergy, float3 ClearCoat_MultiScatterEnergy, float3 AlbedoColor, float3 SpecularColor, float ClearCoat, float ClearCoat_Roughness, float Roughness)
 {
-	half3 Diffuse = Diffuse_RenormalizeBurley(LightData.LoH, LightData.NoL, LightData.NoV, AlbedoColor, Roughness);
+	float3 Diffuse = Diffuse_RenormalizeBurley(LightData.LoH, LightData.NoL, LightData.NoV, AlbedoColor, Roughness);
 
-	half F0 = pow5(1 - LightData.VoH);
+	float F0 = pow5(1 - LightData.VoH);
 
-	half ClearCoat_GGX = D_GGX(LightData.NoH, ClearCoat_Roughness);
-	half ClearCoat_Vis = Vis_Kelemen(LightData.VoH);
-	half ClearCoat_Fersnel = (F0 + (1 - F0) * 0.05) * ClearCoat;
-	half ClearCoat_Specular = ClearCoat_GGX * ClearCoat_Vis * ClearCoat_Fersnel;
+	float ClearCoat_GGX = D_GGX(LightData.NoH, ClearCoat_Roughness);
+	float ClearCoat_Vis = Vis_Kelemen(LightData.VoH);
+	float ClearCoat_Fersnel = (F0 + (1 - F0) * 0.05) * ClearCoat;
+	float3 ClearCoat_Specular = ClearCoat_GGX * ClearCoat_Vis * ClearCoat_Fersnel;
 	ClearCoat_Specular *= ClearCoat_MultiScatterEnergy;
 
-    half pbr_GGX = D_GGX(LightData.NoH, Roughness);     
-    half pbr_Vis = Vis_SmithGGXCorrelated(LightData.NoL, LightData.NoV, Roughness);
-	half3 pbr_Fresnel = saturate(50 * SpecularColor.g) * F0 + (1 - F0) * SpecularColor;
-	half3 BaseSpecular = (pbr_Vis * pbr_GGX) * pbr_Fresnel;
+    float pbr_GGX = D_GGX(LightData.NoH, Roughness);     
+    float pbr_Vis = Vis_SmithGGXCorrelated(LightData.NoL, LightData.NoV, Roughness);
+	float3 pbr_Fresnel = saturate(50 * SpecularColor.g) * F0 + (1 - F0) * SpecularColor;
+	float3 BaseSpecular = (pbr_Vis * pbr_GGX) * pbr_Fresnel;
 	BaseSpecular *= MultiScatterEnergy;
 
 
-	half LayerAttenuation = (1 - ClearCoat_Fersnel);
+	float LayerAttenuation = (1 - ClearCoat_Fersnel);
 	return (Diffuse + BaseSpecular + ClearCoat_Specular) * Energy * LayerAttenuation;
 }
 
-half3 Cloth_Cotton(BSDFContext LightData, half3 Energy, half3 AlbedoColor, half3 SpecularColor, half Roughness)
+float3 Cloth_Cotton(BSDFContext LightData, float3 Energy, float3 AlbedoColor, float3 SpecularColor, float Roughness)
 {
-	half3 Diffuse = Diffuse_Fabric(AlbedoColor, Roughness) * LightData.NoL;
+	float3 Diffuse = Diffuse_Fabric(AlbedoColor, Roughness) * LightData.NoL;
 
 	#if _Charlie_Ashikhmin
-		half pbr_InvGGX = D_InverseGGX_Charlie(LightData.NoH, Roughness);
-		half pbr_Vis = Vis_InverseGGX_Charlie(LightData.NoL + 1e-7, LightData.NoV + 1e-7, Roughness);
+		float pbr_InvGGX = D_InverseGGX_Charlie(LightData.NoH, Roughness);
+		float pbr_Vis = Vis_InverseGGX_Charlie(LightData.NoL + 1e-7, LightData.NoV + 1e-7, Roughness);
 	#else
-		half pbr_InvGGX = D_InverseGGX_Ashikhmin(LightData.NoH, Roughness);
-		half pbr_Vis = Vis_InverseGGX_Ashikhmin(LightData.NoL, LightData.NoV);
+		float pbr_InvGGX = D_InverseGGX_Ashikhmin(LightData.NoH, Roughness);
+		float pbr_Vis = Vis_InverseGGX_Ashikhmin(LightData.NoL, LightData.NoV);
 	#endif
-	half3 pbr_Fresnel = F_Schlick(SpecularColor, 1, LightData.LoH);
+	float3 pbr_Fresnel = F_Schlick(SpecularColor, 1, LightData.LoH);
 
-	half3 Specular = (pbr_Vis * pbr_InvGGX) * pbr_Fresnel;
+	float3 Specular = (pbr_Vis * pbr_InvGGX) * pbr_Fresnel;
 
 	return (Diffuse + Specular) * Energy;
 }
 
-half3 Cloth_Silk(BSDFContext LightData, AnisoBSDFContext AnisoLightContext, half3 Energy, half3 AlbedoColor, half3 SpecularColor, half Roughness, half RoughnessT, half RoughnessB)
+float3 Cloth_Silk(BSDFContext LightData, AnisoBSDFContext AnisoLightContext, float3 Energy, float3 AlbedoColor, float3 SpecularColor, float Roughness, float RoughnessT, float RoughnessB)
 {
     
-    half3 Diffuse = Diffuse_Fabric(AlbedoColor, Roughness) * LightData.NoL;
+    float3 Diffuse = Diffuse_Fabric(AlbedoColor, Roughness) * LightData.NoL;
 
-    half pbr_AnisoGGX = D_AnisotropyGGX(AnisoLightContext.ToH, AnisoLightContext.BoH, LightData.NoH, RoughnessT, RoughnessB);
-    half pbr_Vis = Vis_AnisotropyGGX(AnisoLightContext.ToV, AnisoLightContext.BoV, LightData.NoV, AnisoLightContext.ToL, AnisoLightContext.BoL, LightData.NoL, RoughnessT, RoughnessB);
-    half3 pbr_Fresnel = F_Schlick(SpecularColor, 1, LightData.LoH);
+    float pbr_AnisoGGX = D_AnisotropyGGX(AnisoLightContext.ToH, AnisoLightContext.BoH, LightData.NoH, RoughnessT, RoughnessB);
+    float pbr_Vis = Vis_AnisotropyGGX(AnisoLightContext.ToV, AnisoLightContext.BoV, LightData.NoV, AnisoLightContext.ToL, AnisoLightContext.BoL, LightData.NoL, RoughnessT, RoughnessB);
+    float3 pbr_Fresnel = F_Schlick(SpecularColor, 1, LightData.LoH);
 
-    half3 Specular = (pbr_Vis * pbr_AnisoGGX) * pbr_Fresnel;
+    float3 Specular = (pbr_Vis * pbr_AnisoGGX) * pbr_Fresnel;
 
     return (Diffuse + Specular) * Energy;
 }
 
-float3 Hair_Lit(float3 L, float3 V, half3 N, float3 SpecularColor, float Specular, float Roughness,float Backlit, float Scatter, float Area, float Shadow) {
+float3 Hair_Lit(float3 L, float3 V, float3 N, float3 SpecularColor, float Specular, float Roughness,float Backlit, float Scatter, float Area, float Shadow) {
 	Scatter = Scatter / 10;
 	const float VoL       = dot(V,L);
 	const float SinThetaL = dot(N,L);
@@ -96,7 +96,7 @@ float3 Hair_Lit(float3 L, float3 V, half3 N, float3 SpecularColor, float Specula
 	const float3 Lp = L - SinThetaL * N;
 	const float3 Vp = V - SinThetaV * N;
 	const float CosPhi = dot(Lp,Vp) * rsqrt(dot(Lp,Lp) * dot(Vp,Vp) + 1e-4);
-	const float CosHalfPhi = sqrt(saturate(0.5 + 0.5 * CosPhi));
+	const float CosfloatPhi = sqrt(saturate(0.5 + 0.5 * CosPhi));
 
     float3 S = 0;
 	float n = 1.55;
@@ -119,9 +119,9 @@ float3 Hair_Lit(float3 L, float3 V, half3 N, float3 SpecularColor, float Specula
 	if(1) {
 		const float sa = sin(Alpha[0]);
 		const float ca = cos(Alpha[0]);
-		float Shift = 2*sa* (ca * CosHalfPhi * sqrt(1 - SinThetaV * SinThetaV) + sa * SinThetaV);
-		float Mp = Vis_Hair(B[0] * sqrt(2.0) * CosHalfPhi, SinThetaL + SinThetaV - Shift);
-		float Np = 0.25 * CosHalfPhi;
+		float Shift = 2*sa* (ca * CosfloatPhi * sqrt(1 - SinThetaV * SinThetaV) + sa * SinThetaV);
+		float Mp = Vis_Hair(B[0] * sqrt(2.0) * CosfloatPhi, SinThetaL + SinThetaV - Shift);
+		float Np = 0.25 * CosfloatPhi;
 		float Fp = F_Hair(sqrt(saturate( 0.5 + 0.5 * VoL)));
 		S += Specular * Mp * Np * Fp * lerp(1, Backlit, saturate(-VoL));
 	}
@@ -138,7 +138,7 @@ float3 Hair_Lit(float3 L, float3 V, half3 N, float3 SpecularColor, float Specula
 	if(1) {
 		float Mp = Vis_Hair(B[1], SinThetaL + SinThetaV - Alpha[1]);
 		float a = 1 / n_prime;
-		float h = CosHalfPhi * (1 + a * (0.6 - 0.8 * CosPhi));
+		float h = CosfloatPhi * (1 + a * (0.6 - 0.8 * CosPhi));
 		float f = F_Hair(CosThetaD * sqrt(saturate( 1 - h*h)));
 		float Fp = Square(1 - f);
 		float3 Tp = pow(SpecularColor, 0.5 * sqrt(1 - Square(h * a)) / CosThetaD);
@@ -159,5 +159,36 @@ float3 Hair_Lit(float3 L, float3 V, half3 N, float3 SpecularColor, float Specula
 	S = -min(-S, 0);
 	return S;
 }
-
+#if CLEARCOAT_LIT
+struct GeometryBuffer
+{
+	float3 AlbedoColor;
+	float3 SpecularColor;
+	float Roughness;
+	float3 MultiScatterEnergy;
+	float3 ClearCoat_MultiScatterEnergy;
+	float ClearCoat;
+	float ClearCoat_Roughness;
+};
+#else
+struct GeometryBuffer
+{
+	float3 AlbedoColor;
+	float3 SpecularColor;
+	float Roughness;
+	float3 MultiScatterEnergy;
+};
+#endif
+float3 LitFunc(BSDFContext LightData, float3 Energy, GeometryBuffer buffer)
+{
+#if SKIN_LIT
+return Skin_Lit(LightData, Energy, buffer.MultiScatterEnergy, buffer.AlbedoColor, buffer.SpecularColor, buffer.Roughness);
+#elif CLOTH_LIT
+return Cloth_Cotton(LightData, Energy, buffer.AlbedoColor, buffer.SpecularColor, buffer.Roughness);
+#elif CLEARCOAT_LIT
+return ClearCoat_Lit(LightData, Energy, buffer.MultiScatterEnergy, buffer.ClearCoat_MultiScatterEnergy, buffer.AlbedoColor, buffer.SpecularColor, buffer.ClearCoat, buffer.ClearCoat_Roughness, buffer.Roughness);
+#else
+return Defult_Lit(LightData, Energy, buffer.MultiScatterEnergy, buffer.AlbedoColor, buffer.SpecularColor, buffer.Roughness);
+#endif
+}
 #endif

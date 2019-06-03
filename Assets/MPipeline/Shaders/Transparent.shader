@@ -20,6 +20,7 @@
 				#pragma vertex vert
 				#pragma fragment frag
 	#pragma target 5.0
+	#define DEFAULT_LIT
 	#include "UnityCG.cginc"
 	#include "UnityPBSLighting.cginc"
 	#include "CGINC/VoxelLight.cginc"
@@ -86,26 +87,32 @@
 					standardData.diffuseColor = color.rgb;
 					standardData.specularColor = specular.rgb;
 					standardData.smoothness = specular.a;
-					standardData.normalWorld = normal;
 					float oneMinusReflectivity;
 					standardData.diffuseColor = EnergyConservationBetweenDiffuseAndSpecular(standardData.diffuseColor, standardData.specularColor, /*out*/ oneMinusReflectivity);
 					float3 finalColor = 0;
+					GeometryBuffer buffer;
+					buffer.AlbedoColor = standardData.diffuseColor;
+					buffer.SpecularColor = specular;
+					buffer.Roughness = Roughness;
+					buffer.MultiScatterEnergy = 1;
 					#if ENABLE_SUN
 					#if ENABLE_SUNSHADOW
-					finalColor += max(0, CalculateSunLight(standardData, i.pos.z, float4(i.worldPos, 1), viewDir));
+					finalColor += max(0, CalculateSunLight(normal, i.pos.z, float4(i.worldPos, 1), -viewDir, buffer));
 					#else
-					finalColor += max(0, CalculateSunLight_NoShadow(standardData, viewDir));
+					finalColor += max(0, CalculateSunLight_NoShadow(normal, -viewDir, buffer));
 					#endif
 					#endif
 					#if ENABLE_REFLECTION
 					finalColor += CalculateGI(linearEyeDepth, i.worldPos, normal, color.rgb, 1, screenUV);
 					finalColor += CalculateReflection(linearEyeDepth, i.worldPos, viewDir, specular, float4(normal, 1), color.rgb, 1, screenUV);
 					#endif
-					finalColor += max(0, CalculateLocalLight(screenUV, float4(i.worldPos, 1), linearEyeDepth, standardData.diffuseColor, normal, specular, Roughness, -viewDir));
+
+					finalColor += max(0, CalculateLocalLight(screenUV, float4(i.worldPos, 1), linearEyeDepth, normal, -viewDir, buffer));
 					#if ENABLE_VOLUMETRIC
 					float4 fogColor = Fog(linear01Depth, screenUV);
 					finalColor = lerp(fogColor.rgb, finalColor, fogColor.a);
 					#endif
+					color.a = 1-oneMinusReflectivity + color.a*oneMinusReflectivity;
 					outputColor = float4(finalColor, color.a);
 					depth = i.pos.z;
 				}

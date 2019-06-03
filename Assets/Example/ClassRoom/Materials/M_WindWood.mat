@@ -15,7 +15,8 @@ Material:
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
   stringTagMap: {}
-  disabledShaderPasses: []
+  disabledShaderPasses:
+  - MotionVector
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -95,6 +96,7 @@ Material:
     - _Glossiness: 0.36
     - _GlossyReflections: 1
     - _Keyword0: 0
+    - _LightingModel: 1
     - _Metallic: 0
     - _MetallicIntensity: 0.1
     - _Mode: 0

@@ -9,13 +9,14 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: M_Floor
   m_Shader: {fileID: 4800000, guid: f7f0d8bc677efcc44b8b3ea293d2b74f, type: 3}
-  m_ShaderKeywords: LIT_ENABLE _USEALBEDOTEXTURE_ON _USETEXTURE_ON
+  m_ShaderKeywords: DEFAULT_LIT LIT_ENABLE _USEALBEDOTEXTURE_ON _USETEXTURE_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
   m_CustomRenderQueue: -1
   stringTagMap: {}
-  disabledShaderPasses: []
+  disabledShaderPasses:
+  - MotionVector
   m_SavedProperties:
     serializedVersion: 3
     m_TexEnvs:
@@ -91,14 +92,17 @@ Material:
     - _AlbedoBrigness: 1
     - _AlbedoTextureBrigeness: 0
     - _BumpScale: 1
+    - _ClearCoat: 1
+    - _ClearCoatRoughness: 0.111
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _EmissionMultiplier: 1
     - _GlossMapScale: 1
-    - _Glossiness: 0.655
+    - _Glossiness: 0.614
     - _GlossyReflections: 1
     - _Keyword0: 0
+    - _LightingModel: 1
     - _Metallic: 0
     - _MetallicIntensity: 0.1
     - _Mode: 0
@@ -125,6 +129,8 @@ Material:
     m_Colors:
     - _Albedo: {r: 1, g: 1, b: 1, a: 1}
     - _AlbedoColor: {r: 1, g: 1, b: 1, a: 0}
+    - _ClearCoatEnergy: {r: 1, g: 0, b: 0.14901972, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _Color1: {r: 1, g: 1, b: 1, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _MultiScatter: {r: 1, g: 1, b: 1, a: 1}

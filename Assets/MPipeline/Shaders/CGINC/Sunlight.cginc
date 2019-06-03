@@ -48,32 +48,19 @@ float GetShadow(float4 worldPos, float depth)
 	return atten;
 }
 
-float4 CalculateSunLight(UnityStandardData data, float depth, float4 wpos, float3 viewDir)
+float3 CalculateSunLight(float3 normal, float depth, float4 wpos, float3 viewDir, GeometryBuffer buffer)
 {
 	float atten = GetShadow(wpos, depth);
-	float oneMinusReflectivity = 1 - SpecularStrength(data.specularColor.rgb);
-	UnityIndirect ind;
-	UNITY_INITIALIZE_OUTPUT(UnityIndirect, ind);
-	ind.diffuse = 0;
-	ind.specular = 0;
-	UnityLight light;
-	light.dir = _DirLightPos;
-	light.color = _DirLightFinalColor * atten;
-
-	return UNITY_BRDF_PBS(data.diffuseColor, data.specularColor, oneMinusReflectivity, data.smoothness, data.normalWorld, -viewDir, light, ind);
-
+	BSDFContext LightData;
+	Init(LightData, normal, viewDir, _DirLightPos, normalize(viewDir + _DirLightPos));
+	
+	return max(0, LitFunc(LightData, _DirLightFinalColor * atten, buffer));
 }
-float4 CalculateSunLight_NoShadow(UnityStandardData data, float3 viewDir)
+float3 CalculateSunLight_NoShadow(float3 normal, float3 viewDir, GeometryBuffer buffer)
 {
-	float oneMinusReflectivity = 1 - SpecularStrength(data.specularColor.rgb);
-	UnityIndirect ind;
-	UNITY_INITIALIZE_OUTPUT(UnityIndirect, ind);
-	ind.diffuse = 0;
-	ind.specular = 0;
-	UnityLight light;
-	light.dir = _DirLightPos;
-	light.color = _DirLightFinalColor;
-	return UNITY_BRDF_PBS(data.diffuseColor, data.specularColor, oneMinusReflectivity, data.smoothness, data.normalWorld, -viewDir, light, ind);
+	BSDFContext LightData;
+	Init(LightData, normal, viewDir, _DirLightPos, normalize(viewDir + _DirLightPos));
+	return max(0, LitFunc(LightData, _DirLightFinalColor, buffer));
 
 }
 #endif
