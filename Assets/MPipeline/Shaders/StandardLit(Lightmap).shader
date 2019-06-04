@@ -1,5 +1,5 @@
 ﻿
- Shader "Maxwell/StandardLit" {
+ Shader "Maxwell/StandardLit(Lightmap)" {
 	Properties {
 		_Color ("Color", Color) = (1,1,1,1)
 		_MultiScatter("Multi Scatter", Color) = (1,1,1,1)
@@ -83,60 +83,11 @@ ENDCG
 			Cull back
 			Tags {"LightMode" = "Shadow"}
 			CGPROGRAM
-			#pragma vertex vert
-			#pragma fragment frag
+			#pragma vertex vert_shadow
+			#pragma fragment frag_shadow
 			// Upgrade NOTE: excluded shader from OpenGL ES 2.0 because it uses non-square matrices
 			#pragma exclude_renderers gles
-			#include "UnityCG.cginc"
 			#pragma multi_compile __ POINT_LIGHT_SHADOW
-			
-			float4x4 _ShadowMapVP;
-			struct appdata_shadow
-			{
-				float4 vertex : POSITION;
-				#if CUT_OFF
-				float2 texcoord : TEXCOORD0;
-				#endif
-			};
-			struct v2f
-			{
-				float4 vertex : SV_POSITION;
-				#if POINT_LIGHT_SHADOW
-				float3 worldPos : TEXCOORD1;
-				#endif
-				#if CUT_OFF
-				float2 texcoord : TEXCOORD0;
-				#endif
-			};
-
-			v2f vert (appdata_shadow v)
-			{
-				float4 worldPos = mul(unity_ObjectToWorld, v.vertex);
-				v2f o;
-				#if POINT_LIGHT_SHADOW
-				o.worldPos = worldPos.xyz;
-				#endif
-				o.vertex = mul(_ShadowMapVP, worldPos);
-				#if CUT_OFF
-				o.texcoord = v.texcoord;
-				#endif
-				return o;
-			}
-
-			
-			float frag (v2f i)  : SV_TARGET
-			{
-				#if CUT_OFF
-				i.texcoord = TRANSFORM_TEX(i.texcoord, _MainTex);
-				float4 c = tex2D(_MainTex, i.texcoord);
-				clip(c.a * _Color.a - _Cutoff);
-				#endif
-				#if POINT_LIGHT_SHADOW
-				return distance(i.worldPos, _LightPos.xyz) / _LightPos.w;
-				#else
-				return i.vertex.z;
-				#endif
-			}
 
 			ENDCG
 		}
@@ -154,59 +105,10 @@ ENDCG
 			ZWrite off
 			Tags {"LightMode" = "MotionVector"}
 			CGPROGRAM
-			#pragma vertex vert
-			#pragma fragment frag
+			#pragma vertex vert_mv
+			#pragma fragment frag_mv
 			// Upgrade NOTE: excluded shader from OpenGL ES 2.0 because it uses non-square matrices
 			#pragma exclude_renderers gles
-			#include "UnityCG.cginc"
-			
-			struct appdata_shadow
-			{
-				float4 vertex : POSITION;
-#if CUT_OFF
-				float2 texcoord : TEXCOORD0;
-#endif
-			};
-			struct v2f
-			{
-				float4 vertex : SV_POSITION;
-#if CUT_OFF
-				float2 texcoord : TEXCOORD0;
-#endif
-				float3 nonJitterScreenPos : TEXCOORD1;
-				float3 lastScreenPos : TEXCOORD2;
-			};
-
-			v2f vert (appdata_shadow v)
-			{
-				v2f o;
-				o.vertex = UnityObjectToClipPos(v.vertex);
-			  float4 worldPos = mul(unity_ObjectToWorld, v.vertex);
-				o.nonJitterScreenPos = ComputeScreenPos(mul(_NonJitterVP, worldPos)).xyw;
-				float4 lastWorldPos =  mul(_LastFrameModel, v.vertex);
-        o.lastScreenPos = ComputeScreenPos(mul(_LastVp, lastWorldPos)).xyw;
-#if CUT_OFF
-				o.texcoord = v.texcoord;
-#endif
-				return o;
-			}
-
-			
-			float2 frag (v2f i)  : SV_TARGET
-			{
-#if CUT_OFF
-				i.texcoord = TRANSFORM_TEX(i.texcoord, _MainTex);
-				float4 c = tex2D(_MainTex, i.texcoord);
-				clip(c.a * _Color.a - _Cutoff);
-#endif
-				float4 velocity = float4(i.nonJitterScreenPos.xy, i.lastScreenPos.xy) / float4(i.nonJitterScreenPos.zz, i.lastScreenPos.zz);
-#if UNITY_UV_STARTS_AT_TOP
-				return velocity.xw - velocity.zy;
-#else
-				return velocity.xy - velocity.zw;
-#endif
-
-			}
 
 			ENDCG
 		}
@@ -216,49 +118,10 @@ ENDCG
 			Cull back
 			Tags {"LightMode" = "Depth"}
 			CGPROGRAM
-			#pragma vertex vert
-			#pragma fragment frag
+			#pragma vertex vert_depth
+			#pragma fragment frag_depth
 			// Upgrade NOTE: excluded shader from OpenGL ES 2.0 because it uses non-square matrices
 			#pragma exclude_renderers gles
-			#include "UnityCG.cginc"
-			
-			struct appdata_depthPrePass
-			{
-				float4 vertex : POSITION;
-				#if CUT_OFF
-				float2 texcoord : TEXCOORD0;
-				#endif
-			};
-			struct v2f
-			{
-				float4 vertex : SV_POSITION;
-				#if CUT_OFF
-				float2 texcoord : TEXCOORD0;
-				#endif
-			};
-
-			v2f vert (appdata_depthPrePass v)
-			{
-				v2f o;
-				o.vertex = UnityObjectToClipPos(v.vertex);
-				#if CUT_OFF
-				o.texcoord = v.texcoord;
-				#endif
-				return o;
-			}
-			#if CUT_OFF
-			void frag (v2f i)
-			#else
-			void frag ()
-			#endif
-			{
-				#if CUT_OFF
-				i.texcoord = TRANSFORM_TEX(i.texcoord, _MainTex);
-				float4 c = tex2D(_MainTex, i.texcoord);
-				clip(c.a * _Color.a - _Cutoff);
-				#endif
-			}
-
 			ENDCG
 		}
 }

@@ -212,4 +212,144 @@ void frag_surf (v2f_surf IN,
 	#endif
 }
 
+
+//////////////////
+//Motion Vector Pass
+//////////////////
+			struct appdata_mv
+			{
+				float4 vertex : POSITION;
+#if CUT_OFF
+				float2 texcoord : TEXCOORD0;
+#endif
+			};
+			struct v2f_mv
+			{
+				float4 vertex : SV_POSITION;
+#if CUT_OFF
+				float2 texcoord : TEXCOORD0;
+#endif
+				float3 nonJitterScreenPos : TEXCOORD1;
+				float3 lastScreenPos : TEXCOORD2;
+			};
+
+			v2f_mv vert_mv (appdata_mv v)
+			{
+				v2f_mv o;
+				o.vertex = UnityObjectToClipPos(v.vertex);
+			  float4 worldPos = mul(unity_ObjectToWorld, v.vertex);
+				o.nonJitterScreenPos = ComputeScreenPos(mul(_NonJitterVP, worldPos)).xyw;
+				float4 lastWorldPos =  mul(_LastFrameModel, v.vertex);
+        o.lastScreenPos = ComputeScreenPos(mul(_LastVp, lastWorldPos)).xyw;
+#if CUT_OFF
+				o.texcoord = v.texcoord;
+#endif
+				return o;
+			}
+
+			
+			float2 frag_mv (v2f_mv i)  : SV_TARGET
+			{
+#if CUT_OFF
+				i.texcoord = TRANSFORM_TEX(i.texcoord, _MainTex);
+				float4 c = tex2D(_MainTex, i.texcoord);
+				clip(c.a * _Color.a - _Cutoff);
+#endif
+				float4 velocity = float4(i.nonJitterScreenPos.xy, i.lastScreenPos.xy) / float4(i.nonJitterScreenPos.zz, i.lastScreenPos.zz);
+#if UNITY_UV_STARTS_AT_TOP
+				return velocity.xw - velocity.zy;
+#else
+				return velocity.xy - velocity.zw;
+#endif
+
+			}
+////////////
+//Depth pass
+////////////
+struct appdata_depthPrePass
+			{
+				float4 vertex : POSITION;
+				#if CUT_OFF
+				float2 texcoord : TEXCOORD0;
+				#endif
+			};
+			struct v2f_depth
+			{
+				float4 vertex : SV_POSITION;
+				#if CUT_OFF
+				float2 texcoord : TEXCOORD0;
+				#endif
+			};
+
+			v2f_depth vert_depth (appdata_depthPrePass v)
+			{
+				v2f_depth o;
+				o.vertex = UnityObjectToClipPos(v.vertex);
+				#if CUT_OFF
+				o.texcoord = v.texcoord;
+				#endif
+				return o;
+			}
+			#if CUT_OFF
+			void frag_depth (v2f_depth i)
+			#else
+			void frag_depth ()
+			#endif
+			{
+				#if CUT_OFF
+				i.texcoord = TRANSFORM_TEX(i.texcoord, _MainTex);
+				float4 c = tex2D(_MainTex, i.texcoord);
+				clip(c.a * _Color.a - _Cutoff);
+				#endif
+			}
+/////////////
+//Shadow pass
+/////////////
+float4x4 _ShadowMapVP;
+			struct appdata_shadow
+			{
+				float4 vertex : POSITION;
+				#if CUT_OFF
+				float2 texcoord : TEXCOORD0;
+				#endif
+			};
+			struct v2f_shadow
+			{
+				float4 vertex : SV_POSITION;
+				#if POINT_LIGHT_SHADOW
+				float3 worldPos : TEXCOORD1;
+				#endif
+				#if CUT_OFF
+				float2 texcoord : TEXCOORD0;
+				#endif
+			};
+
+			v2f_shadow vert_shadow (appdata_shadow v)
+			{
+				float4 worldPos = mul(unity_ObjectToWorld, v.vertex);
+				v2f_shadow o;
+				#if POINT_LIGHT_SHADOW
+				o.worldPos = worldPos.xyz;
+				#endif
+				o.vertex = mul(_ShadowMapVP, worldPos);
+				#if CUT_OFF
+				o.texcoord = v.texcoord;
+				#endif
+				return o;
+			}
+
+			
+			float frag_shadow (v2f_shadow i)  : SV_TARGET
+			{
+				#if CUT_OFF
+				i.texcoord = TRANSFORM_TEX(i.texcoord, _MainTex);
+				float4 c = tex2D(_MainTex, i.texcoord);
+				clip(c.a * _Color.a - _Cutoff);
+				#endif
+				#if POINT_LIGHT_SHADOW
+				return distance(i.worldPos, _LightPos.xyz) / _LightPos.w;
+				#else
+				return i.vertex.z;
+				#endif
+			}
 #endif
