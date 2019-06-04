@@ -143,4 +143,9 @@ public static partial class ShaderIDs
     public static readonly int _AllDecals = Shader.PropertyToID("_AllDecals");
     public static readonly int _DecalIndexBuffer = Shader.PropertyToID("_DecalIndexBuffer");
     public static readonly int _DecalCount = Shader.PropertyToID("_DecalCount");
+
+    public static readonly int _ReflectionTex = Shader.PropertyToID("_ReflectionTex");
+    public static readonly int _ReflectionIndex = Shader.PropertyToID("_ReflectionIndex");
+    public static readonly int _CameraReflectionTexture = Shader.PropertyToID("_CameraReflectionTexture");
+    public static readonly int _CameraGITexture = Shader.PropertyToID("_CameraGITexture");
 }

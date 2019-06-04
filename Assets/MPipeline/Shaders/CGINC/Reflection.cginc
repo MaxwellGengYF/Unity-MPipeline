@@ -14,7 +14,6 @@
     TextureCube<float4> _ReflectionCubeMap5; SamplerState sampler_ReflectionCubeMap5;
     TextureCube<float4> _ReflectionCubeMap6; SamplerState sampler_ReflectionCubeMap6;
     TextureCube<float4> _ReflectionCubeMap7; SamplerState sampler_ReflectionCubeMap7;
-    Texture2D<float4> _SSR_TemporalCurr_RT; SamplerState sampler_SSR_TemporalCurr_RT;
     void GetColor(int index, float3 normal, float lod, out float4 result)
     {
         switch(index)
@@ -140,6 +139,17 @@ float3 GetFroxelColor(float4 hdr, int index, StructuredBuffer<float3> normals, c
         
     }
 #ifndef FROXEL_LIGHT
+float3 MPipelineGI_IndirectSpecular_Deferred(UnityGIInput data, float2 occlusion, Unity_GlossyEnvironmentData glossIn, ReflectionData reflData, float lod, samplerCUBE targetTex, out float3 gi)
+{
+    if(reflData.boxProjection > 0)
+    {
+        glossIn.reflUVW = BoxProjectedCubemapDirection (glossIn.reflUVW, data.worldPos, data.probePosition[0], data.boxMin[0], data.boxMax[0]);
+    }
+    float4 env0 = texCUBElod(targetTex, float4(glossIn.reflUVW, lod));
+    float4 env1 = texCUBElod(targetTex, float4(glossIn.reflUVW, 10));
+    gi = DecodeHDR(env1, data.probeHDR[0]) * occlusion.x;
+    return DecodeHDR(env0, data.probeHDR[0]) * occlusion.y;
+}
 float3 MPipelineGI_IndirectSpecular(UnityGIInput data, float2 occlusion, Unity_GlossyEnvironmentData glossIn, ReflectionData reflData, int currentIndex, float lod)
 {
     if(reflData.boxProjection > 0)
@@ -184,6 +194,59 @@ float3 CalculateGI(float linearDepth, float3 worldPos, float3 normal, float3 alb
     }
     return 0;
 }
+float3 CalculateReflection_Skybox(float3 viewDir, float4 specular, float4 gbuffer1, float3 albedo, float2 aoro, out float3 gi)
+{
+    float3 normal = gbuffer1.xyz;
+	Unity_GlossyEnvironmentData g = UnityGlossyEnvironmentSetup(specular.w, -viewDir, normal, specular.xyz);
+	float perceptualRoughness = g.roughness;
+	perceptualRoughness = perceptualRoughness * (1.7 - 0.7*perceptualRoughness);
+	float lod = perceptualRoughnessToMipmapLevel(perceptualRoughness);;
+	float oneMinusReflectivity = 1 - SpecularStrength(specular.xyz);
+    float3 refVec = reflect(viewDir, normal);
+    UnityLight light;
+	light.color = float3(0, 0, 0);
+	light.dir = float3(0, 1, 0);
+	UnityIndirect ind;
+	ind.diffuse = 0;
+    ind.specular = _ReflectionCubeMap.SampleLevel(sampler_ReflectionCubeMap, refVec, lod);
+    gi = _ReflectionCubeMap.SampleLevel(sampler_ReflectionCubeMap, normal, 10) * albedo;
+    return BRDF1_Unity_PBS(0, specular.xyz, oneMinusReflectivity, specular.w, normal, -viewDir, light, ind).rgb;
+}
+float4 CalculateReflection_Deferred(float3 worldPos, float3 viewDir, float4 specular, float4 gbuffer1, float3 albedo, float2 aoro, samplerCUBE targetTex, int index, out float3 gi)
+{
+    float3 normal = gbuffer1.xyz;
+	Unity_GlossyEnvironmentData g = UnityGlossyEnvironmentSetup(specular.w, -viewDir, normal, specular.xyz);
+	float perceptualRoughness = g.roughness;
+	perceptualRoughness = perceptualRoughness * (1.7 - 0.7*perceptualRoughness);
+	float lod = perceptualRoughnessToMipmapLevel(perceptualRoughness);;
+	float oneMinusReflectivity = 1 - SpecularStrength(specular.xyz);
+	UnityGIInput d;
+	d.worldPos = worldPos.xyz;
+	d.worldViewDir = -viewDir;
+	UnityLight light;
+	light.color = float3(0, 0, 0);
+	light.dir = float3(0, 1, 0);
+	UnityIndirect ind;
+	ind.diffuse = 0;
+    ReflectionData data = _ReflectionData[index];
+	float3 leftDown = data.position - data.maxExtent;
+	float3 cubemapUV = (worldPos.xyz - leftDown) / (data.maxExtent * 2);
+    if (dot(abs(cubemapUV - saturate(cubemapUV)), 1) > 1e-8) discard;
+    d.probeHDR[0] = data.hdr;
+		if (data.boxProjection > 0)
+		{
+			d.probePosition[0] = float4(data.position, 1);
+			d.boxMin[0].xyz = leftDown;
+			d.boxMax[0].xyz = (data.position + data.maxExtent);
+		}
+        ind.specular = MPipelineGI_IndirectSpecular_Deferred(d, aoro, g, data, lod, targetTex, gi);
+        float3 distanceToMin = saturate((abs(worldPos.xyz - data.position) - data.minExtent) / data.blendDistance);
+        float lerpValue = max(distanceToMin.x, max(distanceToMin.y, distanceToMin.z));
+         float3 rgb = BRDF1_Unity_PBS(0, specular.xyz, oneMinusReflectivity, specular.w, normal, -viewDir, light, ind).rgb;
+        gi *= albedo;
+	return float4(rgb, lerpValue);
+
+}
 float3 CalculateReflection(float linearDepth, float3 worldPos, float3 viewDir, float4 specular, float4 gbuffer1, float3 albedo, float2 aoro, float2 screenUV)
 {
     float3 normal = gbuffer1.xyz;
@@ -200,7 +263,7 @@ float3 CalculateReflection(float linearDepth, float3 worldPos, float3 viewDir, f
 	light.dir = float3(0, 1, 0);
 	UnityIndirect ind;
 	ind.diffuse = 0;
-    ind.specular =  _ReflectionCubeMap.SampleLevel(sampler_ReflectionCubeMap, g.reflUVW, lod).xyz;;
+    ind.specular =  _ReflectionCubeMap.SampleLevel(sampler_ReflectionCubeMap, g.reflUVW, lod).xyz;
 	float rate = pow(max(0, (linearDepth - _CameraClipDistance.x) / _CameraClipDistance.y), 1.0 / CLUSTERRATE);
     if(rate <= 1.0){
 	float3 uv = float3(screenUV, rate);
@@ -229,10 +292,6 @@ float3 CalculateReflection(float linearDepth, float3 worldPos, float3 viewDir, f
 		ind.specular = lerp(specColor, ind.specular, lerpValue);
 	}
     }
-    #if ENABLE_SSR
-    float4 ssr = _SSR_TemporalCurr_RT.Sample(sampler_SSR_TemporalCurr_RT, screenUV);    
-    ind.specular = lerp(ind.specular, max(0,ssr.rgb * aoro.y), saturate(ssr.a));
-    #endif
     float3 rgb = BRDF1_Unity_PBS(0, specular.xyz, oneMinusReflectivity, specular.w, normal, -viewDir, light, ind).rgb;
 	return rgb;
 }

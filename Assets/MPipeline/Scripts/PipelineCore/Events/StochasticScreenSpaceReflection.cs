@@ -250,7 +250,7 @@ namespace MPipeline
             }
             ScreenSpaceReflectionBuffer.ReleaseTemporaryRT(SSR_Trace_ID);
             ScreenSpaceReflectionBuffer.ReleaseTemporaryRT(SSR_GetSSRColor_ID);
-            ScreenSpaceReflectionBuffer.ReleaseTemporaryRT(SSR_TemporalCurr_ID);
+            RenderPipeline.ReleaseRTAfterFrame(SSR_TemporalCurr_ID);
         }
     }
     public class PreviousDepthData : IPerCameraData

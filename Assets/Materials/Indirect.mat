@@ -9,7 +9,7 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: Indirect
   m_Shader: {fileID: 4800000, guid: f7f0d8bc677efcc44b8b3ea293d2b74f, type: 3}
-  m_ShaderKeywords: LIT_ENABLE
+  m_ShaderKeywords: DEFAULT_LIT LIT_ENABLE
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -80,6 +80,8 @@ Material:
     - SpecularInten: 0.3
     - ZWrite_On: 0
     - _BumpScale: 1
+    - _ClearCoat: 0.5
+    - _ClearCoatRoughness: 0.5
     - _Cutoff: 0
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
@@ -104,7 +106,9 @@ Material:
     - _ZTest: 2
     - _ZWrite: 1
     m_Colors:
+    - _ClearCoatEnergy: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _MultiScatter: {r: 1, g: 1, b: 1, a: 1}
     - _SpecColor: {r: 0.19999996, g: 0.19999996, b: 0.19999996, a: 1}
     - _SpecularColor: {r: 0, g: 0, b: 0, a: 1}

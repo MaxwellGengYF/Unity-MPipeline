@@ -18,6 +18,7 @@ namespace MPipeline
         public bool reflectionEnabled { get; private set; }
         private NativeArray<VisibleReflectionProbe> reflectProbes;
         private NativeArray<ReflectionData> reflectionData;
+        private RenderTargetIdentifier[] targetTexs = new RenderTargetIdentifier[2];
         private JobHandle storeDataHandler;
         private ComputeBuffer probeBuffer;
         private LightingEvent lightingEvents;
@@ -92,17 +93,17 @@ namespace MPipeline
         public override void PreRenderFrame(PipelineCamera cam, ref PipelineCommandData data)
         {
             reflectProbes = proper.cullResults.visibleReflectionProbes;
-            reflectionData = new NativeArray<ReflectionData>(Mathf.Min(maximumProbe, reflectProbes.Length), Allocator.Temp, NativeArrayOptions.UninitializedMemory);
+            reflectionData = new NativeArray<ReflectionData>(reflectProbes.Length, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
             storeRef = new StoreReflectionData
             {
                 data = reflectionData.Ptr(),
                 allProbes = reflectProbes.Ptr(),
-                count = 0,
+                count = reflectProbes.Length,
                 camPos = cam.cam.transform.position,
                 dist = availiableDistance,
-                maximumProbe = maximumProbe
+                localToWorldMat = MUnsafeUtility.Malloc<Matrix4x4>(sizeof(Matrix4x4) * reflectProbes.Length, Allocator.Temp)
             };
-            storeDataHandler = storeRef.ScheduleRefBurst(reflectProbes.Length, 32);
+            storeDataHandler = storeRef.ScheduleRefBurst();
             if (ssrEvents.enabled && !RenderPipeline.renderingEditor)
             {
                 ssrEvents.PreRender(cam);
@@ -118,7 +119,7 @@ namespace MPipeline
                 if (!tx) tx = defaultMap;
                 buffer.SetComputeTextureParam(targetShader, kernel, reflectionCubemapIDs[i], tx);
             }
-            for(int i = reflectionCount; i < maximumProbe; ++i)
+            for (int i = reflectionCount; i < maximumProbe; ++i)
             {
                 buffer.SetComputeTextureParam(targetShader, kernel, reflectionCubemapIDs[i], defaultMap);
             }
@@ -130,7 +131,12 @@ namespace MPipeline
             CommandBuffer buffer = data.buffer;
             ComputeShader cullingShader = data.resources.shaders.reflectionCullingShader;
             ref CBDRSharedData cbdr = ref lightingEvents.cbdr;
-            probeBuffer.SetData(reflectionData, 0, 0, reflectionCount);
+            if(probeBuffer.count < storeRef.count)
+            {
+                probeBuffer.Dispose();
+                probeBuffer = new ComputeBuffer(storeRef.count, sizeof(ReflectionData));
+            }
+            probeBuffer.SetData(reflectionData, 0, 0, storeRef.count);
             buffer.SetComputeTextureParam(cullingShader, 0, ShaderIDs._XYPlaneTexture, cbdr.xyPlaneTexture);
             buffer.SetComputeTextureParam(cullingShader, 0, ShaderIDs._ZPlaneTexture, cbdr.zPlaneTexture);
             buffer.SetComputeBufferParam(cullingShader, 0, ShaderIDs._ReflectionIndices, reflectionIndices);
@@ -144,7 +150,6 @@ namespace MPipeline
             {
                 buffer.SetGlobalTexture(reflectionCubemapIDs[i], reflectProbes[i].texture);
             }
-            buffer.BlitSRTWithDepth(cam.targets.renderTargetIdentifier, ShaderIDs._DepthBufferTexture, reflectionMat, 1);
             if (ssrEvents.enabled && !RenderPipeline.renderingEditor)
             {
                 ssrEvents.Render(ref data, cam, proper);
@@ -155,38 +160,53 @@ namespace MPipeline
             {
                 buffer.DisableShaderKeyword("ENABLE_SSR");
             }
-            buffer.BlitSRTWithDepth(cam.targets.renderTargetIdentifier, ShaderIDs._DepthBufferTexture, reflectionMat, 0);
             //TODO
+            targetTexs[0] = ShaderIDs._CameraReflectionTexture;
+            targetTexs[1] = ShaderIDs._CameraGITexture;
+            buffer.GetTemporaryRT(ShaderIDs._CameraReflectionTexture, cam.cam.pixelWidth, cam.cam.pixelHeight, 0, FilterMode.Point, RenderTextureFormat.ARGBHalf, RenderTextureReadWrite.Linear);
+            buffer.GetTemporaryRT(ShaderIDs._CameraGITexture, cam.cam.pixelWidth, cam.cam.pixelHeight, 0, FilterMode.Point, RenderTextureFormat.ARGBHalf, RenderTextureReadWrite.Linear);
+            buffer.SetRenderTarget(colors: targetTexs, depth: ShaderIDs._DepthBufferTexture);
+            buffer.DrawMesh(GraphicsUtility.mesh, Matrix4x4.identity, reflectionMat, 0, 2);
+            for(int i = 0; i < storeRef.count; ++i)
+            {
+                buffer.SetGlobalInt(ShaderIDs._ReflectionIndex, i);
+                buffer.SetGlobalTexture(ShaderIDs._ReflectionTex, reflectProbes[i].texture);
+                buffer.DrawMesh(GraphicsUtility.cubeMesh, storeRef.localToWorldMat[i], reflectionMat, 0, 0);
+            }
+            UnsafeUtility.Free(storeRef.localToWorldMat, Allocator.Temp);
+            buffer.BlitSRTWithDepth(cam.targets.renderTargetIdentifier, ShaderIDs._DepthBufferTexture, reflectionMat, 1);
+            buffer.ReleaseTemporaryRT(ShaderIDs._CameraReflectionTexture);
+            buffer.ReleaseTemporaryRT(ShaderIDs._CameraGITexture);
         }
         [Unity.Burst.BurstCompile]
-        public unsafe struct StoreReflectionData : IJobParallelFor
+        public unsafe struct StoreReflectionData : IJob
         {
             [NativeDisableUnsafePtrRestriction]
             public VisibleReflectionProbe* allProbes;
             [NativeDisableUnsafePtrRestriction]
             public ReflectionData* data;
+            [NativeDisableUnsafePtrRestriction]
+            public Matrix4x4* localToWorldMat;
             public int count;
             public float3 camPos;
             public float dist;
-            public int maximumProbe;
-            public void Execute(int index)
+            public void Execute()
             {
-                VisibleReflectionProbe vis = allProbes[index];
-                float dstSq = dist + length(vis.bounds.extents);
-                dstSq *= dstSq;
-                /* if (dstSq < lengthsq(camPos - (float3)vis.bounds.center))
-                     return;*/
-                int i = System.Threading.Interlocked.Increment(ref count) - 1;
-                if (i >= maximumProbe)
-                    return;
-                ref ReflectionData dt = ref data[i];
-                dt.blendDistance = vis.blendDistance;
-                float4x4 localToWorld = vis.localToWorldMatrix;
-                dt.minExtent = (float3)vis.bounds.extents - dt.blendDistance * 0.5f;
-                dt.maxExtent = (float3)vis.bounds.extents + dt.blendDistance * 0.5f;
-                dt.boxProjection = vis.isBoxProjection ? 1 : 0;
-                dt.position = localToWorld.c3.xyz;
-                dt.hdr = vis.hdrData;
+                for (int index = 0; index < count; ++index)
+                {
+                    VisibleReflectionProbe vis = allProbes[index];
+                    float dstSq = dist + length(vis.bounds.extents);
+                    dstSq *= dstSq;
+                    ref ReflectionData dt = ref data[index];
+                    dt.blendDistance = vis.blendDistance;
+                    float4x4 localToWorld = vis.localToWorldMatrix;
+                    dt.minExtent = (float3)vis.bounds.extents - dt.blendDistance * 0.5f;
+                    dt.maxExtent = (float3)vis.bounds.extents + dt.blendDistance * 0.5f;
+                    dt.boxProjection = vis.isBoxProjection ? 1 : 0;
+                    dt.position = localToWorld.c3.xyz;
+                    dt.hdr = vis.hdrData;
+                    localToWorldMat[index] = Matrix4x4.TRS(dt.position, Quaternion.identity, dt.maxExtent * 2);
+                }
             }
         }
 
