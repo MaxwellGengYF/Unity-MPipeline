@@ -17,15 +17,16 @@ float3 Defult_Lit(BSDFContext LightData, float3 Energy, float3 MultiScatterEnerg
     return (Diffuse + Specular) * Energy;
 }
 
-float3 Skin_Lit(BSDFContext LightData, float3 Energy, float3 MultiScatterEnergy, float3 AlbedoColor, float3 SpecularColor, float Roughness)
+float3 Skin_Lit(BSDFContext LightData, float3 Energy, float3 MultiScatterEnergy, float3 AlbedoColor, float3 SpecularColor, float Roughness, float skinRoughness)
 {
     float3 Diffuse = Diffuse_RenormalizeBurley(LightData.LoH, LightData.NoL, LightData.NoV, AlbedoColor, Roughness);
 
-	float pbr_GGX = lerp(D_Beckmann(LightData.NoH, Roughness), D_Beckmann(LightData.NoH, Roughness * 0.5), 0.85);
+	float2 pbr_GGX = D_Beckmann(LightData.NoH, float2(Roughness, skinRoughness));
+	pbr_GGX.x = lerp(pbr_GGX.x, pbr_GGX.y, 0.85);
 	float pbr_Vis = Vis_SmithGGXCorrelated(LightData.NoL, LightData.NoV, Roughness);
 	float3 pbr_Fresnel = F_Schlick(SpecularColor, 1, LightData.LoH);
 
-	float3 Specular = (pbr_Vis * pbr_GGX) * pbr_Fresnel;
+	float3 Specular = (pbr_Vis * pbr_GGX.x) * pbr_Fresnel;
 	Specular *= MultiScatterEnergy;
 
 	return (Diffuse + Specular) * Energy;
@@ -170,6 +171,15 @@ struct GeometryBuffer
 	float ClearCoat;
 	float ClearCoat_Roughness;
 };
+#elif SKIN_LIT
+struct GeometryBuffer
+{
+	float3 AlbedoColor;
+	float3 SpecularColor;
+	float Roughness;
+	float3 MultiScatterEnergy;
+	float Skin_Roughness;
+};
 #else
 struct GeometryBuffer
 {
@@ -182,7 +192,7 @@ struct GeometryBuffer
 float3 LitFunc(BSDFContext LightData, float3 Energy, GeometryBuffer buffer)
 {
 #if SKIN_LIT
-return Skin_Lit(LightData, Energy, buffer.MultiScatterEnergy, buffer.AlbedoColor, buffer.SpecularColor, buffer.Roughness);
+return Skin_Lit(LightData, Energy, buffer.MultiScatterEnergy, buffer.AlbedoColor, buffer.SpecularColor, buffer.Roughness, buffer.Skin_Roughness);
 #elif CLOTH_LIT
 return Cloth_Cotton(LightData, Energy, buffer.AlbedoColor, buffer.SpecularColor, buffer.Roughness);
 #elif CLEARCOAT_LIT

@@ -24,6 +24,7 @@ namespace MPipeline
         private Dictionary<Type, PostProcessEffectSettings> allSettings;
         private PostProcessRenderContext postContext;
         public CyberColor cyberColor;
+        
         public Shader debug;
         private Material debugMat;
 
@@ -59,6 +60,7 @@ namespace MPipeline
             {
                 allSettings.Add(i.GetType(), i);
             }
+
         }
 
         public override bool CheckProperty()
@@ -75,8 +77,8 @@ namespace MPipeline
             cyberColor.Dispose();
             postContext.uberSheet.Release();
             postContext.logHistogram.Release();
+            
         }
-
         public override void FrameUpdate(PipelineCamera cam, ref PipelineCommandData data)
         {
             if (!enabledPost)

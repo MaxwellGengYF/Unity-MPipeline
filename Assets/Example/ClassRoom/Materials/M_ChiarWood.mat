@@ -9,7 +9,7 @@ Material:
   m_PrefabAsset: {fileID: 0}
   m_Name: M_ChiarWood
   m_Shader: {fileID: 4800000, guid: f7f0d8bc677efcc44b8b3ea293d2b74f, type: 3}
-  m_ShaderKeywords: LIT_ENABLE _USEALBEDOTEXTURE_ON _USETEXTURE_ON
+  m_ShaderKeywords: DEFAULT_LIT LIT_ENABLE _USEALBEDOTEXTURE_ON _USETEXTURE_ON
   m_LightmapFlags: 4
   m_EnableInstancingVariants: 0
   m_DoubleSidedGI: 0
@@ -88,6 +88,8 @@ Material:
     - _AlbedoBrigness: 1
     - _AlbedoTextureBrigeness: 0
     - _BumpScale: 1
+    - _ClearCoat: 0.5
+    - _ClearCoatRoughness: 0.5
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
@@ -123,6 +125,8 @@ Material:
     m_Colors:
     - _Albedo: {r: 1, g: 1, b: 1, a: 1}
     - _AlbedoColor: {r: 1, g: 1, b: 1, a: 0}
+    - _ClearCoatEnergy: {r: 1, g: 1, b: 1, a: 1}
     - _Color: {r: 1, g: 1, b: 1, a: 1}
     - _Color1: {r: 1, g: 1, b: 1, a: 0}
     - _EmissionColor: {r: 0, g: 0, b: 0, a: 1}
+    - _MultiScatter: {r: 1, g: 1, b: 1, a: 1}

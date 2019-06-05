@@ -25,7 +25,7 @@ cbuffer UnityPerMaterial
 		float _EmissionMultiplier;
 		float _Cutoff;
 		float3 _MultiScatter;
-		float _ClearCoatRoughness;
+		float _ClearCoatSmoothness;
 		float _ClearCoat;
 		float3 _ClearCoatEnergy;
 }
@@ -194,7 +194,10 @@ void frag_surf (v2f_surf IN,
 					#if CLEARCOAT_LIT
 					buffer.ClearCoat_MultiScatterEnergy = _ClearCoatEnergy;
 					buffer.ClearCoat = _ClearCoat;
-					buffer.ClearCoat_Roughness = _ClearCoatRoughness;
+					buffer.ClearCoat_Roughness = clamp(1 - _ClearCoatSmoothness, 0.02, 1);
+					#endif
+					#if SKIN_LIT
+					buffer.Skin_Roughness = clamp(1 - _ClearCoatSmoothness, 0.02, 1);
 					#endif
 	            #if ENABLE_SUN
 					#if ENABLE_SUNSHADOW

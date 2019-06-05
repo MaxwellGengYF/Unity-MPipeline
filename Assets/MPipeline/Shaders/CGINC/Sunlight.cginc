@@ -48,18 +48,22 @@ float GetShadow(float4 worldPos, float depth)
 	return atten;
 }
 
-float3 CalculateSunLight(float3 normal, float depth, float4 wpos, float3 viewDir, GeometryBuffer buffer)
+float3 CalculateSunLight(float3 N, float depth, float4 wpos, float3 V, GeometryBuffer buffer)
 {
 	float atten = GetShadow(wpos, depth);
 	BSDFContext LightData;
-	Init(LightData, normal, viewDir, _DirLightPos, normalize(viewDir + _DirLightPos));
-	
+	float3 L = _DirLightPos;
+	float3 H = normalize(V + L);
+	Init(LightData, N, V, L, H);
 	return max(0, LitFunc(LightData, _DirLightFinalColor * atten, buffer));
 }
-float3 CalculateSunLight_NoShadow(float3 normal, float3 viewDir, GeometryBuffer buffer)
+float3 CalculateSunLight_NoShadow(float3 N, float3 V, GeometryBuffer buffer)
 {
 	BSDFContext LightData;
-	Init(LightData, normal, viewDir, _DirLightPos, normalize(viewDir + _DirLightPos));
+	float3 L = normalize(_DirLightPos);
+	float3 H = normalize(V + L);
+	Init(LightData, N, V, L, H);
+//	return LightData.NoL * _DirLightFinalColor;
 	return max(0, LitFunc(LightData, _DirLightFinalColor, buffer));
 
 }

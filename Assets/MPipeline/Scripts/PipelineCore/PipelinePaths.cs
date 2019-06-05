@@ -24,7 +24,6 @@ namespace MPipeline
         public Shader copyShader;
         public Shader HizLodShader;
         public Shader motionVectorShader;
-        public Shader shadowMaskShader;
         public Shader reflectionShader;
         public Shader linearDepthShader;
         public Shader linearDrawerShader;
@@ -34,9 +33,9 @@ namespace MPipeline
         public Shader terrainShader;
         public Shader spotLightDepthShader;
         public Shader gtaoShader;
-        public Shader lightingShader;
         public Shader overrideOpaqueShader;
         public Shader ssgiShader;
+        public Shader sssShader;
         public Mesh occluderMesh;
         public Mesh sphereMesh;
     }
@@ -61,6 +60,7 @@ namespace MPipeline
        typeof(AOEvents),
        typeof(SkyboxEvent),
        typeof(ReflectionEvent),
+       typeof(SeparableSSSSkinEvent),
        typeof(VolumetricLightEvent),
        typeof(TransEvent),
        typeof(TemporalAAEvent),

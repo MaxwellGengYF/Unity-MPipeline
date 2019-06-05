@@ -19,8 +19,8 @@ MonoBehaviour:
   enableInEditor: 0
   cyberColor:
     Enabled: 0
-    _Red: 0.02
-    _Orange: 0
+    _Red: -0.932
+    _Orange: 0.289
     _Yellow: 0.461
     _Green: 0
     _Cyan: 0

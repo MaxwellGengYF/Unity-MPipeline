@@ -134,11 +134,12 @@ namespace MPipeline
             prevDepthData.targetObject = this;
         }
 
-        public void Render(ref PipelineCommandData data, PipelineCamera cam, PropertySetEvent proper)
+        public int Render(ref PipelineCommandData data, PipelineCamera cam, PropertySetEvent proper)
         {
             SSRCameraData cameraData = IPerCameraData.GetProperty(cam, getDataFunc);
             SSR_UpdateVariable(cameraData, cam.cam, ref data, proper);
             RenderScreenSpaceReflection(data.buffer, cameraData, cam);
+            return SSR_TemporalCurr_ID;
         }
 
 
@@ -250,7 +251,6 @@ namespace MPipeline
             }
             ScreenSpaceReflectionBuffer.ReleaseTemporaryRT(SSR_Trace_ID);
             ScreenSpaceReflectionBuffer.ReleaseTemporaryRT(SSR_GetSSRColor_ID);
-            RenderPipeline.ReleaseRTAfterFrame(SSR_TemporalCurr_ID);
         }
     }
     public class PreviousDepthData : IPerCameraData

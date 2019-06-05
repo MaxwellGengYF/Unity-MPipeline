@@ -3,10 +3,10 @@
 	Properties {
 		_Color ("Color", Color) = (1,1,1,1)
 		_MultiScatter("Multi Scatter", Color) = (1,1,1,1)
-		_ClearCoatRoughness("Clearcoat Roughness", Range(0, 1)) = 0.5
 		_ClearCoat("Clearcoat", Range(0, 1)) = 0.5
 		_ClearCoatEnergy("Clearcoat Energy", Color) = (1,1,1,1)
 		_Glossiness ("Smoothness", Range(0,1)) = 0.5
+		_ClearCoatSmoothness("Secondary Smoothness", Range(0, 1)) = 0.5
 		_Occlusion("Occlusion Scale", Range(0,1)) = 1
 		_Cutoff("Cut off", Range(0, 1)) = 0
 		_SpecularIntensity("Specular Intensity", Range(0,1)) = 0.3

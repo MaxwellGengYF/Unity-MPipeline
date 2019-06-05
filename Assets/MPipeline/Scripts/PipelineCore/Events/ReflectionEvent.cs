@@ -33,7 +33,6 @@ namespace MPipeline
         public float availiableDistance = 50;
         public StochasticScreenSpaceReflection ssrEvents = new StochasticScreenSpaceReflection();
         private static readonly int _ReflectionCubeMap = Shader.PropertyToID("_ReflectionCubeMap");
-
         public override bool CheckProperty()
         {
             return reflectionIndices != null && ssrEvents.MaterialEnabled();
@@ -150,9 +149,10 @@ namespace MPipeline
             {
                 buffer.SetGlobalTexture(reflectionCubemapIDs[i], reflectProbes[i].texture);
             }
+            int releaseSSRID = -1;
             if (ssrEvents.enabled && !RenderPipeline.renderingEditor)
             {
-                ssrEvents.Render(ref data, cam, proper);
+                releaseSSRID = ssrEvents.Render(ref data, cam, proper);
                 buffer.EnableShaderKeyword("ENABLE_SSR");
 
             }
@@ -177,6 +177,10 @@ namespace MPipeline
             buffer.BlitSRTWithDepth(cam.targets.renderTargetIdentifier, ShaderIDs._DepthBufferTexture, reflectionMat, 1);
             buffer.ReleaseTemporaryRT(ShaderIDs._CameraReflectionTexture);
             buffer.ReleaseTemporaryRT(ShaderIDs._CameraGITexture);
+            if (releaseSSRID >= 0)
+            {
+                buffer.ReleaseTemporaryRT(releaseSSRID);
+            }
         }
         [Unity.Burst.BurstCompile]
         public unsafe struct StoreReflectionData : IJob

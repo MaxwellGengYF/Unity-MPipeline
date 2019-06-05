@@ -27,3 +27,8 @@ MonoBehaviour:
     TemporalWeight: 0.92
     MaximumAllowedTemporalDepthBias: 0.1
     RunTimeDebugMod: 1
+  skin:
+    enabled: 1
+    SubsurfaceScaler: 3.75
+    SubsurfaceColor: {r: 1, g: 0, b: 0, a: 1}
+    SubsurfaceFalloff: {r: 1, g: 0, b: 0, a: 1}

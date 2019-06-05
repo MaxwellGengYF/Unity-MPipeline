@@ -10,7 +10,6 @@ CGINCLUDE
 #include "UnityCG.cginc"
 Texture2D<float> _CameraDepthTexture; SamplerState sampler_CameraDepthTexture;
 #include "CGINC/VolumetricLight.cginc"
-float2 _Jitter;
             struct v2fScreen
             {
                 float4 vertex : SV_POSITION;
@@ -25,7 +24,7 @@ float2 _Jitter;
             {
                 v2fScreen o;
                 o.vertex = v.vertex;
-                o.uv = v.uv - _Jitter;
+                o.uv = v.uv;
                 return o;
             }
 
@@ -39,7 +38,6 @@ ENDCG
             #pragma fragment frag
             float4 frag(v2fScreen i) : SV_TARGET
             {
-                
                 float linear01Depth = Linear01Depth(_CameraDepthTexture.Sample(sampler_CameraDepthTexture, i.uv));
 		        float4 fog = Fog(linear01Depth, i.uv);
 		        return fog;

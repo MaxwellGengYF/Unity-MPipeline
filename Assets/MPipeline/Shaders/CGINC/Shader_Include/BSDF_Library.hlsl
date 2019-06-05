@@ -21,12 +21,12 @@ struct BSDFContext
 
 void Init(inout BSDFContext LightData, float3 N, float3 V, float3 L, float3 H)
 {
-	LightData.NoL = saturate(dot(N, L));
+	LightData.NoL = clamp(dot(N, L), -1e-5, 1);
 	LightData.NoV = min(dot(N, V), 1);
-	LightData.NoH = saturate(dot(N, H));
-	LightData.LoH = saturate(dot(L, H));
-	LightData.VoL = saturate(dot(V, L));
-	LightData.VoH = saturate(dot(V, H));
+	LightData.NoH = clamp(dot(N, H), -1e-5, 1);
+	LightData.LoH = clamp(dot(L, H), -1e-5, 1);
+	LightData.VoL = clamp(dot(V, L), -1e-5, 1);
+	LightData.VoH = clamp(dot(V, H), -1e-5, 1);
 }
 
 struct AnisoBSDFContext
@@ -202,7 +202,7 @@ float Diffuse_RenormalizeBurley_NoPi(float LoH, float NoL, float NoV, float Roug
 	float F90 = EnergyBias + 2 * pow2(LoH) * Roughness;
 	float lightScatter = F_Schlick(1, F90, NoL);
 	float viewScatter = F_Schlick(1, F90, NoV);
-	return lightScatter * viewScatter * EnergyFactor;
+	return lightScatter * viewScatter * EnergyFactor * NoL;
 }
 
 float3 Diffuse_RenormalizeBurley(float LoH, float NoL, float NoV, float3 DiffuseColor, float Roughness)
@@ -271,6 +271,13 @@ float D_GGX(float NoH, float Roughness)
 float D_Beckmann(float NoH, float Roughness)
 {
 	Roughness = pow4(clamp(Roughness, 0.08, 1));
+	NoH = pow2(NoH);
+	return exp((NoH - 1) / (Roughness * NoH)) / (PI * Roughness * NoH);
+}
+
+float2 D_Beckmann(float NoH, float2 Roughness)
+{
+	Roughness = pow4(Roughness);
 	NoH = pow2(NoH);
 	return exp((NoH - 1) / (Roughness * NoH)) / (PI * Roughness * NoH);
 }

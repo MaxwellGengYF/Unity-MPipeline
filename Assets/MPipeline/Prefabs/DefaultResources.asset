@@ -27,6 +27,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: bdee0411038a22f49a6293ec9d53091f, type: 2}
   - {fileID: 11400000, guid: a419771a386d90742931ac14c01ed40a, type: 2}
   - {fileID: 11400000, guid: f7267997fb1d08d44a48b6d32dd56920, type: 2}
+  - {fileID: 11400000, guid: 198dfbd8e0e7de24c8ed0a157067a057, type: 2}
   shaders:
     cbdrShader: {fileID: 7200000, guid: 32eda6600c320d948b7c69a6823d3bf9, type: 3}
     gpuFrustumCulling: {fileID: 7200000, guid: 27a4a69f28f2cb946a2de4928422fcd8, type: 3}
@@ -54,7 +55,6 @@ MonoBehaviour:
     HizLodShader: {fileID: 4800000, guid: 26c0c9d0c19bd4f4d958db01aa775f53, type: 3}
     motionVectorShader: {fileID: 4800000, guid: af8fd14c9f7a6d941b247fe88b7e37f6,
       type: 3}
-    shadowMaskShader: {fileID: 4800000, guid: 59587a2c9dce614429a67657b3058d89, type: 3}
     reflectionShader: {fileID: 4800000, guid: 570f61f4159173a449116b777a6d5480, type: 3}
     linearDepthShader: {fileID: 4800000, guid: 77485821d74bdd841b30cd6723eff35e, type: 3}
     linearDrawerShader: {fileID: 4800000, guid: 2e72d662f1ade4d4793cb016a15b5b17,
@@ -67,9 +67,9 @@ MonoBehaviour:
     spotLightDepthShader: {fileID: 4800000, guid: bed89509ad0b6d844a4a9086fbabac3c,
       type: 3}
     gtaoShader: {fileID: 4800000, guid: 2dbab40b5193e7640a8d53163872d2f7, type: 3}
-    lightingShader: {fileID: 4800000, guid: b10a195e54d72984783eb1f2f49aa43f, type: 3}
     overrideOpaqueShader: {fileID: 4800000, guid: ffeed60062f9fde43bd897fe88a5ad6b,
       type: 3}
     ssgiShader: {fileID: 4800000, guid: 96507b1ae4f2e70449d65df7bc0fd3ec, type: 3}
+    sssShader: {fileID: 4800000, guid: e897628345ef1444bb78afdf212e8b9b, type: 3}
     occluderMesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
     sphereMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}
