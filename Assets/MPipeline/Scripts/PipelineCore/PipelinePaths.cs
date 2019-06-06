@@ -36,6 +36,7 @@ namespace MPipeline
         public Shader overrideOpaqueShader;
         public Shader ssgiShader;
         public Shader sssShader;
+        public Shader bakePreIntShader;
         public Mesh occluderMesh;
         public Mesh sphereMesh;
     }

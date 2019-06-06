@@ -125,17 +125,18 @@ Material:
     - _BumpScale: 1
     - _ClearCoat: 0.5
     - _ClearCoatRoughness: 0.5
+    - _ClearCoatSmoothness: 0.633
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _EmissionMultiplier: 1
     - _GlossMapScale: 1
-    - _Glossiness: 0.142
+    - _Glossiness: 0.235
     - _GlossyReflections: 1
     - _LightingModel: 2
     - _MaxDist: 25
     - _Metallic: 0
-    - _MetallicIntensity: 0.1
+    - _MetallicIntensity: 0
     - _MinDist: 10
     - _Mode: 0
     - _NormalIntencity: 1
@@ -152,7 +153,7 @@ Material:
     - _SmoothnessTextureChannel: 0
     - _SpecularColor: 0.094
     - _SpecularHighlights: 1
-    - _SpecularIntensity: 0.166
+    - _SpecularIntensity: 0.267
     - _SrcBlend: 1
     - _TessMax: 25
     - _TessMin: 10

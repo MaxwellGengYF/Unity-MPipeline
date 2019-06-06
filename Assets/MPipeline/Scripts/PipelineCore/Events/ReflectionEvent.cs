@@ -24,6 +24,8 @@ namespace MPipeline
         private LightingEvent lightingEvents;
         private ComputeBuffer reflectionIndices;
         private Material reflectionMat;
+        private Material preintMat;
+        private RenderTexture preintDefaultRT;
 
         private NativeList<int> reflectionCubemapIDs;
         public int reflectionCount { get; private set; }
@@ -33,9 +35,10 @@ namespace MPipeline
         public float availiableDistance = 50;
         public StochasticScreenSpaceReflection ssrEvents = new StochasticScreenSpaceReflection();
         private static readonly int _ReflectionCubeMap = Shader.PropertyToID("_ReflectionCubeMap");
+        private static readonly int _PreIntDefault = Shader.PropertyToID("_PreIntDefault");
         public override bool CheckProperty()
         {
-            return reflectionIndices != null && ssrEvents.MaterialEnabled();
+            return reflectionIndices != null && ssrEvents.MaterialEnabled() && reflectionMat;
         }
         protected override void OnEnable()
         {
@@ -55,6 +58,7 @@ namespace MPipeline
 
         protected override void Init(PipelineResources resources)
         {
+            preintMat = new Material(resources.shaders.bakePreIntShader);
             proper = RenderPipeline.GetEvent<PropertySetEvent>();
             probeBuffer = new ComputeBuffer(maximumProbe, sizeof(ReflectionData));
             lightingEvents = RenderPipeline.GetEvent<LightingEvent>();
@@ -79,6 +83,7 @@ namespace MPipeline
             }
             reflectionMat = new Material(resources.shaders.reflectionShader);
             ssrEvents.Init(resources);
+            
         }
         protected override void Dispose()
         {
@@ -87,6 +92,8 @@ namespace MPipeline
             reflectionCubemapIDs.Dispose();
             ssrEvents.Dispose();
             DestroyImmediate(reflectionMat);
+            DestroyImmediate(preintMat);
+            if (preintDefaultRT) DestroyImmediate(preintDefaultRT);
         }
 
         public override void PreRenderFrame(PipelineCamera cam, ref PipelineCommandData data)
@@ -106,6 +113,14 @@ namespace MPipeline
             if (ssrEvents.enabled && !RenderPipeline.renderingEditor)
             {
                 ssrEvents.PreRender(cam);
+            }
+            if(!preintDefaultRT)
+            {
+                
+                preintDefaultRT = new RenderTexture(512, 512, 0, RenderTextureFormat.RGHalf, RenderTextureReadWrite.Linear);
+                preintDefaultRT.filterMode = FilterMode.Bilinear;
+                preintDefaultRT.Create();
+                data.buffer.BlitSRT(preintDefaultRT, preintMat, 0);
             }
         }
         public void SetComputeShaderIBLBuffer(ComputeShader targetShader, int kernel, CommandBuffer buffer, Cubemap defaultMap)
@@ -145,21 +160,12 @@ namespace MPipeline
             buffer.DispatchCompute(cullingShader, 0, 1, 1, CBDRSharedData.ZRES);
             buffer.SetGlobalBuffer(ShaderIDs._ReflectionIndices, reflectionIndices);
             buffer.SetGlobalBuffer(ShaderIDs._ReflectionData, probeBuffer);
+            buffer.SetGlobalTexture(_PreIntDefault, preintDefaultRT);
             for (int i = 0; i < reflectionCount; ++i)
             {
                 buffer.SetGlobalTexture(reflectionCubemapIDs[i], reflectProbes[i].texture);
             }
-            int releaseSSRID = -1;
-            if (ssrEvents.enabled && !RenderPipeline.renderingEditor)
-            {
-                releaseSSRID = ssrEvents.Render(ref data, cam, proper);
-                buffer.EnableShaderKeyword("ENABLE_SSR");
 
-            }
-            else
-            {
-                buffer.DisableShaderKeyword("ENABLE_SSR");
-            }
             //TODO
             targetTexs[0] = ShaderIDs._CameraReflectionTexture;
             targetTexs[1] = ShaderIDs._CameraGITexture;
@@ -174,6 +180,17 @@ namespace MPipeline
                 buffer.DrawMesh(GraphicsUtility.cubeMesh, storeRef.localToWorldMat[i], reflectionMat, 0, 0);
             }
             UnsafeUtility.Free(storeRef.localToWorldMat, Allocator.Temp);
+            int releaseSSRID = -1;
+            if (ssrEvents.enabled && !RenderPipeline.renderingEditor)
+            {
+                releaseSSRID = ssrEvents.Render(ref data, cam, proper);
+                buffer.EnableShaderKeyword("ENABLE_SSR");
+
+            }
+            else
+            {
+                buffer.DisableShaderKeyword("ENABLE_SSR");
+            }
             buffer.BlitSRTWithDepth(cam.targets.renderTargetIdentifier, ShaderIDs._DepthBufferTexture, reflectionMat, 1);
             buffer.ReleaseTemporaryRT(ShaderIDs._CameraReflectionTexture);
             buffer.ReleaseTemporaryRT(ShaderIDs._CameraGITexture);

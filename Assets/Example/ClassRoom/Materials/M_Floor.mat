@@ -94,12 +94,13 @@ Material:
     - _BumpScale: 1
     - _ClearCoat: 1
     - _ClearCoatRoughness: 0.111
+    - _ClearCoatSmoothness: 0.5
     - _Cutoff: 0.5
     - _DetailNormalMapScale: 1
     - _DstBlend: 0
     - _EmissionMultiplier: 1
     - _GlossMapScale: 1
-    - _Glossiness: 0.874
+    - _Glossiness: 0.496
     - _GlossyReflections: 1
     - _Keyword0: 0
     - _LightingModel: 1
@@ -114,7 +115,7 @@ Material:
     - _Roughness: 0.32
     - _SmoothnessTextureChannel: 0
     - _SpecularHighlights: 1
-    - _SpecularIntensity: 0.197
+    - _SpecularIntensity: 0.26
     - _SrcBlend: 1
     - _Stencil: 1
     - _ToggleSwitch0: 1

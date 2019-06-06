@@ -5,6 +5,7 @@
 #include "UnityStandardUtils.cginc"
 #include "Lighting.cginc"
 #include "DecalShading.cginc"
+#include "Shader_Include/ImageBasedLighting.hlsl"
 
 #define GetScreenPos(pos) ((float2(pos.x, pos.y) * 0.5) / pos.w + 0.5)
 	struct Input {
@@ -24,10 +25,8 @@ cbuffer UnityPerMaterial
 		float4 _Color;
 		float _EmissionMultiplier;
 		float _Cutoff;
-		float3 _MultiScatter;
 		float _ClearCoatSmoothness;
 		float _ClearCoat;
-		float3 _ClearCoatEnergy;
 }
 		sampler2D _BumpMap;
 		sampler2D _SpecularMap;
@@ -36,6 +35,7 @@ cbuffer UnityPerMaterial
 		sampler2D _DetailNormal;
 		sampler2D _EmissionMap;
 		sampler2D _RainTexture;
+		sampler2D _PreIntDefault;
 
 		void surf (Input IN, inout SurfaceOutputStandardSpecular o) {
 			// Albedo comes from a texture tinted by color
@@ -67,7 +67,7 @@ cbuffer UnityPerMaterial
 			o.Emission = _EmissionColor * tex2D(_EmissionMap, uv) * _EmissionMultiplier;
 		}
 
-float4 ProceduralStandardSpecular_Deferred (inout SurfaceOutputStandardSpecular s, float3 viewDir, out float4 outGBuffer0, out float4 outGBuffer1, out float4 outGBuffer2)
+float4 ProceduralStandardSpecular_Deferred (inout SurfaceOutputStandardSpecular s, out float4 outGBuffer0, out float4 outGBuffer1, out float4 outGBuffer2)
 {
     // energy conservation
     float oneMinusReflectivity;
@@ -159,14 +159,14 @@ void frag_surf (v2f_surf IN,
 	float2 screenUV = IN.screenUV.xy / IN.screenUV.z;
   surfIN.uv_MainTex = IN.pack0.xy;
   float3 worldPos = float3(IN.worldTangent.w, IN.worldBinormal.w, IN.worldNormal.w);
-  float3 worldViewDir = normalize(worldPos.xyz - _WorldSpaceCameraPos);
+  float3 worldViewDir = normalize(_WorldSpaceCameraPos - worldPos.xyz);
   SurfaceOutputStandardSpecular o;
   float3x3 wdMatrix= float3x3(normalize(IN.worldTangent.xyz), normalize(IN.worldBinormal.xyz), normalize(IN.worldNormal.xyz));
   // call surface function
   surf (surfIN, o);
 	CalculateDecal(screenUV, linearEye, worldPos, o.Albedo, o.Normal);
   o.Normal = normalize(mul(normalize(o.Normal), wdMatrix));
-  outEmission = ProceduralStandardSpecular_Deferred (o, worldViewDir, outGBuffer0, outGBuffer1, outGBuffer2); //GI neccessary here!
+  outEmission = ProceduralStandardSpecular_Deferred (o, outGBuffer0, outGBuffer1, outGBuffer2); //GI neccessary here!
 
 	#if LIT_ENABLE
 	#if LIGHTMAP_ON
@@ -179,40 +179,42 @@ void frag_surf (v2f_surf IN,
 	outEmission.xyz += giResult.indirect.diffuse * outGBuffer0;
   //outEmission.xyz += unity_Lightmap.Sample(samplerunity_Lightmap, IN.lightmapUV).xyz* o.Albedo;
 	#endif
-
+	float Roughness = clamp(1 - outGBuffer1.a, 0.02, 1);
+					  float3 multiScatter;
+  					float3 preint = PreintegratedDGF_LUT(_PreIntDefault, multiScatter, outGBuffer1.xyz, Roughness, dot(o.Normal, worldViewDir));
+					outGBuffer1.xyz *= multiScatter;
 	UnityStandardData standardData;
 	            standardData.occlusion = outGBuffer0.a;
 	            standardData.diffuseColor = outGBuffer0.rgb;
 	            standardData.specularColor = outGBuffer1.rgb;
 	            standardData.smoothness = outGBuffer1.a;
-					float Roughness = clamp(1 - standardData.smoothness, 0.02, 1);
+					
 					GeometryBuffer buffer;
 					buffer.AlbedoColor = standardData.diffuseColor;
 					buffer.SpecularColor = standardData.specularColor;
 					buffer.Roughness = Roughness;
-					buffer.MultiScatterEnergy = _MultiScatter;
-					#if CLEARCOAT_LIT
-					buffer.ClearCoat_MultiScatterEnergy = _ClearCoatEnergy;
+#if CLEARCOAT_LIT
+					buffer.ClearCoat_MultiScatterEnergy = 1;
 					buffer.ClearCoat = _ClearCoat;
 					buffer.ClearCoat_Roughness = clamp(1 - _ClearCoatSmoothness, 0.02, 1);
-					#endif
-					#if SKIN_LIT
+#endif
+#if SKIN_LIT
 					buffer.Skin_Roughness = clamp(1 - _ClearCoatSmoothness, 0.02, 1);
-					#endif
-	            #if ENABLE_SUN
-					#if ENABLE_SUNSHADOW
-					outEmission.xyz +=max(0,  CalculateSunLight(o.Normal, depth, float4(worldPos,1 ), -worldViewDir, buffer));
-					#else
-					outEmission.xyz +=max(0,  CalculateSunLight_NoShadow(o.Normal, -worldViewDir, buffer));
-					#endif
-					#endif
+#endif
 
+#if ENABLE_SUN
+#if ENABLE_SUNSHADOW
+					outEmission.xyz +=max(0,  CalculateSunLight(o.Normal, depth, float4(worldPos,1 ), worldViewDir, buffer));
+#else
+					outEmission.xyz +=max(0,  CalculateSunLight_NoShadow(o.Normal, worldViewDir, buffer));
+#endif
+#endif
 
-
-					#if SPOTLIGHT || POINTLIGHT
-                    outEmission.xyz += max(0, CalculateLocalLight(screenUV, float4(worldPos,1 ), linearEye, o.Normal, -worldViewDir, buffer));
-					#endif
-	#endif
+#if SPOTLIGHT || POINTLIGHT
+                    outEmission.xyz += max(0, CalculateLocalLight(screenUV, float4(worldPos,1 ), linearEye, o.Normal, worldViewDir, buffer));
+#endif
+					outGBuffer1.xyz *= preint;
+#endif
 }
 
 

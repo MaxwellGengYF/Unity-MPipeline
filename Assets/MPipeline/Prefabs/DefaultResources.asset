@@ -71,5 +71,6 @@ MonoBehaviour:
       type: 3}
     ssgiShader: {fileID: 4800000, guid: 96507b1ae4f2e70449d65df7bc0fd3ec, type: 3}
     sssShader: {fileID: 4800000, guid: e897628345ef1444bb78afdf212e8b9b, type: 3}
+    bakePreIntShader: {fileID: 4800000, guid: f4fb6e2c64982644f98560203441b9dd, type: 3}
     occluderMesh: {fileID: 10202, guid: 0000000000000000e000000000000000, type: 0}
     sphereMesh: {fileID: 10207, guid: 0000000000000000e000000000000000, type: 0}

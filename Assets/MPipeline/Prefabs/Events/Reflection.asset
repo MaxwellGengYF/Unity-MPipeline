@@ -16,7 +16,7 @@ MonoBehaviour:
   backgroundCubemap: {fileID: 8900000, guid: c9f77ead4bfe62047bc1c72c41f63436, type: 3}
   availiableDistance: 100
   ssrEvents:
-    enabled: 1
+    enabled: 0
     Thickness: 0.3
     brdfBias: 0.5
     ScreenFade: 0
@@ -27,8 +27,3 @@ MonoBehaviour:
     TemporalWeight: 0.92
     MaximumAllowedTemporalDepthBias: 0.1
     RunTimeDebugMod: 1
-  skin:
-    enabled: 1
-    SubsurfaceScaler: 3.75
-    SubsurfaceColor: {r: 1, g: 0, b: 0, a: 1}
-    SubsurfaceFalloff: {r: 1, g: 0, b: 0, a: 1}

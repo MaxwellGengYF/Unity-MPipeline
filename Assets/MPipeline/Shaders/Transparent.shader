@@ -94,7 +94,6 @@
 					buffer.AlbedoColor = standardData.diffuseColor;
 					buffer.SpecularColor = specular;
 					buffer.Roughness = Roughness;
-					buffer.MultiScatterEnergy = 1;
 					#if ENABLE_SUN
 					#if ENABLE_SUNSHADOW
 					finalColor += max(0, CalculateSunLight(normal, i.pos.z, float4(i.worldPos, 1), -viewDir, buffer));

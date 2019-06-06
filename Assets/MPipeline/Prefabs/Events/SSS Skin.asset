@@ -13,6 +13,6 @@ MonoBehaviour:
   m_Name: SSS Skin
   m_EditorClassIdentifier: 
   enabled: 1
-  SubsurfaceScaler: 3.08
-  SubsurfaceColor: {r: 1, g: 0, b: 0, a: 1}
-  SubsurfaceFalloff: {r: 1, g: 0, b: 0, a: 1}
+  SubsurfaceScaler: 5
+  SubsurfaceColor: {r: 1, g: 0.09197852, b: 0, a: 1}
+  SubsurfaceFalloff: {r: 1, g: 0.33732823, b: 0, a: 1}
