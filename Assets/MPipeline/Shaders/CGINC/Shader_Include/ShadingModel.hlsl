@@ -32,7 +32,6 @@ float3 Skin_Lit(BSDFContext LightData, float3 Energy,  float3 AlbedoColor, float
 float3 ClearCoat_Lit(BSDFContext LightData, float3 Energy, float3 ClearCoat_MultiScatterEnergy, float3 AlbedoColor, float3 SpecularColor, float ClearCoat, float ClearCoat_Roughness, float Roughness)
 {
 	float3 Diffuse = Diffuse_RenormalizeBurley(LightData.LoH, LightData.NoL, LightData.NoV, AlbedoColor, Roughness);
-
 	float F0 = pow5(1 - LightData.VoH);
 
 	float ClearCoat_GGX = D_GGX(LightData.NoH, ClearCoat_Roughness);

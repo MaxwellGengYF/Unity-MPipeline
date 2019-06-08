@@ -83,7 +83,7 @@ namespace MPipeline
             }
             reflectionMat = new Material(resources.shaders.reflectionShader);
             ssrEvents.Init(resources);
-            
+            preintDefaultRT = null;
         }
         protected override void Dispose()
         {
@@ -116,7 +116,6 @@ namespace MPipeline
             }
             if(!preintDefaultRT)
             {
-                
                 preintDefaultRT = new RenderTexture(512, 512, 0, RenderTextureFormat.RGHalf, RenderTextureReadWrite.Linear);
                 preintDefaultRT.filterMode = FilterMode.Bilinear;
                 preintDefaultRT.Create();

@@ -23,6 +23,13 @@ ShaderVariantCollection:
       variants:
       - keywords: 
         passType: 0
+  - first: {fileID: 45, guid: 0000000000000000f000000000000000, type: 0}
+    second:
+      variants:
+      - keywords: DIRECTIONAL _NORMALMAP
+        passType: 4
+      - keywords: SHADOWS_DEPTH
+        passType: 8
   - first: {fileID: 46, guid: 0000000000000000f000000000000000, type: 0}
     second:
       variants:
@@ -366,6 +373,9 @@ ShaderVariantCollection:
         passType: 0
       - keywords: BLOOM CHROMATIC_ABERRATION COLOR_GRADING_HDR_3D DISTORT ENABLE_CYBERCOLOR
         passType: 0
+      - keywords: BLOOM CHROMATIC_ABERRATION COLOR_GRADING_HDR_3D DISTORT ENABLE_CYBERCOLOR
+          VIGNETTE
+        passType: 0
   - first: {fileID: 4800000, guid: 4117fce9491711c4094d33a048e36e73, type: 3}
     second:
       variants:
@@ -386,6 +396,11 @@ ShaderVariantCollection:
       variants:
       - keywords: 
         passType: 0
+  - first: {fileID: 4800000, guid: 7ad194cbe7d006f4bace915156972026, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
   - first: {fileID: 4800000, guid: 9dd7ef06833236b4da63cae18980b2a3, type: 3}
     second:
       variants:
@@ -397,11 +412,6 @@ ShaderVariantCollection:
       - keywords: 
         passType: 0
   - first: {fileID: 4800000, guid: c1e1d3119c6fd4646aea0b4b74cacc1a, type: 3}
-    second:
-      variants:
-      - keywords: 
-        passType: 0
-  - first: {fileID: 4800000, guid: c2654d1ef3f0b64408cc68e6eeb7795b, type: 3}
     second:
       variants:
       - keywords: 
@@ -443,6 +453,10 @@ ShaderVariantCollection:
         passType: 13
       - keywords: LIGHTMAP_ON
         passType: 13
+      - keywords: ENABLE_SUNSHADOW LIGHTMAP_ON
+        passType: 13
+      - keywords: ENABLE_SUN ENABLE_SUNSHADOW LIGHTMAP_ON
+        passType: 13
       - keywords: CUT_OFF
         passType: 13
       - keywords: DETAIL_ON
@@ -450,6 +464,20 @@ ShaderVariantCollection:
       - keywords: LIT_ENABLE
         passType: 13
       - keywords: LIGHTMAP_ON LIT_ENABLE
+        passType: 13
+      - keywords: ENABLE_SUNSHADOW LIGHTMAP_ON LIT_ENABLE
+        passType: 13
+      - keywords: ENABLE_SUN ENABLE_SUNSHADOW LIT_ENABLE
+        passType: 13
+      - keywords: ENABLE_SUN ENABLE_SUNSHADOW LIGHTMAP_ON LIT_ENABLE
+        passType: 13
+      - keywords: DEFAULT_LIT ENABLE_SUNSHADOW LIT_ENABLE
+        passType: 13
+      - keywords: DEFAULT_LIT ENABLE_SUNSHADOW LIGHTMAP_ON LIT_ENABLE
+        passType: 13
+      - keywords: DEFAULT_LIT ENABLE_SUN ENABLE_SUNSHADOW LIT_ENABLE
+        passType: 13
+      - keywords: DEFAULT_LIT ENABLE_SUN ENABLE_SUNSHADOW LIGHTMAP_ON LIT_ENABLE
         passType: 13
   - first: {fileID: 4800000, guid: f997a3dc9254c44459323cced085150c, type: 3}
     second:
@@ -473,6 +501,10 @@ ShaderVariantCollection:
         passType: 13
       - keywords: ENABLE_REFLECTION
         passType: 13
+      - keywords: ENABLE_SUNSHADOW
+        passType: 13
+      - keywords: ENABLE_REFLECTION ENABLE_SUNSHADOW
+        passType: 13
       - keywords: ENABLE_SUN ENABLE_SUNSHADOW
         passType: 13
       - keywords: ENABLE_REFLECTION ENABLE_SUN ENABLE_SUNSHADOW
@@ -494,39 +526,6 @@ ShaderVariantCollection:
         passType: 13
       - keywords: ENABLE_REFLECTION ENABLE_VOLUMETRIC POINTLIGHT SPOTLIGHT
         passType: 13
-  - first: {fileID: 4800000, guid: b10a195e54d72984783eb1f2f49aa43f, type: 3}
-    second:
-      variants:
-      - keywords: 
-        passType: 0
-      - keywords: ENABLE_SUNSHADOW
-        passType: 0
-      - keywords: ENABLE_SUN ENABLE_SUNSHADOW
-        passType: 0
-      - keywords: EnableGTAO
-        passType: 0
-      - keywords: ENABLE_SUNSHADOW EnableGTAO
-        passType: 0
-      - keywords: ENABLE_SUN ENABLE_SUNSHADOW EnableGTAO
-        passType: 0
-      - keywords: EnableGTAO SPOTLIGHT
-        passType: 0
-      - keywords: ENABLE_SUNSHADOW EnableGTAO SPOTLIGHT
-        passType: 0
-      - keywords: ENABLE_SUN ENABLE_SUNSHADOW EnableGTAO SPOTLIGHT
-        passType: 0
-      - keywords: POINTLIGHT
-        passType: 0
-      - keywords: EnableGTAO POINTLIGHT
-        passType: 0
-      - keywords: ENABLE_SUNSHADOW EnableGTAO POINTLIGHT
-        passType: 0
-      - keywords: ENABLE_SUN ENABLE_SUNSHADOW EnableGTAO POINTLIGHT
-        passType: 0
-      - keywords: EnableGTAO POINTLIGHT SPOTLIGHT
-        passType: 0
-      - keywords: ENABLE_SUNSHADOW EnableGTAO POINTLIGHT SPOTLIGHT
-        passType: 0
   - first: {fileID: 4800000, guid: cbaa9fe6466c82840b218b6e5a550dd9, type: 3}
     second:
       variants:
@@ -547,11 +546,6 @@ ShaderVariantCollection:
       variants:
       - keywords: 
         passType: 0
-  - first: {fileID: 4800000, guid: ccefdd4cfe6d5f843b027cb2b1ca6776, type: 3}
-    second:
-      variants:
-      - keywords: 
-        passType: 13
   - first: {fileID: 4800000, guid: 7061b45a41a45a8439883f503be20210, type: 3}
     second:
       variants:
@@ -636,6 +630,8 @@ ShaderVariantCollection:
         passType: 5
       - keywords: DETAIL_ON POINT SHADOWS_CUBE SHADOWS_SOFT
         passType: 5
+      - keywords: SHADOWS_CUBE
+        passType: 8
       - keywords: LIGHTMAP_ON
         passType: 10
       - keywords: LIGHTPROBE_SH
@@ -677,13 +673,6 @@ ShaderVariantCollection:
       variants:
       - keywords: 
         passType: 0
-  - first: {fileID: 4800000, guid: ad4d4395140a5da4cae8f9d28b78e9cd, type: 3}
-    second:
-      variants:
-      - keywords: ENABLE_REFLECTION ENABLE_VOLUMETRIC
-        passType: 13
-      - keywords: ENABLE_REFLECTION ENABLE_SUN ENABLE_SUNSHADOW ENABLE_VOLUMETRIC
-        passType: 13
   - first: {fileID: 4800000, guid: 824d4dd9940244f43a887c89dfbfdcd5, type: 3}
     second:
       variants:
@@ -701,3 +690,25 @@ ShaderVariantCollection:
         passType: 13
       - keywords: POINT_LIGHT_SHADOW
         passType: 13
+  - first: {fileID: 4800000, guid: f02d2ab9b1798f54bb5c71b39117b17b, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 4800000, guid: 78d7f230d7ae5ca44b8db60eed308d9e, type: 3}
+    second:
+      variants:
+      - keywords: ENABLE_SUNSHADOW LIT_ENABLE SKIN_LIT
+        passType: 13
+      - keywords: ENABLE_SUN ENABLE_SUNSHADOW LIT_ENABLE SKIN_LIT
+        passType: 13
+  - first: {fileID: 4800000, guid: e897628345ef1444bb78afdf212e8b9b, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
+  - first: {fileID: 4800000, guid: f4fb6e2c64982644f98560203441b9dd, type: 3}
+    second:
+      variants:
+      - keywords: 
+        passType: 0
