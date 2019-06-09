@@ -118,6 +118,7 @@ namespace MPipeline
                 }
             };
             cyberColor.FrameUpdate(data.buffer);
+           // data.buffer.BlitSRT(cam.cameraTarget, debugMat, 0);
             data.buffer.BlitSRT(cam.targets.renderTargetIdentifier, cam.cameraTarget, postContext.uberSheet.material, 0, postContext.uberSheet.properties);
             if (postContext.bloomBufferNameID > -1) data.buffer.ReleaseTemporaryRT(postContext.bloomBufferNameID);
         }

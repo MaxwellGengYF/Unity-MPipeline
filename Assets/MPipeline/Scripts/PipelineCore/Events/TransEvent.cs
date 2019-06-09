@@ -7,12 +7,22 @@ namespace MPipeline
 {
     [CreateAssetMenu(menuName = "GPURP Events/Transparent")]
     [RequireEvent(typeof(PropertySetEvent))]
-    public class TransEvent : PipelineEvent
+    public unsafe sealed class TransEvent : PipelineEvent
     {
         private RenderTargetIdentifier[] transparentOutput = new RenderTargetIdentifier[2];
         private PropertySetEvent proper;
+        private NativeList<System.UIntPtr> commandBuffers;
+        public void AddCommand(CommandBuffer buffer)
+        {
+            commandBuffers.Add(new System.UIntPtr(MUnsafeUtility.GetManagedPtr(buffer)));
+        }
+        public void RemoveCommand(CommandBuffer buffer)
+        {
+            commandBuffers.RemoveElement(new System.UIntPtr(MUnsafeUtility.GetManagedPtr(buffer)), (a, b) => a == b);
+        }
         protected override void Init(PipelineResources resources)
         {
+            commandBuffers = new NativeList<System.UIntPtr>(10, Unity.Collections.Allocator.Persistent);
             proper = RenderPipeline.GetEvent<PropertySetEvent>();
         }
         public override bool CheckProperty()
@@ -21,7 +31,7 @@ namespace MPipeline
         }
         protected override void Dispose()
         {
-
+            commandBuffers.Dispose();
         }
         public override void FrameUpdate(PipelineCamera cam, ref PipelineCommandData data)
         {
@@ -47,6 +57,11 @@ namespace MPipeline
             transparentOutput[1] = ShaderIDs._CameraDepthTexture;
             data.buffer.SetRenderTarget(colors: transparentOutput, depth: ShaderIDs._DepthBufferTexture);
             data.ExecuteCommandBuffer();
+            foreach(var i in commandBuffers)
+            {
+                CommandBuffer cb = MUnsafeUtility.GetObject<CommandBuffer>(i.ToPointer());
+                data.context.ExecuteCommandBuffer(cb);
+            }
             data.context.DrawRenderers(proper.cullResults, ref drawSettings, ref filter);
         }
     }

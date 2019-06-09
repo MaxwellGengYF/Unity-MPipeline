@@ -1,15 +1,12 @@
-﻿Shader "Maxwell/Transparent"
+﻿Shader "Hidden/RainDrop"
 {
 	Properties
 	{
 		_Color("Color", Color) = (1,1,1,1)
-		_MainTex("Albedo(RGB)Alpha(A)", 2D) = "white"{}
-		_SpecularTex("Specular(RGB)Smoothness(A)", 2D) = "white"{}
 		_SpecularColor("Specular Color", Color) = (0.3, 0.3, 0.3, 0.3)
 	}
 		SubShader
 		{
-			Tags{ "LightMode" = "Transparent" "Queue" = "Transparent"}
 						ZTest less
 						ZWrite off
 						Cull back
@@ -38,19 +35,15 @@
 	#pragma multi_compile __ SPOTLIGHT
 	#pragma multi_compile __ ENABLE_VOLUMETRIC
 	#pragma multi_compile __ ENABLE_REFLECTION
+
 cbuffer UnityPerMaterial
 {
 float4 _Color;
-float4 _MainTex_ST;
 float4 _SpecularColor;
 }
-	
-	sampler2D _MainTex; 
-	sampler2D _SpecularTex;
 
 	struct v2f {
 	  UNITY_POSITION(pos);
-	  float2 texcoord : TEXCOORD0;
 	  float3 worldNormal : TEXCOORD1;
 	float3 worldPos : TEXCOORD3;
 	  float4 screenUV : TEXCOORD4;
@@ -59,14 +52,12 @@ float4 _SpecularColor;
 	{
 		float4 vertex : POSITION;
 		float3 normal : NORMAL;
-		float2 texcoord : TEXCOORD0;
 	};
 
 	float4x4 _NonJitterTextureVP;
 	v2f vert(appdata v)
 	{
 		v2f o;
-		o.texcoord = TRANSFORM_TEX(v.texcoord, _MainTex);
 		float4 worldPos = mul(unity_ObjectToWorld, v.vertex);
 		o.pos = mul(UNITY_MATRIX_VP, worldPos);
 		  o.screenUV = ComputeScreenPos(o.pos);
@@ -78,8 +69,8 @@ float4 _SpecularColor;
 				void frag(v2f i, out float4 outputColor:SV_TARGET0, out float depth : SV_TARGET1)
 				{
 					
-					float4 color = tex2D(_MainTex, i.texcoord) * _Color;
-					float4 specular = tex2D(_SpecularTex, i.texcoord) * _SpecularColor;
+					float4 color = _Color;
+					float4 specular = _SpecularColor;
 					float3 viewDir = normalize(i.worldPos - _WorldSpaceCameraPos);
 					float3 normal = normalize(i.worldNormal);
 					float2 screenUV = i.screenUV.xy / i.screenUV.w;
@@ -106,7 +97,6 @@ float4 _SpecularColor;
 					#endif
 					#endif
 					#if ENABLE_REFLECTION
-					finalColor += CalculateGI(linearEyeDepth, i.worldPos, normal, color.rgb, 1, screenUV);
 					finalColor += CalculateReflection(linearEyeDepth, i.worldPos, viewDir, specular, float4(normal, 1), color.rgb, 1, screenUV);
 					#endif
 

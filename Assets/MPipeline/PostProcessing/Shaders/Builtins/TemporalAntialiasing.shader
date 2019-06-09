@@ -66,6 +66,37 @@ Shader "Hidden/PostProcessing/TemporalAntialiasing"
 
     #define SAMPLE_DEPTH_OFFSET(x,y,z,a) (x.Sample(y,z,a).r )
     #define SAMPLE_TEXTURE2D_OFFSET(x,y,z,a) (x.Sample(y,z,a))
+    float2 _LastJitter;
+    float4x4 _InvNonJitterVP;
+    float4x4 _InvLastVp;
+
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+    float3 RGBToYCoCg(float3 RGB)
+    {
+        const float3x3 mat = float3x3(0.25,0.5,0.25,0.5,0,-0.5,-0.25,0.5,-0.25);
+        float3 col =mul(mat, RGB);
+        return col;
+    }
+    
+    float3 YCoCgToRGB(float3 YCoCg)
+    {
+        const float3x3 mat = float3x3(1,1,-1,1,0,1,1,-1,-1);
+        return mul(mat, YCoCg);
+    }
+
+    float4 RGBToYCoCg(float4 RGB)
+    {
+        return float4(RGBToYCoCg(RGB.xyz), RGB.w);
+    }
+
+
+
+    float4 YCoCgToRGB(float4 YCoCg)
+    {
+        return float4(YCoCgToRGB(YCoCg.xyz), YCoCg.w); 
+    }
 
     static const float A = 0.15;
     static const float B = 0.50;
@@ -75,37 +106,14 @@ Shader "Hidden/PostProcessing/TemporalAntialiasing"
     static const float F = 0.30;
     static const float W = 11.2;
 
-    float2 _LastJitter;
-    float4x4 _InvNonJitterVP;
-    float4x4 _InvLastVp;
-////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-    float3 RGBToYCoCg(float3 RGB)
-    {
-        const float3x3 mat = float3x3(0.25,0.5,0.25,0.5,0,-0.5,-0.25,0.5,-0.25);
-        float3 col =mul(mat, RGB);
-        return col;
-    }
-
-    float4 RGBToYCoCg(float4 RGB)
-    {
-        return float4(RGBToYCoCg(RGB.xyz), RGB.w);
-    }
-
-    float3 YCoCgToRGB(float3 YCoCg)
-    {
-        const float3x3 mat = float3x3(1,1,-1,1,0,1,1,-1,-1);
-        return mul(mat, YCoCg);
-    }
-
-    float4 YCoCgToRGB(float4 YCoCg)
-    {
-    return float4(YCoCgToRGB(YCoCg.xyz), YCoCg.w); 
-    }
-
     float3 Tonemap(float3 x) 
     { 
         x *= 2;
         return 1.0-((x*(A*x+C*B)+D*E)/(x*(A*x+B)+D*F)-E/F);
+    }
+
+    float3 TonemapInvert(float3 x) { 
+        return ((sqrt((4*x-4*x*x)*A*D*F*F*F+((4*x-4)*A*D*E+B*B*C*C+(2*x-2)*B*B*C+(x*x-2*x+1)*B*B)*F*F+((2-2*x)*B*B-2*B*B*C)*E*F+B*B*E*E)+((1-x)*B-B*C)*F+B*E)/(2*x*A*F-2*A*E)) * 0.5;
     }
 
     float Pow2(float x)
@@ -113,9 +121,6 @@ Shader "Hidden/PostProcessing/TemporalAntialiasing"
         return x * x;
     }
 
-    float3 TonemapInvert(float3 x) { 
-        return ((sqrt((4*x-4*x*x)*A*D*F*F*F+((4*x-4)*A*D*E+B*B*C*C+(2*x-2)*B*B*C+(x*x-2*x+1)*B*B)*F*F+((2-2*x)*B*B-2*B*B*C)*E*F+B*B*E*E)+((1-x)*B-B*C)*F+B*E)/(2*x*A*F-2*A*E)) * 0.5;
-    }
 
     float Luma4(float3 Color)
     {

@@ -37,25 +37,15 @@
             v2f vert (appdata v)
             {
                 v2f o;
-                o.vertex = UnityObjectToClipPos(v.vertex);
+                o.vertex = v.vertex;
+                o.vertex.y = -o.vertex.y;
                 o.uv = v.uv;
                 return o;
             }
+            sampler2D _AOROTexture;
             void frag (v2f i, out float4 col : SV_TARGET)
             {
-                float2 albedoUV = i.uv * 2;
-                float2 specularUV = i.uv * 2 - float2(0, 1);
-                float2 normalUV = i.uv  * 2 - float2(1, 0);
-                float2 depthUV = i.uv * 2 - 1;
-                if(i.uv.x > 0.5)
-                {
-                    if(i.uv.y > 0.5) col = tex2D(_CameraDepthTexture, depthUV).rrrr;
-                    else col = tex2D(_CameraGBufferTexture2, normalUV);
-                }else
-                {
-                    if(i.uv.y > 0.5) col = tex2D(_CameraGBufferTexture1, specularUV);
-                    else col = tex2D(_CameraGBufferTexture0, albedoUV);
-                }
+                col = tex2D(_AOROTexture, i.uv).r;
             }
             ENDCG
         }
