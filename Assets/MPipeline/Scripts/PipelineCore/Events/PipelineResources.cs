@@ -77,5 +77,19 @@ namespace MPipeline
             }
 
         }
+
+        private Material defaultMaterial_;
+        public override Material defaultMaterial
+        {
+            get
+            {
+                if (defaultMaterial_ == null)
+                {
+                    defaultMaterial_ = new Material(Shader.Find("Maxwell/StandardLit(Lightmap)"));
+                    defaultMaterial_.SetShaderPassEnabled("MotionVector", false);
+                }
+                return defaultMaterial_;
+            }
+        }
     }
 }

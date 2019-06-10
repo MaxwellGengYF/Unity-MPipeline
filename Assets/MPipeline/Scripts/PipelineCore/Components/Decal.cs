@@ -4,6 +4,7 @@ using UnityEngine;
 using Unity.Mathematics;
 using UnityEngine.Rendering;
 using static Unity.Mathematics.math;
+
 namespace MPipeline
 {
     [ExecuteInEditMode]
@@ -56,6 +57,18 @@ namespace MPipeline
             lastDec.index = index;
             decalDatas[index] = decalDatas[decalDatas.Length - 1];
             decalDatas.RemoveLast();
+        }
+
+        private void OnDrawGizmos()
+        {
+            using (new GizmosHelper())
+            {
+                Gizmos.matrix = transform.localToWorldMatrix;
+                Gizmos.color = new Color(0, 0, 1, 0.2f);
+                Gizmos.DrawCube(Vector3.zero, Vector3.one);
+                Gizmos.color = new Color(1, 1, 1, 1f);
+                Gizmos.DrawWireCube(Vector3.zero, Vector3.one);
+            }
         }
     }
 }

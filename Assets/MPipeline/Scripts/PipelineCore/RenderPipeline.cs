@@ -7,6 +7,8 @@ using System.Reflection;
 using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Collections.LowLevel.Unsafe;
+using UnityEditor;
+
 namespace MPipeline
 {
     public unsafe sealed class RenderPipeline : UnityEngine.Rendering.RenderPipeline
@@ -115,6 +117,15 @@ namespace MPipeline
                 resources.availiableEvents[i].InitEvent(resources);
             }
             waitReleaseRT = new NativeList<int>(20, Allocator.Persistent);
+
+#if UNITY_EDITOR
+            SceneView.duringSceneGui += OnSceneGUIDelegate;
+#endif
+        }
+
+        void OnSceneGUIDelegate(SceneView view)
+        {
+            Handles.DrawGizmos(view.camera);
         }
 
         protected override void Dispose(bool disposing)
