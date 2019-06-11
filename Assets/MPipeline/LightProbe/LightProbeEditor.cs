@@ -207,9 +207,48 @@ namespace MPipeline
 
             //todo: generate probes
 
+            Transform trans = m_Group.transform;
+            Vector3 max_size = m_Group.volumeSize / 2;
+            Vector3 probe_pos = max_size;
+            float cell_size = m_Group.cellSize;
 
+            probe_pos = probe_pos / cell_size;
+            probe_pos = - new Vector3(Mathf.Floor(probe_pos.x), Mathf.Floor(probe_pos.y), Mathf.Floor(probe_pos.z)) * cell_size;
+            Vector3 init_Pos = probe_pos;
 
+            GameObject go = new GameObject();
+            Camera cam = go.AddComponent<Camera>();
+            RenderTextureDescriptor rtd = new RenderTextureDescriptor(1024, 1024, RenderTextureFormat.ARGBFloat, 24);
+            rtd.dimension = UnityEngine.Rendering.TextureDimension.Cube;
+            rtd.enableRandomWrite = true;
+            RenderTexture rt = new RenderTexture(rtd);
+            rt.Create();
+            m_Group.GetComponent<DebugHelper>().rt = rt;
 
+            while (probe_pos.x < max_size.x)
+            {
+                while (probe_pos.y < max_size.y)
+                {
+                    while (probe_pos.z < max_size.z)
+                    {
+                        m_SourcePositions.Add(probe_pos);
+
+                        go.transform.position = trans.TransformPoint(probe_pos);
+
+                        cam.cameraType = (CameraType)32;
+                        cam.RenderWithShader(Shader.Find("Bake/BakeProbe"), "RenderType");
+                        cam.RenderToCubemap(rt);
+
+                        probe_pos.z += cell_size;
+                    }
+                    probe_pos.y += cell_size;
+                    probe_pos.z = init_Pos.z;
+                }
+                probe_pos.x += cell_size;
+                probe_pos.y = init_Pos.y;
+                probe_pos.z = init_Pos.z;
+            }
+            
             //
 
             DeselectProbes();

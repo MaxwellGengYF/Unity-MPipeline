@@ -16,7 +16,6 @@ namespace MPipeline
 
         [SerializeField]
         public bool showVolumeInScene = true;
-        
 
         public void RecalcuMesh()
         {
