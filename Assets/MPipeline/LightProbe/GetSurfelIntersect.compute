@@ -1,15 +1,24 @@
 ﻿#pragma kernel CSMain
 
+float4 ProbePosition;
 
 TextureCube<float4> Cube0;
 SamplerState samplerCube0;
 TextureCube<float4> Cube1;
 SamplerState samplerCube1;
-RWStructuredBuffer<float> Result;
+RWStructuredBuffer<int> Result;
 
 
-[numthreads(8,8,1)]
+[numthreads(8,8,8)]
 void CSMain (uint3 id : SV_DispatchThreadID)
 {
-    Result[0] = Cube0.SampleLevel(samplerCube0, float3(0,0,0), 0).r;
+	float3 dir = float3(id) / 31 - 0.5;
+
+	float2 hit = Cube1.SampleLevel(samplerCube1, dir, 0).zw;
+
+	if (hit.y < 0.5) return;
+
+	if (hit.x < 0.05) {
+		Result[0] = 1;
+	}
 }

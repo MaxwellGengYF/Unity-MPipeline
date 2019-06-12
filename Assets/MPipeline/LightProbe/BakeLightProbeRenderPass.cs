@@ -15,6 +15,7 @@ namespace MPipeline
         #region _
         static CommandBuffer cb_;
         static Matrix4x4[] proj_mats_;
+        static Material blitMat_;
         #endregion
         static CommandBuffer cb {
             get {
@@ -53,6 +54,14 @@ namespace MPipeline
                 return proj_mats_;
             }
         }
+        static Material blitMat {
+            get {
+                if (blitMat_ == null) {
+                    blitMat_ = new Material(Shader.Find("Bake/BlitFloat"));
+                }
+                return blitMat_;
+            }
+        }
 
         struct ShaderPropertyID
         {
@@ -65,6 +74,8 @@ namespace MPipeline
         {
             if (camera.cameraType == (CameraType)32)
             {
+                cb.SetGlobalVector("_Bake_ProbePosition", camera.transform.position);
+
                 camera.transform.position -= 30 * Vector3.forward;
 
                 ScriptableCullingParameters cp = new ScriptableCullingParameters();
@@ -114,9 +125,9 @@ namespace MPipeline
                 cb.Clear();
                 context.DrawRenderers(cullResults, ref renderSetting, ref filterSetting);
                 cb.SetRenderTarget(new RenderTargetIdentifier(info.rt0, 0, CubemapFace.PositiveZ));
-                cb.Blit(info.rt2, new RenderTargetIdentifier(BuiltinRenderTextureType.CurrentActive));
+                cb.Blit(info.rt2, new RenderTargetIdentifier(BuiltinRenderTextureType.CurrentActive), blitMat);
                 cb.SetRenderTarget(new RenderTargetIdentifier(info.rt1, 0, CubemapFace.PositiveZ));
-                cb.Blit(info.rt3, new RenderTargetIdentifier(BuiltinRenderTextureType.CurrentActive));
+                cb.Blit(info.rt3, new RenderTargetIdentifier(BuiltinRenderTextureType.CurrentActive), blitMat);
                 context.ExecuteCommandBuffer(cb);
                 cb.Clear();
             }
@@ -129,9 +140,9 @@ namespace MPipeline
                 cb.Clear();
                 context.DrawRenderers(cullResults, ref renderSetting, ref filterSetting);
                 cb.SetRenderTarget(new RenderTargetIdentifier(info.rt0, 0, CubemapFace.NegativeZ));
-                cb.Blit(info.rt2, new RenderTargetIdentifier(BuiltinRenderTextureType.CurrentActive));
+                cb.Blit(info.rt2, new RenderTargetIdentifier(BuiltinRenderTextureType.CurrentActive), blitMat);
                 cb.SetRenderTarget(new RenderTargetIdentifier(info.rt1, 0, CubemapFace.NegativeZ));
-                cb.Blit(info.rt3, new RenderTargetIdentifier(BuiltinRenderTextureType.CurrentActive));
+                cb.Blit(info.rt3, new RenderTargetIdentifier(BuiltinRenderTextureType.CurrentActive), blitMat);
                 context.ExecuteCommandBuffer(cb);
                 cb.Clear();
             }
@@ -144,9 +155,9 @@ namespace MPipeline
                 cb.Clear();
                 context.DrawRenderers(cullResults, ref renderSetting, ref filterSetting);
                 cb.SetRenderTarget(new RenderTargetIdentifier(info.rt0, 0, CubemapFace.PositiveX));
-                cb.Blit(info.rt2, new RenderTargetIdentifier(BuiltinRenderTextureType.CurrentActive));
+                cb.Blit(info.rt2, new RenderTargetIdentifier(BuiltinRenderTextureType.CurrentActive), blitMat);
                 cb.SetRenderTarget(new RenderTargetIdentifier(info.rt1, 0, CubemapFace.PositiveX));
-                cb.Blit(info.rt3, new RenderTargetIdentifier(BuiltinRenderTextureType.CurrentActive));
+                cb.Blit(info.rt3, new RenderTargetIdentifier(BuiltinRenderTextureType.CurrentActive), blitMat);
                 context.ExecuteCommandBuffer(cb);
                 cb.Clear();
             }
@@ -159,9 +170,9 @@ namespace MPipeline
                 cb.Clear();
                 context.DrawRenderers(cullResults, ref renderSetting, ref filterSetting);
                 cb.SetRenderTarget(new RenderTargetIdentifier(info.rt0, 0, CubemapFace.NegativeX));
-                cb.Blit(info.rt2, new RenderTargetIdentifier(BuiltinRenderTextureType.CurrentActive));
+                cb.Blit(info.rt2, new RenderTargetIdentifier(BuiltinRenderTextureType.CurrentActive), blitMat);
                 cb.SetRenderTarget(new RenderTargetIdentifier(info.rt1, 0, CubemapFace.NegativeX));
-                cb.Blit(info.rt3, new RenderTargetIdentifier(BuiltinRenderTextureType.CurrentActive));
+                cb.Blit(info.rt3, new RenderTargetIdentifier(BuiltinRenderTextureType.CurrentActive), blitMat);
                 context.ExecuteCommandBuffer(cb);
                 cb.Clear();
             }
@@ -174,9 +185,9 @@ namespace MPipeline
                 cb.Clear();
                 context.DrawRenderers(cullResults, ref renderSetting, ref filterSetting);
                 cb.SetRenderTarget(new RenderTargetIdentifier(info.rt0, 0, CubemapFace.PositiveY));
-                cb.Blit(info.rt2, new RenderTargetIdentifier(BuiltinRenderTextureType.CurrentActive));
+                cb.Blit(info.rt2, new RenderTargetIdentifier(BuiltinRenderTextureType.CurrentActive), blitMat);
                 cb.SetRenderTarget(new RenderTargetIdentifier(info.rt1, 0, CubemapFace.PositiveY));
-                cb.Blit(info.rt3, new RenderTargetIdentifier(BuiltinRenderTextureType.CurrentActive));
+                cb.Blit(info.rt3, new RenderTargetIdentifier(BuiltinRenderTextureType.CurrentActive), blitMat);
                 context.ExecuteCommandBuffer(cb);
                 cb.Clear();
             }
@@ -189,9 +200,9 @@ namespace MPipeline
                 cb.Clear();
                 context.DrawRenderers(cullResults, ref renderSetting, ref filterSetting);
                 cb.SetRenderTarget(new RenderTargetIdentifier(info.rt0, 0, CubemapFace.NegativeY));
-                cb.Blit(info.rt2, new RenderTargetIdentifier(BuiltinRenderTextureType.CurrentActive));
+                cb.Blit(info.rt2, new RenderTargetIdentifier(BuiltinRenderTextureType.CurrentActive), blitMat);
                 cb.SetRenderTarget(new RenderTargetIdentifier(info.rt1, 0, CubemapFace.NegativeY));
-                cb.Blit(info.rt3, new RenderTargetIdentifier(BuiltinRenderTextureType.CurrentActive));
+                cb.Blit(info.rt3, new RenderTargetIdentifier(BuiltinRenderTextureType.CurrentActive), blitMat);
                 context.ExecuteCommandBuffer(cb);
                 cb.Clear();
             }

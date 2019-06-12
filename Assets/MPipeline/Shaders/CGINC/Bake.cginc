@@ -2,6 +2,7 @@
 #define MPIP_BAKE_CGINC
 
 float4x4 _Bake_VP;
+float3 _Bake_ProbePosition;
 
 struct a2v {
 	float4 vert : POSITION;
@@ -28,9 +29,11 @@ v2f vert_bake_light_probe(a2v i) {
 }
 
 
-float3 frag_bake_light_probe(v2f i) : SV_TARGET{
-
-	return tex2D(_MainTex, i.uv)* _Color.rgb;
+void frag_bake_light_probe(v2f i, out float4 out0 : SV_TARGET0, out float4 out1 : SV_TARGET1){
+	float3 normal = i.normal;
+	normal = normalize(normal);
+	out0 = float4(tex2D(_MainTex, i.uv).rgb * _Color.rgb, normal.x);
+	out1 = float4(normal.yz, length(i.worldPos.xyz - _Bake_ProbePosition), 1);
 }
 
 #endif

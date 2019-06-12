@@ -210,7 +210,7 @@ namespace MPipeline
             var resources = AssetDatabase.LoadAssetAtPath<LPResources>("Assets/MPipeline/LightProbe/LPResources.asset");
             var cs_GetSurfelIntersect = resources.GetSurfelIntersect;
 
-            ComputeBuffer cb_Intersect = new ComputeBuffer(1, sizeof(float));
+            ComputeBuffer cb_Intersect = new ComputeBuffer(1, sizeof(int));
 
 
             Transform trans = m_Group.transform;
@@ -235,14 +235,14 @@ namespace MPipeline
             cam.orthographicSize = distance;
             cam.farClipPlane = distance * 2;
 
-            RenderTextureDescriptor rtd = new RenderTextureDescriptor(1024, 1024, RenderTextureFormat.ARGBFloat, 24);
+            RenderTextureDescriptor rtd = new RenderTextureDescriptor(128, 128, RenderTextureFormat.ARGBFloat, 24);
             rtd.dimension = UnityEngine.Rendering.TextureDimension.Tex2D;
             info.rt2 = new RenderTexture(rtd);
             info.rt2.Create();
             info.rt3 = new RenderTexture(rtd);
             info.rt3.Create();
 
-            rtd = new RenderTextureDescriptor(1024, 1024, RenderTextureFormat.ARGBFloat, 0);
+            rtd = new RenderTextureDescriptor(128, 128, RenderTextureFormat.ARGBFloat, 0);
             rtd.dimension = UnityEngine.Rendering.TextureDimension.Cube;
             rtd.enableRandomWrite = true;
             info.rt0 = new RenderTexture(rtd);
@@ -256,25 +256,24 @@ namespace MPipeline
                 {
                     while (probe_pos.z < max_size.z)
                     {
-                        m_SourcePositions.Add(probe_pos);
-
-                        go.transform.position = trans.TransformPoint(/*probe_pos*/Vector3.zero);
+                        go.transform.position = trans.TransformPoint(probe_pos);
 
                         cam.Render();
 
                         cs_GetSurfelIntersect.SetTexture(0, "Cube0", info.rt0);
-                        cs_GetSurfelIntersect.SetTexture(0, "Cube1", info.rt0);
-
+                        cs_GetSurfelIntersect.SetTexture(0, "Cube1", info.rt1);
+                        cs_GetSurfelIntersect.SetVector("ProbePosition", probe_pos);
+                        cb_Intersect.SetData(new int[] { 0 });
                         cs_GetSurfelIntersect.SetBuffer(0, "Result", cb_Intersect);
+                        cs_GetSurfelIntersect.Dispatch(0, 4, 4, 4);
 
-                        cs_GetSurfelIntersect.Dispatch(0, 1, 1, 1);
-
-                        float[] res = new float[1];
+                        int[] res = new int[1];
                         cb_Intersect.GetData(res);
-                        Debug.Log(res[0]);
-
-                        return;
-
+                        if (res[0] != 0)
+                        {
+                            Debug.Log(res[0]);
+                            m_SourcePositions.Add(probe_pos);
+                        }
                         probe_pos.z += cell_size;
                     }
                     probe_pos.y += cell_size;
@@ -285,12 +284,12 @@ namespace MPipeline
                 probe_pos.z = init_Pos.z;
             }
 
-            info.rt0.Release();
-            info.rt1.Release();
-            info.rt2.Release();
-            info.rt3.Release();
-            cb_Intersect.Dispose();
-            GameObject.DestroyImmediate(go);
+            //info.rt0.Release();
+            //info.rt1.Release();
+            //info.rt2.Release();
+            //info.rt3.Release();
+            //cb_Intersect.Dispose();
+            //GameObject.DestroyImmediate(go);
             //
 
             DeselectProbes();
