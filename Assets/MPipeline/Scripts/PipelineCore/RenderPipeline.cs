@@ -198,6 +198,10 @@ namespace MPipeline
 
                 foreach (var cam in cameras)
                 {
+#if UNITY_EDITOR
+                    if (BakeLightProbeRenderPass.Render(ref renderContext, cam)) continue;
+#endif
+
                     PipelineCamera pipelineCam;
                     UIntPtr pipelineCamPtr;
                     if (!PipelineCamera.allCamera.Get(cam.gameObject.GetInstanceID(), out pipelineCamPtr))

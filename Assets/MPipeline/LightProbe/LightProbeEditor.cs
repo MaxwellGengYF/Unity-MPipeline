@@ -207,6 +207,12 @@ namespace MPipeline
 
             //todo: generate probes
 
+            var resources = AssetDatabase.LoadAssetAtPath<LPResources>("Assets/MPipeline/LightProbe/LPResources.asset");
+            var cs_GetSurfelIntersect = resources.GetSurfelIntersect;
+
+            ComputeBuffer cb_Intersect = new ComputeBuffer(1, sizeof(float));
+
+
             Transform trans = m_Group.transform;
             Vector3 max_size = m_Group.volumeSize / 2;
             Vector3 probe_pos = max_size;
@@ -218,12 +224,31 @@ namespace MPipeline
 
             GameObject go = new GameObject();
             Camera cam = go.AddComponent<Camera>();
+            var info = go.AddComponent<BakeLightProbeInfomation>();
+            cam.cameraType = (CameraType)32;
+            go.SetActive(false);
+            cam.enabled = false;
+            cam.aspect = 1;
+            cam.transform.up = Vector3.up;
+            cam.transform.forward = Vector3.forward;
+            float distance = 30;
+            cam.orthographicSize = distance;
+            cam.farClipPlane = distance * 2;
+
             RenderTextureDescriptor rtd = new RenderTextureDescriptor(1024, 1024, RenderTextureFormat.ARGBFloat, 24);
+            rtd.dimension = UnityEngine.Rendering.TextureDimension.Tex2D;
+            info.rt2 = new RenderTexture(rtd);
+            info.rt2.Create();
+            info.rt3 = new RenderTexture(rtd);
+            info.rt3.Create();
+
+            rtd = new RenderTextureDescriptor(1024, 1024, RenderTextureFormat.ARGBFloat, 0);
             rtd.dimension = UnityEngine.Rendering.TextureDimension.Cube;
             rtd.enableRandomWrite = true;
-            RenderTexture rt = new RenderTexture(rtd);
-            rt.Create();
-            m_Group.GetComponent<DebugHelper>().rt = rt;
+            info.rt0 = new RenderTexture(rtd);
+            info.rt0.Create();
+            info.rt1 = new RenderTexture(rtd);
+            info.rt1.Create();
 
             while (probe_pos.x < max_size.x)
             {
@@ -233,11 +258,22 @@ namespace MPipeline
                     {
                         m_SourcePositions.Add(probe_pos);
 
-                        go.transform.position = trans.TransformPoint(probe_pos);
+                        go.transform.position = trans.TransformPoint(/*probe_pos*/Vector3.zero);
 
-                        cam.cameraType = (CameraType)32;
-                        cam.RenderWithShader(Shader.Find("Bake/BakeProbe"), "RenderType");
-                        cam.RenderToCubemap(rt);
+                        cam.Render();
+
+                        cs_GetSurfelIntersect.SetTexture(0, "Cube0", info.rt0);
+                        cs_GetSurfelIntersect.SetTexture(0, "Cube1", info.rt0);
+
+                        cs_GetSurfelIntersect.SetBuffer(0, "Result", cb_Intersect);
+
+                        cs_GetSurfelIntersect.Dispatch(0, 1, 1, 1);
+
+                        float[] res = new float[1];
+                        cb_Intersect.GetData(res);
+                        Debug.Log(res[0]);
+
+                        return;
 
                         probe_pos.z += cell_size;
                     }
@@ -248,7 +284,13 @@ namespace MPipeline
                 probe_pos.y = init_Pos.y;
                 probe_pos.z = init_Pos.z;
             }
-            
+
+            info.rt0.Release();
+            info.rt1.Release();
+            info.rt2.Release();
+            info.rt3.Release();
+            cb_Intersect.Dispose();
+            GameObject.DestroyImmediate(go);
             //
 
             DeselectProbes();

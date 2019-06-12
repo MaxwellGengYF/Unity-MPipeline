@@ -1,5 +1,4 @@
-﻿
- Shader "Maxwell/StandardLit(Lightmap)" {
+﻿ Shader "Maxwell/StandardLit(Lightmap)" {
 	Properties {
 		_Color ("Color", Color) = (1,1,1,1)
 		_ClearCoat("Clearcoat", Range(0, 1)) = 0.5
@@ -25,57 +24,58 @@
 		Tags { "RenderType"="Opaque" }
 		LOD 200
 
-	// ------------------------------------------------------------
-	// Surface shader code generated out of a CGPROGRAM block:
-CGINCLUDE
-#pragma shader_feature DETAIL_ON
-#pragma multi_compile __ LIGHTMAP_ON
-#pragma target 5.0
-#define DECAL
+		// ------------------------------------------------------------
+		// Surface shader code generated out of a CGPROGRAM block:
+		CGINCLUDE
+			#pragma shader_feature DETAIL_ON
+			#pragma multi_compile __ LIGHTMAP_ON
+			#pragma target 5.0
+			#define DECAL
 
-#pragma multi_compile __ ENABLE_RAINNING
-#pragma multi_compile __ USE_RANNING
-#pragma multi_compile __ CUT_OFF
-#pragma multi_compile __ LIT_ENABLE
-#pragma multi_compile __ DEFAULT_LIT SKIN_LIT CLOTH_LIT CLEARCOAT_LIT
+			#pragma multi_compile __ ENABLE_RAINNING
+			#pragma multi_compile __ USE_RANNING
+			#pragma multi_compile __ CUT_OFF
+			#pragma multi_compile __ LIT_ENABLE
+			#pragma multi_compile __ DEFAULT_LIT SKIN_LIT CLOTH_LIT CLEARCOAT_LIT
 
-//#define MOTION_VECTOR
-#include "UnityCG.cginc"
-#include "UnityDeferredLibrary.cginc"
-#include "UnityPBSLighting.cginc"
-#include "CGINC/VoxelLight.cginc"
-#include "CGINC/Shader_Include/Common.hlsl"
-#include "CGINC/Shader_Include/BSDF_Library.hlsl"
-#include "CGINC/Shader_Include/AreaLight.hlsl"
-#include "CGINC/Sunlight.cginc"
-#include "CGINC/Lighting.cginc"
-#include "CGINC/MPipeDeferred.cginc"
-ENDCG
+			//#define MOTION_VECTOR
+			#include "UnityCG.cginc"
+			#include "UnityDeferredLibrary.cginc"
+			#include "UnityPBSLighting.cginc"
+			#include "CGINC/VoxelLight.cginc"
+			#include "CGINC/Shader_Include/Common.hlsl"
+			#include "CGINC/Shader_Include/BSDF_Library.hlsl"
+			#include "CGINC/Shader_Include/AreaLight.hlsl"
+			#include "CGINC/Sunlight.cginc"
+			#include "CGINC/Lighting.cginc"
+			#include "CGINC/MPipeDeferred.cginc"
+			#include "CGINC/Bake.cginc"
+		ENDCG
 
-pass
-{
-	Stencil
-	{
-		Ref [_LightingModel]
-		WriteMask 127
-		Pass replace
-		comp always
-	}
-Name "GBuffer"
-Tags {"LightMode" = "GBuffer" "Name" = "GBuffer"}
-ZTest [_ZTest]
-ZWrite [_ZWrite]
-Cull back
-CGPROGRAM
-	#pragma multi_compile _ ENABLE_SUN
-	#pragma multi_compile _ ENABLE_SUNSHADOW
-	#pragma multi_compile _ POINTLIGHT
-	#pragma multi_compile _ SPOTLIGHT
-#pragma vertex vert_surf
-#pragma fragment frag_surf
-ENDCG
-}
-	Pass
+		Pass
+		{
+			Stencil
+			{
+				Ref [_LightingModel]
+				WriteMask 127
+				Pass replace
+				comp always
+			}
+			Name "GBuffer"
+			Tags {"LightMode" = "GBuffer" "Name" = "GBuffer"}
+			ZTest [_ZTest]
+			ZWrite [_ZWrite]
+			Cull back
+			CGPROGRAM
+				#pragma multi_compile _ ENABLE_SUN
+				#pragma multi_compile _ ENABLE_SUNSHADOW
+				#pragma multi_compile _ POINTLIGHT
+				#pragma multi_compile _ SPOTLIGHT
+				#pragma vertex vert_surf
+				#pragma fragment frag_surf
+			ENDCG
+		}
+		Pass
 		{
 			ZTest less
 			Cull back
@@ -89,7 +89,7 @@ ENDCG
 
 			ENDCG
 		}
-				Pass
+		Pass
 		{
 			Stencil
 			{
@@ -103,11 +103,10 @@ ENDCG
 			ZWrite off
 			Tags {"LightMode" = "MotionVector"}
 			CGPROGRAM
-			#pragma vertex vert_mv
-			#pragma fragment frag_mv
-			// Upgrade NOTE: excluded shader from OpenGL ES 2.0 because it uses non-square matrices
-			#pragma exclude_renderers gles
-
+				#pragma vertex vert_mv
+				#pragma fragment frag_mv
+				// Upgrade NOTE: excluded shader from OpenGL ES 2.0 because it uses non-square matrices
+				#pragma exclude_renderers gles
 			ENDCG
 		}
 		Pass
@@ -116,13 +115,28 @@ ENDCG
 			Cull back
 			Tags {"LightMode" = "Depth"}
 			CGPROGRAM
-			#pragma vertex vert_depth
-			#pragma fragment frag_depth
-			// Upgrade NOTE: excluded shader from OpenGL ES 2.0 because it uses non-square matrices
-			#pragma exclude_renderers gles
+				#pragma vertex vert_depth
+				#pragma fragment frag_depth
+				// Upgrade NOTE: excluded shader from OpenGL ES 2.0 because it uses non-square matrices
+				#pragma exclude_renderers gles
 			ENDCG
 		}
-}
+		Pass
+		{
+			Name "BAKE_LIGHT_PROBE"
+			Tags { "LightMode" = "BAKE_LIGHT_PROBE" }
+
+			ZTest on
+			ZWrite on
+
+			CGPROGRAM
+				#pragma vertex vert_bake_light_probe
+				#pragma fragment frag_bake_light_probe
+				#pragma target 3.0
+			ENDCG
+		}
+	}
+	FallBack "Diffuse"
 	CustomEditor "ShouShouEditor"
 }
 
