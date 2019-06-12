@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace MPipeline
 {
-    class LightProbe : MonoBehaviour
+    class LightProbeVolmue : MonoBehaviour
     {
         [SerializeField]
         public Vector3[] probePositions = new Vector3[0];
@@ -17,11 +17,6 @@ namespace MPipeline
         [SerializeField]
         public bool showVolumeInScene = true;
 
-        public void RecalcuMesh()
-        {
-
-        }
-
         private void OnDrawGizmos()
         {
             if (!showVolumeInScene) return;
@@ -30,10 +25,24 @@ namespace MPipeline
                 Gizmos.matrix =transform.localToWorldMatrix;
                 Gizmos.color = Color.yellow;
                 Gizmos.DrawWireCube(Vector3.zero, volumeSize);
-                Gizmos.color = new Color(0.5f, 0, 0.2f, 0.3f);
+                Gizmos.color = new Color(0.5f, 0, 0.2f, 0.2f);
                 Gizmos.DrawCube(Vector3.zero, volumeSize);
             }
         }
+
+#if UNITY_EDITOR
+
+        [MenuItem("GameObject/Light/Light probe volume")]
+        static void CreateLightPobes()
+        {
+            GameObject go = new GameObject();
+            go.AddComponent<LightProbeVolmue>();
+            go.transform.position = SceneView.lastActiveSceneView.camera.transform.position + SceneView.lastActiveSceneView.camera.transform.forward * 10;
+            go.name = "LightProbeVolume";
+            Selection.objects = new Object[] { go };
+        }
+
+#endif
     }
 }
 

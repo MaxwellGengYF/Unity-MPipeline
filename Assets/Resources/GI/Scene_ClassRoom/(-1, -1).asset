@@ -1,0 +1,62 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 4b116d9f88f66294ea945f9cc1c922cf, type: 3}
+  m_Name: (-1, -1)
+  m_EditorClassIdentifier: 
+  probes:
+  - position: {x: -8, y: -4, z: -16}
+  - position: {x: -8, y: -4, z: -12}
+  - position: {x: -8, y: -4, z: -8}
+  - position: {x: -8, y: -4, z: -4}
+  - position: {x: -8, y: -4, z: 0}
+  - position: {x: -8, y: 0, z: -16}
+  - position: {x: -8, y: 0, z: -12}
+  - position: {x: -8, y: 0, z: -8}
+  - position: {x: -8, y: 0, z: -4}
+  - position: {x: -8, y: 0, z: 0}
+  - position: {x: -8, y: 4, z: -16}
+  - position: {x: -8, y: 4, z: -12}
+  - position: {x: -8, y: 4, z: -8}
+  - position: {x: -8, y: 4, z: -4}
+  - position: {x: -8, y: 4, z: 0}
+  - position: {x: -4, y: -4, z: -16}
+  - position: {x: -4, y: -4, z: -12}
+  - position: {x: -4, y: -4, z: -8}
+  - position: {x: -4, y: -4, z: -4}
+  - position: {x: -4, y: -4, z: 0}
+  - position: {x: -4, y: 0, z: -16}
+  - position: {x: -4, y: 0, z: -12}
+  - position: {x: -4, y: 0, z: -8}
+  - position: {x: -4, y: 0, z: -4}
+  - position: {x: -4, y: 0, z: 0}
+  - position: {x: -4, y: 4, z: -16}
+  - position: {x: -4, y: 4, z: -12}
+  - position: {x: -4, y: 4, z: -8}
+  - position: {x: -4, y: 4, z: -4}
+  - position: {x: -4, y: 4, z: 0}
+  - position: {x: 0, y: -4, z: -16}
+  - position: {x: 0, y: -4, z: -12}
+  - position: {x: 0, y: -4, z: -8}
+  - position: {x: 0, y: -4, z: -4}
+  - position: {x: 0, y: -4, z: 0}
+  - position: {x: 0, y: 0, z: -16}
+  - position: {x: 0, y: 0, z: -12}
+  - position: {x: 0, y: 0, z: -8}
+  - position: {x: 0, y: 0, z: -4}
+  - position: {x: 0, y: 0, z: 0}
+  - position: {x: 0, y: 4, z: -16}
+  - position: {x: 0, y: 4, z: -12}
+  - position: {x: 0, y: 4, z: -8}
+  - position: {x: 0, y: 4, z: -4}
+  - position: {x: 0, y: 4, z: 0}
+  surfels: []
+  surfelGroups: []

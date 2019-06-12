@@ -6,6 +6,7 @@ using System.Xml.Serialization;
 using System.IO;
 using System.Reflection;
 using UnityEditorInternal;
+using UnityEngine.SceneManagement;
 
 namespace MPipeline
 {
@@ -19,20 +20,32 @@ namespace MPipeline
 
         private SMPSelection m_SerializedSelectedProbes;
 
-        private readonly LightProbe m_Group;
+        private readonly LightProbeVolmue m_Group;
         private bool m_ShouldRecalculateTetrahedra;
         private Vector3 m_LastPosition = Vector3.zero;
         private Quaternion m_LastRotation = Quaternion.identity;
         private Vector3 m_LastScale = Vector3.one;
-        private LightProbeEditor m_Inspector;
+        private LightProbeVolumeEditor m_Inspector;
+        private LPSystemManager m_probeSystem;
 
-        public PointEditr(LightProbe group, LightProbeEditor inspector)
+        public PointEditr(LightProbeVolmue group, LightProbeVolumeEditor inspector)
         {
             m_Group = group;
-            MarkMeshDirty();
+            m_LastPosition = group.transform.position;
+            m_LastRotation = group.transform.rotation;
+            m_LastScale = group.transform.localScale;
             m_SerializedSelectedProbes = ScriptableObject.CreateInstance<SMPSelection>();
             m_SerializedSelectedProbes.hideFlags = HideFlags.HideAndDontSave;
             m_Inspector = inspector;
+            try {
+                m_probeSystem = GameObject.Find("LPSystem").GetComponent<LPSystemManager>();
+            }
+            catch (System.Exception) { }
+            if (m_probeSystem == null) {
+                GameObject lpsys = new GameObject("LPSystem");
+                m_probeSystem = lpsys.AddComponent<LPSystemManager>();
+                m_probeSystem.sceneLightProbeFile = LPSceneFile.CreateAsset(SceneManager.GetActiveScene().name);
+            }
         }
 
         public void SetEditing(bool editing)
@@ -46,7 +59,7 @@ namespace MPipeline
             m_SourcePositions.Add(position);
             SelectProbe(m_SourcePositions.Count - 1);
 
-            MarkMeshDirty();
+            MarkDirtyChunk();
         }
 
         private void SelectProbe(int i)
@@ -87,7 +100,7 @@ namespace MPipeline
                 m_SourcePositions.Add(position);
             }
 
-            MarkMeshDirty();
+            MarkDirtyChunk();
         }
 
         private void CopySelectedProbes()
@@ -147,7 +160,7 @@ namespace MPipeline
                 {
                     SelectProbe(i);
                 }
-                MarkMeshDirty();
+                MarkDirtyChunk();
 
                 return true;
             }
@@ -196,7 +209,7 @@ namespace MPipeline
                 m_SourcePositions.RemoveAt(index);
             }
             DeselectProbes();
-            MarkMeshDirty();
+            MarkDirtyChunk();
         }
 
         public void RebuildProbes()
@@ -205,9 +218,7 @@ namespace MPipeline
 
             m_SourcePositions.Clear();
 
-            //todo: generate probes
-
-            var resources = AssetDatabase.LoadAssetAtPath<LPResources>("Assets/MPipeline/LightProbe/LPResources.asset");
+            var resources = AssetDatabase.LoadAssetAtPath<LPResources>("Assets/MPipeline/LightProbe/Resources/LPResources.asset");
             var cs_GetSurfelIntersect = resources.GetSurfelIntersect;
 
             ComputeBuffer cb_Intersect = new ComputeBuffer(1, sizeof(int));
@@ -237,18 +248,23 @@ namespace MPipeline
 
             RenderTextureDescriptor rtd = new RenderTextureDescriptor(128, 128, RenderTextureFormat.ARGBFloat, 24);
             rtd.dimension = UnityEngine.Rendering.TextureDimension.Tex2D;
-            info.rt2 = new RenderTexture(rtd);
+            rtd.autoGenerateMips = false;
+            rtd.useMipMap = false;
+            info.rt2 = new RenderTexture(rtd); 
             info.rt2.Create();
+            info.rt2.filterMode = FilterMode.Point;
             info.rt3 = new RenderTexture(rtd);
             info.rt3.Create();
+            info.rt3.filterMode = FilterMode.Point;
 
             rtd = new RenderTextureDescriptor(128, 128, RenderTextureFormat.ARGBFloat, 0);
             rtd.dimension = UnityEngine.Rendering.TextureDimension.Cube;
-            rtd.enableRandomWrite = true;
             info.rt0 = new RenderTexture(rtd);
             info.rt0.Create();
+            info.rt0.filterMode = FilterMode.Point;
             info.rt1 = new RenderTexture(rtd);
             info.rt1.Create();
+            info.rt1.filterMode = FilterMode.Point;
 
             while (probe_pos.x < max_size.x)
             {
@@ -269,11 +285,10 @@ namespace MPipeline
 
                         int[] res = new int[1];
                         cb_Intersect.GetData(res);
+
                         if (res[0] != 0)
-                        {
-                            Debug.Log(res[0]);
                             m_SourcePositions.Add(probe_pos);
-                        }
+                        
                         probe_pos.z += cell_size;
                     }
                     probe_pos.y += cell_size;
@@ -284,16 +299,15 @@ namespace MPipeline
                 probe_pos.z = init_Pos.z;
             }
 
-            //info.rt0.Release();
-            //info.rt1.Release();
-            //info.rt2.Release();
-            //info.rt3.Release();
-            //cb_Intersect.Dispose();
-            //GameObject.DestroyImmediate(go);
-            //
+            info.rt0.Release();
+            info.rt1.Release();
+            info.rt2.Release();
+            info.rt3.Release();
+            cb_Intersect.Dispose();
+            GameObject.DestroyImmediate(go);
 
             DeselectProbes();
-            MarkMeshDirty();
+            MarkDirtyChunk();
         }
 
 
@@ -365,7 +379,7 @@ namespace MPipeline
                     || m_LastRotation != m_Group.transform.rotation
                     || m_LastScale != m_Group.transform.localScale)
                 {
-                    MarkMeshDirty();
+                    MarkDirtyChunk();
                 }
 
                 m_LastPosition = m_Group.transform.position;
@@ -425,7 +439,7 @@ namespace MPipeline
                         Vector3 delta = newPosition - pos;
                         for (int i = 0; i < selectedPositions.Length; i++)
                             UpdateSelectedPosition(i, selectedPositions[i] + delta);
-                        MarkMeshDirty();
+                        MarkDirtyChunk();
                     }
                 }
             }
@@ -536,9 +550,32 @@ namespace MPipeline
         }
 
 
-        public void MarkMeshDirty()
+        public void MarkDirtyChunk()
         {
-            m_Group.RecalcuMesh();
+            if (m_Group.probePositions.Length == 0) return;
+
+            Vector3 p0, p1, p2, p3, p4, p5, p6, p7;
+            Vector3 halfVolumeSize = m_Group.volumeSize / 2;
+            Transform trans = m_Group.transform;
+            p0 = trans.TransformPoint(Vector3.Scale(halfVolumeSize, new Vector3(-1, -1, -1)));
+            p1 = trans.TransformPoint(Vector3.Scale(halfVolumeSize, new Vector3(1, -1, -1)));
+            p2 = trans.TransformPoint(Vector3.Scale(halfVolumeSize, new Vector3(1, -1, 1)));
+            p3 = trans.TransformPoint(Vector3.Scale(halfVolumeSize, new Vector3(-1, -1, 1)));
+            p4 = trans.TransformPoint(Vector3.Scale(halfVolumeSize, new Vector3(-1, 1, -1)));
+            p5 = trans.TransformPoint(Vector3.Scale(halfVolumeSize, new Vector3(1, 1, -1)));
+            p6 = trans.TransformPoint(Vector3.Scale(halfVolumeSize, new Vector3(1, 1, 1)));
+            p7 = trans.TransformPoint(Vector3.Scale(halfVolumeSize, new Vector3(-1, 1, 1)));
+            Vector3 a, b;
+            a = Vector3.Min(p0, Vector3.Min(p1, Vector3.Min(p2, Vector3.Min(p3, Vector3.Min(p4, Vector3.Min(p5, Vector3.Min(p6, p7)))))));
+            b = Vector3.Max(p0, Vector3.Max(p1, Vector3.Max(p2, Vector3.Max(p3, Vector3.Max(p4, Vector3.Max(p5, Vector3.Max(p6, p7)))))));
+            Vector2 minV = new Vector2(a.x, a.z), maxV = new Vector2(b.x, b.z);
+            minV /= 64; maxV /= 64;
+
+            Vector2Int minChunkId = new Vector2Int(Mathf.FloorToInt(minV.x), Mathf.FloorToInt(minV.y)), maxChunkId = new Vector2Int(Mathf.FloorToInt(maxV.x), Mathf.FloorToInt(maxV.y));
+
+            for (int i = minChunkId.x; i <= maxChunkId.x; i++)
+                for (int j = minChunkId.y; j <= maxChunkId.y; j++)
+                    m_probeSystem.MarkDirt(new Vector2Int(i,j), m_Group);
         }
 
         public Bounds selectedProbeBounds
@@ -696,15 +733,15 @@ namespace MPipeline
 
 
 
-    [CustomEditor(typeof(LightProbe))]
-    class LightProbeEditor : Editor
+    [CustomEditor(typeof(LightProbeVolmue))]
+    class LightProbeVolumeEditor : Editor
     {
         private static class Styles
         {
             public static readonly GUIContent showVolume = EditorGUIUtility.TrTextContent("Show volume in scene view");
             public static readonly GUIContent cellSize = EditorGUIUtility.TrTextContent("Cell size");
             public static readonly GUIContent volumeSize = EditorGUIUtility.TrTextContent("Volume size");
-            public static readonly GUIContent rebuild = EditorGUIUtility.TrTextContent("Rebuild probes automatically(todo)");
+            public static readonly GUIContent rebuild = EditorGUIUtility.TrTextContent("Rebuild probes automatically");
             public static readonly GUIContent selectedProbePosition = EditorGUIUtility.TrTextContent("Selected Probe Position", "The local position of this ponit relative to parent.");
             public static readonly GUIContent addPoint = EditorGUIUtility.TrTextContent("Add Probe");
             public static readonly GUIContent deleteSelected = EditorGUIUtility.TrTextContent("Delete Selected");
@@ -719,10 +756,11 @@ namespace MPipeline
             }
         }
         private PointEditr m_Editor;
+        private LPSystemManager m_probeSystem;
 
         public void OnEnable()
         {
-            m_Editor = new PointEditr(target as LightProbe, this);
+            m_Editor = new PointEditr(target as LightProbeVolmue, this);
             m_Editor.PullProbePositions();
             m_Editor.DeselectProbes();
             m_Editor.PushProbePositions();
@@ -730,6 +768,16 @@ namespace MPipeline
             Undo.undoRedoPerformed += UndoRedoPerformed;
             EditMode.onEditModeStartDelegate += OnEditModeStarted;
             EditMode.onEditModeEndDelegate += OnEditModeEnded;
+            try {
+                m_probeSystem = GameObject.Find("LPSystem").GetComponent<LPSystemManager>();
+            }
+            catch (System.Exception) {}
+            if (m_probeSystem == null)
+            {
+                GameObject lpsys = new GameObject("LPSystem");
+                m_probeSystem = lpsys.AddComponent<LPSystemManager>();
+                m_probeSystem.sceneLightProbeFile = LPSceneFile.CreateAsset(SceneManager.GetActiveScene().name);
+            }
         }
 
         private void OnEditModeEnded(Editor owner)
@@ -793,7 +841,7 @@ namespace MPipeline
             // Update the cached probe positions from the ones just restored in the LightProbeGroup
             m_Editor.PullProbePositions();
 
-            m_Editor.MarkMeshDirty();
+            m_Editor.MarkDirtyChunk();
         }
 
         private bool m_EditingProbes;
@@ -802,7 +850,7 @@ namespace MPipeline
         {
             m_Editor.PullProbePositions();
 
-            var lp = target as LightProbe;
+            var lp = target as LightProbeVolmue;
             if (!lp) return;
 
 
@@ -838,6 +886,7 @@ namespace MPipeline
                 Vector3 delta = newPosition - pos;
                 for (int i = 0; i < selectedPositions.Length; i++)
                     m_Editor.UpdateSelectedPosition(i, selectedPositions[i] + delta);
+                m_Editor.MarkDirtyChunk();
             }
             EditorGUI.EndDisabledGroup();
 
@@ -886,23 +935,15 @@ namespace MPipeline
 
             GUILayout.Space(10);
 
-            if (GUILayout.Button(Styles.rebake))
-            {
-                //todo: rebake probes of influnced groups
-
-
-                //
-            }
-
-
             m_Editor.HandleEditMenuHotKeyCommands();
             m_Editor.PushProbePositions();
 
-            if (EditorGUI.EndChangeCheck())
+            if (GUILayout.Button(Styles.rebake))
             {
-                m_Editor.MarkMeshDirty();
-                SceneView.RepaintAll();
+                m_probeSystem.RebakeDirtChunks();
             }
+
+            SceneView.RepaintAll();
         }
 
         internal Bounds GetWorldBoundsOfTarget(UnityEngine.Object targetObject)
@@ -922,7 +963,7 @@ namespace MPipeline
             }
 
             m_Editor.PullProbePositions();
-            var lpg = target as LightProbe;
+            var lpg = target as LightProbeVolmue;
             if (lpg != null)
             {
                 if (m_Editor.OnSceneGUI(lpg.transform))

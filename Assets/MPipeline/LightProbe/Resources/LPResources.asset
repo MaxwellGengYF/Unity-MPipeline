@@ -13,3 +13,5 @@ MonoBehaviour:
   m_Name: LPResources
   m_EditorClassIdentifier: 
   GetSurfelIntersect: {fileID: 7200000, guid: e19224204757137419e324d31d8e52aa, type: 3}
+  GetSurfelFromGBuffer: {fileID: 7200000, guid: baac4854426120646a623d22b9021e0c,
+    type: 3}

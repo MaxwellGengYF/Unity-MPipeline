@@ -18,7 +18,7 @@ void CSMain (uint3 id : SV_DispatchThreadID)
 
 	if (hit.y < 0.5) return;
 
-	if (hit.x < 0.05) {
+	if (hit.x < 4.05) {
 		Result[0] = 1;
 	}
 }
