@@ -14,8 +14,12 @@ namespace MPipeline
         [SerializeField]
         public Vector3 volumeSize = new Vector3(4,4,4);
 
+#if UNITY_EDITOR
+
         [SerializeField]
         public bool showVolumeInScene = true;
+        [SerializeField]
+        public bool showBakeInfoInScene = false;
 
         private void OnDrawGizmos()
         {
@@ -29,8 +33,6 @@ namespace MPipeline
                 Gizmos.DrawCube(Vector3.zero, volumeSize);
             }
         }
-
-#if UNITY_EDITOR
 
         [MenuItem("GameObject/Light/Light probe volume")]
         static void CreateLightPobes()

@@ -16,9 +16,7 @@ namespace MPipeline
     internal struct LPSurfel
     {
         [SerializeField]
-        public Vector3 position, normal;
-        [SerializeField]
-        public Color albedo;
+        public Vector3 position, normal, albedo;
     }
 
     [System.Serializable]
@@ -28,6 +26,11 @@ namespace MPipeline
         public int id;
         [SerializeField]
         public float weight;
+        public IdWeight(int id, float weight)
+        {
+            this.id = id;
+            this.weight = weight;
+        }
     }
 
     [System.Serializable]

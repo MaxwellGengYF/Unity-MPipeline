@@ -937,10 +937,8 @@ MonoBehaviour:
     files: []
   - id: []
     files: []
-  - id:
-    - {x: -1, y: -1}
-    files:
-    - {fileID: 11400000, guid: bcd823cde39c52d40b92877f10e78e7f, type: 2}
+  - id: []
+    files: []
   - id: []
     files: []
   - id: []

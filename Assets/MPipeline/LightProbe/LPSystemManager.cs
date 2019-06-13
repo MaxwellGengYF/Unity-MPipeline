@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using UnityEditor;
 using UnityEngine;
 
@@ -26,6 +27,15 @@ namespace MPipeline
         List<Vector2Int> dirtChunkId;
         [SerializeField, HideInInspector]
         List<Chunk_pg> dirtChunks;
+
+        struct ShaderPropertiesID
+        {
+            public static int ProbePosition = Shader.PropertyToID("ProbePosition");
+            public static int Cube0 = Shader.PropertyToID("Cube0");
+            public static int Cube1 = Shader.PropertyToID("Cube1");
+            public static int ResultCount = Shader.PropertyToID("ResultCount");
+            public static int Result = Shader.PropertyToID("Result"); 
+        }
 
 
 #if UNITY_EDITOR
@@ -56,6 +66,13 @@ namespace MPipeline
             r.pgs.Add(group);
             EditorUtility.SetDirty(this);
             AssetDatabase.SaveAssets();
+        }
+
+        public LPChunk GetChunk(Vector2Int id)
+        {
+            if (sceneLightProbeFile != null)
+                return sceneLightProbeFile.GetChunk(id);
+            return null;
         }
 
         public void RebakeDirtChunks()
@@ -99,47 +116,160 @@ namespace MPipeline
             info.rt1.Create();
             info.rt1.filterMode = FilterMode.Point;
             #endregion
+            ComputeBuffer cb_Result = new ComputeBuffer(64 * 64 * 64, Marshal.SizeOf<LPSurfel>());
+            ComputeBuffer cb_ResultCount = new ComputeBuffer(1, sizeof(int));
+
 
             for (int i = 0; i < dirtChunkId.Count; i++)
             {
                 Vector2Int id = dirtChunkId[i];
 
+                List<LPProbe> probesFromLightProbes = new List<LPProbe>();
                 List<LPProbe> probes = new List<LPProbe>();
+                Dictionary<Vector3Int, List<LPSurfel>> surfels_countainslist = new Dictionary<Vector3Int, List<LPSurfel>>();
+                Dictionary<Vector3Int, LPSurfel> surfels = new Dictionary<Vector3Int, LPSurfel>();
+                List<LPSurfel> surfels_list = new  List<LPSurfel>();
+                Dictionary<Vector3Int, List<int>> surfel_probe = new Dictionary<Vector3Int, List<int>>();
+                List<LPSurfelGroup> groups = new List<LPSurfelGroup>();
 
-                Bounds bound = new Bounds(new Vector3(id.x * 64 + 32, 0, id.y * 64 + 32), new Vector3(64, 999999999, 64));
-
-                foreach (var group in dirtChunks[i].pgs)
+                //get probes from LightProbes in scene
                 {
-                    foreach (var probe in group.probePositions)
+                    Bounds bound = new Bounds(new Vector3(id.x * 64 + 32, 0, id.y * 64 + 32), new Vector3(64, 999999999, 64));
+                    foreach (var group in dirtChunks[i].pgs)
                     {
-                        if (bound.Contains(probe))
+                        foreach (var localPos in group.probePositions)
                         {
-                            probes.Add(new LPProbe(probe));
+                            Vector3 worldPos = group.transform.TransformPoint(localPos);
+                            if (bound.Contains(worldPos))
+                            {
+                                probesFromLightProbes.Add(new LPProbe(worldPos));
+                            }
                         }
                     }
                 }
 
-                LPChunk chunk = sceneLightProbeFile.GetChunkFile(id);
-                chunk.probes = probes.ToArray();
-                EditorUtility.SetDirty(chunk);
-
-                Dictionary<Vector3Int, List<LPSurfel>> surfels = new Dictionary<Vector3Int, List<LPSurfel>>();
-
-                for (int j = 0; j < probes.Count; j++)
+                //per probe get surfel data
+                for (int j = 0; j < probesFromLightProbes.Count; j++)
                 {
-                    int probe_id = j;
+                    Vector3 porbePosition = probesFromLightProbes[j].position;
 
-                    cam.transform.position = probes[j].position;
-
+                    cam.transform.position = porbePosition;
                     cam.Render();
+                    
+                    cs_GetSurfelFromGBuffer.SetVector(ShaderPropertiesID.ProbePosition, porbePosition);
+                    cs_GetSurfelFromGBuffer.SetTexture(0, ShaderPropertiesID.Cube0, info.rt0);
+                    cs_GetSurfelFromGBuffer.SetTexture(0, ShaderPropertiesID.Cube1, info.rt1);
 
-                    // now get cubemap GBuffer, which contains albedo, normal and position
-                    //todo: generate Surfels
+                    cb_ResultCount.SetData(new int[] { 0 });
+                    cs_GetSurfelFromGBuffer.SetBuffer(0, ShaderPropertiesID.ResultCount, cb_ResultCount);
+                    cs_GetSurfelFromGBuffer.SetBuffer(0, ShaderPropertiesID.Result, cb_Result);
 
+                    cs_GetSurfelFromGBuffer.Dispatch(0, 8, 8, 8);
 
+                    int[] count = new int[1];
+                    cb_ResultCount.GetData(count);
 
+                    if (count[0] <= 0)
+                        continue;
 
-                    //
+                    //add into probes
+                    probes.Add(probesFromLightProbes[j]);
+                    int probeId = probes.Count - 1;
+
+                    LPSurfel[] surfelsReadbackFromGPU = new LPSurfel[count[0]];
+                    cb_Result.GetData(surfelsReadbackFromGPU, 0, 0, count[0]);
+
+                    //add to surfel dictionary
+                    foreach (var surfel in surfelsReadbackFromGPU)
+                    {
+                        List<LPSurfel> surfel_list;
+                        Vector3Int surfelPositionInt = VectorToVectorInt(surfel.position);
+                        if (surfel_probe.ContainsKey(surfelPositionInt))
+                        {
+                            surfel_probe[surfelPositionInt].Add(probeId);
+                        }
+                        else
+                        {
+                            surfel_probe.Add(surfelPositionInt, new List<int>(new int[] { probeId }));
+                        }
+                        if (surfels_countainslist.ContainsKey(surfelPositionInt))
+                            surfel_list = surfels_countainslist[surfelPositionInt];
+                        else {
+                            surfel_list = new List<LPSurfel>();
+                            surfels_countainslist.Add(surfelPositionInt, surfel_list);
+                        }
+                        surfel_list.Add(surfel);
+                    }
+                }
+
+                //calculate average of surfel list of each surfel
+                foreach (var surfel_list in surfels_countainslist)
+                {
+                    LPSurfel surfel = new LPSurfel();
+                    foreach (var surfel_info in surfel_list.Value)
+                    {
+                        surfel.position += surfel_info.position;
+                        surfel.normal += surfel_info.normal;
+                        surfel.albedo += surfel_info.albedo;
+                    }
+                    surfel.position /= surfel_list.Value.Count;
+                    surfel.normal.Normalize();
+                    surfel.albedo /= surfel_list.Value.Count;
+
+                    surfels.Add(surfel_list.Key, surfel);
+                }
+
+                //generate surfel groups
+                {
+                    Vector3Int minP = new Vector3Int(99999999, 99999999, 99999999), maxP = new Vector3Int(-99999999, -99999999, -99999999);
+                    foreach (var surfel in surfels) {
+                        minP = Vector3Int.Min(surfel.Key, minP);
+                        maxP = Vector3Int.Max(surfel.Key, maxP);
+                    }
+                    for (int j = minP.x; j <= maxP.x; j+=4)
+                        for (int k = minP.y; k <= maxP.y; k+=4)
+                            for (int m = minP.z; m <= maxP.z; m+=4)
+                            {
+                                LPSurfelGroup group = new LPSurfelGroup();
+                                List<int> surfel_ids = new List<int>();
+                                List<IdWeight> idWeight = new List<IdWeight>();
+                                Dictionary<int, int> probe_id_num = new Dictionary<int, int>();
+                                for (int n = 0; n < 4; n++)
+                                    for (int p = 0; p < 4; p++)
+                                        for (int q = 0; q < 4; q++)
+                                        {
+                                            Vector3Int surfelPositionInt = new Vector3Int(j + n, k + p, m + q);
+                                            if (surfels.ContainsKey(surfelPositionInt))
+                                            {
+                                                surfels_list.Add(surfels[surfelPositionInt]);
+                                                surfel_ids.Add(surfels_list.Count - 1);
+                                                foreach (var probeId in surfel_probe[surfelPositionInt])
+                                                {
+                                                    if (probe_id_num.ContainsKey(probeId))
+                                                        probe_id_num[probeId] += 1;
+                                                    else
+                                                        probe_id_num.Add(probeId, 1);
+                                                }
+                                            }
+                                        }
+                                if (surfel_ids.Count == 0) continue;
+                                group.surfelId = surfel_ids.ToArray();
+                                foreach (var id_num in probe_id_num)
+                                {
+                                    idWeight.Add(new IdWeight(id_num.Key, (float)id_num.Value / surfel_ids.Count));
+                                }
+                                group.influncedProbeIdWeight = idWeight.ToArray();
+                                groups.Add(group);
+                            }
+                }
+                
+                //save to file
+                {
+                    LPChunk chunk = sceneLightProbeFile.GetChunkFile(id);
+                    chunk.probes = probes.ToArray();
+                    chunk.surfels = surfels_list.ToArray();
+                    chunk.surfelGroups = groups.ToArray();
+                    EditorUtility.SetDirty(chunk);
                 }
             }
 
@@ -152,15 +282,24 @@ namespace MPipeline
             info.rt2.Release();
             info.rt3.Release();
             GameObject.DestroyImmediate(go);
+            cb_Result.Release();
 
             EditorUtility.SetDirty(this);
             AssetDatabase.SaveAssets();
         }
 
+        static Vector3Int VectorToVectorInt(Vector3 v) {
+            return new Vector3Int(Mathf.FloorToInt(v.x), Mathf.FloorToInt(v.y), Mathf.FloorToInt(v.z));
+        }
+
         private void OnDrawGizmos()
         {
             if (!showDirtArea) return;
-            if (dirtChunks == null) return;
+            if (dirtChunks == null)
+            {
+                dirtChunkId = new List<Vector2Int>();
+                dirtChunks = new List<Chunk_pg>();
+            }
             using (new GizmosHelper())
             {
                 Gizmos.color = Color.red;

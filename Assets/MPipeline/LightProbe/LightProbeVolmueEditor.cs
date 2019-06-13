@@ -540,6 +540,41 @@ namespace MPipeline
                 Handles.color = color;
             }
 
+            while (m_Group.showBakeInfoInScene)
+            {
+                if (m_Group.probePositions.Length == 0) break;
+
+                Vector3 p0, p1, p2, p3, p4, p5, p6, p7;
+                Vector3 halfVolumeSize = m_Group.volumeSize / 2;
+                Transform trans = m_Group.transform;
+                p0 = trans.TransformPoint(Vector3.Scale(halfVolumeSize, new Vector3(-1, -1, -1)));
+                p1 = trans.TransformPoint(Vector3.Scale(halfVolumeSize, new Vector3(1, -1, -1)));
+                p2 = trans.TransformPoint(Vector3.Scale(halfVolumeSize, new Vector3(1, -1, 1)));
+                p3 = trans.TransformPoint(Vector3.Scale(halfVolumeSize, new Vector3(-1, -1, 1)));
+                p4 = trans.TransformPoint(Vector3.Scale(halfVolumeSize, new Vector3(-1, 1, -1)));
+                p5 = trans.TransformPoint(Vector3.Scale(halfVolumeSize, new Vector3(1, 1, -1)));
+                p6 = trans.TransformPoint(Vector3.Scale(halfVolumeSize, new Vector3(1, 1, 1)));
+                p7 = trans.TransformPoint(Vector3.Scale(halfVolumeSize, new Vector3(-1, 1, 1)));
+                Vector3 a, b;
+                a = Vector3.Min(p0, Vector3.Min(p1, Vector3.Min(p2, Vector3.Min(p3, Vector3.Min(p4, Vector3.Min(p5, Vector3.Min(p6, p7)))))));
+                b = Vector3.Max(p0, Vector3.Max(p1, Vector3.Max(p2, Vector3.Max(p3, Vector3.Max(p4, Vector3.Max(p5, Vector3.Max(p6, p7)))))));
+                Vector2 minV = new Vector2(a.x, a.z), maxV = new Vector2(b.x, b.z);
+                minV /= 64; maxV /= 64;
+
+                Vector2Int minChunkId = new Vector2Int(Mathf.FloorToInt(minV.x), Mathf.FloorToInt(minV.y)), maxChunkId = new Vector2Int(Mathf.FloorToInt(maxV.x), Mathf.FloorToInt(maxV.y));
+
+                for (int i = minChunkId.x; i <= maxChunkId.x; i++)
+                    for (int j = minChunkId.y; j <= maxChunkId.y; j++)
+                    {
+                        var chunk = m_probeSystem.GetChunk(new Vector2Int(i, j));
+                        if (chunk != null)
+                        {
+                            DrawChunkInfo(chunk);
+                        }
+                    }
+                break;
+            }
+
 
             if (!m_Editing)
                 return m_Editing;
@@ -549,6 +584,15 @@ namespace MPipeline
             return m_Editing;
         }
 
+        void DrawChunkInfo(LPChunk chunk)
+        {
+            Handles.matrix = Matrix4x4.identity;
+            foreach (var surfel in chunk.surfels)
+            {
+                Handles.color = new Color(surfel.albedo.x, surfel.albedo.y, surfel.albedo.z);
+                Handles.Slider(surfel.position, surfel.normal, 0.2f, Handles.ArrowHandleCap, 0);
+            }
+        }
 
         public void MarkDirtyChunk()
         {
@@ -738,7 +782,8 @@ namespace MPipeline
     {
         private static class Styles
         {
-            public static readonly GUIContent showVolume = EditorGUIUtility.TrTextContent("Show volume in scene view");
+            public static readonly GUIContent showVolume = EditorGUIUtility.TrTextContent("Show volume", "Display volume in scene view");
+            public static readonly GUIContent showBake = EditorGUIUtility.TrTextContent("Show bake info", "Display bake infomation in scene view");
             public static readonly GUIContent cellSize = EditorGUIUtility.TrTextContent("Cell size");
             public static readonly GUIContent volumeSize = EditorGUIUtility.TrTextContent("Volume size");
             public static readonly GUIContent rebuild = EditorGUIUtility.TrTextContent("Rebuild probes automatically");
@@ -747,7 +792,7 @@ namespace MPipeline
             public static readonly GUIContent deleteSelected = EditorGUIUtility.TrTextContent("Delete Selected");
             public static readonly GUIContent selectAll = EditorGUIUtility.TrTextContent("Select All");
             public static readonly GUIContent duplicateSelected = EditorGUIUtility.TrTextContent("Duplicate Selected");
-            public static readonly GUIContent rebake = EditorGUIUtility.TrTextContent("Rebake probes of scene(todo)", "Will rebake all probes changed in the scene, not only this light probe component.");
+            public static readonly GUIContent rebake = EditorGUIUtility.TrTextContent("Rebake probes of scene", "Will rebake all probes changed in the scene, not only this light probe component.");
             public static readonly GUIContent editModeButton;
 
             static Styles()
@@ -855,6 +900,8 @@ namespace MPipeline
 
 
             lp.showVolumeInScene = EditorGUILayout.Toggle(Styles.showVolume, lp.showVolumeInScene);
+
+            lp.showBakeInfoInScene = EditorGUILayout.Toggle(Styles.showBake, lp.showBakeInfoInScene);
 
             lp.cellSize = EditorGUILayout.FloatField(Styles.cellSize, lp.cellSize);
             lp.volumeSize = EditorGUILayout.Vector3Field(Styles.volumeSize, lp.volumeSize);

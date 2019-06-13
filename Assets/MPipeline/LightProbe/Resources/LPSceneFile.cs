@@ -55,10 +55,27 @@ namespace MPipeline
             return file;
         }
 
+        public LPChunk GetChunk(Vector2Int id)
+        {
+            int index = HashId(id);
 
+            ChunkList list = chunkLists[index];
 
+            if (list.id == null) return null;
 
-
+            LPChunk chunk = null;
+            for (int i = 0; i < list.id.Count; i++)
+            {
+                if (list.id[i] == id)
+                {
+                    chunk = list.files[i];
+                    break;
+                }
+            }
+            if (chunk == null) return null;
+            return chunk;
+        }
+        
         public static LPSceneFile CreateAsset(string sceneName)
         {
             if (!AssetDatabase.IsValidFolder("Assets/Resources"))

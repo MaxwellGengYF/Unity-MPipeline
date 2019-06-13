@@ -1,14 +1,55 @@
-﻿// Each #kernel tells which function to compile; you can have many kernels
-#pragma kernel CSMain
+﻿#pragma kernel CSMain
 
-// Create a RenderTexture with enableRandomWrite flag and set it
-// with cs.SetTexture
-RWTexture2D<float4> Result;
+struct LPSurfel {
+	float3 position, normal, color;
+};
 
-[numthreads(8,8,1)]
-void CSMain (uint3 id : SV_DispatchThreadID)
+
+
+float4 ProbePosition;
+
+TextureCube<float4> Cube0;
+SamplerState samplerCube0;
+TextureCube<float4> Cube1;
+SamplerState samplerCube1;
+RWStructuredBuffer<int> ResultCount;
+RWStructuredBuffer<LPSurfel> Result;
+
+
+[numthreads(8, 8, 8)]
+void CSMain(uint3 id : SV_DispatchThreadID)
 {
-    // TODO: insert actual code here!
+	int3 probe_int = floor(ProbePosition.xyz);
 
-    Result[id.xy] = float4(id.x & id.y, (id.x & 15)/15.0, (id.y & 15)/15.0, 0.0);
+	int3 aim_local_int = id - 32;
+	float3 aim_world_int = probe_int + aim_local_int;
+	float3 aim_world_float = aim_world_int + 0.5;
+
+
+	float3 dir = normalize(aim_world_float - ProbePosition);
+	float3 sample_dir = float3(-dir.x, dir.y, dir.z);
+
+	float4 cube1 = Cube1.SampleLevel(samplerCube1, sample_dir, 0);
+
+	if (cube1.w < 0.5) return;
+
+	float3 hit = dir * cube1.z + ProbePosition;
+	//int index;
+	//InterlockedAdd(ResultCount[0], 1, index);
+	//LPSurfel surfel;
+	//surfel.position = hit;
+	//surfel.normal = aim_world_float;
+	//surfel.color = aim_world_float;
+	//Result[index] = surfel;
+	if (all(abs(hit - aim_world_float) < 0.5)) {
+		int index;
+		InterlockedAdd(ResultCount[0], 1, index);
+		LPSurfel surfel;
+		float4 cube0 = Cube0.SampleLevel(samplerCube0, sample_dir, 0);
+		surfel.position = hit;
+		surfel.normal = float3(cube0.w, cube1.xy);
+		surfel.color = cube0.xyz;
+		Result[index] = surfel;
+	}
+
 }
