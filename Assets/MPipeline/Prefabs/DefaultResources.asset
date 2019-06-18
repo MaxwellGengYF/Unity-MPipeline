@@ -28,6 +28,7 @@ MonoBehaviour:
   - {fileID: 11400000, guid: a419771a386d90742931ac14c01ed40a, type: 2}
   - {fileID: 11400000, guid: f7267997fb1d08d44a48b6d32dd56920, type: 2}
   - {fileID: 11400000, guid: 198dfbd8e0e7de24c8ed0a157067a057, type: 2}
+  - {fileID: 11400000, guid: dd7596f73394672489e308b6d8837dbe, type: 2}
   shaders:
     cbdrShader: {fileID: 7200000, guid: 32eda6600c320d948b7c69a6823d3bf9, type: 3}
     gpuFrustumCulling: {fileID: 7200000, guid: 27a4a69f28f2cb946a2de4928422fcd8, type: 3}
@@ -44,6 +45,7 @@ MonoBehaviour:
     voxelNoise: {fileID: 7200000, guid: f7fd67eb107ed9e4cad86e295cbafc9e, type: 3}
     occlusionProbeCalculate: {fileID: 7200000, guid: 4251ad5f26891974885cb27d7ebccb7a,
       type: 3}
+    relightProbes: {fileID: 7200000, guid: bd5a3727701e00f4f8ddd3a4faf486e3, type: 3}
     minMaxDepthBounding: {fileID: 4800000, guid: 824d4dd9940244f43a887c89dfbfdcd5,
       type: 3}
     taaShader: {fileID: 4800000, guid: 51bcf79c50dc92e47ba87821b61100c3, type: 3}

@@ -1,0 +1,105 @@
+﻿#pragma kernel RelightSurfel
+#pragma kernel RelightSurfelGroup
+#pragma kernel RelightProbe
+
+
+struct Probe
+{
+	float3 position;
+	float skyVisibility;
+	int surfelGroupPtr, surfelGroupCount;
+};
+struct Surfel
+{
+	float3 position, normal, albedo;
+};
+
+struct IdWeight
+{
+	int id;
+	float weight;
+};
+
+struct SurfelGroup
+{
+	int surfelPtr;
+	int surfelCount;
+};
+
+struct Basis6
+{
+	float3 a, b, c, d, e, f;
+};
+
+StructuredBuffer<Surfel> surfels;
+StructuredBuffer<SurfelGroup> surfelGroups;
+
+StructuredBuffer<Probe> probes;
+StructuredBuffer<IdWeight> influncedGroupIdWeight;
+
+
+RWStructuredBuffer<float3> surfelResult;
+RWStructuredBuffer<int> shadowCache;
+RWStructuredBuffer<float3> surfelGroupResult;
+RWStructuredBuffer<Basis6> probeResult;
+
+
+
+RWTexture2D<float4> Result;
+
+[numthreads(64, 1, 1)]
+void RelightSurfel(uint id : SV_DispatchThreadID)
+{
+	if (id > surfels.Length) return;
+
+	Surfel surfel = surfels[id];
+	float3 result = 0;
+	// light surfel
+
+
+
+	surfelResult[id] = result;
+}
+
+[numthreads(64, 1, 1)]
+void RelightSurfelGroup(uint id : SV_DispatchThreadID)
+{
+	if (id > surfelGroups.Length) return;
+
+	SurfelGroup group = surfelGroups[id];
+
+	float3 result = 0;
+
+	for (int i = 0; i < group.surfelCount; i++)
+	{
+		int surfelId = i + group.surfelPtr;
+
+		result += surfelResult[surfelId];
+	}
+
+	surfelGroupResult[id] = result / group.surfelCount;
+}
+
+[numthreads(64, 1, 1)]
+void RelightProbe(uint id : SV_DispatchThreadID)
+{
+	if (id > probes.Length) return;
+
+
+	Probe probe = probes[id];
+
+	float3 result = 0;
+
+	for (int i = 0; i < probe.surfelGroupCount; i++)
+	{
+		int surfelGroupPtrId = i + probe.surfelGroupPtr;
+
+		IdWeight id_w = influncedGroupIdWeight[surfelGroupPtrId];
+
+		
+
+		result += surfelGroupResult[id_w.id] * id_w.weight;
+	}
+
+	//probeResult[id] = result;
+}

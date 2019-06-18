@@ -14,114 +14,441 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   probes:
   - position: {x: 5.5, y: -0.51, z: -42}
+    skyVisibility: 0.9132004
+    surfelGroupPtr: 0
+    surfelGroupCount: 22
   - position: {x: 5.5, y: -0.51, z: -38}
+    skyVisibility: 0.84788513
+    surfelGroupPtr: 22
+    surfelGroupCount: 23
   - position: {x: 5.5, y: -0.51, z: -34}
+    skyVisibility: 0.7988548
+    surfelGroupPtr: 45
+    surfelGroupCount: 24
   - position: {x: 5.5, y: -0.51, z: -30}
+    skyVisibility: 0.7941475
+    surfelGroupPtr: 69
+    surfelGroupCount: 23
   - position: {x: 5.5, y: -0.51, z: -26}
+    skyVisibility: 0.7939415
+    surfelGroupPtr: 92
+    surfelGroupCount: 24
   - position: {x: 5.5, y: -0.51, z: -22}
+    skyVisibility: 0.807148
+    surfelGroupPtr: 116
+    surfelGroupCount: 23
   - position: {x: 5.5, y: -0.51, z: -18}
+    skyVisibility: 0.89315414
+    surfelGroupPtr: 139
+    surfelGroupCount: 22
   - position: {x: 5.5, y: 3.49, z: -42}
+    skyVisibility: 0.8813095
+    surfelGroupPtr: 161
+    surfelGroupCount: 19
   - position: {x: 5.5, y: 3.49, z: -38}
+    skyVisibility: 0.7273407
+    surfelGroupPtr: 180
+    surfelGroupCount: 17
   - position: {x: 5.5, y: 3.49, z: -34}
+    skyVisibility: 0.6484604
+    surfelGroupPtr: 197
+    surfelGroupCount: 17
   - position: {x: 5.5, y: 3.49, z: -30}
+    skyVisibility: 0.6418648
+    surfelGroupPtr: 214
+    surfelGroupCount: 17
   - position: {x: 5.5, y: 3.49, z: -26}
+    skyVisibility: 0.6431923
+    surfelGroupPtr: 231
+    surfelGroupCount: 17
   - position: {x: 5.5, y: 3.49, z: -22}
+    skyVisibility: 0.6586685
+    surfelGroupPtr: 248
+    surfelGroupCount: 17
   - position: {x: 5.5, y: 3.49, z: -18}
+    skyVisibility: 0.8197098
+    surfelGroupPtr: 265
+    surfelGroupCount: 17
   - position: {x: 5.5, y: 7.49, z: -42}
+    skyVisibility: 0.91285706
+    surfelGroupPtr: 282
+    surfelGroupCount: 18
   - position: {x: 5.5, y: 7.49, z: -38}
+    skyVisibility: 0.8502388
+    surfelGroupPtr: 300
+    surfelGroupCount: 18
   - position: {x: 5.5, y: 7.49, z: -34}
+    skyVisibility: 0.7993126
+    surfelGroupPtr: 318
+    surfelGroupCount: 18
   - position: {x: 5.5, y: 7.49, z: -30}
+    skyVisibility: 0.79227066
+    surfelGroupPtr: 336
+    surfelGroupCount: 17
   - position: {x: 5.5, y: 7.49, z: -26}
+    skyVisibility: 0.7936554
+    surfelGroupPtr: 353
+    surfelGroupCount: 17
   - position: {x: 5.5, y: 7.49, z: -22}
+    skyVisibility: 0.8085747
+    surfelGroupPtr: 370
+    surfelGroupCount: 17
   - position: {x: 5.5, y: 7.49, z: -18}
+    skyVisibility: 0.89284897
+    surfelGroupPtr: 387
+    surfelGroupCount: 17
   - position: {x: 9.5, y: -0.51, z: -42}
+    skyVisibility: 0.8555565
+    surfelGroupPtr: 404
+    surfelGroupCount: 9
   - position: {x: 9.5, y: -0.51, z: -38}
+    skyVisibility: 0.5209465
+    surfelGroupPtr: 413
+    surfelGroupCount: 5
   - position: {x: 9.5, y: -0.51, z: -34}
+    skyVisibility: 0.51545715
+    surfelGroupPtr: 418
+    surfelGroupCount: 5
   - position: {x: 9.5, y: -0.51, z: -30}
+    skyVisibility: 0.51732635
+    surfelGroupPtr: 423
+    surfelGroupCount: 1
   - position: {x: 9.5, y: -0.51, z: -26}
+    skyVisibility: 0.5154953
+    surfelGroupPtr: 424
+    surfelGroupCount: 4
   - position: {x: 9.5, y: -0.51, z: -22}
+    skyVisibility: 0.5162811
+    surfelGroupPtr: 428
+    surfelGroupCount: 4
   - position: {x: 9.5, y: -0.51, z: -18}
+    skyVisibility: 0.7612457
+    surfelGroupPtr: 432
+    surfelGroupCount: 4
   - position: {x: 9.5, y: 3.49, z: -42}
+    skyVisibility: 0.76330185
+    surfelGroupPtr: 436
+    surfelGroupCount: 8
   - position: {x: 9.5, y: 3.49, z: -38}
+    skyVisibility: 0.00030136108
+    surfelGroupPtr: 444
+    surfelGroupCount: 36
   - position: {x: 9.5, y: 3.49, z: -34}
+    skyVisibility: 0.0019798279
+    surfelGroupPtr: 480
+    surfelGroupCount: 45
   - position: {x: 9.5, y: 3.49, z: -30}
+    skyVisibility: 0.0021705627
+    surfelGroupPtr: 525
+    surfelGroupCount: 44
   - position: {x: 9.5, y: 3.49, z: -26}
+    skyVisibility: 0.002292633
+    surfelGroupPtr: 569
+    surfelGroupCount: 47
   - position: {x: 9.5, y: 3.49, z: -22}
+    skyVisibility: 0.0023994446
+    surfelGroupPtr: 616
+    surfelGroupCount: 44
   - position: {x: 9.5, y: 3.49, z: -18}
+    skyVisibility: 0.51919556
+    surfelGroupPtr: 660
+    surfelGroupCount: 1
   - position: {x: 9.5, y: 7.49, z: -42}
+    skyVisibility: 0.8553314
+    surfelGroupPtr: 661
+    surfelGroupCount: 5
   - position: {x: 9.5, y: 7.49, z: -38}
+    skyVisibility: 0.5680046
+    surfelGroupPtr: 666
+    surfelGroupCount: 2
   - position: {x: 9.5, y: 7.49, z: -34}
+    skyVisibility: 0.533905
+    surfelGroupPtr: 668
+    surfelGroupCount: 2
   - position: {x: 9.5, y: 7.49, z: -30}
+    skyVisibility: 0.5310936
+    surfelGroupPtr: 670
+    surfelGroupCount: 2
   - position: {x: 9.5, y: 7.49, z: -26}
+    skyVisibility: 0.53125
+    surfelGroupPtr: 672
+    surfelGroupCount: 1
   - position: {x: 9.5, y: 7.49, z: -22}
+    skyVisibility: 0.5372467
+    surfelGroupPtr: 673
+    surfelGroupCount: 1
   - position: {x: 9.5, y: 7.49, z: -18}
+    skyVisibility: 0.7677307
+    surfelGroupPtr: 674
+    surfelGroupCount: 1
   - position: {x: 13.5, y: -0.51, z: -42}
+    skyVisibility: 0.81627655
+    surfelGroupPtr: 675
+    surfelGroupCount: 11
   - position: {x: 13.5, y: -0.51, z: -38}
+    skyVisibility: 0.5178757
+    surfelGroupPtr: 686
+    surfelGroupCount: 5
   - position: {x: 13.5, y: -0.51, z: -34}
+    skyVisibility: 0.5114403
+    surfelGroupPtr: 691
+    surfelGroupCount: 5
   - position: {x: 13.5, y: -0.51, z: -26}
+    skyVisibility: 0.5131264
+    surfelGroupPtr: 696
+    surfelGroupCount: 4
   - position: {x: 13.5, y: -0.51, z: -22}
+    skyVisibility: 0.51351166
+    surfelGroupPtr: 700
+    surfelGroupCount: 5
   - position: {x: 13.5, y: -0.51, z: -18}
+    skyVisibility: 0.75722885
+    surfelGroupPtr: 705
+    surfelGroupCount: 4
   - position: {x: 13.5, y: 3.49, z: -42}
+    skyVisibility: 0.70713043
+    surfelGroupPtr: 709
+    surfelGroupCount: 11
   - position: {x: 13.5, y: 3.49, z: -38}
+    skyVisibility: 0.00036621094
+    surfelGroupPtr: 720
+    surfelGroupCount: 9
   - position: {x: 13.5, y: 3.49, z: -34}
+    skyVisibility: 0.005542755
+    surfelGroupPtr: 729
+    surfelGroupCount: 50
   - position: {x: 13.5, y: 3.49, z: -30}
+    skyVisibility: 0.007873535
+    surfelGroupPtr: 779
+    surfelGroupCount: 47
   - position: {x: 13.5, y: 3.49, z: -26}
+    skyVisibility: 0.0076293945
+    surfelGroupPtr: 826
+    surfelGroupCount: 47
   - position: {x: 13.5, y: 3.49, z: -22}
+    skyVisibility: 0.005584717
+    surfelGroupPtr: 873
+    surfelGroupCount: 43
   - position: {x: 13.5, y: 3.49, z: -18}
+    skyVisibility: 0.5046959
+    surfelGroupPtr: 916
+    surfelGroupCount: 1
   - position: {x: 13.5, y: 7.49, z: -42}
+    skyVisibility: 0.81536484
+    surfelGroupPtr: 917
+    surfelGroupCount: 8
   - position: {x: 13.5, y: 7.49, z: -38}
+    skyVisibility: 0.5548363
+    surfelGroupPtr: 925
+    surfelGroupCount: 2
   - position: {x: 13.5, y: 7.49, z: -34}
+    skyVisibility: 0.5148735
+    surfelGroupPtr: 927
+    surfelGroupCount: 2
   - position: {x: 13.5, y: 7.49, z: -30}
+    skyVisibility: 0.51197433
+    surfelGroupPtr: 929
+    surfelGroupCount: 1
   - position: {x: 13.5, y: 7.49, z: -26}
+    skyVisibility: 0.5129509
+    surfelGroupPtr: 930
+    surfelGroupCount: 2
   - position: {x: 13.5, y: 7.49, z: -22}
+    skyVisibility: 0.5202255
+    surfelGroupPtr: 932
+    surfelGroupCount: 2
   - position: {x: 13.5, y: 7.49, z: -18}
+    skyVisibility: 0.7565155
+    surfelGroupPtr: 934
+    surfelGroupCount: 1
   - position: {x: 17.5, y: -4.51, z: -38}
+    skyVisibility: 0.8351364
+    surfelGroupPtr: 935
+    surfelGroupCount: 24
   - position: {x: 17.5, y: -0.51, z: -42}
+    skyVisibility: 0.8360901
+    surfelGroupPtr: 959
+    surfelGroupCount: 12
   - position: {x: 17.5, y: -0.51, z: -38}
+    skyVisibility: 0.5081291
+    surfelGroupPtr: 971
+    surfelGroupCount: 5
   - position: {x: 17.5, y: -0.51, z: -34}
+    skyVisibility: 0.51128006
+    surfelGroupPtr: 976
+    surfelGroupCount: 4
   - position: {x: 17.5, y: -0.51, z: -26}
+    skyVisibility: 0.515522
+    surfelGroupPtr: 980
+    surfelGroupCount: 4
   - position: {x: 17.5, y: -0.51, z: -22}
+    skyVisibility: 0.51576614
+    surfelGroupPtr: 984
+    surfelGroupCount: 4
   - position: {x: 17.5, y: -0.51, z: -18}
+    skyVisibility: 0.754509
+    surfelGroupPtr: 988
+    surfelGroupCount: 5
   - position: {x: 17.5, y: 3.49, z: -42}
+    skyVisibility: 0.74269867
+    surfelGroupPtr: 993
+    surfelGroupCount: 11
   - position: {x: 17.5, y: 3.49, z: -38}
+    skyVisibility: 0.0118255615
+    surfelGroupPtr: 1004
+    surfelGroupCount: 33
   - position: {x: 17.5, y: 3.49, z: -34}
+    skyVisibility: 0.021598816
+    surfelGroupPtr: 1037
+    surfelGroupCount: 45
   - position: {x: 17.5, y: 3.49, z: -30}
+    skyVisibility: 0.01468277
+    surfelGroupPtr: 1082
+    surfelGroupCount: 44
   - position: {x: 17.5, y: 3.49, z: -26}
+    skyVisibility: 0.015453339
+    surfelGroupPtr: 1126
+    surfelGroupCount: 44
   - position: {x: 17.5, y: 3.49, z: -22}
+    skyVisibility: 0.015930176
+    surfelGroupPtr: 1170
+    surfelGroupCount: 45
   - position: {x: 17.5, y: 3.49, z: -18}
+    skyVisibility: 0.49706268
+    surfelGroupPtr: 1215
+    surfelGroupCount: 1
   - position: {x: 17.5, y: 7.49, z: -42}
+    skyVisibility: 0.83512497
+    surfelGroupPtr: 1216
+    surfelGroupCount: 8
   - position: {x: 17.5, y: 7.49, z: -38}
+    skyVisibility: 0.54535294
+    surfelGroupPtr: 1224
+    surfelGroupCount: 2
   - position: {x: 17.5, y: 7.49, z: -34}
+    skyVisibility: 0.51381683
+    surfelGroupPtr: 1226
+    surfelGroupCount: 1
   - position: {x: 17.5, y: 7.49, z: -30}
+    skyVisibility: 0.5146065
+    surfelGroupPtr: 1227
+    surfelGroupCount: 1
   - position: {x: 17.5, y: 7.49, z: -26}
+    skyVisibility: 0.5148392
+    surfelGroupPtr: 1228
+    surfelGroupCount: 1
   - position: {x: 17.5, y: 7.49, z: -22}
+    skyVisibility: 0.520298
+    surfelGroupPtr: 1229
+    surfelGroupCount: 1
   - position: {x: 17.5, y: 7.49, z: -18}
+    skyVisibility: 0.7529907
+    surfelGroupPtr: 1230
+    surfelGroupCount: 2
   - position: {x: 17.5, y: 11.49, z: -38}
+    skyVisibility: 0.82793045
+    surfelGroupPtr: 1232
+    surfelGroupCount: 6
   - position: {x: 21.5, y: -4.51, z: -38}
+    skyVisibility: 0.8855934
+    surfelGroupPtr: 1238
+    surfelGroupCount: 32
   - position: {x: 21.5, y: -0.51, z: -42}
+    skyVisibility: 0.89949036
+    surfelGroupPtr: 1270
+    surfelGroupCount: 22
   - position: {x: 21.5, y: -0.51, z: -38}
+    skyVisibility: 0.7440796
+    surfelGroupPtr: 1292
+    surfelGroupCount: 15
   - position: {x: 21.5, y: -0.51, z: -34}
+    skyVisibility: 0.76789856
+    surfelGroupPtr: 1307
+    surfelGroupCount: 20
   - position: {x: 21.5, y: -0.51, z: -30}
+    skyVisibility: 0.76730347
+    surfelGroupPtr: 1327
+    surfelGroupCount: 18
   - position: {x: 21.5, y: -0.51, z: -26}
+    skyVisibility: 0.7665367
+    surfelGroupPtr: 1345
+    surfelGroupCount: 19
   - position: {x: 21.5, y: -0.51, z: -22}
+    skyVisibility: 0.7731705
+    surfelGroupPtr: 1364
+    surfelGroupCount: 21
   - position: {x: 21.5, y: -0.51, z: -18}
+    skyVisibility: 0.8740616
+    surfelGroupPtr: 1385
+    surfelGroupCount: 22
   - position: {x: 21.5, y: 3.49, z: -42}
+    skyVisibility: 0.85908127
+    surfelGroupPtr: 1407
+    surfelGroupCount: 21
   - position: {x: 21.5, y: 3.49, z: -38}
+    skyVisibility: 0.65317154
+    surfelGroupPtr: 1428
+    surfelGroupCount: 25
   - position: {x: 21.5, y: 3.49, z: -34}
+    skyVisibility: 0.57224655
+    surfelGroupPtr: 1453
+    surfelGroupCount: 28
   - position: {x: 21.5, y: 3.49, z: -30}
+    skyVisibility: 0.57082367
+    surfelGroupPtr: 1481
+    surfelGroupCount: 29
   - position: {x: 21.5, y: 3.49, z: -26}
+    skyVisibility: 0.5670395
+    surfelGroupPtr: 1510
+    surfelGroupCount: 33
   - position: {x: 21.5, y: 3.49, z: -22}
+    skyVisibility: 0.5682945
+    surfelGroupPtr: 1543
+    surfelGroupCount: 29
   - position: {x: 21.5, y: 3.49, z: -18}
+    skyVisibility: 0.7631645
+    surfelGroupPtr: 1572
+    surfelGroupCount: 16
   - position: {x: 21.5, y: 3.49, z: -14}
+    skyVisibility: 0.89767456
+    surfelGroupPtr: 1588
+    surfelGroupCount: 22
   - position: {x: 21.5, y: 7.49, z: -42}
+    skyVisibility: 0.90130997
+    surfelGroupPtr: 1610
+    surfelGroupCount: 19
   - position: {x: 21.5, y: 7.49, z: -38}
+    skyVisibility: 0.75667953
+    surfelGroupPtr: 1629
+    surfelGroupCount: 12
   - position: {x: 21.5, y: 7.49, z: -34}
+    skyVisibility: 0.77197266
+    surfelGroupPtr: 1641
+    surfelGroupCount: 15
   - position: {x: 21.5, y: 7.49, z: -30}
+    skyVisibility: 0.7689743
+    surfelGroupPtr: 1656
+    surfelGroupCount: 15
   - position: {x: 21.5, y: 7.49, z: -26}
+    skyVisibility: 0.7701454
+    surfelGroupPtr: 1671
+    surfelGroupCount: 14
   - position: {x: 21.5, y: 7.49, z: -22}
+    skyVisibility: 0.77747726
+    surfelGroupPtr: 1685
+    surfelGroupCount: 14
   - position: {x: 21.5, y: 7.49, z: -18}
+    skyVisibility: 0.8749466
+    surfelGroupPtr: 1699
+    surfelGroupCount: 16
   - position: {x: 21.5, y: 7.49, z: -14}
+    skyVisibility: 0.9158554
+    surfelGroupPtr: 1715
+    surfelGroupCount: 21
   - position: {x: 21.5, y: 11.49, z: -38}
+    skyVisibility: 0.88606644
+    surfelGroupPtr: 1736
+    surfelGroupCount: 14
   surfels:
   - position: {x: 7.3807216, y: -0.26203996, z: -39.171986}
     normal: {x: -1, y: 0, z: 0}
@@ -5116,3647 +5443,3648 @@ MonoBehaviour:
     normal: {x: 1, y: 0, z: 0}
     albedo: {x: 1, y: 1, z: 1}
   surfelGroups:
-  - surfelId: 000000000100000002000000030000000400000005000000060000000700000008000000090000000a0000000b0000000c0000000d0000000e0000000f000000100000001100000012000000130000001400000015000000160000001700000018000000190000001a0000001b0000001c0000001d0000001e0000001f000000200000002100000022000000230000002400000025000000
-    influncedProbeIdWeight:
-    - id: 9
-      weight: 0.28947368
-    - id: 4
-      weight: 0.18421052
-    - id: 5
-      weight: 0.15789473
-    - id: 7
-      weight: 0.36842105
-    - id: 8
-      weight: 0.2631579
-    - id: 19
-      weight: 0.15789473
-    - id: 25
-      weight: 0.10526316
-    - id: 45
-      weight: 0.10526316
-    - id: 6
-      weight: 0.078947365
-    - id: 10
-      weight: 0.21052632
-    - id: 0
-      weight: 0.21052632
-    - id: 1
-      weight: 0.21052632
-    - id: 2
-      weight: 0.21052632
-    - id: 28
-      weight: 0.28947368
-    - id: 48
-      weight: 0.18421052
-    - id: 55
-      weight: 0.05263158
-    - id: 76
-      weight: 0.05263158
-    - id: 92
-      weight: 0.05263158
-    - id: 100
-      weight: 0.05263158
-    - id: 11
-      weight: 0.15789473
-    - id: 12
-      weight: 0.13157895
-    - id: 13
-      weight: 0.078947365
-    - id: 14
-      weight: 0.18421052
-    - id: 15
-      weight: 0.18421052
-    - id: 16
-      weight: 0.18421052
-    - id: 17
-      weight: 0.18421052
-    - id: 18
-      weight: 0.15789473
-    - id: 20
-      weight: 0.10526316
-    - id: 50
-      weight: 0.42105263
-    - id: 3
-      weight: 0.13157895
-    - id: 51
-      weight: 0.39473686
-    - id: 21
-      weight: 0.10526316
-    - id: 42
-      weight: 0.078947365
-    - id: 63
-      weight: 0.02631579
-    - id: 69
-      weight: 0.02631579
-    - id: 85
-      weight: 0.10526316
-    - id: 71
-      weight: 0.21052632
-    - id: 72
-      weight: 0.31578946
-    - id: 73
-      weight: 0.18421052
-    - id: 94
-      weight: 0.10526316
-    - id: 95
-      weight: 0.15789473
-    - id: 29
-      weight: 0.18421052
-    - id: 96
-      weight: 0.02631579
-    - id: 88
-      weight: 0.10526316
-    - id: 62
-      weight: 0.23684211
-    - id: 66
-      weight: 0.078947365
-    - id: 84
-      weight: 0.23684211
-    - id: 87
-      weight: 0.078947365
-    - id: 89
-      weight: 0.13157895
-    - id: 30
-      weight: 0.31578946
-    - id: 31
-      weight: 0.31578946
-    - id: 33
-      weight: 0.10526316
-    - id: 52
-      weight: 0.10526316
-    - id: 53
-      weight: 0.10526316
-    - id: 74
-      weight: 0.10526316
-    - id: 32
-      weight: 0.078947365
-  - surfelId: 260000002700000028000000290000002a0000002b0000002c0000002d0000002e0000002f000000300000003100000032000000330000003400000035000000360000003700000038000000390000003a0000003b0000003c0000003d0000003e0000003f000000400000004100000042000000430000004400000045000000460000004700000048000000490000004a0000004b0000004c000000
-    influncedProbeIdWeight:
-    - id: 7
-      weight: 0.23076923
-    - id: 8
-      weight: 0.30769232
-    - id: 9
-      weight: 0.30769232
-    - id: 10
-      weight: 0.30769232
-    - id: 5
-      weight: 0.20512821
-    - id: 6
-      weight: 0.15384616
-    - id: 20
-      weight: 0.17948718
-    - id: 26
-      weight: 0.102564104
-    - id: 46
-      weight: 0.102564104
-    - id: 11
-      weight: 0.23076923
-    - id: 0
-      weight: 0.12820514
-    - id: 1
-      weight: 0.20512821
-    - id: 2
-      weight: 0.20512821
-    - id: 3
-      weight: 0.20512821
-    - id: 12
-      weight: 0.20512821
-    - id: 13
-      weight: 0.15384616
-    - id: 14
-      weight: 0.20512821
-    - id: 15
-      weight: 0.20512821
-    - id: 16
-      weight: 0.20512821
-    - id: 17
-      weight: 0.20512821
-    - id: 18
-      weight: 0.20512821
-    - id: 19
-      weight: 0.20512821
-    - id: 50
-      weight: 0.4871795
-    - id: 51
-      weight: 0.35897437
-    - id: 30
-      weight: 0.43589744
-    - id: 4
-      weight: 0.12820514
-    - id: 71
-      weight: 0.2820513
-    - id: 72
-      weight: 0.17948718
-    - id: 73
-      weight: 0.17948718
-    - id: 94
-      weight: 0.051282052
-    - id: 95
-      weight: 0.051282052
-    - id: 96
-      weight: 0.051282052
-    - id: 52
-      weight: 0.17948718
-    - id: 74
-      weight: 0.051282052
-    - id: 97
-      weight: 0.025641026
-    - id: 62
-      weight: 0.30769232
-    - id: 84
-      weight: 0.30769232
-    - id: 85
-      weight: 0.102564104
-    - id: 87
-      weight: 0.102564104
-    - id: 88
-      weight: 0.102564104
-    - id: 89
-      weight: 0.102564104
-    - id: 67
-      weight: 0.07692308
-    - id: 90
-      weight: 0.12820514
-    - id: 29
-      weight: 0.30769232
-    - id: 31
-      weight: 0.23076923
-    - id: 32
-      weight: 0.15384616
-  - surfelId: 4d0000004e0000004f000000500000005100000052000000530000005400000055000000560000005700000058000000590000005a0000005b0000005c0000005d0000005e0000005f000000600000006100000062000000630000006400000065000000660000006700000068000000690000006a0000006b0000006c0000006d0000006e0000006f00000070000000710000007200000073000000740000007500000076000000770000007800000079000000
-    influncedProbeIdWeight:
-    - id: 8
-      weight: 0.2
-    - id: 9
-      weight: 0.26666668
-    - id: 10
-      weight: 0.26666668
-    - id: 11
-      weight: 0.26666668
-    - id: 6
-      weight: 0.17777778
-    - id: 27
-      weight: 0.08888889
-    - id: 47
-      weight: 0.08888889
-    - id: 0
-      weight: 0.17777778
-    - id: 21
-      weight: 0.08888889
-    - id: 42
-      weight: 0.08888889
-    - id: 12
-      weight: 0.2
-    - id: 1
-      weight: 0.11111111
-    - id: 2
-      weight: 0.17777778
-    - id: 3
-      weight: 0.17777778
-    - id: 4
-      weight: 0.17777778
-    - id: 7
-      weight: 0.17777778
-    - id: 13
-      weight: 0.17777778
-    - id: 14
-      weight: 0.17777778
-    - id: 15
-      weight: 0.17777778
-    - id: 16
-      weight: 0.17777778
-    - id: 17
-      weight: 0.17777778
-    - id: 18
-      weight: 0.17777778
-    - id: 19
-      weight: 0.17777778
-    - id: 20
-      weight: 0.17777778
-    - id: 51
-      weight: 0.26666668
-    - id: 52
-      weight: 0.2888889
-    - id: 5
-      weight: 0.11111111
-    - id: 53
-      weight: 0.22222222
-    - id: 31
-      weight: 0.33333334
-    - id: 50
-      weight: 0.24444444
-    - id: 71
-      weight: 0.08888889
-    - id: 72
-      weight: 0.15555556
-    - id: 73
-      weight: 0.13333334
-    - id: 74
-      weight: 0.11111111
-    - id: 95
-      weight: 0.06666667
-    - id: 96
-      weight: 0.022222223
-    - id: 93
-      weight: 0.06666667
-    - id: 62
-      weight: 0.26666668
-    - id: 84
-      weight: 0.26666668
-    - id: 85
-      weight: 0.11111111
-    - id: 86
-      weight: 0.08888889
-    - id: 87
-      weight: 0.08888889
-    - id: 88
-      weight: 0.08888889
-    - id: 89
-      weight: 0.08888889
-    - id: 90
-      weight: 0.08888889
-    - id: 68
-      weight: 0.06666667
-    - id: 91
-      weight: 0.11111111
-    - id: 63
-      weight: 0.06666667
-    - id: 29
-      weight: 0.26666668
-    - id: 30
-      weight: 0.26666668
-    - id: 32
-      weight: 0.22222222
-    - id: 33
-      weight: 0.13333334
-    - id: 97
-      weight: 0.044444446
-  - surfelId: 7a0000007b0000007c0000007d0000007e0000007f000000800000008100000082000000830000008400000085000000860000008700000088000000890000008a0000008b0000008c0000008d0000008e0000008f000000900000009100000092000000930000009400000095000000960000009700000098000000990000009a0000009b0000009c0000009d0000009e0000009f000000a0000000a1000000a2000000a3000000a4000000
-    influncedProbeIdWeight:
-    - id: 0
-      weight: 0.13953489
-    - id: 9
-      weight: 0.20930232
-    - id: 10
-      weight: 0.27906978
-    - id: 11
-      weight: 0.27906978
-    - id: 12
-      weight: 0.27906978
-    - id: 1
-      weight: 0.18604651
-    - id: 14
-      weight: 0.1627907
-    - id: 22
-      weight: 0.093023255
-    - id: 43
-      weight: 0.093023255
-    - id: 13
-      weight: 0.20930232
-    - id: 62
-      weight: 0.30232558
-    - id: 2
-      weight: 0.11627907
-    - id: 3
-      weight: 0.18604651
-    - id: 4
-      weight: 0.18604651
-    - id: 5
-      weight: 0.18604651
-    - id: 7
-      weight: 0.13953489
-    - id: 8
-      weight: 0.18604651
-    - id: 15
-      weight: 0.18604651
-    - id: 16
-      weight: 0.18604651
-    - id: 17
-      weight: 0.18604651
-    - id: 18
-      weight: 0.18604651
-    - id: 19
-      weight: 0.18604651
-    - id: 20
-      weight: 0.18604651
-    - id: 51
-      weight: 0.3255814
-    - id: 52
-      weight: 0.3488372
-    - id: 53
-      weight: 0.39534885
-    - id: 6
-      weight: 0.11627907
-    - id: 32
-      weight: 0.41860464
-    - id: 72
-      weight: 0.11627907
-    - id: 73
-      weight: 0.18604651
-    - id: 95
-      weight: 0.023255814
-    - id: 97
-      weight: 0.069767445
-    - id: 71
-      weight: 0.046511628
-    - id: 74
-      weight: 0.20930232
-    - id: 93
-      weight: 0.046511628
-    - id: 84
-      weight: 0.27906978
-    - id: 86
-      weight: 0.11627907
-    - id: 87
-      weight: 0.093023255
-    - id: 88
-      weight: 0.093023255
-    - id: 89
-      weight: 0.093023255
-    - id: 90
-      weight: 0.093023255
-    - id: 91
-      weight: 0.093023255
-    - id: 64
-      weight: 0.069767445
-    - id: 30
-      weight: 0.11627907
-    - id: 31
-      weight: 0.18604651
-    - id: 33
-      weight: 0.23255815
-    - id: 50
-      weight: 0.069767445
-  - surfelId: a5000000a6000000a7000000a8000000a9000000aa000000ab000000ac000000ad000000ae000000af000000b0000000b1000000b2000000b3000000b4000000b5000000b6000000b7000000b8000000b9000000ba000000bb000000bc000000bd000000be000000bf000000c0000000c1000000c2000000c3000000c4000000c5000000c6000000c7000000c8000000c9000000ca000000cb000000
-    influncedProbeIdWeight:
-    - id: 0
-      weight: 0.07692308
-    - id: 1
-      weight: 0.15384616
-    - id: 10
-      weight: 0.23076923
-    - id: 11
-      weight: 0.30769232
-    - id: 12
-      weight: 0.30769232
-    - id: 13
-      weight: 0.30769232
-    - id: 2
-      weight: 0.20512821
-    - id: 15
-      weight: 0.17948718
-    - id: 23
-      weight: 0.102564104
-    - id: 44
-      weight: 0.102564104
-    - id: 3
-      weight: 0.12820514
-    - id: 4
-      weight: 0.20512821
-    - id: 5
-      weight: 0.20512821
-    - id: 6
-      weight: 0.20512821
-    - id: 7
-      weight: 0.07692308
-    - id: 8
-      weight: 0.15384616
-    - id: 9
-      weight: 0.20512821
-    - id: 14
-      weight: 0.102564104
-    - id: 16
-      weight: 0.20512821
-    - id: 17
-      weight: 0.20512821
-    - id: 18
-      weight: 0.20512821
-    - id: 19
-      weight: 0.20512821
-    - id: 20
-      weight: 0.20512821
-    - id: 51
-      weight: 0.20512821
-    - id: 53
-      weight: 0.35897437
-    - id: 33
-      weight: 0.33333334
-    - id: 72
-      weight: 0.25641027
-    - id: 73
-      weight: 0.20512821
-    - id: 74
-      weight: 0.17948718
-    - id: 96
-      weight: 0.051282052
-    - id: 52
-      weight: 0.30769232
-    - id: 97
-      weight: 0.051282052
-    - id: 62
-      weight: 0.23076923
-    - id: 84
-      weight: 0.23076923
-    - id: 87
-      weight: 0.12820514
-    - id: 88
-      weight: 0.102564104
-    - id: 89
-      weight: 0.102564104
-    - id: 90
-      weight: 0.102564104
-    - id: 91
-      weight: 0.102564104
-    - id: 65
-      weight: 0.07692308
-    - id: 31
-      weight: 0.102564104
-    - id: 32
-      weight: 0.17948718
-    - id: 70
-      weight: 0.025641026
-  - surfelId: cc000000cd000000ce000000cf000000d0000000d1000000d2000000d3000000d4000000d5000000d6000000d7000000d8000000d9000000da000000db000000
-    influncedProbeIdWeight:
-    - id: 0
-      weight: 0.1875
-    - id: 1
-      weight: 0.1875
-    - id: 2
-      weight: 0.1875
-    - id: 11
-      weight: 0.3125
-    - id: 12
-      weight: 0.375
-    - id: 13
-      weight: 0.375
-    - id: 14
-      weight: 0.1875
-    - id: 62
-      weight: 0.25
-    - id: 84
-      weight: 0.25
-    - id: 4
-      weight: 0.1875
-    - id: 5
-      weight: 0.25
-    - id: 6
-      weight: 0.25
-    - id: 7
-      weight: 0.125
-    - id: 8
-      weight: 0.1875
-    - id: 9
-      weight: 0.1875
-    - id: 10
-      weight: 0.25
-    - id: 15
-      weight: 0.1875
-    - id: 16
-      weight: 0.1875
-    - id: 17
-      weight: 0.25
-    - id: 18
-      weight: 0.25
-    - id: 19
-      weight: 0.25
-    - id: 20
-      weight: 0.25
-    - id: 3
-      weight: 0.125
-    - id: 99
-      weight: 0.0625
-    - id: 107
-      weight: 0.0625
-    - id: 88
-      weight: 0.125
-    - id: 89
-      weight: 0.125
-    - id: 90
-      weight: 0.125
-    - id: 91
-      weight: 0.125
-    - id: 32
-      weight: 0.1875
-    - id: 33
-      weight: 0.375
-    - id: 53
-      weight: 0.375
-    - id: 29
-      weight: 0.0625
-    - id: 30
-      weight: 0.0625
-    - id: 31
-      weight: 0.125
-    - id: 51
-      weight: 0.1875
-    - id: 52
-      weight: 0.1875
-    - id: 71
-      weight: 0.125
-    - id: 72
-      weight: 0.125
-    - id: 73
-      weight: 0.1875
-    - id: 74
-      weight: 0.125
-    - id: 94
-      weight: 0.125
-    - id: 96
-      weight: 0.1875
-    - id: 50
-      weight: 0.0625
-    - id: 70
-      weight: 0.0625
-  - surfelId: dc000000dd000000de000000df000000e0000000e1000000e2000000e3000000e4000000e5000000e6000000e7000000e8000000e9000000ea000000eb000000ec000000ed000000ee000000ef000000f0000000f1000000f2000000f3000000f4000000f5000000f6000000f7000000f8000000f9000000fa000000fb000000fc000000fd000000fe000000ff000000000100000101000002010000
-    influncedProbeIdWeight:
-    - id: 0
-      weight: 0.43589744
-    - id: 1
-      weight: 0.41025642
-    - id: 2
-      weight: 0.41025642
-    - id: 3
-      weight: 0.41025642
-    - id: 7
-      weight: 0.43589744
-    - id: 8
-      weight: 0.41025642
-    - id: 9
-      weight: 0.41025642
-    - id: 10
-      weight: 0.41025642
-    - id: 14
-      weight: 0.41025642
-    - id: 15
-      weight: 0.41025642
-    - id: 16
-      weight: 0.41025642
-    - id: 17
-      weight: 0.41025642
-    - id: 21
-      weight: 0.25641027
-    - id: 28
-      weight: 0.43589744
-    - id: 42
-      weight: 0.17948718
-    - id: 48
-      weight: 0.30769232
-    - id: 55
-      weight: 0.23076923
-    - id: 63
-      weight: 0.102564104
-    - id: 69
-      weight: 0.102564104
-    - id: 76
-      weight: 0.102564104
-    - id: 85
-      weight: 0.102564104
-    - id: 92
-      weight: 0.102564104
-    - id: 100
-      weight: 0.102564104
-    - id: 4
-      weight: 0.30769232
-    - id: 5
-      weight: 0.20512821
-    - id: 6
-      weight: 0.102564104
-    - id: 11
-      weight: 0.30769232
-    - id: 12
-      weight: 0.20512821
-    - id: 13
-      weight: 0.102564104
-    - id: 18
-      weight: 0.30769232
-    - id: 19
-      weight: 0.20512821
-    - id: 20
-      weight: 0.102564104
-    - id: 49
-      weight: 0.12820514
-    - id: 50
-      weight: 0.53846157
-    - id: 71
-      weight: 0.30769232
-    - id: 72
-      weight: 0.51282054
-    - id: 73
-      weight: 0.53846157
-    - id: 94
-      weight: 0.12820514
-    - id: 95
-      weight: 0.20512821
-    - id: 29
-      weight: 0.53846157
-    - id: 30
-      weight: 0.4871795
-    - id: 51
-      weight: 0.46153846
-    - id: 96
-      weight: 0.051282052
-    - id: 35
-      weight: 0.23076923
-    - id: 70
-      weight: 0.07692308
-    - id: 31
-      weight: 0.3846154
-    - id: 33
-      weight: 0.3846154
-    - id: 52
-      weight: 0.3846154
-    - id: 53
-      weight: 0.3846154
-    - id: 74
-      weight: 0.33333334
-    - id: 32
-      weight: 0.30769232
-  - surfelId: 030100000401000005010000060100000701000008010000090100000a0100000b0100000c0100000d0100000e0100000f010000100100001101000012010000130100001401000015010000160100001701000018010000190100001a0100001b0100001c0100001d0100001e0100001f01000020010000
-    influncedProbeIdWeight:
-    - id: 0
-      weight: 0.53333336
-    - id: 1
-      weight: 0.53333336
-    - id: 2
-      weight: 0.53333336
-    - id: 3
-      weight: 0.53333336
-    - id: 4
-      weight: 0.53333336
-    - id: 5
-      weight: 0.53333336
-    - id: 6
-      weight: 0.26666668
-    - id: 7
-      weight: 0.53333336
-    - id: 8
-      weight: 0.53333336
-    - id: 9
-      weight: 0.53333336
-    - id: 10
-      weight: 0.53333336
-    - id: 11
-      weight: 0.53333336
-    - id: 12
-      weight: 0.53333336
-    - id: 13
-      weight: 0.26666668
-    - id: 14
-      weight: 0.53333336
-    - id: 15
-      weight: 0.53333336
-    - id: 16
-      weight: 0.53333336
-    - id: 17
-      weight: 0.53333336
-    - id: 18
-      weight: 0.53333336
-    - id: 19
-      weight: 0.53333336
-    - id: 20
-      weight: 0.26666668
-    - id: 29
-      weight: 0.13333334
-    - id: 30
-      weight: 0.8
-    - id: 50
-      weight: 0.46666667
-    - id: 51
-      weight: 0.53333336
-    - id: 71
-      weight: 0.53333336
-    - id: 72
-      weight: 0.46666667
-    - id: 73
-      weight: 0.53333336
-    - id: 94
-      weight: 0.13333334
-    - id: 95
-      weight: 0.23333333
-    - id: 96
-      weight: 0.23333333
-    - id: 52
-      weight: 0.2
-    - id: 74
-      weight: 0.36666667
-    - id: 97
-      weight: 0.13333334
-    - id: 31
-      weight: 0.13333334
-    - id: 70
-      weight: 0.1
-  - surfelId: 2101000022010000230100002401000025010000260100002701000028010000290100002a0100002b0100002c0100002d0100002e0100002f010000300100003101000032010000330100003401000035010000360100003701000038010000390100003a0100003b0100003c0100003d0100003e0100003f010000400100004101000042010000
-    influncedProbeIdWeight:
-    - id: 0
-      weight: 0.47058824
-    - id: 1
-      weight: 0.47058824
-    - id: 2
-      weight: 0.47058824
-    - id: 3
-      weight: 0.47058824
-    - id: 4
-      weight: 0.47058824
-    - id: 5
-      weight: 0.47058824
-    - id: 6
-      weight: 0.47058824
-    - id: 7
-      weight: 0.47058824
-    - id: 8
-      weight: 0.47058824
-    - id: 9
-      weight: 0.47058824
-    - id: 10
-      weight: 0.47058824
-    - id: 11
-      weight: 0.47058824
-    - id: 12
-      weight: 0.47058824
-    - id: 13
-      weight: 0.47058824
-    - id: 14
-      weight: 0.47058824
-    - id: 15
-      weight: 0.47058824
-    - id: 16
-      weight: 0.47058824
-    - id: 17
-      weight: 0.47058824
-    - id: 18
-      weight: 0.47058824
-    - id: 19
-      weight: 0.47058824
-    - id: 20
-      weight: 0.47058824
-    - id: 30
-      weight: 0.38235295
-    - id: 31
-      weight: 0.88235295
-    - id: 50
-      weight: 0.5882353
-    - id: 51
-      weight: 0.64705884
-    - id: 52
-      weight: 0.44117647
-    - id: 71
-      weight: 0.61764705
-    - id: 72
-      weight: 0.47058824
-    - id: 73
-      weight: 0.4117647
-    - id: 74
-      weight: 0.32352942
-    - id: 93
-      weight: 0.38235295
-    - id: 95
-      weight: 0.20588236
-    - id: 96
-      weight: 0.05882353
-    - id: 97
-      weight: 0.14705883
-    - id: 32
-      weight: 0.38235295
-    - id: 53
-      weight: 0.38235295
-    - id: 29
-      weight: 0.2647059
-    - id: 33
-      weight: 0.2647059
-  - surfelId: 430100004401000045010000460100004701000048010000490100004a0100004b0100004c0100004d0100004e0100004f010000500100005101000052010000530100005401000055010000560100005701000058010000590100005a0100005b0100005c0100005d0100005e0100005f0100006001000061010000
-    influncedProbeIdWeight:
-    - id: 1
-      weight: 0.516129
-    - id: 2
-      weight: 0.516129
-    - id: 3
-      weight: 0.516129
-    - id: 4
-      weight: 0.516129
-    - id: 5
-      weight: 0.516129
-    - id: 6
-      weight: 0.516129
-    - id: 8
-      weight: 0.516129
-    - id: 9
-      weight: 0.516129
-    - id: 10
-      weight: 0.516129
-    - id: 11
-      weight: 0.516129
-    - id: 12
-      weight: 0.516129
-    - id: 13
-      weight: 0.516129
-    - id: 15
-      weight: 0.516129
-    - id: 16
-      weight: 0.516129
-    - id: 17
-      weight: 0.516129
-    - id: 18
-      weight: 0.516129
-    - id: 19
-      weight: 0.516129
-    - id: 20
-      weight: 0.516129
-    - id: 32
-      weight: 0.9032258
-    - id: 51
-      weight: 0.48387095
-    - id: 52
-      weight: 0.516129
-    - id: 53
-      weight: 0.48387095
-    - id: 72
-      weight: 0.516129
-    - id: 73
-      weight: 0.5483871
-    - id: 74
-      weight: 0.5483871
-    - id: 95
-      weight: 0.06451613
-    - id: 97
-      weight: 0.22580644
-    - id: 0
-      weight: 0.2580645
-    - id: 7
-      weight: 0.2580645
-    - id: 14
-      weight: 0.2580645
-    - id: 71
-      weight: 0.38709676
-    - id: 93
-      weight: 0.16129032
-    - id: 96
-      weight: 0.12903225
-    - id: 33
-      weight: 0.12903225
-    - id: 50
-      weight: 0.032258064
-  - surfelId: 62010000630100006401000065010000660100006701000068010000690100006a0100006b0100006c0100006d0100006e0100006f010000700100007101000072010000730100007401000075010000760100007701000078010000790100007a0100007b0100007c0100007d0100007e010000
-    influncedProbeIdWeight:
-    - id: 2
-      weight: 0.55172414
-    - id: 3
-      weight: 0.55172414
-    - id: 4
-      weight: 0.55172414
-    - id: 5
-      weight: 0.55172414
-    - id: 6
-      weight: 0.55172414
-    - id: 9
-      weight: 0.55172414
-    - id: 10
-      weight: 0.55172414
-    - id: 11
-      weight: 0.55172414
-    - id: 12
-      weight: 0.55172414
-    - id: 13
-      weight: 0.55172414
-    - id: 16
-      weight: 0.55172414
-    - id: 17
-      weight: 0.55172414
-    - id: 18
-      weight: 0.55172414
-    - id: 19
-      weight: 0.55172414
-    - id: 20
-      weight: 0.55172414
-    - id: 32
-      weight: 0.13793103
-    - id: 33
-      weight: 1
-    - id: 51
-      weight: 0.13793103
-    - id: 52
-      weight: 0.55172414
-    - id: 53
-      weight: 0.51724136
-    - id: 71
-      weight: 0.27586207
-    - id: 72
-      weight: 0.55172414
-    - id: 73
-      weight: 0.55172414
-    - id: 74
-      weight: 0.55172414
-    - id: 93
-      weight: 0.1724138
-    - id: 96
-      weight: 0.2413793
-    - id: 97
-      weight: 0.2413793
-    - id: 1
-      weight: 0.27586207
-    - id: 8
-      weight: 0.27586207
-    - id: 15
-      weight: 0.27586207
-    - id: 0
-      weight: 0.13793103
-    - id: 7
-      weight: 0.13793103
-    - id: 14
-      weight: 0.13793103
-  - surfelId: 7f010000800100008101000082010000830100008401000085010000860100008701000088010000890100008a0100008b0100008c0100008d0100008e0100008f010000900100009101000092010000930100009401000095010000960100009701000098010000990100009a0100009b0100009c010000
-    influncedProbeIdWeight:
-    - id: 3
-      weight: 0.26666668
-    - id: 4
-      weight: 0.26666668
-    - id: 5
-      weight: 0.26666668
-    - id: 6
-      weight: 0.26666668
-    - id: 10
-      weight: 0.26666668
-    - id: 11
-      weight: 0.26666668
-    - id: 12
-      weight: 0.26666668
-    - id: 13
-      weight: 0.26666668
-    - id: 17
-      weight: 0.26666668
-    - id: 18
-      weight: 0.26666668
-    - id: 19
-      weight: 0.26666668
-    - id: 20
-      weight: 0.26666668
-    - id: 33
-      weight: 0.53333336
-    - id: 52
-      weight: 0.53333336
-    - id: 72
-      weight: 0.53333336
-    - id: 94
-      weight: 0.13333334
-    - id: 0
-      weight: 0.13333334
-    - id: 1
-      weight: 0.13333334
-    - id: 2
-      weight: 0.13333334
-    - id: 7
-      weight: 0.13333334
-    - id: 8
-      weight: 0.13333334
-    - id: 9
-      weight: 0.13333334
-    - id: 14
-      weight: 0.13333334
-    - id: 15
-      weight: 0.13333334
-    - id: 16
-      weight: 0.13333334
-    - id: 107
-      weight: 0.1
-    - id: 99
-      weight: 0.06666667
-    - id: 29
-      weight: 0.4
-    - id: 30
-      weight: 0.4
-    - id: 31
-      weight: 0.4
-    - id: 32
-      weight: 0.4
-    - id: 50
-      weight: 0.4
-    - id: 51
-      weight: 0.4
-    - id: 53
-      weight: 0.33333334
-    - id: 70
-      weight: 0.4
-    - id: 71
-      weight: 0.36666667
-    - id: 73
-      weight: 0.36666667
-    - id: 74
-      weight: 0.1
-    - id: 93
-      weight: 0.06666667
-    - id: 96
-      weight: 0.1
-    - id: 34
-      weight: 0.3
-  - surfelId: 9d0100009e0100009f010000a0010000a1010000a2010000a3010000a4010000a5010000a6010000a7010000a8010000a9010000aa010000ab010000ac010000
-    influncedProbeIdWeight:
-    - id: 2
-      weight: 0.25
-    - id: 3
-      weight: 0.1875
-    - id: 7
-      weight: 0.375
-    - id: 9
-      weight: 0.25
-    - id: 10
-      weight: 0.125
-    - id: 14
-      weight: 0.3125
-    - id: 16
-      weight: 0.25
-    - id: 0
-      weight: 0.1875
-    - id: 1
-      weight: 0.1875
-    - id: 5
-      weight: 0.125
-    - id: 8
-      weight: 0.1875
-    - id: 12
-      weight: 0.125
-    - id: 15
-      weight: 0.1875
-    - id: 19
-      weight: 0.125
-    - id: 6
-      weight: 0.0625
-    - id: 13
-      weight: 0.0625
-    - id: 17
-      weight: 0.0625
-    - id: 20
-      weight: 0.0625
-    - id: 28
-      weight: 0.1875
-    - id: 35
-      weight: 0.1875
-    - id: 36
-      weight: 0.375
-    - id: 29
-      weight: 0.1875
-    - id: 30
-      weight: 0.1875
-    - id: 48
-      weight: 0.0625
-    - id: 55
-      weight: 0.0625
-    - id: 50
-      weight: 0.0625
-  - surfelId: ad010000ae010000af010000b0010000b1010000b2010000b3010000b4010000b5010000b6010000b7010000b8010000b9010000ba010000bb010000bc010000
-    influncedProbeIdWeight:
-    - id: 0
-      weight: 0.1875
-    - id: 1
-      weight: 0.25
-    - id: 2
-      weight: 0.25
-    - id: 3
-      weight: 0.25
-    - id: 4
-      weight: 0.1875
-    - id: 7
-      weight: 0.0625
-    - id: 8
-      weight: 0.25
-    - id: 9
-      weight: 0.25
-    - id: 10
-      weight: 0.25
-    - id: 11
-      weight: 0.125
-    - id: 14
-      weight: 0.0625
-    - id: 15
-      weight: 0.25
-    - id: 16
-      weight: 0.25
-    - id: 17
-      weight: 0.25
-    - id: 6
-      weight: 0.125
-    - id: 13
-      weight: 0.125
-    - id: 20
-      weight: 0.125
-    - id: 18
-      weight: 0.0625
-    - id: 29
-      weight: 0.1875
-    - id: 30
-      weight: 0.375
-    - id: 37
-      weight: 0.375
-    - id: 31
-      weight: 0.1875
-    - id: 49
-      weight: 0.0625
-    - id: 51
-      weight: 0.0625
-  - surfelId: bd010000be010000bf010000c0010000c1010000c2010000c3010000c4010000c5010000c6010000c7010000c8010000c9010000ca010000cb010000cc010000
-    influncedProbeIdWeight:
-    - id: 1
-      weight: 0.1875
-    - id: 2
-      weight: 0.25
-    - id: 3
-      weight: 0.25
-    - id: 4
-      weight: 0.25
-    - id: 5
-      weight: 0.1875
-    - id: 8
-      weight: 0.0625
-    - id: 9
-      weight: 0.25
-    - id: 10
-      weight: 0.25
-    - id: 11
-      weight: 0.25
-    - id: 12
-      weight: 0.125
-    - id: 15
-      weight: 0.0625
-    - id: 16
-      weight: 0.25
-    - id: 17
-      weight: 0.25
-    - id: 18
-      weight: 0.25
-    - id: 19
-      weight: 0.0625
-    - id: 30
-      weight: 0.1875
-    - id: 31
-      weight: 0.375
-    - id: 38
-      weight: 0.375
-    - id: 32
-      weight: 0.1875
-    - id: 50
-      weight: 0.0625
-  - surfelId: cd010000ce010000cf010000d0010000d1010000d2010000d3010000d4010000d5010000d6010000d7010000d8010000d9010000
-    influncedProbeIdWeight:
-    - id: 0
-      weight: 0.15384616
-    - id: 2
-      weight: 0.23076923
-    - id: 3
-      weight: 0.30769232
-    - id: 4
-      weight: 0.30769232
-    - id: 5
-      weight: 0.30769232
-    - id: 6
-      weight: 0.23076923
-    - id: 7
-      weight: 0.15384616
-    - id: 9
-      weight: 0.15384616
-    - id: 10
-      weight: 0.30769232
-    - id: 11
-      weight: 0.30769232
-    - id: 12
-      weight: 0.30769232
-    - id: 13
-      weight: 0.15384616
-    - id: 14
-      weight: 0.15384616
-    - id: 16
-      weight: 0.07692308
-    - id: 17
-      weight: 0.30769232
-    - id: 18
-      weight: 0.30769232
-    - id: 19
-      weight: 0.30769232
-    - id: 20
-      weight: 0.07692308
-    - id: 32
-      weight: 0.30769232
-    - id: 39
-      weight: 0.46153846
-    - id: 33
-      weight: 0.23076923
-  - surfelId: da010000db010000dc010000dd010000de010000df010000e0010000e1010000e2010000e3010000e4010000e5010000e6010000
-    influncedProbeIdWeight:
-    - id: 0
-      weight: 0.07692308
-    - id: 1
-      weight: 0.15384616
-    - id: 3
-      weight: 0.23076923
-    - id: 4
-      weight: 0.30769232
-    - id: 5
-      weight: 0.30769232
-    - id: 6
-      weight: 0.30769232
-    - id: 7
-      weight: 0.07692308
-    - id: 8
-      weight: 0.15384616
-    - id: 10
-      weight: 0.15384616
-    - id: 11
-      weight: 0.30769232
-    - id: 12
-      weight: 0.30769232
-    - id: 13
-      weight: 0.30769232
-    - id: 14
-      weight: 0.07692308
-    - id: 15
-      weight: 0.15384616
-    - id: 17
-      weight: 0.07692308
-    - id: 18
-      weight: 0.30769232
-    - id: 19
-      weight: 0.30769232
-    - id: 20
-      weight: 0.30769232
-    - id: 32
-      weight: 0.23076923
-    - id: 33
-      weight: 0.30769232
-    - id: 40
-      weight: 0.46153846
-  - surfelId: e7010000e8010000e9010000ea010000eb010000ec010000ed010000ee010000
-    influncedProbeIdWeight:
-    - id: 0
-      weight: 0.125
-    - id: 1
-      weight: 0.125
-    - id: 2
-      weight: 0.125
-    - id: 4
-      weight: 0.25
-    - id: 5
-      weight: 0.25
-    - id: 6
-      weight: 0.25
-    - id: 7
-      weight: 0.125
-    - id: 8
-      weight: 0.125
-    - id: 9
-      weight: 0.125
-    - id: 11
-      weight: 0.125
-    - id: 12
-      weight: 0.25
-    - id: 13
-      weight: 0.25
-    - id: 14
-      weight: 0.125
-    - id: 15
-      weight: 0.125
-    - id: 16
-      weight: 0.125
-    - id: 18
-      weight: 0.125
-    - id: 19
-      weight: 0.25
-    - id: 20
-      weight: 0.25
-    - id: 33
-      weight: 0.375
-    - id: 41
-      weight: 0.375
-  - surfelId: ef010000f0010000f1010000f2010000f3010000f4010000f5010000f6010000f7010000f8010000f9010000fa010000fb010000fc010000fd010000fe010000ff010000000200000102000002020000030200000402000005020000060200000702000008020000090200000a0200000b0200000c0200000d0200000e0200000f0200001002000011020000
-    influncedProbeIdWeight:
-    - id: 4
-      weight: 0.114285715
-    - id: 25
-      weight: 0.114285715
-    - id: 45
-      weight: 0.114285715
-    - id: 62
-      weight: 0.34285715
-    - id: 66
-      weight: 0.114285715
-    - id: 84
-      weight: 0.34285715
-    - id: 89
-      weight: 0.114285715
-    - id: 28
-      weight: 0.22857143
-    - id: 48
-      weight: 0.34285715
-    - id: 30
-      weight: 0.37142858
-    - id: 31
-      weight: 0.37142858
-    - id: 50
-      weight: 0.37142858
-    - id: 51
-      weight: 0.37142858
-    - id: 71
-      weight: 0.37142858
-    - id: 72
-      weight: 0.37142858
-    - id: 29
-      weight: 0.08571429
-    - id: 52
-      weight: 0.14285715
-    - id: 73
-      weight: 0.14285715
-    - id: 21
-      weight: 0.057142857
-    - id: 32
-      weight: 0.114285715
-    - id: 33
-      weight: 0.114285715
-    - id: 42
-      weight: 0.114285715
-    - id: 53
-      weight: 0.114285715
-    - id: 74
-      weight: 0.114285715
-    - id: 69
-      weight: 0.14285715
-    - id: 94
-      weight: 0.08571429
-    - id: 95
-      weight: 0.028571429
-    - id: 63
-      weight: 0.057142857
-    - id: 70
-      weight: 0.028571429
-  - surfelId: 12020000130200001402000015020000160200001702000018020000190200001a0200001b0200001c0200001d0200001e0200001f020000200200002102000022020000230200002402000025020000260200002702000028020000290200002a0200002b0200002c0200002d0200002e0200002f020000300200003102000032020000330200003402000035020000
-    influncedProbeIdWeight:
-    - id: 62
-      weight: 0.44444445
-    - id: 84
-      weight: 0.44444445
-    - id: 5
-      weight: 0.11111111
-    - id: 26
-      weight: 0.11111111
-    - id: 46
-      weight: 0.11111111
-    - id: 67
-      weight: 0.11111111
-    - id: 90
-      weight: 0.11111111
-    - id: 29
-      weight: 0.3611111
-    - id: 30
-      weight: 0.4722222
-    - id: 31
-      weight: 0.33333334
-    - id: 50
-      weight: 0.4722222
-    - id: 51
-      weight: 0.3888889
-    - id: 71
-      weight: 0.44444445
-    - id: 72
-      weight: 0.3888889
-    - id: 52
-      weight: 0.19444445
-    - id: 73
-      weight: 0.22222222
-    - id: 93
-      weight: 0.11111111
-    - id: 32
-      weight: 0.19444445
-    - id: 94
-      weight: 0.055555556
-    - id: 33
-      weight: 0.027777778
-    - id: 74
-      weight: 0.027777778
-    - id: 95
-      weight: 0.055555556
-    - id: 70
-      weight: 0.055555556
-  - surfelId: 360200003702000038020000390200003a0200003b0200003c0200003d0200003e0200003f020000400200004102000042020000430200004402000045020000460200004702000048020000490200004a0200004b0200004c0200004d0200004e0200004f020000500200005102000052020000530200005402000055020000560200005702000058020000590200005a0200005b0200005c0200005d0200005e0200005f020000600200006102000062020000
-    influncedProbeIdWeight:
-    - id: 62
-      weight: 0.35555556
-    - id: 84
-      weight: 0.35555556
-    - id: 6
-      weight: 0.08888889
-    - id: 27
-      weight: 0.08888889
-    - id: 47
-      weight: 0.08888889
-    - id: 68
-      weight: 0.08888889
-    - id: 91
-      weight: 0.08888889
-    - id: 0
-      weight: 0.08888889
-    - id: 21
-      weight: 0.08888889
-    - id: 42
-      weight: 0.08888889
-    - id: 63
-      weight: 0.08888889
-    - id: 85
-      weight: 0.08888889
-    - id: 29
-      weight: 0.31111112
-    - id: 50
-      weight: 0.31111112
-    - id: 51
-      weight: 0.26666668
-    - id: 52
-      weight: 0.2
-    - id: 53
-      weight: 0.13333334
-    - id: 72
-      weight: 0.22222222
-    - id: 32
-      weight: 0.2888889
-    - id: 33
-      weight: 0.15555556
-    - id: 30
-      weight: 0.24444444
-    - id: 73
-      weight: 0.26666668
-    - id: 31
-      weight: 0.26666668
-    - id: 97
-      weight: 0.022222223
-    - id: 71
-      weight: 0.2888889
-    - id: 70
-      weight: 0.22222222
-    - id: 74
-      weight: 0.2
-    - id: 93
-      weight: 0.06666667
-    - id: 96
-      weight: 0.06666667
-    - id: 95
-      weight: 0.08888889
-  - surfelId: 630200006402000065020000660200006702000068020000690200006a0200006b0200006c0200006d0200006e0200006f020000700200007102000072020000730200007402000075020000760200007702000078020000790200007a0200007b0200007c0200007d0200007e0200007f020000800200008102000082020000830200008402000085020000860200008702000088020000890200008a0200008b0200008c020000
-    influncedProbeIdWeight:
-    - id: 62
-      weight: 0.3809524
-    - id: 84
-      weight: 0.3809524
-    - id: 1
-      weight: 0.0952381
-    - id: 22
-      weight: 0.0952381
-    - id: 43
-      weight: 0.0952381
-    - id: 64
-      weight: 0.0952381
-    - id: 86
-      weight: 0.0952381
-    - id: 31
-      weight: 0.2857143
-    - id: 50
-      weight: 0.11904762
-    - id: 51
-      weight: 0.23809524
-    - id: 53
-      weight: 0.2857143
-    - id: 32
-      weight: 0.30952382
-    - id: 52
-      weight: 0.33333334
-    - id: 72
-      weight: 0.35714287
-    - id: 73
-      weight: 0.21428572
-    - id: 30
-      weight: 0.14285715
-    - id: 33
-      weight: 0.3809524
-    - id: 74
-      weight: 0.35714287
-    - id: 71
-      weight: 0.04761905
-    - id: 29
-      weight: 0.04761905
-    - id: 70
-      weight: 0.023809524
-    - id: 97
-      weight: 0.071428575
-    - id: 96
-      weight: 0.023809524
-  - surfelId: 8d0200008e0200008f020000900200009102000092020000930200009402000095020000960200009702000098020000990200009a0200009b0200009c0200009d0200009e0200009f020000a0020000a1020000a2020000a3020000a4020000a5020000a6020000a7020000a8020000a9020000aa020000ab020000ac020000ad020000ae020000af020000b0020000b1020000
-    influncedProbeIdWeight:
-    - id: 62
-      weight: 0.2972973
-    - id: 84
-      weight: 0.2972973
-    - id: 2
-      weight: 0.10810811
-    - id: 23
-      weight: 0.10810811
-    - id: 44
-      weight: 0.10810811
-    - id: 65
-      weight: 0.10810811
-    - id: 87
-      weight: 0.10810811
-    - id: 31
-      weight: 0.2972973
-    - id: 51
-      weight: 0.21621622
-    - id: 52
-      weight: 0.2972973
-    - id: 53
-      weight: 0.3243243
-    - id: 72
-      weight: 0.21621622
-    - id: 74
-      weight: 0.3243243
-    - id: 50
-      weight: 0.027027028
-    - id: 32
-      weight: 0.27027026
-    - id: 73
-      weight: 0.4054054
-    - id: 33
-      weight: 0.27027026
-    - id: 70
-      weight: 0.08108108
-    - id: 96
-      weight: 0.054054055
-    - id: 29
-      weight: 0.10810811
-    - id: 30
-      weight: 0.027027028
-    - id: 71
-      weight: 0.027027028
-    - id: 97
-      weight: 0.054054055
-    - id: 93
-      weight: 0.027027028
-  - surfelId: b2020000b3020000b4020000b5020000b6020000b7020000b8020000b9020000ba020000bb020000bc020000bd020000be020000bf020000c0020000c1020000c2020000c3020000c4020000c5020000
-    influncedProbeIdWeight:
-    - id: 62
-      weight: 0.2
-    - id: 84
-      weight: 0.2
-    - id: 33
-      weight: 0.4
-    - id: 52
-      weight: 0.2
-    - id: 53
-      weight: 0.4
-    - id: 74
-      weight: 0.4
-    - id: 99
-      weight: 0.4
-    - id: 107
-      weight: 0.4
-    - id: 29
-      weight: 0.15
-    - id: 30
-      weight: 0.1
-    - id: 31
-      weight: 0.2
-    - id: 32
-      weight: 0.2
-    - id: 50
-      weight: 0.15
-    - id: 51
-      weight: 0.15
-    - id: 70
-      weight: 0.15
-    - id: 72
-      weight: 0.15
-    - id: 94
-      weight: 0.05
-    - id: 96
-      weight: 0.1
-    - id: 73
-      weight: 0.15
-    - id: 71
-      weight: 0.1
-  - surfelId: c6020000c7020000c8020000c9020000ca020000cb020000cc020000cd020000ce020000cf020000d0020000d1020000d2020000d3020000d4020000d5020000d6020000d7020000d8020000d9020000da020000db020000dc020000dd020000de020000df020000e0020000e1020000e2020000e3020000e4020000e5020000
-    influncedProbeIdWeight:
-    - id: 21
-      weight: 0.09375
-    - id: 28
-      weight: 0.28125
-    - id: 42
-      weight: 0.21875
-    - id: 48
-      weight: 0.5
-    - id: 29
-      weight: 0.125
-    - id: 30
-      weight: 0.4375
-    - id: 31
-      weight: 0.5
-    - id: 32
-      weight: 0.5
-    - id: 33
-      weight: 0.46875
-    - id: 50
-      weight: 0.5
-    - id: 51
-      weight: 0.5
-    - id: 52
-      weight: 0.5
-    - id: 53
-      weight: 0.40625
-    - id: 71
-      weight: 0.4375
-    - id: 72
-      weight: 0.5
-    - id: 73
-      weight: 0.5
-    - id: 74
-      weight: 0.4375
-    - id: 35
-      weight: 0.125
-    - id: 55
-      weight: 0.25
-    - id: 49
-      weight: 0.59375
-    - id: 63
-      weight: 0.09375
-    - id: 69
-      weight: 0.25
-    - id: 76
-      weight: 0.15625
-    - id: 94
-      weight: 0.09375
-  - surfelId: e6020000e7020000e8020000e9020000ea020000eb020000ec020000ed020000ee020000ef020000f0020000f1020000f2020000f3020000f4020000f5020000f6020000f7020000f8020000f9020000
-    influncedProbeIdWeight:
-    - id: 30
-      weight: 0.2
-    - id: 50
-      weight: 1
-  - surfelId: fa020000fb020000fc020000fd020000fe020000ff020000000300000103000002030000030300000403000005030000060300000703000008030000090300000a0300000b030000
-    influncedProbeIdWeight:
-    - id: 31
-      weight: 0.44444445
-    - id: 51
-      weight: 1
-    - id: 29
-      weight: 0.22222222
-    - id: 30
-      weight: 0.22222222
-    - id: 50
-      weight: 0.22222222
-    - id: 70
-      weight: 0.16666667
-    - id: 71
-      weight: 0.22222222
-    - id: 72
-      weight: 0.2777778
-    - id: 32
-      weight: 0.11111111
-    - id: 33
-      weight: 0.22222222
-    - id: 52
-      weight: 0.22222222
-    - id: 53
-      weight: 0.22222222
-    - id: 74
-      weight: 0.22222222
-    - id: 73
-      weight: 0.11111111
-    - id: 93
-      weight: 0.055555556
-  - surfelId: 0c0300000d0300000e0300000f030000100300001103000012030000130300001403000015030000160300001703000018030000190300001a0300001b0300001c0300001d030000
-    influncedProbeIdWeight:
-    - id: 32
-      weight: 0.22222222
-    - id: 52
-      weight: 1
-  - surfelId: 1e0300001f030000200300002103000022030000230300002403000025030000260300002703000028030000290300002a030000
-    influncedProbeIdWeight:
-    - id: 33
-      weight: 0.30769232
-    - id: 53
-      weight: 1
-  - surfelId: 2b0300002c0300002d0300002e0300002f030000300300003103000032030000330300003403000035030000360300003703000038030000390300003a0300003b0300003c0300003d0300003e0300003f030000400300004103000042030000430300004403000045030000460300004703000048030000490300004a030000
-    influncedProbeIdWeight:
-    - id: 29
-      weight: 0.4375
-    - id: 30
-      weight: 0.46875
-    - id: 31
-      weight: 0.5
-    - id: 32
-      weight: 0.5
-    - id: 33
-      weight: 0.4375
-    - id: 50
-      weight: 0.40625
-    - id: 51
-      weight: 0.5
-    - id: 52
-      weight: 0.5
-    - id: 53
-      weight: 0.5
-    - id: 70
-      weight: 0.40625
-    - id: 71
-      weight: 0.40625
-    - id: 72
-      weight: 0.5
-    - id: 73
-      weight: 0.5
-    - id: 99
-      weight: 0.5
-    - id: 107
-      weight: 0.5
-    - id: 54
-      weight: 0.28125
-    - id: 74
-      weight: 0.21875
-    - id: 93
-      weight: 0.09375
-    - id: 96
-      weight: 0.0625
-  - surfelId: 4b0300004c0300004d0300004e0300004f03000050030000510300005203000053030000540300005503000056030000570300005803000059030000
-    influncedProbeIdWeight:
-    - id: 28
-      weight: 0.2
-    - id: 35
-      weight: 0.13333334
-    - id: 48
-      weight: 0.26666668
-    - id: 55
-      weight: 0.26666668
-    - id: 29
-      weight: 0.06666667
-    - id: 49
-      weight: 0.26666668
-    - id: 30
-      weight: 0.13333334
-    - id: 50
-      weight: 0.26666668
-    - id: 56
-      weight: 0.4
-    - id: 83
-      weight: 0.6
-    - id: 69
-      weight: 0.06666667
-    - id: 76
-      weight: 0.06666667
-    - id: 71
-      weight: 0.06666667
-  - surfelId: 5a0300005b0300005c0300005d0300005e0300005f03000060030000610300006203000063030000640300006503000066030000670300006803000069030000
-    influncedProbeIdWeight:
-    - id: 29
-      weight: 0.125
-    - id: 49
-      weight: 0.25
-    - id: 30
-      weight: 0.125
-    - id: 50
-      weight: 0.5
-    - id: 31
-      weight: 0.125
-    - id: 51
-      weight: 0.25
-    - id: 83
-      weight: 0.5625
-    - id: 57
-      weight: 0.375
-    - id: 70
-      weight: 0.0625
-    - id: 72
-      weight: 0.0625
-  - surfelId: 6a0300006b0300006c0300006d0300006e0300006f030000700300007103000072030000730300007403000075030000
-    influncedProbeIdWeight:
-    - id: 30
-      weight: 0.16666667
-    - id: 50
-      weight: 0.25
-    - id: 31
-      weight: 0.16666667
-    - id: 51
-      weight: 0.6666667
-    - id: 32
-      weight: 0.083333336
-    - id: 58
-      weight: 0.5
-    - id: 71
-      weight: 0.083333336
-  - surfelId: 760300007703000078030000790300007a0300007b0300007c0300007d0300007e0300007f030000
-    influncedProbeIdWeight:
-    - id: 33
-      weight: 0.1
-    - id: 53
-      weight: 0.4
-    - id: 52
-      weight: 0.4
-    - id: 59
-      weight: 0.6
-  - surfelId: 80030000810300008203000083030000840300008503000086030000870300008803000089030000
-    influncedProbeIdWeight:
-    - id: 32
-      weight: 0.1
-    - id: 52
-      weight: 0.4
-    - id: 53
-      weight: 0.4
-    - id: 60
-      weight: 0.6
-  - surfelId: 8a0300008b0300008c0300008d030000
-    influncedProbeIdWeight:
-    - id: 33
-      weight: 0.25
-    - id: 61
-      weight: 0.75
-  - surfelId: 8e0300008f030000900300009103000092030000930300009403000095030000960300009703000098030000990300009a0300009b0300009c0300009d0300009e0300009f030000a0030000a1030000a2030000a3030000a4030000a5030000a6030000a7030000a8030000a9030000aa030000ab030000ac030000ad030000ae030000af030000
-    influncedProbeIdWeight:
-    - id: 4
-      weight: 0.1764706
-    - id: 25
-      weight: 0.11764706
-    - id: 45
-      weight: 0.11764706
-    - id: 62
-      weight: 0.3529412
-    - id: 66
-      weight: 0.11764706
-    - id: 84
-      weight: 0.3529412
-    - id: 89
-      weight: 0.11764706
-    - id: 48
-      weight: 0.23529412
-    - id: 69
-      weight: 0.3529412
-    - id: 30
-      weight: 0.3529412
-    - id: 31
-      weight: 0.38235295
-    - id: 50
-      weight: 0.44117647
-    - id: 51
-      weight: 0.47058824
-    - id: 71
-      weight: 0.44117647
-    - id: 72
-      weight: 0.38235295
-    - id: 52
-      weight: 0.14705883
-    - id: 70
-      weight: 0.20588236
-    - id: 32
-      weight: 0.20588236
-    - id: 33
-      weight: 0.14705883
-    - id: 42
-      weight: 0.05882353
-    - id: 53
-      weight: 0.11764706
-    - id: 63
-      weight: 0.11764706
-    - id: 73
-      weight: 0.14705883
-    - id: 74
-      weight: 0.0882353
-    - id: 94
-      weight: 0.029411765
-    - id: 95
-      weight: 0.029411765
-    - id: 92
-      weight: 0.14705883
-    - id: 85
-      weight: 0.05882353
-    - id: 3
-      weight: 0.11764706
-    - id: 0
-      weight: 0.0882353
-    - id: 1
-      weight: 0.0882353
-    - id: 2
-      weight: 0.0882353
-  - surfelId: b0030000b1030000b2030000b3030000b4030000b5030000b6030000b7030000b8030000b9030000ba030000bb030000bc030000bd030000be030000bf030000c0030000c1030000c2030000c3030000c4030000c5030000c6030000c7030000c8030000c9030000ca030000cb030000cc030000cd030000ce030000cf030000d0030000d1030000d2030000d3030000d4030000
-    influncedProbeIdWeight:
-    - id: 62
-      weight: 0.43243244
-    - id: 84
-      weight: 0.43243244
-    - id: 5
-      weight: 0.16216215
-    - id: 26
-      weight: 0.10810811
-    - id: 46
-      weight: 0.10810811
-    - id: 67
-      weight: 0.10810811
-    - id: 90
-      weight: 0.10810811
-    - id: 30
-      weight: 0.35135135
-    - id: 31
-      weight: 0.1891892
-    - id: 50
-      weight: 0.3783784
-    - id: 51
-      weight: 0.35135135
-    - id: 71
-      weight: 0.3783784
-    - id: 52
-      weight: 0.1891892
-    - id: 70
-      weight: 0.4054054
-    - id: 72
-      weight: 0.27027026
-    - id: 29
-      weight: 0.027027028
-    - id: 73
-      weight: 0.10810811
-    - id: 32
-      weight: 0.13513513
-    - id: 53
-      weight: 0.027027028
-    - id: 0
-      weight: 0.10810811
-    - id: 1
-      weight: 0.10810811
-    - id: 2
-      weight: 0.10810811
-    - id: 3
-      weight: 0.10810811
-    - id: 4
-      weight: 0.10810811
-    - id: 33
-      weight: 0.027027028
-    - id: 74
-      weight: 0.027027028
-  - surfelId: d5030000d6030000d7030000d8030000d9030000da030000db030000dc030000dd030000de030000df030000e0030000e1030000e2030000e3030000e4030000e5030000e6030000e7030000e8030000e9030000ea030000eb030000ec030000ed030000ee030000ef030000f0030000f1030000f2030000f3030000f4030000f5030000f6030000f7030000f8030000f9030000fa030000fb030000fc030000fd030000fe030000ff030000
-    influncedProbeIdWeight:
-    - id: 62
-      weight: 0.37209302
-    - id: 84
-      weight: 0.37209302
-    - id: 6
-      weight: 0.13953489
-    - id: 27
-      weight: 0.093023255
-    - id: 47
-      weight: 0.093023255
-    - id: 68
-      weight: 0.093023255
-    - id: 91
-      weight: 0.093023255
-    - id: 0
-      weight: 0.13953489
-    - id: 21
-      weight: 0.093023255
-    - id: 42
-      weight: 0.093023255
-    - id: 63
-      weight: 0.093023255
-    - id: 29
-      weight: 0.18604651
-    - id: 50
-      weight: 0.3488372
-    - id: 51
-      weight: 0.39534885
-    - id: 52
-      weight: 0.30232558
-    - id: 70
-      weight: 0.1627907
-    - id: 71
-      weight: 0.30232558
-    - id: 73
-      weight: 0.27906978
-    - id: 31
-      weight: 0.1627907
-    - id: 32
-      weight: 0.13953489
-    - id: 53
-      weight: 0.23255815
-    - id: 30
-      weight: 0.18604651
-    - id: 74
-      weight: 0.23255815
-    - id: 33
-      weight: 0.11627907
-    - id: 72
-      weight: 0.3255814
-    - id: 93
-      weight: 0.023255814
-    - id: 95
-      weight: 0.023255814
-    - id: 96
-      weight: 0.023255814
-    - id: 1
-      weight: 0.093023255
-    - id: 2
-      weight: 0.093023255
-    - id: 3
-      weight: 0.093023255
-    - id: 4
-      weight: 0.093023255
-    - id: 5
-      weight: 0.093023255
-  - surfelId: 000400000104000002040000030400000404000005040000060400000704000008040000090400000a0400000b0400000c0400000d0400000e0400000f040000100400001104000012040000130400001404000015040000160400001704000018040000190400001a0400001b0400001c0400001d0400001e0400001f04000020040000210400002204000023040000240400002504000026040000
-    influncedProbeIdWeight:
-    - id: 62
-      weight: 0.41025642
-    - id: 84
-      weight: 0.41025642
-    - id: 1
-      weight: 0.15384616
-    - id: 22
-      weight: 0.102564104
-    - id: 43
-      weight: 0.102564104
-    - id: 64
-      weight: 0.102564104
-    - id: 86
-      weight: 0.102564104
-    - id: 31
-      weight: 0.17948718
-    - id: 50
-      weight: 0.15384616
-    - id: 51
-      weight: 0.33333334
-    - id: 52
-      weight: 0.30769232
-    - id: 53
-      weight: 0.30769232
-    - id: 73
-      weight: 0.2820513
-    - id: 74
-      weight: 0.23076923
-    - id: 32
-      weight: 0.12820514
-    - id: 33
-      weight: 0.20512821
-    - id: 72
-      weight: 0.2820513
-    - id: 71
-      weight: 0.07692308
-    - id: 30
-      weight: 0.07692308
-    - id: 29
-      weight: 0.051282052
-    - id: 70
-      weight: 0.025641026
-    - id: 93
-      weight: 0.025641026
-    - id: 2
-      weight: 0.102564104
-    - id: 3
-      weight: 0.102564104
-    - id: 4
-      weight: 0.102564104
-    - id: 5
-      weight: 0.102564104
-    - id: 6
-      weight: 0.102564104
-  - surfelId: 2704000028040000290400002a0400002b0400002c0400002d0400002e0400002f040000300400003104000032040000330400003404000035040000360400003704000038040000390400003a0400003b0400003c0400003d0400003e0400003f0400004004000041040000420400004304000044040000450400004604000047040000
-    influncedProbeIdWeight:
-    - id: 62
-      weight: 0.36363637
-    - id: 84
-      weight: 0.33333334
-    - id: 2
-      weight: 0.18181819
-    - id: 23
-      weight: 0.121212125
-    - id: 44
-      weight: 0.121212125
-    - id: 65
-      weight: 0.121212125
-    - id: 87
-      weight: 0.121212125
-    - id: 31
-      weight: 0.21212122
-    - id: 33
-      weight: 0.15151516
-    - id: 51
-      weight: 0.24242425
-    - id: 52
-      weight: 0.42424244
-    - id: 53
-      weight: 0.45454547
-    - id: 32
-      weight: 0.21212122
-    - id: 73
-      weight: 0.3030303
-    - id: 74
-      weight: 0.45454547
-    - id: 72
-      weight: 0.15151516
-    - id: 70
-      weight: 0.09090909
-    - id: 29
-      weight: 0.060606062
-    - id: 96
-      weight: 0.030303031
-    - id: 50
-      weight: 0.030303031
-    - id: 3
-      weight: 0.121212125
-    - id: 4
-      weight: 0.121212125
-    - id: 5
-      weight: 0.121212125
-    - id: 6
-      weight: 0.121212125
-    - id: 71
-      weight: 0.030303031
-  - surfelId: 48040000490400004a0400004b0400004c0400004d0400004e0400004f040000500400005104000052040000530400005404000055040000560400005704000058040000590400005a0400005b0400005c040000
-    influncedProbeIdWeight:
-    - id: 62
-      weight: 0.1904762
-    - id: 84
-      weight: 0.1904762
-    - id: 33
-      weight: 0.2857143
-    - id: 52
-      weight: 0.3809524
-    - id: 53
-      weight: 0.3809524
-    - id: 73
-      weight: 0.3809524
-    - id: 74
-      weight: 0.3809524
-    - id: 99
-      weight: 0.52380955
-    - id: 107
-      weight: 0.3809524
-    - id: 29
-      weight: 0.1904762
-    - id: 30
-      weight: 0.1904762
-    - id: 31
-      weight: 0.1904762
-    - id: 32
-      weight: 0.1904762
-    - id: 50
-      weight: 0.1904762
-    - id: 51
-      weight: 0.1904762
-    - id: 70
-      weight: 0.1904762
-    - id: 71
-      weight: 0.1904762
-    - id: 72
-      weight: 0.1904762
-    - id: 97
-      weight: 0.04761905
-    - id: 3
-      weight: 0.0952381
-    - id: 4
-      weight: 0.0952381
-    - id: 5
-      weight: 0.0952381
-    - id: 6
-      weight: 0.0952381
-  - surfelId: 5d0400005e0400005f040000600400006104000062040000630400006404000065040000660400006704000068040000690400006a0400006b0400006c0400006d0400006e0400006f040000700400007104000072040000730400007404000075040000760400007704000078040000790400007a0400007b0400007c040000
-    influncedProbeIdWeight:
-    - id: 42
-      weight: 0.09375
-    - id: 48
-      weight: 0.28125
-    - id: 63
-      weight: 0.21875
-    - id: 69
-      weight: 0.5
-    - id: 94
-      weight: 0.21875
-    - id: 30
-      weight: 0.25
-    - id: 31
-      weight: 0.375
-    - id: 32
-      weight: 0.5
-    - id: 33
-      weight: 0.5
-    - id: 50
-      weight: 0.375
-    - id: 51
-      weight: 0.53125
-    - id: 52
-      weight: 0.5
-    - id: 53
-      weight: 0.5
-    - id: 70
-      weight: 0.71875
-    - id: 71
-      weight: 0.5
-    - id: 72
-      weight: 0.5
-    - id: 73
-      weight: 0.5
-    - id: 74
-      weight: 0.5
-    - id: 55
-      weight: 0.125
-    - id: 76
-      weight: 0.25
-    - id: 49
-      weight: 0.0625
-    - id: 85
-      weight: 0.09375
-    - id: 92
-      weight: 0.25
-    - id: 100
-      weight: 0.15625
-  - surfelId: 7d0400007e0400007f040000800400008104000082040000830400008404000085040000860400008704000088040000890400008a0400008b0400008c0400008d0400008e0400008f0400009004000091040000
-    influncedProbeIdWeight:
-    - id: 50
-      weight: 0.1904762
-    - id: 71
-      weight: 0.95238096
-    - id: 74
-      weight: 0.04761905
-  - surfelId: 92040000930400009404000095040000960400009704000098040000990400009a0400009b0400009c0400009d0400009e0400009f040000a0040000a1040000a2040000a3040000a4040000a5040000a6040000a7040000a8040000a9040000
-    influncedProbeIdWeight:
-    - id: 51
-      weight: 0.5833333
-    - id: 72
-      weight: 0.9166667
-    - id: 29
-      weight: 0.41666666
-    - id: 30
-      weight: 0.41666666
-    - id: 31
-      weight: 0.375
-    - id: 50
-      weight: 0.41666666
-    - id: 70
-      weight: 0.16666667
-    - id: 71
-      weight: 0.16666667
-    - id: 33
-      weight: 0.20833333
-    - id: 52
-      weight: 0.20833333
-    - id: 53
-      weight: 0.29166666
-    - id: 73
-      weight: 0.16666667
-    - id: 74
-      weight: 0.16666667
-    - id: 32
-      weight: 0.125
-    - id: 94
-      weight: 0.041666668
-  - surfelId: aa040000ab040000ac040000ad040000ae040000af040000b0040000b1040000b2040000b3040000b4040000b5040000b6040000b7040000b8040000b9040000ba040000bb040000bc040000bd040000be040000
-    influncedProbeIdWeight:
-    - id: 52
-      weight: 0.1904762
-    - id: 73
-      weight: 1
-  - surfelId: bf040000c0040000c1040000c2040000c3040000c4040000c5040000c6040000c7040000c8040000c9040000ca040000cb040000cc040000cd040000ce040000cf040000d0040000d1040000d2040000
-    influncedProbeIdWeight:
-    - id: 53
-      weight: 0.15
-    - id: 74
-      weight: 1
-  - surfelId: d3040000d4040000d5040000d6040000d7040000d8040000d9040000da040000db040000dc040000dd040000de040000df040000e0040000e1040000e2040000e3040000e4040000e5040000e6040000e7040000e8040000e9040000ea040000eb040000ec040000ed040000ee040000ef040000f0040000f1040000f2040000
-    influncedProbeIdWeight:
-    - id: 29
-      weight: 0.4375
-    - id: 30
-      weight: 0.4375
-    - id: 31
-      weight: 0.5
-    - id: 32
-      weight: 0.5
-    - id: 50
-      weight: 0.5
-    - id: 51
-      weight: 0.5
-    - id: 52
-      weight: 0.5
-    - id: 53
-      weight: 0.4375
-    - id: 70
-      weight: 0.5
-    - id: 71
-      weight: 0.5
-    - id: 72
-      weight: 0.5
-    - id: 73
-      weight: 0.5
-    - id: 74
-      weight: 0.5
-    - id: 99
-      weight: 0.5
-    - id: 107
-      weight: 0.5
-    - id: 92
-      weight: 0.0625
-    - id: 75
-      weight: 0.28125
-    - id: 33
-      weight: 0.125
-    - id: 95
-      weight: 0.09375
-    - id: 97
-      weight: 0.03125
-  - surfelId: f3040000f4040000f5040000f6040000f7040000f8040000f9040000fa040000fb040000fc040000fd040000fe040000ff040000000500000105000002050000
-    influncedProbeIdWeight:
-    - id: 48
-      weight: 0.1875
-    - id: 55
-      weight: 0.125
-    - id: 69
-      weight: 0.25
-    - id: 76
-      weight: 0.25
-    - id: 83
-      weight: 0.75
-    - id: 49
-      weight: 0.0625
-    - id: 70
-      weight: 0.25
-    - id: 50
-      weight: 0.125
-    - id: 71
-      weight: 0.25
-    - id: 77
-      weight: 0.375
-    - id: 108
-      weight: 0.5625
-    - id: 92
-      weight: 0.0625
-    - id: 100
-      weight: 0.0625
-  - surfelId: 030500000405000005050000060500000705000008050000090500000a0500000b0500000c0500000d0500000e0500000f050000100500001105000012050000
-    influncedProbeIdWeight:
-    - id: 49
-      weight: 0.125
-    - id: 70
-      weight: 0.25
-    - id: 83
-      weight: 0.75
-    - id: 50
-      weight: 0.125
-    - id: 71
-      weight: 0.5
-    - id: 51
-      weight: 0.125
-    - id: 72
-      weight: 0.25
-    - id: 108
-      weight: 0.5625
-    - id: 78
-      weight: 0.375
-  - surfelId: 130500001405000015050000160500001705000018050000190500001a0500001b0500001c0500001d0500001e0500001f050000200500002105000022050000
-    influncedProbeIdWeight:
-    - id: 50
-      weight: 0.125
-    - id: 71
-      weight: 0.25
-    - id: 51
-      weight: 0.125
-    - id: 72
-      weight: 0.5
-    - id: 73
-      weight: 0.25
-    - id: 79
-      weight: 0.375
-  - surfelId: 230500002405000025050000260500002705000028050000290500002a0500002b0500002c050000
-    influncedProbeIdWeight:
-    - id: 53
-      weight: 0.1
-    - id: 74
-      weight: 0.4
-    - id: 73
-      weight: 0.4
-    - id: 80
-      weight: 0.6
-  - surfelId: 2d0500002e0500002f05000030050000310500003205000033050000340500003505000036050000
-    influncedProbeIdWeight:
-    - id: 52
-      weight: 0.1
-    - id: 73
-      weight: 0.4
-    - id: 74
-      weight: 0.4
-    - id: 81
-      weight: 0.6
-  - surfelId: 3705000038050000390500003a0500003b0500003c050000
-    influncedProbeIdWeight:
-    - id: 74
-      weight: 0.5
-    - id: 82
-      weight: 0.5
-    - id: 99
-      weight: 0.5
-    - id: 107
-      weight: 0.5
-  - surfelId: 3d0500003e0500003f050000400500004105000042050000430500004405000045050000460500004705000048050000490500004a0500004b0500004c0500004d0500004e0500004f05000050050000510500005205000053050000540500005505000056050000
-    influncedProbeIdWeight:
-    - id: 23
-      weight: 0.15384616
-    - id: 28
-      weight: 0.07692308
-    - id: 44
-      weight: 0.15384616
-    - id: 24
-      weight: 0.15384616
-    - id: 25
-      weight: 0.03846154
-    - id: 45
-      weight: 0.115384616
-    - id: 62
-      weight: 0.1923077
-    - id: 66
-      weight: 0.03846154
-    - id: 89
-      weight: 0.1923077
-    - id: 84
-      weight: 0.1923077
-    - id: 69
-      weight: 0.115384616
-    - id: 92
-      weight: 0.30769232
-    - id: 70
-      weight: 0.07692308
-    - id: 71
-      weight: 0.07692308
-    - id: 86
-      weight: 0.34615386
-    - id: 87
-      weight: 0.42307693
-    - id: 63
-      weight: 0.03846154
-    - id: 85
-      weight: 0.34615386
-    - id: 30
-      weight: 0.07692308
-    - id: 31
-      weight: 0.07692308
-    - id: 32
-      weight: 0.07692308
-    - id: 33
-      weight: 0.07692308
-    - id: 50
-      weight: 0.07692308
-    - id: 51
-      weight: 0.07692308
-    - id: 52
-      weight: 0.07692308
-    - id: 53
-      weight: 0.07692308
-    - id: 1
-      weight: 0.03846154
-    - id: 2
-      weight: 0.03846154
-    - id: 7
-      weight: 0.03846154
-    - id: 21
-      weight: 0.15384616
-    - id: 22
-      weight: 0.15384616
-    - id: 42
-      weight: 0.15384616
-    - id: 43
-      weight: 0.15384616
-    - id: 48
-      weight: 0.03846154
-    - id: 64
-      weight: 0.15384616
-    - id: 96
-      weight: 0.15384616
-    - id: 100
-      weight: 0.15384616
-    - id: 101
-      weight: 0.15384616
-    - id: 102
-      weight: 0.23076923
-    - id: 103
-      weight: 0.15384616
-    - id: 104
-      weight: 0.15384616
-    - id: 0
-      weight: 0.03846154
-    - id: 46
-      weight: 0.03846154
-    - id: 68
-      weight: 0.03846154
-    - id: 90
-      weight: 0.15384616
-    - id: 91
-      weight: 0.15384616
-    - id: 97
-      weight: 0.15384616
-    - id: 98
-      weight: 0.15384616
-    - id: 105
-      weight: 0.15384616
-    - id: 106
-      weight: 0.15384616
-    - id: 93
-      weight: 0.1923077
-    - id: 94
-      weight: 0.26923078
-    - id: 108
-      weight: 0.07692308
-    - id: 95
-      weight: 0.03846154
-  - surfelId: 5705000058050000590500005a0500005b0500005c0500005d0500005e0500005f050000600500006105000062050000630500006405000065050000660500006705000068050000690500006a050000
-    influncedProbeIdWeight:
-    - id: 62
-      weight: 0.2
-    - id: 84
-      weight: 0.3
-    - id: 26
-      weight: 0.05
-    - id: 46
-      weight: 0.05
-    - id: 67
-      weight: 0.05
-    - id: 90
-      weight: 0.1
-    - id: 70
-      weight: 0.1
-    - id: 71
-      weight: 0.2
-    - id: 86
-      weight: 0.25
-    - id: 87
-      weight: 0.6
-    - id: 72
-      weight: 0.1
-    - id: 88
-      weight: 0.2
-    - id: 30
-      weight: 0.15
-    - id: 31
-      weight: 0.2
-    - id: 32
-      weight: 0.2
-    - id: 33
-      weight: 0.05
-    - id: 50
-      weight: 0.2
-    - id: 51
-      weight: 0.2
-    - id: 52
-      weight: 0.1
-    - id: 101
-      weight: 0.1
-    - id: 102
-      weight: 0.1
-    - id: 103
-      weight: 0.1
-    - id: 93
-      weight: 0.15
-    - id: 94
-      weight: 0.2
-    - id: 85
-      weight: 0.1
-    - id: 92
-      weight: 0.1
-    - id: 100
-      weight: 0.1
-    - id: 89
-      weight: 0.05
-    - id: 91
-      weight: 0.05
-    - id: 95
-      weight: 0.1
-    - id: 96
-      weight: 0.05
-    - id: 97
-      weight: 0.05
-    - id: 98
-      weight: 0.05
-    - id: 99
-      weight: 0.05
-    - id: 104
-      weight: 0.05
-    - id: 105
-      weight: 0.05
-    - id: 106
-      weight: 0.05
-    - id: 107
-      weight: 0.05
-  - surfelId: 6b0500006c0500006d0500006e0500006f050000700500007105000072050000730500007405000075050000760500007705000078050000790500007a0500007b0500007c0500007d0500007e050000
-    influncedProbeIdWeight:
-    - id: 62
-      weight: 0.2
-    - id: 84
-      weight: 0.3
-    - id: 27
-      weight: 0.05
-    - id: 47
-      weight: 0.05
-    - id: 68
-      weight: 0.05
-    - id: 91
-      weight: 0.05
-    - id: 21
-      weight: 0.05
-    - id: 42
-      weight: 0.05
-    - id: 63
-      weight: 0.05
-    - id: 85
-      weight: 0.15
-    - id: 71
-      weight: 0.1
-    - id: 72
-      weight: 0.15
-    - id: 87
-      weight: 0.25
-    - id: 88
-      weight: 0.6
-    - id: 73
-      weight: 0.05
-    - id: 89
-      weight: 0.2
-    - id: 30
-      weight: 0.1
-    - id: 31
-      weight: 0.1
-    - id: 32
-      weight: 0.05
-    - id: 50
-      weight: 0.15
-    - id: 51
-      weight: 0.1
-    - id: 52
-      weight: 0.1
-    - id: 33
-      weight: 0.05
-    - id: 29
-      weight: 0.05
-    - id: 53
-      weight: 0.05
-    - id: 94
-      weight: 0.15
-    - id: 95
-      weight: 0.2
-    - id: 86
-      weight: 0.1
-    - id: 90
-      weight: 0.1
-    - id: 92
-      weight: 0.1
-    - id: 93
-      weight: 0.1
-    - id: 96
-      weight: 0.1
-    - id: 97
-      weight: 0.1
-    - id: 100
-      weight: 0.1
-    - id: 101
-      weight: 0.1
-    - id: 102
-      weight: 0.1
-    - id: 103
-      weight: 0.1
-    - id: 104
-      weight: 0.1
-    - id: 105
-      weight: 0.1
-    - id: 108
-      weight: 0.05
-  - surfelId: 7f050000800500008105000082050000830500008405000085050000860500008705000088050000890500008a0500008b0500008c0500008d0500008e0500008f050000900500009105000092050000
-    influncedProbeIdWeight:
-    - id: 62
-      weight: 0.25
-    - id: 84
-      weight: 0.3
-    - id: 22
-      weight: 0.05
-    - id: 43
-      weight: 0.05
-    - id: 64
-      weight: 0.05
-    - id: 86
-      weight: 0.15
-    - id: 73
-      weight: 0.2
-    - id: 88
-      weight: 0.25
-    - id: 89
-      weight: 0.6
-    - id: 72
-      weight: 0.05
-    - id: 74
-      weight: 0.05
-    - id: 30
-      weight: 0.15
-    - id: 31
-      weight: 0.2
-    - id: 32
-      weight: 0.15
-    - id: 33
-      weight: 0.2
-    - id: 51
-      weight: 0.15
-    - id: 52
-      weight: 0.2
-    - id: 53
-      weight: 0.2
-    - id: 50
-      weight: 0.05
-    - id: 85
-      weight: 0.1
-    - id: 87
-      weight: 0.1
-    - id: 90
-      weight: 0.15
-    - id: 92
-      weight: 0.1
-    - id: 93
-      weight: 0.1
-    - id: 94
-      weight: 0.1
-    - id: 95
-      weight: 0.15
-    - id: 100
-      weight: 0.1
-    - id: 101
-      weight: 0.1
-    - id: 102
-      weight: 0.1
-    - id: 103
-      weight: 0.1
-    - id: 108
-      weight: 0.1
-    - id: 91
-      weight: 0.05
-    - id: 96
-      weight: 0.2
-    - id: 97
-      weight: 0.1
-    - id: 98
-      weight: 0.05
-    - id: 99
-      weight: 0.05
-    - id: 105
-      weight: 0.05
-    - id: 106
-      weight: 0.05
-    - id: 107
-      weight: 0.05
-  - surfelId: 930500009405000095050000960500009705000098050000990500009a0500009b0500009c0500009d0500009e0500009f050000a0050000a1050000a2050000a3050000a4050000a5050000a6050000
-    influncedProbeIdWeight:
-    - id: 62
-      weight: 0.15
-    - id: 84
-      weight: 0.2
-    - id: 23
-      weight: 0.05
-    - id: 44
-      weight: 0.05
-    - id: 65
-      weight: 0.05
-    - id: 87
-      weight: 0.15
-    - id: 73
-      weight: 0.05
-    - id: 74
-      weight: 0.2
-    - id: 90
-      weight: 0.6
-    - id: 31
-      weight: 0.2
-    - id: 32
-      weight: 0.2
-    - id: 33
-      weight: 0.2
-    - id: 51
-      weight: 0.1
-    - id: 52
-      weight: 0.2
-    - id: 53
-      weight: 0.15
-    - id: 50
-      weight: 0.05
-    - id: 30
-      weight: 0.05
-    - id: 106
-      weight: 0.15
-    - id: 89
-      weight: 0.2
-    - id: 91
-      weight: 0.1
-    - id: 98
-      weight: 0.1
-    - id: 99
-      weight: 0.1
-    - id: 107
-      weight: 0.1
-    - id: 85
-      weight: 0.1
-    - id: 88
-      weight: 0.1
-    - id: 92
-      weight: 0.1
-    - id: 94
-      weight: 0.1
-    - id: 95
-      weight: 0.1
-    - id: 96
-      weight: 0.15
-    - id: 100
-      weight: 0.1
-    - id: 102
-      weight: 0.1
-    - id: 103
-      weight: 0.1
-    - id: 104
-      weight: 0.1
-    - id: 97
-      weight: 0.2
-  - surfelId: a7050000a8050000a9050000aa050000ab050000ac050000ad050000ae050000af050000b0050000b1050000
-    influncedProbeIdWeight:
-    - id: 62
-      weight: 0.09090909
-    - id: 84
-      weight: 0.09090909
-    - id: 99
-      weight: 0.6363636
-    - id: 74
-      weight: 0.09090909
-    - id: 90
-      weight: 0.09090909
-    - id: 107
-      weight: 0.36363637
-    - id: 29
-      weight: 0.09090909
-    - id: 30
-      weight: 0.09090909
-    - id: 31
-      weight: 0.09090909
-    - id: 32
-      weight: 0.09090909
-    - id: 50
-      weight: 0.09090909
-    - id: 51
-      weight: 0.09090909
-    - id: 52
-      weight: 0.09090909
-    - id: 53
-      weight: 0.09090909
-    - id: 91
-      weight: 0.36363637
-    - id: 98
-      weight: 0.27272728
-  - surfelId: b2050000b3050000b4050000b5050000b6050000b7050000b8050000b9050000ba050000bb050000bc050000bd050000be050000bf050000c0050000c1050000c2050000c3050000c4050000c5050000c6050000c7050000c8050000c9050000ca050000cb050000
-    influncedProbeIdWeight:
-    - id: 63
-      weight: 0.03846154
-    - id: 69
-      weight: 0.15384616
-    - id: 85
-      weight: 0.3846154
-    - id: 92
-      weight: 0.61538464
-    - id: 30
-      weight: 0.5
-    - id: 31
-      weight: 0.5
-    - id: 32
-      weight: 0.42307693
-    - id: 33
-      weight: 0.34615386
-    - id: 50
-      weight: 0.5
-    - id: 51
-      weight: 0.5
-    - id: 52
-      weight: 0.3846154
-    - id: 53
-      weight: 0.26923078
-    - id: 70
-      weight: 0.23076923
-    - id: 71
-      weight: 0.46153846
-    - id: 72
-      weight: 0.15384616
-    - id: 73
-      weight: 0.15384616
-    - id: 74
-      weight: 0.15384616
-    - id: 93
-      weight: 0.42307693
-    - id: 76
-      weight: 0.07692308
-    - id: 100
-      weight: 0.46153846
-    - id: 29
-      weight: 0.115384616
-    - id: 49
-      weight: 0.115384616
-    - id: 84
-      weight: 0.26923078
-    - id: 86
-      weight: 0.30769232
-    - id: 87
-      weight: 0.3846154
-    - id: 89
-      weight: 0.26923078
-    - id: 94
-      weight: 0.3846154
-    - id: 101
-      weight: 0.30769232
-    - id: 102
-      weight: 0.42307693
-    - id: 104
-      weight: 0.15384616
-    - id: 108
-      weight: 0.30769232
-    - id: 88
-      weight: 0.1923077
-    - id: 90
-      weight: 0.115384616
-    - id: 91
-      weight: 0.115384616
-    - id: 95
-      weight: 0.15384616
-    - id: 96
-      weight: 0.15384616
-    - id: 103
-      weight: 0.115384616
-    - id: 97
-      weight: 0.07692308
-    - id: 98
-      weight: 0.07692308
-    - id: 105
-      weight: 0.07692308
-    - id: 106
-      weight: 0.07692308
-    - id: 99
-      weight: 0.03846154
-  - surfelId: cc050000cd050000ce050000cf050000d0050000d1050000d2050000d3050000d4050000d5050000d6050000d7050000d8050000d9050000da050000db050000dc050000dd050000de050000df050000e0050000e1050000e2050000e3050000e4050000e5050000
-    influncedProbeIdWeight:
-    - id: 30
-      weight: 0.7307692
-    - id: 31
-      weight: 0.7307692
-    - id: 32
-      weight: 0.7692308
-    - id: 50
-      weight: 0.7307692
-    - id: 51
-      weight: 0.7692308
-    - id: 70
-      weight: 0.30769232
-    - id: 71
-      weight: 0.61538464
-    - id: 93
-      weight: 0.5
-    - id: 94
-      weight: 0.7307692
-    - id: 52
-      weight: 0.30769232
-    - id: 72
-      weight: 0.30769232
-    - id: 29
-      weight: 0.1923077
-    - id: 33
-      weight: 0.34615386
-    - id: 84
-      weight: 0.30769232
-    - id: 85
-      weight: 0.46153846
-    - id: 86
-      weight: 0.3846154
-    - id: 87
-      weight: 0.3846154
-    - id: 88
-      weight: 0.46153846
-    - id: 89
-      weight: 0.3846154
-    - id: 90
-      weight: 0.26923078
-    - id: 91
-      weight: 0.15384616
-    - id: 92
-      weight: 0.46153846
-    - id: 95
-      weight: 0.46153846
-    - id: 96
-      weight: 0.3846154
-    - id: 97
-      weight: 0.23076923
-    - id: 98
-      weight: 0.15384616
-    - id: 100
-      weight: 0.42307693
-    - id: 101
-      weight: 0.5
-    - id: 102
-      weight: 0.5
-    - id: 103
-      weight: 0.46153846
-    - id: 104
-      weight: 0.30769232
-    - id: 105
-      weight: 0.1923077
-    - id: 108
-      weight: 0.30769232
-    - id: 53
-      weight: 0.115384616
-    - id: 99
-      weight: 0.07692308
-    - id: 106
-      weight: 0.115384616
-    - id: 107
-      weight: 0.07692308
-  - surfelId: e6050000e7050000e8050000e9050000ea050000eb050000ec050000ed050000ee050000ef050000f0050000f1050000f2050000f3050000f4050000f5050000f6050000f7050000f8050000f9050000fa050000fb050000fc050000fd050000fe050000ff0500000006000001060000
-    influncedProbeIdWeight:
-    - id: 30
-      weight: 0.64285713
-    - id: 31
-      weight: 0.39285713
-    - id: 32
-      weight: 0.39285713
-    - id: 33
-      weight: 0.25
-    - id: 50
-      weight: 0.60714287
-    - id: 51
-      weight: 0.53571427
-    - id: 52
-      weight: 0.2857143
-    - id: 71
-      weight: 0.4642857
-    - id: 72
-      weight: 0.5
-    - id: 94
-      weight: 0.53571427
-    - id: 95
-      weight: 0.75
-    - id: 29
-      weight: 0.14285715
-    - id: 70
-      weight: 0.21428572
-    - id: 53
-      weight: 0.14285715
-    - id: 73
-      weight: 0.14285715
-    - id: 74
-      weight: 0.14285715
-    - id: 87
-      weight: 0.53571427
-    - id: 84
-      weight: 0.42857143
-    - id: 85
-      weight: 0.39285713
-    - id: 86
-      weight: 0.42857143
-    - id: 88
-      weight: 0.42857143
-    - id: 89
-      weight: 0.42857143
-    - id: 90
-      weight: 0.42857143
-    - id: 91
-      weight: 0.071428575
-    - id: 93
-      weight: 0.42857143
-    - id: 96
-      weight: 0.42857143
-    - id: 97
-      weight: 0.42857143
-    - id: 98
-      weight: 0.071428575
-    - id: 99
-      weight: 0.071428575
-    - id: 101
-      weight: 0.39285713
-    - id: 102
-      weight: 0.5
-    - id: 103
-      weight: 0.4642857
-    - id: 104
-      weight: 0.42857143
-    - id: 105
-      weight: 0.39285713
-    - id: 106
-      weight: 0.071428575
-    - id: 108
-      weight: 0.4642857
-    - id: 92
-      weight: 0.35714287
-    - id: 100
-      weight: 0.32142857
-    - id: 107
-      weight: 0.035714287
-  - surfelId: 02060000030600000406000005060000060600000706000008060000090600000a0600000b0600000c0600000d0600000e0600000f060000100600001106000012060000130600001406000015060000160600001706000018060000190600001a0600001b0600001c0600001d060000
-    influncedProbeIdWeight:
-    - id: 30
-      weight: 0.6785714
-    - id: 31
-      weight: 0.8214286
-    - id: 32
-      weight: 0.8214286
-    - id: 33
-      weight: 0.60714287
-    - id: 51
-      weight: 0.71428573
-    - id: 52
-      weight: 0.8214286
-    - id: 53
-      weight: 0.71428573
-    - id: 73
-      weight: 0.71428573
-    - id: 96
-      weight: 0.6785714
-    - id: 29
-      weight: 0.35714287
-    - id: 74
-      weight: 0.25
-    - id: 87
-      weight: 0.42857143
-    - id: 88
-      weight: 0.42857143
-    - id: 89
-      weight: 0.21428572
-    - id: 90
-      weight: 0.25
-    - id: 91
-      weight: 0.21428572
-    - id: 94
-      weight: 0.42857143
-    - id: 95
-      weight: 0.42857143
-    - id: 97
-      weight: 0.35714287
-    - id: 98
-      weight: 0.21428572
-    - id: 99
-      weight: 0.14285715
-    - id: 102
-      weight: 0.39285713
-    - id: 103
-      weight: 0.4642857
-    - id: 104
-      weight: 0.32142857
-    - id: 105
-      weight: 0.2857143
-    - id: 106
-      weight: 0.17857143
-    - id: 107
-      weight: 0.14285715
-    - id: 84
-      weight: 0.32142857
-    - id: 86
-      weight: 0.2857143
-    - id: 93
-      weight: 0.2857143
-    - id: 101
-      weight: 0.25
-    - id: 108
-      weight: 0.25
-    - id: 50
-      weight: 0.25
-    - id: 72
-      weight: 0.10714286
-    - id: 85
-      weight: 0.14285715
-    - id: 92
-      weight: 0.14285715
-    - id: 100
-      weight: 0.14285715
-  - surfelId: 1e0600001f060000200600002106000022060000230600002406000025060000260600002706000028060000290600002a0600002b0600002c0600002d0600002e0600002f0600003006000031060000320600003306000034060000350600003606000037060000
-    influncedProbeIdWeight:
-    - id: 31
-      weight: 0.6923077
-    - id: 32
-      weight: 0.6923077
-    - id: 33
-      weight: 0.9230769
-    - id: 51
-      weight: 0.42307693
-    - id: 52
-      weight: 0.6923077
-    - id: 53
-      weight: 0.88461536
-    - id: 73
-      weight: 0.34615386
-    - id: 74
-      weight: 0.84615386
-    - id: 97
-      weight: 0.7307692
-    - id: 91
-      weight: 0.3846154
-    - id: 96
-      weight: 0.3846154
-    - id: 98
-      weight: 0.3846154
-    - id: 99
-      weight: 0.23076923
-    - id: 106
-      weight: 0.3846154
-    - id: 107
-      weight: 0.1923077
-    - id: 30
-      weight: 0.3846154
-    - id: 50
-      weight: 0.30769232
-    - id: 90
-      weight: 0.23076923
-    - id: 104
-      weight: 0.30769232
-    - id: 105
-      weight: 0.34615386
-    - id: 29
-      weight: 0.34615386
-    - id: 88
-      weight: 0.23076923
-    - id: 89
-      weight: 0.26923078
-    - id: 95
-      weight: 0.23076923
-    - id: 103
-      weight: 0.1923077
-    - id: 85
-      weight: 0.15384616
-    - id: 87
-      weight: 0.15384616
-    - id: 92
-      weight: 0.15384616
-    - id: 94
-      weight: 0.15384616
-    - id: 100
-      weight: 0.15384616
-    - id: 102
-      weight: 0.15384616
-    - id: 72
-      weight: 0.07692308
-  - surfelId: 38060000390600003a0600003b0600003c0600003d0600003e0600003f060000400600004106000042060000430600004406000045060000460600004706000048060000490600004a0600004b060000
-    influncedProbeIdWeight:
-    - id: 29
-      weight: 0.2
-    - id: 30
-      weight: 0.2
-    - id: 31
-      weight: 0.2
-    - id: 32
-      weight: 0.15
-    - id: 50
-      weight: 0.2
-    - id: 51
-      weight: 0.2
-    - id: 52
-      weight: 0.2
-    - id: 53
-      weight: 0.15
-    - id: 70
-      weight: 0.2
-    - id: 71
-      weight: 0.2
-    - id: 72
-      weight: 0.2
-    - id: 73
-      weight: 0.2
-    - id: 74
-      weight: 0.2
-    - id: 97
-      weight: 0.05
-    - id: 99
-      weight: 0.6
-    - id: 107
-      weight: 0.55
-    - id: 90
-      weight: 0.05
-    - id: 98
-      weight: 0.4
-    - id: 91
-      weight: 0.05
-    - id: 106
-      weight: 0.2
-  - surfelId: 4c0600004d0600004e0600004f060000500600005106000052060000530600005406000055060000560600005706000058060000590600005a0600005b060000
-    influncedProbeIdWeight:
-    - id: 69
-      weight: 0.0625
-    - id: 76
-      weight: 0.0625
-    - id: 92
-      weight: 0.375
-    - id: 100
-      weight: 0.4375
-    - id: 83
-      weight: 0.1875
-    - id: 70
-      weight: 0.0625
-    - id: 71
-      weight: 0.0625
-    - id: 108
-      weight: 0.5
-    - id: 37
-      weight: 0.1875
-    - id: 57
-      weight: 0.1875
-    - id: 38
-      weight: 0.1875
-    - id: 85
-      weight: 0.0625
-    - id: 86
-      weight: 0.0625
-    - id: 87
-      weight: 0.0625
-    - id: 93
-      weight: 0.25
-    - id: 94
-      weight: 0.3125
-    - id: 101
-      weight: 0.25
-    - id: 102
-      weight: 0.3125
-    - id: 84
-      weight: 0.1875
-    - id: 95
-      weight: 0.125
-    - id: 99
-      weight: 0.0625
-    - id: 103
-      weight: 0.125
-    - id: 107
-      weight: 0.0625
-    - id: 15
-      weight: 0.0625
-    - id: 16
-      weight: 0.0625
-    - id: 35
-      weight: 0.25
-    - id: 36
-      weight: 0.25
-    - id: 55
-      weight: 0.25
-    - id: 56
-      weight: 0.25
-    - id: 77
-      weight: 0.25
-    - id: 104
-      weight: 0.0625
-    - id: 14
-      weight: 0.0625
-    - id: 59
-      weight: 0.0625
-    - id: 60
-      weight: 0.0625
-    - id: 82
-      weight: 0.0625
-    - id: 105
-      weight: 0.0625
-    - id: 106
-      weight: 0.0625
-    - id: 7
-      weight: 0.0625
-    - id: 28
-      weight: 0.0625
-    - id: 48
-      weight: 0.0625
-    - id: 96
-      weight: 0.0625
-    - id: 97
-      weight: 0.0625
-  - surfelId: 5c0600005d0600005e0600005f06000060060000610600006206000063060000640600006506000066060000
-    influncedProbeIdWeight:
-    - id: 70
-      weight: 0.09090909
-    - id: 83
-      weight: 0.27272728
-    - id: 108
-      weight: 0.90909094
-    - id: 71
-      weight: 0.18181819
-    - id: 72
-      weight: 0.09090909
-    - id: 84
-      weight: 0.36363637
-    - id: 89
-      weight: 0.09090909
-    - id: 90
-      weight: 0.09090909
-    - id: 91
-      weight: 0.09090909
-    - id: 92
-      weight: 0.27272728
-    - id: 93
-      weight: 0.36363637
-    - id: 94
-      weight: 0.36363637
-    - id: 95
-      weight: 0.36363637
-    - id: 96
-      weight: 0.27272728
-    - id: 97
-      weight: 0.09090909
-    - id: 98
-      weight: 0.09090909
-    - id: 100
-      weight: 0.27272728
-    - id: 101
-      weight: 0.36363637
-    - id: 102
-      weight: 0.36363637
-    - id: 103
-      weight: 0.36363637
-    - id: 104
-      weight: 0.27272728
-    - id: 105
-      weight: 0.09090909
-    - id: 106
-      weight: 0.09090909
-    - id: 85
-      weight: 0.09090909
-  - surfelId: 6706000068060000690600006a0600006b0600006c0600006d0600006e060000
-    influncedProbeIdWeight:
-    - id: 71
-      weight: 0.125
-    - id: 72
-      weight: 0.25
-    - id: 88
-      weight: 0.125
-    - id: 73
-      weight: 0.125
-    - id: 84
-      weight: 0.5
-    - id: 90
-      weight: 0.125
-    - id: 91
-      weight: 0.125
-    - id: 93
-      weight: 0.375
-    - id: 94
-      weight: 0.5
-    - id: 95
-      weight: 0.5
-    - id: 96
-      weight: 0.5
-    - id: 97
-      weight: 0.375
-    - id: 98
-      weight: 0.125
-    - id: 99
-      weight: 0.125
-    - id: 101
-      weight: 0.375
-    - id: 102
-      weight: 0.5
-    - id: 103
-      weight: 0.5
-    - id: 104
-      weight: 0.5
-    - id: 105
-      weight: 0.375
-    - id: 106
-      weight: 0.125
-    - id: 107
-      weight: 0.125
-    - id: 108
-      weight: 0.375
-    - id: 85
-      weight: 0.125
-    - id: 86
-      weight: 0.125
-    - id: 92
-      weight: 0.125
-    - id: 100
-      weight: 0.125
-  - surfelId: 6f0600007006000071060000720600007306000074060000
-    influncedProbeIdWeight:
-    - id: 74
-      weight: 0.16666667
-    - id: 84
-      weight: 0.5
-    - id: 91
-      weight: 0.16666667
-    - id: 94
-      weight: 0.5
-    - id: 95
-      weight: 0.6666667
-    - id: 96
-      weight: 0.5
-    - id: 97
-      weight: 0.33333334
-    - id: 98
-      weight: 0.16666667
-    - id: 99
-      weight: 0.16666667
-    - id: 102
-      weight: 0.5
-    - id: 103
-      weight: 0.6666667
-    - id: 104
-      weight: 0.6666667
-    - id: 105
-      weight: 0.5
-    - id: 106
-      weight: 0.16666667
-    - id: 107
-      weight: 0.16666667
-    - id: 85
-      weight: 0.16666667
-    - id: 86
-      weight: 0.16666667
-    - id: 87
-      weight: 0.33333334
-    - id: 92
-      weight: 0.16666667
-    - id: 93
-      weight: 0.16666667
-    - id: 100
-      weight: 0.16666667
-    - id: 101
-      weight: 0.16666667
-    - id: 108
-      weight: 0.16666667
-    - id: 88
-      weight: 0.16666667
-  - surfelId: 75060000760600007706000078060000790600007a060000
-    influncedProbeIdWeight:
-    - id: 73
-      weight: 0.16666667
-    - id: 98
-      weight: 0.5
-    - id: 99
-      weight: 0.16666667
-    - id: 104
-      weight: 0.5
-    - id: 105
-      weight: 0.6666667
-    - id: 106
-      weight: 0.5
-    - id: 107
-      weight: 0.16666667
-    - id: 97
-      weight: 0.5
-    - id: 96
-      weight: 0.33333334
-    - id: 85
-      weight: 0.16666667
-    - id: 87
-      weight: 0.16666667
-    - id: 88
-      weight: 0.16666667
-    - id: 92
-      weight: 0.16666667
-    - id: 94
-      weight: 0.16666667
-    - id: 95
-      weight: 0.16666667
-    - id: 100
-      weight: 0.16666667
-    - id: 102
-      weight: 0.16666667
-    - id: 103
-      weight: 0.16666667
-    - id: 108
-      weight: 0.16666667
-    - id: 91
-      weight: 0.16666667
-  - surfelId: 7b0600007c0600007d0600007e0600007f060000
-    influncedProbeIdWeight:
-    - id: 74
-      weight: 0.2
-    - id: 99
-      weight: 0.6
-    - id: 107
-      weight: 0.6
-    - id: 106
-      weight: 0.4
-    - id: 98
-      weight: 0.2
+  - surfelPtr: 0
+    surfelCount: 0
+  - surfelPtr: 38
+    surfelCount: 38
+  - surfelPtr: 77
+    surfelCount: 77
+  - surfelPtr: 122
+    surfelCount: 122
+  - surfelPtr: 165
+    surfelCount: 165
+  - surfelPtr: 204
+    surfelCount: 204
+  - surfelPtr: 220
+    surfelCount: 220
+  - surfelPtr: 259
+    surfelCount: 259
+  - surfelPtr: 289
+    surfelCount: 289
+  - surfelPtr: 323
+    surfelCount: 323
+  - surfelPtr: 354
+    surfelCount: 354
+  - surfelPtr: 383
+    surfelCount: 383
+  - surfelPtr: 413
+    surfelCount: 413
+  - surfelPtr: 429
+    surfelCount: 429
+  - surfelPtr: 445
+    surfelCount: 445
+  - surfelPtr: 461
+    surfelCount: 461
+  - surfelPtr: 474
+    surfelCount: 474
+  - surfelPtr: 487
+    surfelCount: 487
+  - surfelPtr: 495
+    surfelCount: 495
+  - surfelPtr: 530
+    surfelCount: 530
+  - surfelPtr: 566
+    surfelCount: 566
+  - surfelPtr: 611
+    surfelCount: 611
+  - surfelPtr: 653
+    surfelCount: 653
+  - surfelPtr: 690
+    surfelCount: 690
+  - surfelPtr: 710
+    surfelCount: 710
+  - surfelPtr: 742
+    surfelCount: 742
+  - surfelPtr: 762
+    surfelCount: 762
+  - surfelPtr: 780
+    surfelCount: 780
+  - surfelPtr: 798
+    surfelCount: 798
+  - surfelPtr: 811
+    surfelCount: 811
+  - surfelPtr: 843
+    surfelCount: 843
+  - surfelPtr: 858
+    surfelCount: 858
+  - surfelPtr: 874
+    surfelCount: 874
+  - surfelPtr: 886
+    surfelCount: 886
+  - surfelPtr: 896
+    surfelCount: 896
+  - surfelPtr: 906
+    surfelCount: 906
+  - surfelPtr: 910
+    surfelCount: 910
+  - surfelPtr: 944
+    surfelCount: 944
+  - surfelPtr: 981
+    surfelCount: 981
+  - surfelPtr: 1024
+    surfelCount: 1024
+  - surfelPtr: 1063
+    surfelCount: 1063
+  - surfelPtr: 1096
+    surfelCount: 1096
+  - surfelPtr: 1117
+    surfelCount: 1117
+  - surfelPtr: 1149
+    surfelCount: 1149
+  - surfelPtr: 1170
+    surfelCount: 1170
+  - surfelPtr: 1194
+    surfelCount: 1194
+  - surfelPtr: 1215
+    surfelCount: 1215
+  - surfelPtr: 1235
+    surfelCount: 1235
+  - surfelPtr: 1267
+    surfelCount: 1267
+  - surfelPtr: 1283
+    surfelCount: 1283
+  - surfelPtr: 1299
+    surfelCount: 1299
+  - surfelPtr: 1315
+    surfelCount: 1315
+  - surfelPtr: 1325
+    surfelCount: 1325
+  - surfelPtr: 1335
+    surfelCount: 1335
+  - surfelPtr: 1341
+    surfelCount: 1341
+  - surfelPtr: 1367
+    surfelCount: 1367
+  - surfelPtr: 1387
+    surfelCount: 1387
+  - surfelPtr: 1407
+    surfelCount: 1407
+  - surfelPtr: 1427
+    surfelCount: 1427
+  - surfelPtr: 1447
+    surfelCount: 1447
+  - surfelPtr: 1458
+    surfelCount: 1458
+  - surfelPtr: 1484
+    surfelCount: 1484
+  - surfelPtr: 1510
+    surfelCount: 1510
+  - surfelPtr: 1538
+    surfelCount: 1538
+  - surfelPtr: 1566
+    surfelCount: 1566
+  - surfelPtr: 1592
+    surfelCount: 1592
+  - surfelPtr: 1612
+    surfelCount: 1612
+  - surfelPtr: 1628
+    surfelCount: 1628
+  - surfelPtr: 1639
+    surfelCount: 1639
+  - surfelPtr: 1647
+    surfelCount: 1647
+  - surfelPtr: 1653
+    surfelCount: 1653
+  - surfelPtr: 1659
+    surfelCount: 1659
+  influncedGroupIdWeight:
+  - id: 0
+    weight: 0.21052632
+  - id: 1
+    weight: 0.12820514
+  - id: 2
+    weight: 0.17777778
+  - id: 3
+    weight: 0.13953489
+  - id: 4
+    weight: 0.07692308
+  - id: 5
+    weight: 0.1875
+  - id: 6
+    weight: 0.43589744
+  - id: 7
+    weight: 0.53333336
+  - id: 8
+    weight: 0.47058824
+  - id: 9
+    weight: 0.2580645
+  - id: 10
+    weight: 0.13793103
+  - id: 11
+    weight: 0.13333334
+  - id: 12
+    weight: 0.1875
+  - id: 13
+    weight: 0.1875
+  - id: 15
+    weight: 0.15384616
+  - id: 16
+    weight: 0.07692308
+  - id: 17
+    weight: 0.125
+  - id: 20
+    weight: 0.08888889
+  - id: 36
+    weight: 0.0882353
+  - id: 37
+    weight: 0.10810811
+  - id: 38
+    weight: 0.13953489
+  - id: 54
+    weight: 0.03846154
+  - id: 0
+    weight: 0.21052632
+  - id: 1
+    weight: 0.20512821
+  - id: 2
+    weight: 0.11111111
+  - id: 3
+    weight: 0.18604651
+  - id: 4
+    weight: 0.15384616
+  - id: 5
+    weight: 0.1875
+  - id: 6
+    weight: 0.41025642
+  - id: 7
+    weight: 0.53333336
+  - id: 8
+    weight: 0.47058824
+  - id: 9
+    weight: 0.516129
+  - id: 10
+    weight: 0.27586207
+  - id: 11
+    weight: 0.13333334
+  - id: 12
+    weight: 0.1875
+  - id: 13
+    weight: 0.25
+  - id: 14
+    weight: 0.1875
+  - id: 16
+    weight: 0.15384616
+  - id: 17
+    weight: 0.125
+  - id: 21
+    weight: 0.0952381
+  - id: 36
+    weight: 0.0882353
+  - id: 37
+    weight: 0.10810811
+  - id: 38
+    weight: 0.093023255
+  - id: 39
+    weight: 0.15384616
+  - id: 54
+    weight: 0.03846154
+  - id: 0
+    weight: 0.21052632
+  - id: 1
+    weight: 0.20512821
+  - id: 2
+    weight: 0.17777778
+  - id: 3
+    weight: 0.11627907
+  - id: 4
+    weight: 0.20512821
+  - id: 5
+    weight: 0.1875
+  - id: 6
+    weight: 0.41025642
+  - id: 7
+    weight: 0.53333336
+  - id: 8
+    weight: 0.47058824
+  - id: 9
+    weight: 0.516129
+  - id: 10
+    weight: 0.55172414
+  - id: 11
+    weight: 0.13333334
+  - id: 12
+    weight: 0.25
+  - id: 13
+    weight: 0.25
+  - id: 14
+    weight: 0.25
+  - id: 15
+    weight: 0.23076923
+  - id: 17
+    weight: 0.125
+  - id: 22
+    weight: 0.10810811
+  - id: 36
+    weight: 0.0882353
+  - id: 37
+    weight: 0.10810811
+  - id: 38
+    weight: 0.093023255
+  - id: 39
+    weight: 0.102564104
+  - id: 40
+    weight: 0.18181819
+  - id: 54
+    weight: 0.03846154
+  - id: 0
+    weight: 0.13157895
+  - id: 1
+    weight: 0.20512821
+  - id: 2
+    weight: 0.17777778
+  - id: 3
+    weight: 0.18604651
+  - id: 4
+    weight: 0.12820514
+  - id: 5
+    weight: 0.125
+  - id: 6
+    weight: 0.41025642
+  - id: 7
+    weight: 0.53333336
+  - id: 8
+    weight: 0.47058824
+  - id: 9
+    weight: 0.516129
+  - id: 10
+    weight: 0.55172414
+  - id: 11
+    weight: 0.26666668
+  - id: 12
+    weight: 0.1875
+  - id: 13
+    weight: 0.25
+  - id: 14
+    weight: 0.25
+  - id: 15
+    weight: 0.30769232
+  - id: 16
+    weight: 0.23076923
+  - id: 36
+    weight: 0.11764706
+  - id: 37
+    weight: 0.10810811
+  - id: 38
+    weight: 0.093023255
+  - id: 39
+    weight: 0.102564104
+  - id: 40
+    weight: 0.121212125
+  - id: 41
+    weight: 0.0952381
+  - id: 0
+    weight: 0.18421052
+  - id: 1
+    weight: 0.12820514
+  - id: 2
+    weight: 0.17777778
+  - id: 3
+    weight: 0.18604651
+  - id: 4
+    weight: 0.20512821
+  - id: 5
+    weight: 0.1875
+  - id: 6
+    weight: 0.30769232
+  - id: 7
+    weight: 0.53333336
+  - id: 8
+    weight: 0.47058824
+  - id: 9
+    weight: 0.516129
+  - id: 10
+    weight: 0.55172414
+  - id: 11
+    weight: 0.26666668
+  - id: 13
+    weight: 0.1875
+  - id: 14
+    weight: 0.25
+  - id: 15
+    weight: 0.30769232
+  - id: 16
+    weight: 0.30769232
+  - id: 17
+    weight: 0.25
+  - id: 18
+    weight: 0.114285715
+  - id: 36
+    weight: 0.1764706
+  - id: 37
+    weight: 0.10810811
+  - id: 38
+    weight: 0.093023255
+  - id: 39
+    weight: 0.102564104
+  - id: 40
+    weight: 0.121212125
+  - id: 41
+    weight: 0.0952381
+  - id: 0
+    weight: 0.15789473
+  - id: 1
+    weight: 0.20512821
+  - id: 2
+    weight: 0.11111111
+  - id: 3
+    weight: 0.18604651
+  - id: 4
+    weight: 0.20512821
+  - id: 5
+    weight: 0.25
+  - id: 6
+    weight: 0.20512821
+  - id: 7
+    weight: 0.53333336
+  - id: 8
+    weight: 0.47058824
+  - id: 9
+    weight: 0.516129
+  - id: 10
+    weight: 0.55172414
+  - id: 11
+    weight: 0.26666668
+  - id: 12
+    weight: 0.125
+  - id: 14
+    weight: 0.1875
+  - id: 15
+    weight: 0.30769232
+  - id: 16
+    weight: 0.30769232
+  - id: 17
+    weight: 0.25
+  - id: 19
+    weight: 0.11111111
+  - id: 37
+    weight: 0.16216215
+  - id: 38
+    weight: 0.093023255
+  - id: 39
+    weight: 0.102564104
+  - id: 40
+    weight: 0.121212125
+  - id: 41
+    weight: 0.0952381
+  - id: 0
+    weight: 0.078947365
+  - id: 1
+    weight: 0.15384616
+  - id: 2
+    weight: 0.17777778
+  - id: 3
+    weight: 0.11627907
+  - id: 4
+    weight: 0.20512821
+  - id: 5
+    weight: 0.25
+  - id: 6
+    weight: 0.102564104
+  - id: 7
+    weight: 0.26666668
+  - id: 8
+    weight: 0.47058824
+  - id: 9
+    weight: 0.516129
+  - id: 10
+    weight: 0.55172414
+  - id: 11
+    weight: 0.26666668
+  - id: 12
+    weight: 0.0625
+  - id: 13
+    weight: 0.125
+  - id: 15
+    weight: 0.23076923
+  - id: 16
+    weight: 0.30769232
+  - id: 17
+    weight: 0.25
+  - id: 20
+    weight: 0.08888889
+  - id: 38
+    weight: 0.13953489
+  - id: 39
+    weight: 0.102564104
+  - id: 40
+    weight: 0.121212125
+  - id: 41
+    weight: 0.0952381
+  - id: 0
+    weight: 0.36842105
+  - id: 1
+    weight: 0.23076923
+  - id: 2
+    weight: 0.17777778
+  - id: 3
+    weight: 0.13953489
+  - id: 4
+    weight: 0.07692308
+  - id: 5
+    weight: 0.125
+  - id: 6
+    weight: 0.43589744
+  - id: 7
+    weight: 0.53333336
+  - id: 8
+    weight: 0.47058824
+  - id: 9
+    weight: 0.2580645
+  - id: 10
+    weight: 0.13793103
+  - id: 11
+    weight: 0.13333334
+  - id: 12
+    weight: 0.375
+  - id: 13
+    weight: 0.0625
+  - id: 15
+    weight: 0.15384616
+  - id: 16
+    weight: 0.07692308
+  - id: 17
+    weight: 0.125
+  - id: 54
+    weight: 0.03846154
+  - id: 66
+    weight: 0.0625
+  - id: 0
+    weight: 0.2631579
+  - id: 1
+    weight: 0.30769232
+  - id: 2
+    weight: 0.2
+  - id: 3
+    weight: 0.18604651
+  - id: 4
+    weight: 0.15384616
+  - id: 5
+    weight: 0.1875
+  - id: 6
+    weight: 0.41025642
+  - id: 7
+    weight: 0.53333336
+  - id: 8
+    weight: 0.47058824
+  - id: 9
+    weight: 0.516129
+  - id: 10
+    weight: 0.27586207
+  - id: 11
+    weight: 0.13333334
+  - id: 12
+    weight: 0.1875
+  - id: 13
+    weight: 0.25
+  - id: 14
+    weight: 0.0625
+  - id: 16
+    weight: 0.15384616
+  - id: 17
+    weight: 0.125
+  - id: 0
+    weight: 0.28947368
+  - id: 1
+    weight: 0.30769232
+  - id: 2
+    weight: 0.26666668
+  - id: 3
+    weight: 0.20930232
+  - id: 4
+    weight: 0.20512821
+  - id: 5
+    weight: 0.1875
+  - id: 6
+    weight: 0.41025642
+  - id: 7
+    weight: 0.53333336
+  - id: 8
+    weight: 0.47058824
+  - id: 9
+    weight: 0.516129
+  - id: 10
+    weight: 0.55172414
+  - id: 11
+    weight: 0.13333334
+  - id: 12
+    weight: 0.25
+  - id: 13
+    weight: 0.25
+  - id: 14
+    weight: 0.25
+  - id: 15
+    weight: 0.15384616
+  - id: 17
+    weight: 0.125
+  - id: 0
+    weight: 0.21052632
+  - id: 1
+    weight: 0.30769232
+  - id: 2
+    weight: 0.26666668
+  - id: 3
+    weight: 0.27906978
+  - id: 4
+    weight: 0.23076923
+  - id: 5
+    weight: 0.25
+  - id: 6
+    weight: 0.41025642
+  - id: 7
+    weight: 0.53333336
+  - id: 8
+    weight: 0.47058824
+  - id: 9
+    weight: 0.516129
+  - id: 10
+    weight: 0.55172414
+  - id: 11
+    weight: 0.26666668
+  - id: 12
+    weight: 0.125
+  - id: 13
+    weight: 0.25
+  - id: 14
+    weight: 0.25
+  - id: 15
+    weight: 0.30769232
+  - id: 16
+    weight: 0.15384616
+  - id: 0
+    weight: 0.15789473
+  - id: 1
+    weight: 0.23076923
+  - id: 2
+    weight: 0.26666668
+  - id: 3
+    weight: 0.27906978
+  - id: 4
+    weight: 0.30769232
+  - id: 5
+    weight: 0.3125
+  - id: 6
+    weight: 0.30769232
+  - id: 7
+    weight: 0.53333336
+  - id: 8
+    weight: 0.47058824
+  - id: 9
+    weight: 0.516129
+  - id: 10
+    weight: 0.55172414
+  - id: 11
+    weight: 0.26666668
+  - id: 13
+    weight: 0.125
+  - id: 14
+    weight: 0.25
+  - id: 15
+    weight: 0.30769232
+  - id: 16
+    weight: 0.30769232
+  - id: 17
+    weight: 0.125
+  - id: 0
+    weight: 0.13157895
+  - id: 1
+    weight: 0.20512821
+  - id: 2
+    weight: 0.2
+  - id: 3
+    weight: 0.27906978
+  - id: 4
+    weight: 0.30769232
+  - id: 5
+    weight: 0.375
+  - id: 6
+    weight: 0.20512821
+  - id: 7
+    weight: 0.53333336
+  - id: 8
+    weight: 0.47058824
+  - id: 9
+    weight: 0.516129
+  - id: 10
+    weight: 0.55172414
+  - id: 11
+    weight: 0.26666668
+  - id: 12
+    weight: 0.125
+  - id: 14
+    weight: 0.125
+  - id: 15
+    weight: 0.30769232
+  - id: 16
+    weight: 0.30769232
+  - id: 17
+    weight: 0.25
+  - id: 0
+    weight: 0.078947365
+  - id: 1
+    weight: 0.15384616
+  - id: 2
+    weight: 0.17777778
+  - id: 3
+    weight: 0.20930232
+  - id: 4
+    weight: 0.30769232
+  - id: 5
+    weight: 0.375
+  - id: 6
+    weight: 0.102564104
+  - id: 7
+    weight: 0.26666668
+  - id: 8
+    weight: 0.47058824
+  - id: 9
+    weight: 0.516129
+  - id: 10
+    weight: 0.55172414
+  - id: 11
+    weight: 0.26666668
+  - id: 12
+    weight: 0.0625
+  - id: 13
+    weight: 0.125
+  - id: 15
+    weight: 0.15384616
+  - id: 16
+    weight: 0.30769232
+  - id: 17
+    weight: 0.25
+  - id: 0
+    weight: 0.18421052
+  - id: 1
+    weight: 0.20512821
+  - id: 2
+    weight: 0.17777778
+  - id: 3
+    weight: 0.1627907
+  - id: 4
+    weight: 0.102564104
+  - id: 5
+    weight: 0.1875
+  - id: 6
+    weight: 0.41025642
+  - id: 7
+    weight: 0.53333336
+  - id: 8
+    weight: 0.47058824
+  - id: 9
+    weight: 0.2580645
+  - id: 10
+    weight: 0.13793103
+  - id: 11
+    weight: 0.13333334
+  - id: 12
+    weight: 0.3125
+  - id: 13
+    weight: 0.0625
+  - id: 15
+    weight: 0.15384616
+  - id: 16
+    weight: 0.07692308
+  - id: 17
+    weight: 0.125
+  - id: 66
+    weight: 0.0625
+  - id: 0
+    weight: 0.18421052
+  - id: 1
+    weight: 0.20512821
+  - id: 2
+    weight: 0.17777778
+  - id: 3
+    weight: 0.18604651
+  - id: 4
+    weight: 0.17948718
+  - id: 5
+    weight: 0.1875
+  - id: 6
+    weight: 0.41025642
+  - id: 7
+    weight: 0.53333336
+  - id: 8
+    weight: 0.47058824
+  - id: 9
+    weight: 0.516129
+  - id: 10
+    weight: 0.27586207
+  - id: 11
+    weight: 0.13333334
+  - id: 12
+    weight: 0.1875
+  - id: 13
+    weight: 0.25
+  - id: 14
+    weight: 0.0625
+  - id: 16
+    weight: 0.15384616
+  - id: 17
+    weight: 0.125
+  - id: 66
+    weight: 0.0625
+  - id: 0
+    weight: 0.18421052
+  - id: 1
+    weight: 0.20512821
+  - id: 2
+    weight: 0.17777778
+  - id: 3
+    weight: 0.18604651
+  - id: 4
+    weight: 0.20512821
+  - id: 5
+    weight: 0.1875
+  - id: 6
+    weight: 0.41025642
+  - id: 7
+    weight: 0.53333336
+  - id: 8
+    weight: 0.47058824
+  - id: 9
+    weight: 0.516129
+  - id: 10
+    weight: 0.55172414
+  - id: 11
+    weight: 0.13333334
+  - id: 12
+    weight: 0.25
+  - id: 13
+    weight: 0.25
+  - id: 14
+    weight: 0.25
+  - id: 15
+    weight: 0.07692308
+  - id: 17
+    weight: 0.125
+  - id: 66
+    weight: 0.0625
+  - id: 0
+    weight: 0.18421052
+  - id: 1
+    weight: 0.20512821
+  - id: 2
+    weight: 0.17777778
+  - id: 3
+    weight: 0.18604651
+  - id: 4
+    weight: 0.20512821
+  - id: 5
+    weight: 0.25
+  - id: 6
+    weight: 0.41025642
+  - id: 7
+    weight: 0.53333336
+  - id: 8
+    weight: 0.47058824
+  - id: 9
+    weight: 0.516129
+  - id: 10
+    weight: 0.55172414
+  - id: 11
+    weight: 0.26666668
+  - id: 12
+    weight: 0.0625
+  - id: 13
+    weight: 0.25
+  - id: 14
+    weight: 0.25
+  - id: 15
+    weight: 0.30769232
+  - id: 16
+    weight: 0.07692308
+  - id: 0
+    weight: 0.15789473
+  - id: 1
+    weight: 0.20512821
+  - id: 2
+    weight: 0.17777778
+  - id: 3
+    weight: 0.18604651
+  - id: 4
+    weight: 0.20512821
+  - id: 5
+    weight: 0.25
+  - id: 6
+    weight: 0.30769232
+  - id: 7
+    weight: 0.53333336
+  - id: 8
+    weight: 0.47058824
+  - id: 9
+    weight: 0.516129
+  - id: 10
+    weight: 0.55172414
+  - id: 11
+    weight: 0.26666668
+  - id: 13
+    weight: 0.0625
+  - id: 14
+    weight: 0.25
+  - id: 15
+    weight: 0.30769232
+  - id: 16
+    weight: 0.30769232
+  - id: 17
+    weight: 0.125
+  - id: 0
+    weight: 0.15789473
+  - id: 1
+    weight: 0.20512821
+  - id: 2
+    weight: 0.17777778
+  - id: 3
+    weight: 0.18604651
+  - id: 4
+    weight: 0.20512821
+  - id: 5
+    weight: 0.25
+  - id: 6
+    weight: 0.20512821
+  - id: 7
+    weight: 0.53333336
+  - id: 8
+    weight: 0.47058824
+  - id: 9
+    weight: 0.516129
+  - id: 10
+    weight: 0.55172414
+  - id: 11
+    weight: 0.26666668
+  - id: 12
+    weight: 0.125
+  - id: 14
+    weight: 0.0625
+  - id: 15
+    weight: 0.30769232
+  - id: 16
+    weight: 0.30769232
+  - id: 17
+    weight: 0.25
+  - id: 0
+    weight: 0.10526316
+  - id: 1
+    weight: 0.17948718
+  - id: 2
+    weight: 0.17777778
+  - id: 3
+    weight: 0.18604651
+  - id: 4
+    weight: 0.20512821
+  - id: 5
+    weight: 0.25
+  - id: 6
+    weight: 0.102564104
+  - id: 7
+    weight: 0.26666668
+  - id: 8
+    weight: 0.47058824
+  - id: 9
+    weight: 0.516129
+  - id: 10
+    weight: 0.55172414
+  - id: 11
+    weight: 0.26666668
+  - id: 12
+    weight: 0.0625
+  - id: 13
+    weight: 0.125
+  - id: 15
+    weight: 0.07692308
+  - id: 16
+    weight: 0.30769232
+  - id: 17
+    weight: 0.25
+  - id: 0
+    weight: 0.10526316
+  - id: 2
+    weight: 0.08888889
+  - id: 6
+    weight: 0.25641027
+  - id: 18
+    weight: 0.057142857
+  - id: 20
+    weight: 0.08888889
+  - id: 24
+    weight: 0.09375
+  - id: 38
+    weight: 0.093023255
+  - id: 54
+    weight: 0.15384616
+  - id: 56
+    weight: 0.05
+  - id: 3
+    weight: 0.093023255
+  - id: 21
+    weight: 0.0952381
+  - id: 39
+    weight: 0.102564104
+  - id: 54
+    weight: 0.15384616
+  - id: 57
+    weight: 0.05
+  - id: 4
+    weight: 0.102564104
+  - id: 22
+    weight: 0.10810811
+  - id: 40
+    weight: 0.121212125
+  - id: 54
+    weight: 0.15384616
+  - id: 58
+    weight: 0.05
+  - id: 54
+    weight: 0.15384616
+  - id: 0
+    weight: 0.10526316
+  - id: 18
+    weight: 0.114285715
+  - id: 36
+    weight: 0.11764706
+  - id: 54
+    weight: 0.03846154
+  - id: 1
+    weight: 0.102564104
+  - id: 19
+    weight: 0.11111111
+  - id: 37
+    weight: 0.10810811
+  - id: 55
+    weight: 0.05
+  - id: 2
+    weight: 0.08888889
+  - id: 20
+    weight: 0.08888889
+  - id: 38
+    weight: 0.093023255
+  - id: 56
+    weight: 0.05
+  - id: 0
+    weight: 0.28947368
+  - id: 6
+    weight: 0.43589744
+  - id: 12
+    weight: 0.1875
+  - id: 18
+    weight: 0.22857143
+  - id: 24
+    weight: 0.28125
+  - id: 30
+    weight: 0.2
+  - id: 54
+    weight: 0.07692308
+  - id: 66
+    weight: 0.0625
+  - id: 0
+    weight: 0.18421052
+  - id: 1
+    weight: 0.30769232
+  - id: 2
+    weight: 0.26666668
+  - id: 5
+    weight: 0.0625
+  - id: 6
+    weight: 0.53846157
+  - id: 7
+    weight: 0.13333334
+  - id: 8
+    weight: 0.2647059
+  - id: 11
+    weight: 0.4
+  - id: 12
+    weight: 0.1875
+  - id: 13
+    weight: 0.1875
+  - id: 18
+    weight: 0.08571429
+  - id: 19
+    weight: 0.3611111
+  - id: 20
+    weight: 0.31111112
+  - id: 21
+    weight: 0.04761905
+  - id: 22
+    weight: 0.10810811
+  - id: 23
+    weight: 0.15
+  - id: 24
+    weight: 0.125
+  - id: 26
+    weight: 0.22222222
+  - id: 29
+    weight: 0.4375
+  - id: 30
+    weight: 0.06666667
+  - id: 31
+    weight: 0.125
+  - id: 37
+    weight: 0.027027028
+  - id: 38
+    weight: 0.18604651
+  - id: 39
+    weight: 0.051282052
+  - id: 40
+    weight: 0.060606062
+  - id: 41
+    weight: 0.1904762
+  - id: 44
+    weight: 0.41666666
+  - id: 47
+    weight: 0.4375
+  - id: 56
+    weight: 0.05
+  - id: 59
+    weight: 0.09090909
+  - id: 60
+    weight: 0.115384616
+  - id: 61
+    weight: 0.1923077
+  - id: 62
+    weight: 0.14285715
+  - id: 63
+    weight: 0.35714287
+  - id: 64
+    weight: 0.34615386
+  - id: 65
+    weight: 0.2
+  - id: 0
+    weight: 0.31578946
+  - id: 1
+    weight: 0.43589744
+  - id: 2
+    weight: 0.26666668
+  - id: 3
+    weight: 0.11627907
+  - id: 5
+    weight: 0.0625
+  - id: 6
+    weight: 0.4871795
+  - id: 7
+    weight: 0.8
+  - id: 8
+    weight: 0.38235295
+  - id: 11
+    weight: 0.4
+  - id: 12
+    weight: 0.1875
+  - id: 13
+    weight: 0.375
+  - id: 14
+    weight: 0.1875
+  - id: 18
+    weight: 0.37142858
+  - id: 19
+    weight: 0.4722222
+  - id: 20
+    weight: 0.24444444
+  - id: 21
+    weight: 0.14285715
+  - id: 22
+    weight: 0.027027028
+  - id: 23
+    weight: 0.1
+  - id: 24
+    weight: 0.4375
+  - id: 25
+    weight: 0.2
+  - id: 26
+    weight: 0.22222222
+  - id: 29
+    weight: 0.46875
+  - id: 30
+    weight: 0.13333334
+  - id: 31
+    weight: 0.125
+  - id: 32
+    weight: 0.16666667
+  - id: 36
+    weight: 0.3529412
+  - id: 37
+    weight: 0.35135135
+  - id: 38
+    weight: 0.18604651
+  - id: 39
+    weight: 0.07692308
+  - id: 41
+    weight: 0.1904762
+  - id: 42
+    weight: 0.25
+  - id: 44
+    weight: 0.41666666
+  - id: 47
+    weight: 0.4375
+  - id: 54
+    weight: 0.07692308
+  - id: 55
+    weight: 0.15
+  - id: 56
+    weight: 0.1
+  - id: 57
+    weight: 0.15
+  - id: 58
+    weight: 0.05
+  - id: 59
+    weight: 0.09090909
+  - id: 60
+    weight: 0.5
+  - id: 61
+    weight: 0.7307692
+  - id: 62
+    weight: 0.64285713
+  - id: 63
+    weight: 0.6785714
+  - id: 64
+    weight: 0.3846154
+  - id: 65
+    weight: 0.2
+  - id: 0
+    weight: 0.31578946
+  - id: 1
+    weight: 0.23076923
+  - id: 2
+    weight: 0.33333334
+  - id: 3
+    weight: 0.18604651
+  - id: 4
+    weight: 0.102564104
+  - id: 5
+    weight: 0.125
+  - id: 6
+    weight: 0.3846154
+  - id: 7
+    weight: 0.13333334
+  - id: 8
+    weight: 0.88235295
+  - id: 11
+    weight: 0.4
+  - id: 13
+    weight: 0.1875
+  - id: 14
+    weight: 0.375
+  - id: 18
+    weight: 0.37142858
+  - id: 19
+    weight: 0.33333334
+  - id: 20
+    weight: 0.26666668
+  - id: 21
+    weight: 0.2857143
+  - id: 22
+    weight: 0.2972973
+  - id: 23
+    weight: 0.2
+  - id: 24
+    weight: 0.5
+  - id: 26
+    weight: 0.44444445
+  - id: 29
+    weight: 0.5
+  - id: 31
+    weight: 0.125
+  - id: 32
+    weight: 0.16666667
+  - id: 36
+    weight: 0.38235295
+  - id: 37
+    weight: 0.1891892
+  - id: 38
+    weight: 0.1627907
+  - id: 39
+    weight: 0.17948718
+  - id: 40
+    weight: 0.21212122
+  - id: 41
+    weight: 0.1904762
+  - id: 42
+    weight: 0.375
+  - id: 44
+    weight: 0.375
+  - id: 47
+    weight: 0.5
+  - id: 54
+    weight: 0.07692308
+  - id: 55
+    weight: 0.2
+  - id: 56
+    weight: 0.1
+  - id: 57
+    weight: 0.2
+  - id: 58
+    weight: 0.2
+  - id: 59
+    weight: 0.09090909
+  - id: 60
+    weight: 0.5
+  - id: 61
+    weight: 0.7307692
+  - id: 62
+    weight: 0.39285713
+  - id: 63
+    weight: 0.8214286
+  - id: 64
+    weight: 0.6923077
+  - id: 65
+    weight: 0.2
+  - id: 0
+    weight: 0.078947365
+  - id: 1
+    weight: 0.15384616
+  - id: 2
+    weight: 0.22222222
+  - id: 3
+    weight: 0.41860464
+  - id: 4
+    weight: 0.17948718
+  - id: 5
+    weight: 0.1875
+  - id: 6
+    weight: 0.30769232
+  - id: 8
+    weight: 0.38235295
+  - id: 9
+    weight: 0.9032258
+  - id: 10
+    weight: 0.13793103
+  - id: 11
+    weight: 0.4
+  - id: 14
+    weight: 0.1875
+  - id: 15
+    weight: 0.30769232
+  - id: 16
+    weight: 0.23076923
+  - id: 18
+    weight: 0.114285715
+  - id: 19
+    weight: 0.19444445
+  - id: 20
+    weight: 0.2888889
+  - id: 21
+    weight: 0.30952382
+  - id: 22
+    weight: 0.27027026
+  - id: 23
+    weight: 0.2
+  - id: 24
+    weight: 0.5
+  - id: 26
+    weight: 0.11111111
+  - id: 27
+    weight: 0.22222222
+  - id: 29
+    weight: 0.5
+  - id: 32
+    weight: 0.083333336
+  - id: 34
+    weight: 0.1
+  - id: 36
+    weight: 0.20588236
+  - id: 37
+    weight: 0.13513513
+  - id: 38
+    weight: 0.13953489
+  - id: 39
+    weight: 0.12820514
+  - id: 40
+    weight: 0.21212122
+  - id: 41
+    weight: 0.1904762
+  - id: 42
+    weight: 0.5
+  - id: 44
+    weight: 0.125
+  - id: 47
+    weight: 0.5
+  - id: 54
+    weight: 0.07692308
+  - id: 55
+    weight: 0.2
+  - id: 56
+    weight: 0.05
+  - id: 57
+    weight: 0.15
+  - id: 58
+    weight: 0.2
+  - id: 59
+    weight: 0.09090909
+  - id: 60
+    weight: 0.42307693
+  - id: 61
+    weight: 0.7692308
+  - id: 62
+    weight: 0.39285713
+  - id: 63
+    weight: 0.8214286
+  - id: 64
+    weight: 0.6923077
+  - id: 65
+    weight: 0.15
+  - id: 0
+    weight: 0.10526316
+  - id: 2
+    weight: 0.13333334
+  - id: 3
+    weight: 0.23255815
+  - id: 4
+    weight: 0.33333334
+  - id: 5
+    weight: 0.375
+  - id: 6
+    weight: 0.3846154
+  - id: 8
+    weight: 0.2647059
+  - id: 9
+    weight: 0.12903225
+  - id: 10
+    weight: 1
+  - id: 11
+    weight: 0.53333336
+  - id: 15
+    weight: 0.23076923
+  - id: 16
+    weight: 0.30769232
+  - id: 17
+    weight: 0.375
+  - id: 18
+    weight: 0.114285715
+  - id: 19
+    weight: 0.027777778
+  - id: 20
+    weight: 0.15555556
+  - id: 21
+    weight: 0.3809524
+  - id: 22
+    weight: 0.27027026
+  - id: 23
+    weight: 0.4
+  - id: 24
+    weight: 0.46875
+  - id: 26
+    weight: 0.22222222
+  - id: 28
+    weight: 0.30769232
+  - id: 29
+    weight: 0.4375
+  - id: 33
+    weight: 0.1
+  - id: 35
+    weight: 0.25
+  - id: 36
+    weight: 0.14705883
+  - id: 37
+    weight: 0.027027028
+  - id: 38
+    weight: 0.11627907
+  - id: 39
+    weight: 0.20512821
+  - id: 40
+    weight: 0.15151516
+  - id: 41
+    weight: 0.2857143
+  - id: 42
+    weight: 0.5
+  - id: 44
+    weight: 0.20833333
+  - id: 47
+    weight: 0.125
+  - id: 54
+    weight: 0.07692308
+  - id: 55
+    weight: 0.05
+  - id: 56
+    weight: 0.05
+  - id: 57
+    weight: 0.2
+  - id: 58
+    weight: 0.2
+  - id: 60
+    weight: 0.34615386
+  - id: 61
+    weight: 0.34615386
+  - id: 62
+    weight: 0.25
+  - id: 63
+    weight: 0.60714287
+  - id: 64
+    weight: 0.9230769
+  - id: 11
+    weight: 0.3
+  - id: 6
+    weight: 0.23076923
+  - id: 12
+    weight: 0.1875
+  - id: 24
+    weight: 0.125
+  - id: 30
+    weight: 0.13333334
+  - id: 66
+    weight: 0.25
+  - id: 12
+    weight: 0.375
+  - id: 66
+    weight: 0.25
+  - id: 13
+    weight: 0.375
+  - id: 66
+    weight: 0.1875
+  - id: 14
+    weight: 0.375
+  - id: 66
+    weight: 0.1875
+  - id: 15
+    weight: 0.46153846
+  - id: 16
+    weight: 0.46153846
+  - id: 17
+    weight: 0.375
+  - id: 0
+    weight: 0.078947365
+  - id: 2
+    weight: 0.08888889
+  - id: 6
+    weight: 0.17948718
+  - id: 18
+    weight: 0.114285715
+  - id: 20
+    weight: 0.08888889
+  - id: 24
+    weight: 0.21875
+  - id: 36
+    weight: 0.05882353
+  - id: 38
+    weight: 0.093023255
+  - id: 42
+    weight: 0.09375
+  - id: 54
+    weight: 0.15384616
+  - id: 56
+    weight: 0.05
+  - id: 3
+    weight: 0.093023255
+  - id: 21
+    weight: 0.0952381
+  - id: 39
+    weight: 0.102564104
+  - id: 54
+    weight: 0.15384616
+  - id: 57
+    weight: 0.05
+  - id: 4
+    weight: 0.102564104
+  - id: 22
+    weight: 0.10810811
+  - id: 40
+    weight: 0.121212125
+  - id: 54
+    weight: 0.15384616
+  - id: 58
+    weight: 0.05
+  - id: 0
+    weight: 0.10526316
+  - id: 18
+    weight: 0.114285715
+  - id: 36
+    weight: 0.11764706
+  - id: 54
+    weight: 0.115384616
+  - id: 1
+    weight: 0.102564104
+  - id: 19
+    weight: 0.11111111
+  - id: 37
+    weight: 0.10810811
+  - id: 54
+    weight: 0.03846154
+  - id: 55
+    weight: 0.05
+  - id: 2
+    weight: 0.08888889
+  - id: 20
+    weight: 0.08888889
+  - id: 38
+    weight: 0.093023255
+  - id: 56
+    weight: 0.05
+  - id: 0
+    weight: 0.18421052
+  - id: 6
+    weight: 0.30769232
+  - id: 12
+    weight: 0.0625
+  - id: 18
+    weight: 0.34285715
+  - id: 24
+    weight: 0.5
+  - id: 30
+    weight: 0.26666668
+  - id: 36
+    weight: 0.23529412
+  - id: 42
+    weight: 0.28125
+  - id: 48
+    weight: 0.1875
+  - id: 54
+    weight: 0.03846154
+  - id: 66
+    weight: 0.0625
+  - id: 6
+    weight: 0.12820514
+  - id: 13
+    weight: 0.0625
+  - id: 24
+    weight: 0.59375
+  - id: 30
+    weight: 0.26666668
+  - id: 31
+    weight: 0.25
+  - id: 42
+    weight: 0.0625
+  - id: 48
+    weight: 0.0625
+  - id: 49
+    weight: 0.125
+  - id: 60
+    weight: 0.115384616
+  - id: 0
+    weight: 0.42105263
+  - id: 1
+    weight: 0.4871795
+  - id: 2
+    weight: 0.24444444
+  - id: 3
+    weight: 0.069767445
+  - id: 5
+    weight: 0.0625
+  - id: 6
+    weight: 0.53846157
+  - id: 7
+    weight: 0.46666667
+  - id: 8
+    weight: 0.5882353
+  - id: 9
+    weight: 0.032258064
+  - id: 11
+    weight: 0.4
+  - id: 12
+    weight: 0.0625
+  - id: 14
+    weight: 0.0625
+  - id: 18
+    weight: 0.37142858
+  - id: 19
+    weight: 0.4722222
+  - id: 20
+    weight: 0.31111112
+  - id: 21
+    weight: 0.11904762
+  - id: 22
+    weight: 0.027027028
+  - id: 23
+    weight: 0.15
+  - id: 24
+    weight: 0.5
+  - id: 25
+    weight: 1
+  - id: 26
+    weight: 0.22222222
+  - id: 29
+    weight: 0.40625
+  - id: 30
+    weight: 0.26666668
+  - id: 31
+    weight: 0.5
+  - id: 32
+    weight: 0.25
+  - id: 36
+    weight: 0.44117647
+  - id: 37
+    weight: 0.3783784
+  - id: 38
+    weight: 0.3488372
+  - id: 39
+    weight: 0.15384616
+  - id: 40
+    weight: 0.030303031
+  - id: 41
+    weight: 0.1904762
+  - id: 42
+    weight: 0.375
+  - id: 43
+    weight: 0.1904762
+  - id: 44
+    weight: 0.41666666
+  - id: 47
+    weight: 0.5
+  - id: 48
+    weight: 0.125
+  - id: 49
+    weight: 0.125
+  - id: 50
+    weight: 0.125
+  - id: 54
+    weight: 0.07692308
+  - id: 55
+    weight: 0.2
+  - id: 56
+    weight: 0.15
+  - id: 57
+    weight: 0.05
+  - id: 58
+    weight: 0.05
+  - id: 59
+    weight: 0.09090909
+  - id: 60
+    weight: 0.5
+  - id: 61
+    weight: 0.7307692
+  - id: 62
+    weight: 0.60714287
+  - id: 63
+    weight: 0.25
+  - id: 64
+    weight: 0.30769232
+  - id: 65
+    weight: 0.2
+  - id: 0
+    weight: 0.39473686
+  - id: 1
+    weight: 0.35897437
+  - id: 2
+    weight: 0.26666668
+  - id: 3
+    weight: 0.3255814
+  - id: 4
+    weight: 0.20512821
+  - id: 5
+    weight: 0.1875
+  - id: 6
+    weight: 0.46153846
+  - id: 7
+    weight: 0.53333336
+  - id: 8
+    weight: 0.64705884
+  - id: 9
+    weight: 0.48387095
+  - id: 10
+    weight: 0.13793103
+  - id: 11
+    weight: 0.4
+  - id: 13
+    weight: 0.0625
+  - id: 18
+    weight: 0.37142858
+  - id: 19
+    weight: 0.3888889
+  - id: 20
+    weight: 0.26666668
+  - id: 21
+    weight: 0.23809524
+  - id: 22
+    weight: 0.21621622
+  - id: 23
+    weight: 0.15
+  - id: 24
+    weight: 0.5
+  - id: 26
+    weight: 1
+  - id: 29
+    weight: 0.5
+  - id: 31
+    weight: 0.25
+  - id: 32
+    weight: 0.6666667
+  - id: 36
+    weight: 0.47058824
+  - id: 37
+    weight: 0.35135135
+  - id: 38
+    weight: 0.39534885
+  - id: 39
+    weight: 0.33333334
+  - id: 40
+    weight: 0.24242425
+  - id: 41
+    weight: 0.1904762
+  - id: 42
+    weight: 0.53125
+  - id: 44
+    weight: 0.5833333
+  - id: 47
+    weight: 0.5
+  - id: 49
+    weight: 0.125
+  - id: 50
+    weight: 0.125
+  - id: 54
+    weight: 0.07692308
+  - id: 55
+    weight: 0.2
+  - id: 56
+    weight: 0.1
+  - id: 57
+    weight: 0.15
+  - id: 58
+    weight: 0.1
+  - id: 59
+    weight: 0.09090909
+  - id: 60
+    weight: 0.5
+  - id: 61
+    weight: 0.7692308
+  - id: 62
+    weight: 0.53571427
+  - id: 63
+    weight: 0.71428573
+  - id: 64
+    weight: 0.42307693
+  - id: 65
+    weight: 0.2
+  - id: 0
+    weight: 0.10526316
+  - id: 1
+    weight: 0.17948718
+  - id: 2
+    weight: 0.2888889
+  - id: 3
+    weight: 0.3488372
+  - id: 4
+    weight: 0.30769232
+  - id: 5
+    weight: 0.1875
+  - id: 6
+    weight: 0.3846154
+  - id: 7
+    weight: 0.2
+  - id: 8
+    weight: 0.44117647
+  - id: 9
+    weight: 0.516129
+  - id: 10
+    weight: 0.55172414
+  - id: 11
+    weight: 0.53333336
+  - id: 18
+    weight: 0.14285715
+  - id: 19
+    weight: 0.19444445
+  - id: 20
+    weight: 0.2
+  - id: 21
+    weight: 0.33333334
+  - id: 22
+    weight: 0.2972973
+  - id: 23
+    weight: 0.2
+  - id: 24
+    weight: 0.5
+  - id: 26
+    weight: 0.22222222
+  - id: 27
+    weight: 1
+  - id: 29
+    weight: 0.5
+  - id: 33
+    weight: 0.4
+  - id: 34
+    weight: 0.4
+  - id: 36
+    weight: 0.14705883
+  - id: 37
+    weight: 0.1891892
+  - id: 38
+    weight: 0.30232558
+  - id: 39
+    weight: 0.30769232
+  - id: 40
+    weight: 0.42424244
+  - id: 41
+    weight: 0.3809524
+  - id: 42
+    weight: 0.5
+  - id: 44
+    weight: 0.20833333
+  - id: 45
+    weight: 0.1904762
+  - id: 47
+    weight: 0.5
+  - id: 52
+    weight: 0.1
+  - id: 54
+    weight: 0.07692308
+  - id: 55
+    weight: 0.1
+  - id: 56
+    weight: 0.1
+  - id: 57
+    weight: 0.2
+  - id: 58
+    weight: 0.2
+  - id: 59
+    weight: 0.09090909
+  - id: 60
+    weight: 0.3846154
+  - id: 61
+    weight: 0.30769232
+  - id: 62
+    weight: 0.2857143
+  - id: 63
+    weight: 0.8214286
+  - id: 64
+    weight: 0.6923077
+  - id: 65
+    weight: 0.2
+  - id: 0
+    weight: 0.10526316
+  - id: 2
+    weight: 0.22222222
+  - id: 3
+    weight: 0.39534885
+  - id: 4
+    weight: 0.35897437
+  - id: 5
+    weight: 0.375
+  - id: 6
+    weight: 0.3846154
+  - id: 8
+    weight: 0.38235295
+  - id: 9
+    weight: 0.48387095
+  - id: 10
+    weight: 0.51724136
+  - id: 11
+    weight: 0.33333334
+  - id: 18
+    weight: 0.114285715
+  - id: 20
+    weight: 0.13333334
+  - id: 21
+    weight: 0.2857143
+  - id: 22
+    weight: 0.3243243
+  - id: 23
+    weight: 0.4
+  - id: 24
+    weight: 0.40625
+  - id: 26
+    weight: 0.22222222
+  - id: 28
+    weight: 1
+  - id: 29
+    weight: 0.5
+  - id: 33
+    weight: 0.4
+  - id: 34
+    weight: 0.4
+  - id: 36
+    weight: 0.11764706
+  - id: 37
+    weight: 0.027027028
+  - id: 38
+    weight: 0.23255815
+  - id: 39
+    weight: 0.30769232
+  - id: 40
+    weight: 0.45454547
+  - id: 41
+    weight: 0.3809524
+  - id: 42
+    weight: 0.5
+  - id: 44
+    weight: 0.29166666
+  - id: 46
+    weight: 0.15
+  - id: 47
+    weight: 0.4375
+  - id: 51
+    weight: 0.1
+  - id: 54
+    weight: 0.07692308
+  - id: 56
+    weight: 0.05
+  - id: 57
+    weight: 0.2
+  - id: 58
+    weight: 0.15
+  - id: 59
+    weight: 0.09090909
+  - id: 60
+    weight: 0.26923078
+  - id: 61
+    weight: 0.115384616
+  - id: 62
+    weight: 0.14285715
+  - id: 63
+    weight: 0.71428573
+  - id: 64
+    weight: 0.88461536
+  - id: 65
+    weight: 0.15
+  - id: 29
+    weight: 0.28125
+  - id: 0
+    weight: 0.05263158
+  - id: 6
+    weight: 0.23076923
+  - id: 12
+    weight: 0.0625
+  - id: 24
+    weight: 0.25
+  - id: 30
+    weight: 0.26666668
+  - id: 42
+    weight: 0.125
+  - id: 48
+    weight: 0.125
+  - id: 66
+    weight: 0.25
+  - id: 30
+    weight: 0.4
+  - id: 66
+    weight: 0.25
+  - id: 31
+    weight: 0.375
+  - id: 66
+    weight: 0.1875
+  - id: 32
+    weight: 0.5
+  - id: 33
+    weight: 0.6
+  - id: 66
+    weight: 0.0625
+  - id: 34
+    weight: 0.6
+  - id: 66
+    weight: 0.0625
+  - id: 35
+    weight: 0.75
+  - id: 0
+    weight: 0.23684211
+  - id: 1
+    weight: 0.30769232
+  - id: 2
+    weight: 0.26666668
+  - id: 3
+    weight: 0.30232558
+  - id: 4
+    weight: 0.23076923
+  - id: 5
+    weight: 0.25
+  - id: 18
+    weight: 0.34285715
+  - id: 19
+    weight: 0.44444445
+  - id: 20
+    weight: 0.35555556
+  - id: 21
+    weight: 0.3809524
+  - id: 22
+    weight: 0.2972973
+  - id: 23
+    weight: 0.2
+  - id: 36
+    weight: 0.3529412
+  - id: 37
+    weight: 0.43243244
+  - id: 38
+    weight: 0.37209302
+  - id: 39
+    weight: 0.41025642
+  - id: 40
+    weight: 0.36363637
+  - id: 41
+    weight: 0.1904762
+  - id: 54
+    weight: 0.1923077
+  - id: 55
+    weight: 0.2
+  - id: 56
+    weight: 0.2
+  - id: 57
+    weight: 0.25
+  - id: 58
+    weight: 0.15
+  - id: 59
+    weight: 0.09090909
+  - id: 0
+    weight: 0.02631579
+  - id: 2
+    weight: 0.06666667
+  - id: 6
+    weight: 0.102564104
+  - id: 18
+    weight: 0.057142857
+  - id: 20
+    weight: 0.08888889
+  - id: 24
+    weight: 0.09375
+  - id: 36
+    weight: 0.11764706
+  - id: 38
+    weight: 0.093023255
+  - id: 42
+    weight: 0.21875
+  - id: 54
+    weight: 0.03846154
+  - id: 56
+    weight: 0.05
+  - id: 60
+    weight: 0.03846154
+  - id: 3
+    weight: 0.069767445
+  - id: 21
+    weight: 0.0952381
+  - id: 39
+    weight: 0.102564104
+  - id: 54
+    weight: 0.15384616
+  - id: 57
+    weight: 0.05
+  - id: 4
+    weight: 0.07692308
+  - id: 22
+    weight: 0.10810811
+  - id: 40
+    weight: 0.121212125
+  - id: 58
+    weight: 0.05
+  - id: 0
+    weight: 0.078947365
+  - id: 18
+    weight: 0.114285715
+  - id: 36
+    weight: 0.11764706
+  - id: 54
+    weight: 0.03846154
+  - id: 1
+    weight: 0.07692308
+  - id: 19
+    weight: 0.11111111
+  - id: 37
+    weight: 0.10810811
+  - id: 55
+    weight: 0.05
+  - id: 2
+    weight: 0.06666667
+  - id: 20
+    weight: 0.08888889
+  - id: 38
+    weight: 0.093023255
+  - id: 54
+    weight: 0.03846154
+  - id: 56
+    weight: 0.05
+  - id: 0
+    weight: 0.02631579
+  - id: 6
+    weight: 0.102564104
+  - id: 18
+    weight: 0.14285715
+  - id: 24
+    weight: 0.25
+  - id: 30
+    weight: 0.06666667
+  - id: 36
+    weight: 0.3529412
+  - id: 42
+    weight: 0.5
+  - id: 48
+    weight: 0.25
+  - id: 54
+    weight: 0.115384616
+  - id: 60
+    weight: 0.15384616
+  - id: 66
+    weight: 0.0625
+  - id: 4
+    weight: 0.025641026
+  - id: 5
+    weight: 0.0625
+  - id: 6
+    weight: 0.07692308
+  - id: 7
+    weight: 0.1
+  - id: 11
+    weight: 0.4
+  - id: 18
+    weight: 0.028571429
+  - id: 19
+    weight: 0.055555556
+  - id: 20
+    weight: 0.22222222
+  - id: 21
+    weight: 0.023809524
+  - id: 22
+    weight: 0.08108108
+  - id: 23
+    weight: 0.15
+  - id: 26
+    weight: 0.16666667
+  - id: 29
+    weight: 0.40625
+  - id: 31
+    weight: 0.0625
+  - id: 36
+    weight: 0.20588236
+  - id: 37
+    weight: 0.4054054
+  - id: 38
+    weight: 0.1627907
+  - id: 39
+    weight: 0.025641026
+  - id: 40
+    weight: 0.09090909
+  - id: 41
+    weight: 0.1904762
+  - id: 42
+    weight: 0.71875
+  - id: 44
+    weight: 0.16666667
+  - id: 47
+    weight: 0.5
+  - id: 48
+    weight: 0.25
+  - id: 49
+    weight: 0.25
+  - id: 54
+    weight: 0.07692308
+  - id: 55
+    weight: 0.1
+  - id: 60
+    weight: 0.23076923
+  - id: 61
+    weight: 0.30769232
+  - id: 62
+    weight: 0.21428572
+  - id: 65
+    weight: 0.2
+  - id: 66
+    weight: 0.0625
+  - id: 67
+    weight: 0.09090909
+  - id: 0
+    weight: 0.21052632
+  - id: 1
+    weight: 0.2820513
+  - id: 2
+    weight: 0.08888889
+  - id: 3
+    weight: 0.046511628
+  - id: 5
+    weight: 0.125
+  - id: 6
+    weight: 0.30769232
+  - id: 7
+    weight: 0.53333336
+  - id: 8
+    weight: 0.61764705
+  - id: 9
+    weight: 0.38709676
+  - id: 10
+    weight: 0.27586207
+  - id: 11
+    weight: 0.36666667
+  - id: 18
+    weight: 0.37142858
+  - id: 19
+    weight: 0.44444445
+  - id: 20
+    weight: 0.2888889
+  - id: 21
+    weight: 0.04761905
+  - id: 22
+    weight: 0.027027028
+  - id: 23
+    weight: 0.1
+  - id: 24
+    weight: 0.4375
+  - id: 26
+    weight: 0.22222222
+  - id: 29
+    weight: 0.40625
+  - id: 30
+    weight: 0.06666667
+  - id: 32
+    weight: 0.083333336
+  - id: 36
+    weight: 0.44117647
+  - id: 37
+    weight: 0.3783784
+  - id: 38
+    weight: 0.30232558
+  - id: 39
+    weight: 0.07692308
+  - id: 40
+    weight: 0.030303031
+  - id: 41
+    weight: 0.1904762
+  - id: 42
+    weight: 0.5
+  - id: 43
+    weight: 0.95238096
+  - id: 44
+    weight: 0.16666667
+  - id: 47
+    weight: 0.5
+  - id: 48
+    weight: 0.25
+  - id: 49
+    weight: 0.5
+  - id: 50
+    weight: 0.25
+  - id: 54
+    weight: 0.07692308
+  - id: 55
+    weight: 0.2
+  - id: 56
+    weight: 0.1
+  - id: 60
+    weight: 0.46153846
+  - id: 61
+    weight: 0.61538464
+  - id: 62
+    weight: 0.4642857
+  - id: 65
+    weight: 0.2
+  - id: 66
+    weight: 0.0625
+  - id: 67
+    weight: 0.18181819
+  - id: 68
+    weight: 0.125
+  - id: 0
+    weight: 0.31578946
+  - id: 1
+    weight: 0.17948718
+  - id: 2
+    weight: 0.15555556
+  - id: 3
+    weight: 0.11627907
+  - id: 4
+    weight: 0.25641027
+  - id: 5
+    weight: 0.125
+  - id: 6
+    weight: 0.51282054
+  - id: 7
+    weight: 0.46666667
+  - id: 8
+    weight: 0.47058824
+  - id: 9
+    weight: 0.516129
+  - id: 10
+    weight: 0.55172414
+  - id: 11
+    weight: 0.53333336
+  - id: 18
+    weight: 0.37142858
+  - id: 19
+    weight: 0.3888889
+  - id: 20
+    weight: 0.22222222
+  - id: 21
+    weight: 0.35714287
+  - id: 22
+    weight: 0.21621622
+  - id: 23
+    weight: 0.15
+  - id: 24
+    weight: 0.5
+  - id: 26
+    weight: 0.2777778
+  - id: 29
+    weight: 0.5
+  - id: 31
+    weight: 0.0625
+  - id: 36
+    weight: 0.38235295
+  - id: 37
+    weight: 0.27027026
+  - id: 38
+    weight: 0.3255814
+  - id: 39
+    weight: 0.2820513
+  - id: 40
+    weight: 0.15151516
+  - id: 41
+    weight: 0.1904762
+  - id: 42
+    weight: 0.5
+  - id: 44
+    weight: 0.9166667
+  - id: 47
+    weight: 0.5
+  - id: 49
+    weight: 0.25
+  - id: 50
+    weight: 0.5
+  - id: 55
+    weight: 0.1
+  - id: 56
+    weight: 0.15
+  - id: 57
+    weight: 0.05
+  - id: 60
+    weight: 0.15384616
+  - id: 61
+    weight: 0.30769232
+  - id: 62
+    weight: 0.5
+  - id: 63
+    weight: 0.10714286
+  - id: 64
+    weight: 0.07692308
+  - id: 65
+    weight: 0.2
+  - id: 67
+    weight: 0.09090909
+  - id: 68
+    weight: 0.25
+  - id: 0
+    weight: 0.18421052
+  - id: 1
+    weight: 0.17948718
+  - id: 2
+    weight: 0.13333334
+  - id: 3
+    weight: 0.18604651
+  - id: 4
+    weight: 0.20512821
+  - id: 5
+    weight: 0.1875
+  - id: 6
+    weight: 0.53846157
+  - id: 7
+    weight: 0.53333336
+  - id: 8
+    weight: 0.4117647
+  - id: 9
+    weight: 0.5483871
+  - id: 10
+    weight: 0.55172414
+  - id: 11
+    weight: 0.36666667
+  - id: 18
+    weight: 0.14285715
+  - id: 19
+    weight: 0.22222222
+  - id: 20
+    weight: 0.26666668
+  - id: 21
+    weight: 0.21428572
+  - id: 22
+    weight: 0.4054054
+  - id: 23
+    weight: 0.15
+  - id: 24
+    weight: 0.5
+  - id: 26
+    weight: 0.11111111
+  - id: 29
+    weight: 0.5
+  - id: 36
+    weight: 0.14705883
+  - id: 37
+    weight: 0.10810811
+  - id: 38
+    weight: 0.27906978
+  - id: 39
+    weight: 0.2820513
+  - id: 40
+    weight: 0.3030303
+  - id: 41
+    weight: 0.3809524
+  - id: 42
+    weight: 0.5
+  - id: 44
+    weight: 0.16666667
+  - id: 45
+    weight: 1
+  - id: 47
+    weight: 0.5
+  - id: 50
+    weight: 0.25
+  - id: 51
+    weight: 0.4
+  - id: 52
+    weight: 0.4
+  - id: 56
+    weight: 0.05
+  - id: 57
+    weight: 0.2
+  - id: 58
+    weight: 0.05
+  - id: 60
+    weight: 0.15384616
+  - id: 62
+    weight: 0.14285715
+  - id: 63
+    weight: 0.71428573
+  - id: 64
+    weight: 0.34615386
+  - id: 65
+    weight: 0.2
+  - id: 68
+    weight: 0.125
+  - id: 70
+    weight: 0.16666667
+  - id: 0
+    weight: 0.10526316
+  - id: 1
+    weight: 0.051282052
+  - id: 2
+    weight: 0.11111111
+  - id: 3
+    weight: 0.20930232
+  - id: 4
+    weight: 0.17948718
+  - id: 5
+    weight: 0.125
+  - id: 6
+    weight: 0.33333334
+  - id: 7
+    weight: 0.36666667
+  - id: 8
+    weight: 0.32352942
+  - id: 9
+    weight: 0.5483871
+  - id: 10
+    weight: 0.55172414
+  - id: 11
+    weight: 0.1
+  - id: 18
+    weight: 0.114285715
+  - id: 19
+    weight: 0.027777778
+  - id: 20
+    weight: 0.2
+  - id: 21
+    weight: 0.35714287
+  - id: 22
+    weight: 0.3243243
+  - id: 23
+    weight: 0.4
+  - id: 24
+    weight: 0.4375
+  - id: 26
+    weight: 0.22222222
+  - id: 29
+    weight: 0.21875
+  - id: 36
+    weight: 0.0882353
+  - id: 37
+    weight: 0.027027028
+  - id: 38
+    weight: 0.23255815
+  - id: 39
+    weight: 0.23076923
+  - id: 40
+    weight: 0.45454547
+  - id: 41
+    weight: 0.3809524
+  - id: 42
+    weight: 0.5
+  - id: 43
+    weight: 0.04761905
+  - id: 44
+    weight: 0.16666667
+  - id: 46
+    weight: 1
+  - id: 47
+    weight: 0.5
+  - id: 51
+    weight: 0.4
+  - id: 52
+    weight: 0.4
+  - id: 53
+    weight: 0.5
+  - id: 57
+    weight: 0.05
+  - id: 58
+    weight: 0.2
+  - id: 59
+    weight: 0.09090909
+  - id: 60
+    weight: 0.15384616
+  - id: 62
+    weight: 0.14285715
+  - id: 63
+    weight: 0.25
+  - id: 64
+    weight: 0.84615386
+  - id: 65
+    weight: 0.2
+  - id: 69
+    weight: 0.16666667
+  - id: 71
+    weight: 0.2
+  - id: 47
+    weight: 0.28125
+  - id: 0
+    weight: 0.05263158
+  - id: 6
+    weight: 0.102564104
+  - id: 24
+    weight: 0.15625
+  - id: 30
+    weight: 0.06666667
+  - id: 42
+    weight: 0.25
+  - id: 48
+    weight: 0.25
+  - id: 60
+    weight: 0.07692308
+  - id: 66
+    weight: 0.0625
+  - id: 48
+    weight: 0.375
+  - id: 66
+    weight: 0.25
+  - id: 49
+    weight: 0.375
+  - id: 50
+    weight: 0.375
+  - id: 51
+    weight: 0.6
+  - id: 52
+    weight: 0.6
+  - id: 53
+    weight: 0.5
+  - id: 66
+    weight: 0.0625
+  - id: 30
+    weight: 0.6
+  - id: 31
+    weight: 0.5625
+  - id: 48
+    weight: 0.75
+  - id: 49
+    weight: 0.75
+  - id: 66
+    weight: 0.1875
+  - id: 67
+    weight: 0.27272728
+  - id: 0
+    weight: 0.23684211
+  - id: 1
+    weight: 0.30769232
+  - id: 2
+    weight: 0.26666668
+  - id: 3
+    weight: 0.27906978
+  - id: 4
+    weight: 0.23076923
+  - id: 5
+    weight: 0.25
+  - id: 18
+    weight: 0.34285715
+  - id: 19
+    weight: 0.44444445
+  - id: 20
+    weight: 0.35555556
+  - id: 21
+    weight: 0.3809524
+  - id: 22
+    weight: 0.2972973
+  - id: 23
+    weight: 0.2
+  - id: 36
+    weight: 0.3529412
+  - id: 37
+    weight: 0.43243244
+  - id: 38
+    weight: 0.37209302
+  - id: 39
+    weight: 0.41025642
+  - id: 40
+    weight: 0.33333334
+  - id: 41
+    weight: 0.1904762
+  - id: 54
+    weight: 0.1923077
+  - id: 55
+    weight: 0.3
+  - id: 56
+    weight: 0.3
+  - id: 57
+    weight: 0.3
+  - id: 58
+    weight: 0.2
+  - id: 59
+    weight: 0.09090909
+  - id: 60
+    weight: 0.26923078
+  - id: 61
+    weight: 0.30769232
+  - id: 62
+    weight: 0.42857143
+  - id: 63
+    weight: 0.32142857
+  - id: 66
+    weight: 0.1875
+  - id: 67
+    weight: 0.36363637
+  - id: 68
+    weight: 0.5
+  - id: 69
+    weight: 0.5
+  - id: 0
+    weight: 0.10526316
+  - id: 1
+    weight: 0.102564104
+  - id: 2
+    weight: 0.11111111
+  - id: 6
+    weight: 0.102564104
+  - id: 20
+    weight: 0.08888889
+  - id: 36
+    weight: 0.05882353
+  - id: 42
+    weight: 0.09375
+  - id: 54
+    weight: 0.34615386
+  - id: 55
+    weight: 0.1
+  - id: 56
+    weight: 0.15
+  - id: 57
+    weight: 0.1
+  - id: 58
+    weight: 0.1
+  - id: 60
+    weight: 0.3846154
+  - id: 61
+    weight: 0.46153846
+  - id: 62
+    weight: 0.39285713
+  - id: 63
+    weight: 0.14285715
+  - id: 64
+    weight: 0.15384616
+  - id: 66
+    weight: 0.0625
+  - id: 67
+    weight: 0.09090909
+  - id: 68
+    weight: 0.125
+  - id: 69
+    weight: 0.16666667
+  - id: 70
+    weight: 0.16666667
+  - id: 2
+    weight: 0.08888889
+  - id: 3
+    weight: 0.11627907
+  - id: 21
+    weight: 0.0952381
+  - id: 39
+    weight: 0.102564104
+  - id: 54
+    weight: 0.34615386
+  - id: 55
+    weight: 0.25
+  - id: 56
+    weight: 0.1
+  - id: 57
+    weight: 0.15
+  - id: 60
+    weight: 0.30769232
+  - id: 61
+    weight: 0.3846154
+  - id: 62
+    weight: 0.42857143
+  - id: 63
+    weight: 0.2857143
+  - id: 66
+    weight: 0.0625
+  - id: 68
+    weight: 0.125
+  - id: 69
+    weight: 0.16666667
+  - id: 0
+    weight: 0.078947365
+  - id: 1
+    weight: 0.102564104
+  - id: 2
+    weight: 0.08888889
+  - id: 3
+    weight: 0.093023255
+  - id: 4
+    weight: 0.12820514
+  - id: 22
+    weight: 0.10810811
+  - id: 40
+    weight: 0.121212125
+  - id: 54
+    weight: 0.42307693
+  - id: 55
+    weight: 0.6
+  - id: 56
+    weight: 0.25
+  - id: 57
+    weight: 0.1
+  - id: 58
+    weight: 0.15
+  - id: 60
+    weight: 0.3846154
+  - id: 61
+    weight: 0.3846154
+  - id: 62
+    weight: 0.53571427
+  - id: 63
+    weight: 0.42857143
+  - id: 64
+    weight: 0.15384616
+  - id: 66
+    weight: 0.0625
+  - id: 69
+    weight: 0.33333334
+  - id: 70
+    weight: 0.16666667
+  - id: 0
+    weight: 0.10526316
+  - id: 1
+    weight: 0.102564104
+  - id: 2
+    weight: 0.08888889
+  - id: 3
+    weight: 0.093023255
+  - id: 4
+    weight: 0.102564104
+  - id: 5
+    weight: 0.125
+  - id: 55
+    weight: 0.2
+  - id: 56
+    weight: 0.6
+  - id: 57
+    weight: 0.25
+  - id: 58
+    weight: 0.1
+  - id: 60
+    weight: 0.1923077
+  - id: 61
+    weight: 0.46153846
+  - id: 62
+    weight: 0.42857143
+  - id: 63
+    weight: 0.42857143
+  - id: 64
+    weight: 0.23076923
+  - id: 68
+    weight: 0.125
+  - id: 69
+    weight: 0.16666667
+  - id: 70
+    weight: 0.16666667
+  - id: 0
+    weight: 0.13157895
+  - id: 1
+    weight: 0.102564104
+  - id: 2
+    weight: 0.08888889
+  - id: 3
+    weight: 0.093023255
+  - id: 4
+    weight: 0.102564104
+  - id: 5
+    weight: 0.125
+  - id: 18
+    weight: 0.114285715
+  - id: 36
+    weight: 0.11764706
+  - id: 54
+    weight: 0.1923077
+  - id: 55
+    weight: 0.05
+  - id: 56
+    weight: 0.2
+  - id: 57
+    weight: 0.6
+  - id: 58
+    weight: 0.2
+  - id: 60
+    weight: 0.26923078
+  - id: 61
+    weight: 0.3846154
+  - id: 62
+    weight: 0.42857143
+  - id: 63
+    weight: 0.21428572
+  - id: 64
+    weight: 0.26923078
+  - id: 67
+    weight: 0.09090909
+  - id: 1
+    weight: 0.12820514
+  - id: 2
+    weight: 0.08888889
+  - id: 3
+    weight: 0.093023255
+  - id: 4
+    weight: 0.102564104
+  - id: 5
+    weight: 0.125
+  - id: 19
+    weight: 0.11111111
+  - id: 37
+    weight: 0.10810811
+  - id: 54
+    weight: 0.15384616
+  - id: 55
+    weight: 0.1
+  - id: 56
+    weight: 0.1
+  - id: 57
+    weight: 0.15
+  - id: 58
+    weight: 0.6
+  - id: 59
+    weight: 0.09090909
+  - id: 60
+    weight: 0.115384616
+  - id: 61
+    weight: 0.26923078
+  - id: 62
+    weight: 0.42857143
+  - id: 63
+    weight: 0.25
+  - id: 64
+    weight: 0.23076923
+  - id: 65
+    weight: 0.05
+  - id: 67
+    weight: 0.09090909
+  - id: 68
+    weight: 0.125
+  - id: 2
+    weight: 0.11111111
+  - id: 3
+    weight: 0.093023255
+  - id: 4
+    weight: 0.102564104
+  - id: 5
+    weight: 0.125
+  - id: 20
+    weight: 0.08888889
+  - id: 38
+    weight: 0.093023255
+  - id: 54
+    weight: 0.15384616
+  - id: 55
+    weight: 0.05
+  - id: 56
+    weight: 0.05
+  - id: 57
+    weight: 0.05
+  - id: 58
+    weight: 0.1
+  - id: 59
+    weight: 0.36363637
+  - id: 60
+    weight: 0.115384616
+  - id: 61
+    weight: 0.15384616
+  - id: 62
+    weight: 0.071428575
+  - id: 63
+    weight: 0.21428572
+  - id: 64
+    weight: 0.3846154
+  - id: 65
+    weight: 0.05
+  - id: 67
+    weight: 0.09090909
+  - id: 68
+    weight: 0.125
+  - id: 69
+    weight: 0.16666667
+  - id: 70
+    weight: 0.16666667
+  - id: 0
+    weight: 0.05263158
+  - id: 6
+    weight: 0.102564104
+  - id: 36
+    weight: 0.14705883
+  - id: 42
+    weight: 0.25
+  - id: 47
+    weight: 0.0625
+  - id: 48
+    weight: 0.0625
+  - id: 54
+    weight: 0.30769232
+  - id: 55
+    weight: 0.1
+  - id: 56
+    weight: 0.1
+  - id: 57
+    weight: 0.1
+  - id: 58
+    weight: 0.1
+  - id: 60
+    weight: 0.61538464
+  - id: 61
+    weight: 0.46153846
+  - id: 62
+    weight: 0.35714287
+  - id: 63
+    weight: 0.14285715
+  - id: 64
+    weight: 0.15384616
+  - id: 66
+    weight: 0.375
+  - id: 67
+    weight: 0.27272728
+  - id: 68
+    weight: 0.125
+  - id: 69
+    weight: 0.16666667
+  - id: 70
+    weight: 0.16666667
+  - id: 2
+    weight: 0.06666667
+  - id: 3
+    weight: 0.046511628
+  - id: 8
+    weight: 0.38235295
+  - id: 9
+    weight: 0.16129032
+  - id: 10
+    weight: 0.1724138
+  - id: 11
+    weight: 0.06666667
+  - id: 19
+    weight: 0.11111111
+  - id: 20
+    weight: 0.06666667
+  - id: 22
+    weight: 0.027027028
+  - id: 26
+    weight: 0.055555556
+  - id: 29
+    weight: 0.09375
+  - id: 38
+    weight: 0.023255814
+  - id: 39
+    weight: 0.025641026
+  - id: 54
+    weight: 0.1923077
+  - id: 55
+    weight: 0.15
+  - id: 56
+    weight: 0.1
+  - id: 57
+    weight: 0.1
+  - id: 60
+    weight: 0.42307693
+  - id: 61
+    weight: 0.5
+  - id: 62
+    weight: 0.42857143
+  - id: 63
+    weight: 0.2857143
+  - id: 66
+    weight: 0.25
+  - id: 67
+    weight: 0.36363637
+  - id: 68
+    weight: 0.375
+  - id: 69
+    weight: 0.16666667
+  - id: 0
+    weight: 0.10526316
+  - id: 1
+    weight: 0.051282052
+  - id: 5
+    weight: 0.125
+  - id: 6
+    weight: 0.12820514
+  - id: 7
+    weight: 0.13333334
+  - id: 11
+    weight: 0.13333334
+  - id: 18
+    weight: 0.08571429
+  - id: 19
+    weight: 0.055555556
+  - id: 23
+    weight: 0.05
+  - id: 24
+    weight: 0.09375
+  - id: 36
+    weight: 0.029411765
+  - id: 42
+    weight: 0.21875
+  - id: 44
+    weight: 0.041666668
+  - id: 54
+    weight: 0.26923078
+  - id: 55
+    weight: 0.2
+  - id: 56
+    weight: 0.15
+  - id: 57
+    weight: 0.1
+  - id: 58
+    weight: 0.1
+  - id: 60
+    weight: 0.3846154
+  - id: 61
+    weight: 0.7307692
+  - id: 62
+    weight: 0.53571427
+  - id: 63
+    weight: 0.42857143
+  - id: 64
+    weight: 0.15384616
+  - id: 66
+    weight: 0.3125
+  - id: 67
+    weight: 0.36363637
+  - id: 68
+    weight: 0.5
+  - id: 69
+    weight: 0.5
+  - id: 70
+    weight: 0.16666667
+  - id: 0
+    weight: 0.15789473
+  - id: 1
+    weight: 0.051282052
+  - id: 2
+    weight: 0.06666667
+  - id: 3
+    weight: 0.023255814
+  - id: 6
+    weight: 0.20512821
+  - id: 7
+    weight: 0.23333333
+  - id: 8
+    weight: 0.20588236
+  - id: 9
+    weight: 0.06451613
+  - id: 18
+    weight: 0.028571429
+  - id: 19
+    weight: 0.055555556
+  - id: 20
+    weight: 0.08888889
+  - id: 36
+    weight: 0.029411765
+  - id: 38
+    weight: 0.023255814
+  - id: 47
+    weight: 0.09375
+  - id: 54
+    weight: 0.03846154
+  - id: 55
+    weight: 0.1
+  - id: 56
+    weight: 0.2
+  - id: 57
+    weight: 0.15
+  - id: 58
+    weight: 0.1
+  - id: 60
+    weight: 0.15384616
+  - id: 61
+    weight: 0.46153846
+  - id: 62
+    weight: 0.75
+  - id: 63
+    weight: 0.42857143
+  - id: 64
+    weight: 0.23076923
+  - id: 66
+    weight: 0.125
+  - id: 67
+    weight: 0.36363637
+  - id: 68
+    weight: 0.5
+  - id: 69
+    weight: 0.6666667
+  - id: 70
+    weight: 0.16666667
+  - id: 0
+    weight: 0.02631579
+  - id: 1
+    weight: 0.051282052
+  - id: 2
+    weight: 0.022222223
+  - id: 4
+    weight: 0.051282052
+  - id: 5
+    weight: 0.1875
+  - id: 6
+    weight: 0.051282052
+  - id: 7
+    weight: 0.23333333
+  - id: 8
+    weight: 0.05882353
+  - id: 9
+    weight: 0.12903225
+  - id: 10
+    weight: 0.2413793
+  - id: 11
+    weight: 0.1
+  - id: 20
+    weight: 0.06666667
+  - id: 21
+    weight: 0.023809524
+  - id: 22
+    weight: 0.054054055
+  - id: 23
+    weight: 0.1
+  - id: 29
+    weight: 0.0625
+  - id: 38
+    weight: 0.023255814
+  - id: 40
+    weight: 0.030303031
+  - id: 54
+    weight: 0.15384616
+  - id: 55
+    weight: 0.05
+  - id: 56
+    weight: 0.1
+  - id: 57
+    weight: 0.2
+  - id: 58
+    weight: 0.15
+  - id: 60
+    weight: 0.15384616
+  - id: 61
+    weight: 0.3846154
+  - id: 62
+    weight: 0.42857143
+  - id: 63
+    weight: 0.6785714
+  - id: 64
+    weight: 0.3846154
+  - id: 66
+    weight: 0.0625
+  - id: 67
+    weight: 0.27272728
+  - id: 68
+    weight: 0.5
+  - id: 69
+    weight: 0.5
+  - id: 70
+    weight: 0.33333334
+  - id: 1
+    weight: 0.025641026
+  - id: 2
+    weight: 0.044444446
+  - id: 3
+    weight: 0.069767445
+  - id: 4
+    weight: 0.051282052
+  - id: 7
+    weight: 0.13333334
+  - id: 8
+    weight: 0.14705883
+  - id: 9
+    weight: 0.22580644
+  - id: 10
+    weight: 0.2413793
+  - id: 20
+    weight: 0.022222223
+  - id: 21
+    weight: 0.071428575
+  - id: 22
+    weight: 0.054054055
+  - id: 41
+    weight: 0.04761905
+  - id: 47
+    weight: 0.03125
+  - id: 54
+    weight: 0.15384616
+  - id: 55
+    weight: 0.05
+  - id: 56
+    weight: 0.1
+  - id: 57
+    weight: 0.1
+  - id: 58
+    weight: 0.2
+  - id: 60
+    weight: 0.07692308
+  - id: 61
+    weight: 0.23076923
+  - id: 62
+    weight: 0.42857143
+  - id: 63
+    weight: 0.35714287
+  - id: 64
+    weight: 0.7307692
+  - id: 65
+    weight: 0.05
+  - id: 66
+    weight: 0.0625
+  - id: 67
+    weight: 0.09090909
+  - id: 68
+    weight: 0.375
+  - id: 69
+    weight: 0.33333334
+  - id: 70
+    weight: 0.5
+  - id: 54
+    weight: 0.15384616
+  - id: 55
+    weight: 0.05
+  - id: 57
+    weight: 0.05
+  - id: 58
+    weight: 0.1
+  - id: 59
+    weight: 0.27272728
+  - id: 60
+    weight: 0.07692308
+  - id: 61
+    weight: 0.15384616
+  - id: 62
+    weight: 0.071428575
+  - id: 63
+    weight: 0.21428572
+  - id: 64
+    weight: 0.3846154
+  - id: 65
+    weight: 0.4
+  - id: 67
+    weight: 0.09090909
+  - id: 68
+    weight: 0.125
+  - id: 69
+    weight: 0.16666667
+  - id: 70
+    weight: 0.5
+  - id: 71
+    weight: 0.2
+  - id: 5
+    weight: 0.0625
+  - id: 11
+    weight: 0.06666667
+  - id: 23
+    weight: 0.4
+  - id: 29
+    weight: 0.5
+  - id: 41
+    weight: 0.52380955
+  - id: 47
+    weight: 0.5
+  - id: 53
+    weight: 0.5
+  - id: 55
+    weight: 0.05
+  - id: 57
+    weight: 0.05
+  - id: 58
+    weight: 0.1
+  - id: 59
+    weight: 0.6363636
+  - id: 60
+    weight: 0.03846154
+  - id: 61
+    weight: 0.07692308
+  - id: 62
+    weight: 0.071428575
+  - id: 63
+    weight: 0.14285715
+  - id: 64
+    weight: 0.23076923
+  - id: 65
+    weight: 0.6
+  - id: 66
+    weight: 0.0625
+  - id: 68
+    weight: 0.125
+  - id: 69
+    weight: 0.16666667
+  - id: 70
+    weight: 0.16666667
+  - id: 71
+    weight: 0.6
+  - id: 0
+    weight: 0.05263158
+  - id: 6
+    weight: 0.102564104
+  - id: 42
+    weight: 0.15625
+  - id: 48
+    weight: 0.0625
+  - id: 54
+    weight: 0.15384616
+  - id: 55
+    weight: 0.1
+  - id: 56
+    weight: 0.1
+  - id: 57
+    weight: 0.1
+  - id: 58
+    weight: 0.1
+  - id: 60
+    weight: 0.46153846
+  - id: 61
+    weight: 0.42307693
+  - id: 62
+    weight: 0.32142857
+  - id: 63
+    weight: 0.14285715
+  - id: 64
+    weight: 0.15384616
+  - id: 66
+    weight: 0.4375
+  - id: 67
+    weight: 0.27272728
+  - id: 68
+    weight: 0.125
+  - id: 69
+    weight: 0.16666667
+  - id: 70
+    weight: 0.16666667
+  - id: 54
+    weight: 0.15384616
+  - id: 55
+    weight: 0.1
+  - id: 56
+    weight: 0.1
+  - id: 57
+    weight: 0.1
+  - id: 60
+    weight: 0.30769232
+  - id: 61
+    weight: 0.5
+  - id: 62
+    weight: 0.39285713
+  - id: 63
+    weight: 0.25
+  - id: 66
+    weight: 0.25
+  - id: 67
+    weight: 0.36363637
+  - id: 68
+    weight: 0.375
+  - id: 69
+    weight: 0.16666667
+  - id: 54
+    weight: 0.23076923
+  - id: 55
+    weight: 0.1
+  - id: 56
+    weight: 0.1
+  - id: 57
+    weight: 0.1
+  - id: 58
+    weight: 0.1
+  - id: 60
+    weight: 0.42307693
+  - id: 61
+    weight: 0.5
+  - id: 62
+    weight: 0.5
+  - id: 63
+    weight: 0.39285713
+  - id: 64
+    weight: 0.15384616
+  - id: 66
+    weight: 0.3125
+  - id: 67
+    weight: 0.36363637
+  - id: 68
+    weight: 0.5
+  - id: 69
+    weight: 0.5
+  - id: 70
+    weight: 0.16666667
+  - id: 54
+    weight: 0.15384616
+  - id: 55
+    weight: 0.1
+  - id: 56
+    weight: 0.1
+  - id: 57
+    weight: 0.1
+  - id: 58
+    weight: 0.1
+  - id: 60
+    weight: 0.115384616
+  - id: 61
+    weight: 0.46153846
+  - id: 62
+    weight: 0.4642857
+  - id: 63
+    weight: 0.4642857
+  - id: 64
+    weight: 0.1923077
+  - id: 66
+    weight: 0.125
+  - id: 67
+    weight: 0.36363637
+  - id: 68
+    weight: 0.5
+  - id: 69
+    weight: 0.6666667
+  - id: 70
+    weight: 0.16666667
+  - id: 54
+    weight: 0.15384616
+  - id: 55
+    weight: 0.05
+  - id: 56
+    weight: 0.1
+  - id: 58
+    weight: 0.1
+  - id: 60
+    weight: 0.15384616
+  - id: 61
+    weight: 0.30769232
+  - id: 62
+    weight: 0.42857143
+  - id: 63
+    weight: 0.32142857
+  - id: 64
+    weight: 0.30769232
+  - id: 66
+    weight: 0.0625
+  - id: 67
+    weight: 0.27272728
+  - id: 68
+    weight: 0.5
+  - id: 69
+    weight: 0.6666667
+  - id: 70
+    weight: 0.5
+  - id: 54
+    weight: 0.15384616
+  - id: 55
+    weight: 0.05
+  - id: 56
+    weight: 0.1
+  - id: 57
+    weight: 0.05
+  - id: 60
+    weight: 0.07692308
+  - id: 61
+    weight: 0.1923077
+  - id: 62
+    weight: 0.39285713
+  - id: 63
+    weight: 0.2857143
+  - id: 64
+    weight: 0.34615386
+  - id: 66
+    weight: 0.0625
+  - id: 67
+    weight: 0.09090909
+  - id: 68
+    weight: 0.375
+  - id: 69
+    weight: 0.5
+  - id: 70
+    weight: 0.6666667
+  - id: 54
+    weight: 0.15384616
+  - id: 55
+    weight: 0.05
+  - id: 57
+    weight: 0.05
+  - id: 58
+    weight: 0.15
+  - id: 60
+    weight: 0.07692308
+  - id: 61
+    weight: 0.115384616
+  - id: 62
+    weight: 0.071428575
+  - id: 63
+    weight: 0.17857143
+  - id: 64
+    weight: 0.3846154
+  - id: 65
+    weight: 0.2
+  - id: 66
+    weight: 0.0625
+  - id: 67
+    weight: 0.09090909
+  - id: 68
+    weight: 0.125
+  - id: 69
+    weight: 0.16666667
+  - id: 70
+    weight: 0.5
+  - id: 71
+    weight: 0.4
+  - id: 5
+    weight: 0.0625
+  - id: 11
+    weight: 0.1
+  - id: 23
+    weight: 0.4
+  - id: 29
+    weight: 0.5
+  - id: 41
+    weight: 0.3809524
+  - id: 47
+    weight: 0.5
+  - id: 53
+    weight: 0.5
+  - id: 55
+    weight: 0.05
+  - id: 57
+    weight: 0.05
+  - id: 58
+    weight: 0.1
+  - id: 59
+    weight: 0.36363637
+  - id: 61
+    weight: 0.07692308
+  - id: 62
+    weight: 0.035714287
+  - id: 63
+    weight: 0.14285715
+  - id: 64
+    weight: 0.1923077
+  - id: 65
+    weight: 0.55
+  - id: 66
+    weight: 0.0625
+  - id: 68
+    weight: 0.125
+  - id: 69
+    weight: 0.16666667
+  - id: 70
+    weight: 0.16666667
+  - id: 71
+    weight: 0.6
+  - id: 48
+    weight: 0.5625
+  - id: 49
+    weight: 0.5625
+  - id: 54
+    weight: 0.07692308
+  - id: 56
+    weight: 0.05
+  - id: 57
+    weight: 0.1
+  - id: 60
+    weight: 0.30769232
+  - id: 61
+    weight: 0.30769232
+  - id: 62
+    weight: 0.4642857
+  - id: 63
+    weight: 0.25
+  - id: 66
+    weight: 0.5
+  - id: 67
+    weight: 0.90909094
+  - id: 68
+    weight: 0.375
+  - id: 69
+    weight: 0.16666667
+  - id: 70
+    weight: 0.16666667

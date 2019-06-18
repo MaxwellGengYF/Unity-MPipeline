@@ -13,20 +13,8 @@ namespace MPipeline
         public LPSurfel[] surfels;
         [SerializeField]
         public LPSurfelGroup[] surfelGroups;
-
-        ComputeBuffer probeBuffer, surfelBuffer, groupBuffer;
-
-        public void PrepairBuffer()
-        {
-            if (probes == null)
-            {
-                Debug.LogError("Error, not init");
-                return;
-            }
-            //todo:
-
-            //
-        }
+        [SerializeField]
+        public IdWeight[] influncedGroupIdWeight;
 
         public static LPChunk CreateAsset(string path)
         {

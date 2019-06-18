@@ -16,6 +16,7 @@ namespace MPipeline
         public ComputeShader reflectionCullingShader;
         public ComputeShader voxelNoise;
         public ComputeShader occlusionProbeCalculate;
+        public ComputeShader relightProbes;
         public Shader minMaxDepthBounding;
         public Shader taaShader;
         public Shader ssrShader;
@@ -57,6 +58,7 @@ namespace MPipeline
         {
        typeof(PropertySetEvent),
        typeof(LightingEvent),
+       typeof(LPEvent),
        typeof(GeometryEvent),
        typeof(AOEvents),
        typeof(SkyboxEvent),

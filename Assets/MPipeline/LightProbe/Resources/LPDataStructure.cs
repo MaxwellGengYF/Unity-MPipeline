@@ -9,7 +9,10 @@ namespace MPipeline
     {
         [SerializeField]
         public Vector3 position;
-        public LPProbe(Vector3 pos) { position = pos; }
+        [SerializeField]
+        public float skyVisibility;
+        [SerializeField]
+        public int surfelGroupPtr, surfelGroupCount;
     }
 
     [System.Serializable]
@@ -34,12 +37,12 @@ namespace MPipeline
     }
 
     [System.Serializable]
-    internal class LPSurfelGroup
+    internal struct LPSurfelGroup
     {
         [SerializeField]
-        public int[] surfelId;
+        public int surfelPtr;
         [SerializeField]
-        public IdWeight[] influncedProbeIdWeight;
+        public int surfelCount;
     }
 
 }

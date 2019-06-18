@@ -142,7 +142,7 @@ namespace MPipeline
                             Vector3 worldPos = group.transform.TransformPoint(localPos);
                             if (bound.Contains(worldPos))
                             {
-                                probesFromLightProbes.Add(new LPProbe(worldPos));
+                                probesFromLightProbes.Add(new LPProbe() { position = worldPos });
                             }
                         }
                     }
@@ -155,7 +155,19 @@ namespace MPipeline
 
                     cam.transform.position = porbePosition;
                     cam.Render();
-                    
+
+                    cs_GetSurfelFromGBuffer.SetVector(ShaderPropertiesID.ProbePosition, porbePosition);
+                    cs_GetSurfelFromGBuffer.SetTexture(1, ShaderPropertiesID.Cube0, info.rt0);
+                    cs_GetSurfelFromGBuffer.SetTexture(1, ShaderPropertiesID.Cube1, info.rt1);
+
+                    cb_ResultCount.SetData(new int[] { 0 });
+                    cs_GetSurfelFromGBuffer.SetBuffer(1, ShaderPropertiesID.ResultCount, cb_ResultCount);
+
+                    cs_GetSurfelFromGBuffer.Dispatch(1, 8, 8, 8);
+
+                    int[] skyVisibility = new int[1];
+                    cb_ResultCount.GetData(skyVisibility);
+
                     cs_GetSurfelFromGBuffer.SetVector(ShaderPropertiesID.ProbePosition, porbePosition);
                     cs_GetSurfelFromGBuffer.SetTexture(0, ShaderPropertiesID.Cube0, info.rt0);
                     cs_GetSurfelFromGBuffer.SetTexture(0, ShaderPropertiesID.Cube1, info.rt1);
@@ -173,8 +185,8 @@ namespace MPipeline
                         continue;
 
                     //add into probes
-                    probes.Add(probesFromLightProbes[j]);
-                    int probeId = probes.Count - 1;
+                    int probeId = probes.Count;
+                    probes.Add(new LPProbe { position = probesFromLightProbes[j].position, skyVisibility = (float)(skyVisibility[0]) / (64*64*64) });
 
                     LPSurfel[] surfelsReadbackFromGPU = new LPSurfel[count[0]];
                     cb_Result.GetData(surfelsReadbackFromGPU, 0, 0, count[0]);
@@ -201,6 +213,7 @@ namespace MPipeline
                         surfel_list.Add(surfel);
                     }
                 }
+                if (probes.Count == 0) continue;
 
                 //calculate average of surfel list of each surfel
                 foreach (var surfel_list in surfels_countainslist)
@@ -219,6 +232,8 @@ namespace MPipeline
                     surfels.Add(surfel_list.Key, surfel);
                 }
 
+                List<int> surfelIds = new List<int>();
+                List<IdWeight>[] influncedGroupIdWeights = new List<IdWeight>[probes.Count];
                 //generate surfel groups
                 {
                     Vector3Int minP = new Vector3Int(99999999, 99999999, 99999999), maxP = new Vector3Int(-99999999, -99999999, -99999999);
@@ -232,7 +247,6 @@ namespace MPipeline
                             {
                                 LPSurfelGroup group = new LPSurfelGroup();
                                 List<int> surfel_ids = new List<int>();
-                                List<IdWeight> idWeight = new List<IdWeight>();
                                 Dictionary<int, int> probe_id_num = new Dictionary<int, int>();
                                 for (int n = 0; n < 4; n++)
                                     for (int p = 0; p < 4; p++)
@@ -253,12 +267,23 @@ namespace MPipeline
                                             }
                                         }
                                 if (surfel_ids.Count == 0) continue;
-                                group.surfelId = surfel_ids.ToArray();
+                                group.surfelPtr = surfelIds.Count;
+                                group.surfelCount = surfelIds.Count;
+                                surfelIds.AddRange(surfel_ids);
+
+                                int groupId = groups.Count;
+
                                 foreach (var id_num in probe_id_num)
                                 {
-                                    idWeight.Add(new IdWeight(id_num.Key, (float)id_num.Value / surfel_ids.Count));
+                                    var idWeight = new IdWeight(groupId, (float)id_num.Value / surfel_ids.Count);
+                                    var influncedGroupIdWeight = influncedGroupIdWeights[id_num.Key];
+                                    if (influncedGroupIdWeight == null)
+                                    {
+                                        influncedGroupIdWeight = new List<IdWeight>();
+                                        influncedGroupIdWeights[id_num.Key] = influncedGroupIdWeight;
+                                    }
+                                    influncedGroupIdWeight.Add(idWeight);
                                 }
-                                group.influncedProbeIdWeight = idWeight.ToArray();
                                 groups.Add(group);
                             }
                 }
@@ -267,8 +292,20 @@ namespace MPipeline
                 {
                     LPChunk chunk = sceneLightProbeFile.GetChunkFile(id);
                     chunk.probes = probes.ToArray();
-                    chunk.surfels = surfels_list.ToArray();
+                    List<LPSurfel> surfelsResort = new List<LPSurfel>();
+                    foreach (var sid in surfelIds)
+                        surfelsResort.Add(surfels_list[sid]);
+                    chunk.surfels = surfelsResort.ToArray();
                     chunk.surfelGroups = groups.ToArray();
+
+                    List<IdWeight> influncedGroupIdWeight = new List<IdWeight>();
+                    for (int j = 0; j < probes.Count; j++)
+                    {
+                        chunk.probes[j].surfelGroupPtr = influncedGroupIdWeight.Count;
+                        chunk.probes[j].surfelGroupCount = influncedGroupIdWeights[j].Count;
+                        influncedGroupIdWeight.AddRange(influncedGroupIdWeights[j]);
+                    }
+                    chunk.influncedGroupIdWeight = influncedGroupIdWeight.ToArray();
                     EditorUtility.SetDirty(chunk);
                 }
             }
