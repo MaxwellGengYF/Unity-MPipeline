@@ -59,12 +59,13 @@
             return o;
         }
 float4x4 _LastSkyVP;
+float2 _Jitter;
             void frag (v2f i, out float3 color : SV_TARGET0, out float2 mv : SV_TARGET1)
             {
                 float2 uv = i.screenUV.xy / i.screenUV.z;
                 float4 lastProj = mul(_LastSkyVP, float4(i.worldPos, 1));
                 lastProj /= lastProj.w;
-                mv = uv - (lastProj.xy * 0.5 + 0.5);
+                mv = uv - (lastProj.xy * 0.5 + 0.5) + _Jitter;
                 float4 tex = texCUBElod(_Tex, float4(i.texcoord, 0));
                 color = DecodeHDR(tex, _Tex_HDR);
                 color = color * _Tint.rgb * unity_ColorSpaceDouble.rgb * _Exposure;

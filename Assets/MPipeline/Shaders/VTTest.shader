@@ -2,7 +2,7 @@
 {
     Properties
     {
-        _MainTex ("Texture", 2D) = "white" {}
+        _TileOffset("Tile Offset", vector) = (1,1,0,0)
     }
     SubShader
     {
@@ -43,17 +43,14 @@ Cull back
                 UNITY_FOG_COORDS(1)
                 float4 vertex : SV_POSITION;
             };
-
-            sampler2D _MainTex;
-            float4 _MainTex_ST;
-
+float4 _TileOffset;
             
 
             v2f vert (appdata v)
             {
                 v2f o;
                 o.vertex = UnityObjectToClipPos(v.vertex);
-                o.uv = TRANSFORM_TEX(v.uv, _MainTex);
+                o.uv = v.uv * _TileOffset.xy + _TileOffset.zw;
                 UNITY_TRANSFER_FOG(o,o.vertex);
                 return o;
             }

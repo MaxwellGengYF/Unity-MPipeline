@@ -144,6 +144,10 @@ namespace MPipeline
         /// <param name="formats">Each VT's format</param>
         public VirtualTexture(int maximumSize, int2 indexSize, VirtualTextureFormat* formats, int formatLen)
         {
+            if(maximumSize > 2048)
+            {
+                throw new System.Exception("Virtual Texture Maximum Size can not larger than 2048");
+            }
             this.indexSize = indexSize;
             setIndexBuffer = new ComputeBuffer(START_CHUNKSIZE * START_CHUNKSIZE, sizeof(uint));
             allFormats = new NativeArray<VirtualTextureFormat>(formatLen, Allocator.Persistent);
@@ -153,7 +157,7 @@ namespace MPipeline
             pool = new TexturePool(maximumSize);
             indexTex = new RenderTexture(new RenderTextureDescriptor
             {
-                colorFormat = RenderTextureFormat.ARGBHalf,
+                colorFormat = RenderTextureFormat.ARGB64,
                 depthBufferBits = 0,
                 dimension = TextureDimension.Tex2D,
                 enableRandomWrite = true,

@@ -19,6 +19,7 @@ inline float3 GetVirtualTextureUV(float2 startChunkPos, float2 localUV)
 {
     startChunkPos = (0.25 + startChunkPos) % _IndexTexture_TexelSize.zw;
     float4 scaleOffset = _IndexTexture[startChunkPos];
+    scaleOffset.w *= 2048;
     localUV = localUV * scaleOffset.x + scaleOffset.yz;
     return float3(localUV, scaleOffset.w);
 }

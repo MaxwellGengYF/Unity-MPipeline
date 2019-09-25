@@ -27,14 +27,14 @@ void SetIndexTex(uint2 id : SV_DISPATCHTHREADID)
     uint2 indx = id + _VTVariables.xy;
     float size = 1.0 / _VTVariables.z;
     float2 offset = ((float2)id) / (float)_VTVariables.z;
-    _IndexTexture[RepeatUV(indx)] = float4(size, offset, _VTVariables.w + 0.2);
+    _IndexTexture[RepeatUV(indx)] = float4(size, offset, (_VTVariables.w + 0.4) / 2048.0);
 }
 [numthreads(8,8,1)]
 void SetIndexIndependentTex(uint2 id : SV_DISPATCHTHREADID)
 {
     if(id.x >= _VTVariables.z || id.y >= _VTVariables.z) return;
     uint2 indx = id + _VTVariables.xy;
-    _IndexTexture[RepeatUV(indx)] = float4(1, 0, 0, _ElementBuffer[id.y * _VTVariables.z + id.x] + 0.2);
+    _IndexTexture[RepeatUV(indx)] = float4(1, 0, 0, (_ElementBuffer[id.y * _VTVariables.z + id.x] + 0.4) / 2048.0);
 }
 
 [numthreads(8,8,1)]
@@ -47,7 +47,7 @@ void BlitTex(uint2 id : SV_DISPATCHTHREADID)
     uint2 startIndex = (uint2)(scaledUV);
     uint targetIndex = _ElementBuffer[startIndex.y * _TextureSize.y + startIndex.x];
     float2 localUV = frac(scaledUV);
-    _VirtualTexture[uint3(localUV * _TextureSize.z + 0.5, targetIndex)] = _MainTex.SampleLevel(sampler_MainTex, uv, 0);
+    _VirtualTexture[uint3(localUV * _TextureSize.z, targetIndex)] = _MainTex.SampleLevel(sampler_MainTex, uv, 0);
 }
 //_TextureSize: XY: destScale        ZW: destOffset
 //_VTVariables: XY: StartIndex      Z: size
@@ -58,6 +58,7 @@ void CopyTex(uint2 id : SV_DISPATCHTHREADID)
     float2 uv = ((id + 0.5) / _Count) * _VTVariables.z;
     uint2 indx = uv + _VTVariables.xy;
     float4 scaleOffset = _IndexTexture[RepeatUV(indx)];
+    scaleOffset.w *= 2048.0;
     float3 uvw =  float3(frac(uv) * scaleOffset.x + scaleOffset.yz, scaleOffset.w);
     #ifdef UNITY_REVERSED_Z
     id.y = _Count - id.y - 1;

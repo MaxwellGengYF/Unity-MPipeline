@@ -27,40 +27,47 @@ public unsafe sealed class Test : MonoBehaviour
     {
         Shader.DisableKeyword("USE_WHITE");
     }
-    ComputeBuffer buff;
-    public Mesh mesh;
     private VirtualTexture vt;
-    public Texture[] allTextures;
-    public Texture[] allTexturesCopy;
-    private struct Int4Equal : IFunction<int4, int4, bool>
-    {
-        public bool Run(ref int4 a, ref int4 b)
-        {
-            bool4 v = a == b;
-            return v.x && v.y && v.z && v.w;
-        }
-    }
 
+    [SerializeField]
+    private Texture[] allTextures;
+    [SerializeField]
+    private Material[] mats;
 
     private void Start()
     {
-        buff = new ComputeBuffer(1, sizeof(float));
-        VirtualTextureFormat* formats = stackalloc VirtualTextureFormat[]
+        int minRes = int.MaxValue;
+        int maxRes = 0;
+        int capacity = 0;
+        foreach (var i in allTextures)
         {
-            new VirtualTextureFormat(VirtualTextureSize.x256, RenderTextureFormat.ARGB32, "_ColorVT")
-        };
-        vt = new VirtualTexture(9, 3, formats, 1);
-        var arr = vt.LoadNewTextureChunks(0, 3, Allocator.Temp);
-        for (int i = 0; i < arr.Length; ++i)
-        {
-            Graphics.Blit(allTextures[i], vt.GetTexture(0), 0, arr[i]);
+            minRes = min(i.width, minRes);
+            maxRes = max(i.width, maxRes);
         }
-        Debug.Log(vt.LeftedTextureElement);
+        foreach (var i in allTextures)
+        {
+            capacity += (i.width / minRes) * (i.height / minRes);
+        }
+        VirtualTextureFormat* formats = stackalloc VirtualTextureFormat[]
+    {
+            new VirtualTextureFormat((VirtualTextureSize)minRes, RenderTextureFormat.ARGB32, "_ColorVT")
+        };
+        vt = new VirtualTexture(capacity, int2(capacity, maxRes), formats, 1);
+
+        for (int i = 0, offset = 0; i < allTextures.Length; ++i)
+        {
+            int size = allTextures[i].width / minRes;
+            int ele = vt.LoadNewTexture(int2(offset, 0), size);
+            mats[i].SetVector("_TileOffset", new Vector4(size, size, offset, 0));
+            offset += size;
+            Graphics.Blit(allTextures[i], vt.GetTexture(0), 0, ele);
+        }
+        Debug.Log(vt.LeftedTextureElement);     //8
     }
     private void Update()
     {
         vt.Update();
-        if (Input.GetKeyDown(KeyCode.Space))
+        /*if (Input.GetKeyDown(KeyCode.Space))
         {
             for (int i = 0; i < 3; i++)
                 for (int j = 0; j < 3; j++)
@@ -75,7 +82,7 @@ public unsafe sealed class Test : MonoBehaviour
         {
             vt.CombineTexture(0, 3, true);
             Debug.Log(vt.LeftedTextureElement);
-        }
+        }*/
         /*
         if(Input.GetKeyDown(KeyCode.Space))
         {
@@ -105,7 +112,6 @@ public unsafe sealed class Test : MonoBehaviour
 
     private void OnDestroy()
     {
-        buff.Dispose();
         vt.Dispose();
     }
 }
