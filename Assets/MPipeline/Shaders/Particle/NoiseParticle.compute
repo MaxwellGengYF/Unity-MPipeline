@@ -1,0 +1,36 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+RWStructuredBuffer<float3x4> _TransformMatrices;
+RWStructuredBuffer<float3x4> _OriginTransformMatrices;
+Texture2D<float> _NoiseTexture; float2 _NoiseTexture_Size;
+float _Offset;
+float3 _OffsetDirection;
+uint _Count;
+float Repeat(float value, float maxv)
+{
+    [flatten]
+    if(value > maxv) value -= maxv;
+    else if(value < 0) value += maxv;
+    return value;
+}
+		float Cubic_Interpolate (float value1, float value2, float value3, float value4, float x)
+		{
+			float p = (value4 - value3) - (value1 - value2);
+			float q = (value1 - value2) - p;
+			float r = value3 - value1;
+            float4 v = float4(p,q,r,value2);
+            v *= float4(x,x,x,1) * float4(x,x,1,1) * float4(x,1,1,1);
+			return dot(v, 1);
+		}
+[numthreads(64,1,1)]
+void CSMain (uint id : SV_DispatchThreadID)
+{
+    if(id >= _Count) return;
+    uint x =(uint)((float)id / (float)_Count * _NoiseTexture_Size.x);
+    float3 offset = Cubic_Interpolate(_NoiseTexture[uint2(x, Repeat(_Offset-1, _NoiseTexture_Size.y))], _NoiseTexture[uint2(x, Repeat(_Offset, _NoiseTexture_Size.y))], _NoiseTexture[uint2(x, Repeat(_Offset + 1, _NoiseTexture_Size.y))],  _NoiseTexture[uint2(x, Repeat(_Offset + 2, _NoiseTexture_Size.y))], frac(_Offset))  * _OffsetDirection;
+    float3x4 mat = _OriginTransformMatrices[id];
+    mat._m03 += offset.x;
+    mat._m13 += offset.y;
+    mat._m23 += offset.z;
+    _TransformMatrices[id] = mat;
+}

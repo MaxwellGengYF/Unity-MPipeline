@@ -1,0 +1,38 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+#include "UnityCG.cginc"
+#include "CGINC/Random.cginc"
+RWStructuredBuffer<float3> _InstancePos;
+Texture2D<float> _RainDepthTex; SamplerState sampler_RainDepthTex;
+float4x4 _DepthVPMatrix;
+float4x4 _InvDepthVPMatrix;
+float _DeltaTime;
+RWStructuredBuffer<float> _RunSpeedBuffer;
+[numthreads(64,1,1)]
+void CSMain (uint id : SV_DispatchThreadID)
+{
+	float4 worldPos = float4(_InstancePos[id], 1);
+	worldPos.y -= _RunSpeedBuffer[id] * _DeltaTime;
+	float4 projPos = mul(_DepthVPMatrix, worldPos);
+	projPos /= projPos.w;
+	float sampledDepth = _RainDepthTex.SampleLevel(sampler_RainDepthTex, projPos.xy * 0.5 + 0.5, 0);
+	#if UNITY_REVERSED_Z
+	projPos.z = 1 - projPos.z;
+	sampledDepth = 1 - sampledDepth;
+	#endif
+	projPos.xy = projPos.xy * 0.5 + 0.5;
+	projPos.xy = frac(projPos.xy);
+	projPos.xy = projPos.xy * 2 - 1;
+	if(projPos.z > sampledDepth)
+	{
+		projPos.z = 0;
+		projPos.xy = MNoise(projPos.xy) * 2 - 1;
+		_RunSpeedBuffer[id] = frac(sin((projPos.x + projPos.y) * 324.687435) * 42576.1384) * 0.3 + 0.7;
+	}
+	#if UNITY_REVERSED_Z
+	projPos.z = 1 - projPos.z;
+	#endif
+	worldPos = mul(_InvDepthVPMatrix, projPos);
+	worldPos /= worldPos.w;
+	_InstancePos[id] = worldPos.xyz;
+}

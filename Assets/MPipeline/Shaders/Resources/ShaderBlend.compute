@@ -1,0 +1,85 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel ColorTexBlend
+#pragma kernel Clear
+#pragma kernel SaveToBuffer
+#pragma kernel ColorTexBlend_Random
+#include "UnityCG.cginc"
+#include "../CGINC/Random.cginc"
+RWTexture2D<float4> _MainTex;
+Texture2D<float4> _BlendTex; SamplerState sampler_BlendTex;
+RWStructuredBuffer<float4> _ColorBuffer;
+float4 _MainTex_TexelSize;// XY : 1 / size   ZW: size - 0.1
+float4 _BlendTex_TexelSize; // XY : 1 / size   ZW: size - 0.1
+float4 _OffsetScale;    //XY: main tex offset + 0.1    ZW: Tilling Scale
+float _BlendAlpha;
+float4 _InitialColor;
+float4 hash4( float2 p ) { return frac(sin(float4( 1.0+dot(p,float2(37.0,17.0)), 
+                                              2.0+dot(p,float2(11.0,47.0)),
+                                              3.0+dot(p,float2(41.0,29.0)),
+                                              4.0+dot(p,float2(23.0,31.0))))*103.0); }
+float4 texNoTileTech2(Texture2D tex, SamplerState samp, float2 uv) {
+	float2 iuv = floor(uv);
+	float2 fuv = frac(uv);
+	// Voronoi contribution
+	float4 va = 0.0;
+	float wt = 0.0;
+    const float _BlendRatio  = 1.5;
+	float blur = -(_BlendRatio ) * 30.0;
+	for (int j = -1; j <= 1; j++) {
+		for (int i = -1; i <= 1; i++) {
+			float2 g = float2((float)i, (float)j);
+			float4 o = hash4(iuv + g);
+		    // Compute the blending weight proportional to a gaussian fallof
+			float2 r = g - fuv + o.xy;
+			float d = dot(r, r);
+			float w = exp(blur * d);
+			float4 c = tex.SampleLevel(samp, frac(uv + o.zw), 0);
+			va += w * c;
+			wt += w;
+		}
+	}
+
+	// Normalization
+	return va/wt;
+}
+void ColorBlend(uint2 id, const bool random)
+{
+    uint2 mainTexID = id + _OffsetScale.xy;
+    if(id.x > _BlendTex_TexelSize.z || id.y > _BlendTex_TexelSize.w) return;
+    if(mainTexID.x > _MainTex_TexelSize.z || mainTexID.y > _MainTex_TexelSize.w) return;
+    //float2 mainUV = mainTexID / ceil(_MainTex_TexelSize.zw);
+    float4 mainTexCol = _MainTex[mainTexID];
+    float4 blendTexCol;
+    if(random)
+        blendTexCol = texNoTileTech2(_BlendTex, sampler_BlendTex, id * _BlendTex_TexelSize.xy * _OffsetScale.zw);
+    else
+        blendTexCol = _BlendTex.SampleLevel(sampler_BlendTex, frac(id * _BlendTex_TexelSize.xy * _OffsetScale.zw), 0);
+    
+    float lerpValue = blendTexCol.a * _BlendAlpha;
+    mainTexCol = lerp(mainTexCol, blendTexCol, lerpValue);
+    _MainTex[mainTexID] = mainTexCol;
+}
+[numthreads(8,8,1)]
+void ColorTexBlend (uint2 id : SV_DispatchThreadID)
+{
+     ColorBlend(id, false);
+}
+
+[numthreads(8,8,1)]
+void Clear(uint2 id : SV_DISPATCHTHREADID)
+{
+    if(id.x > _MainTex_TexelSize.z || id.y > _MainTex_TexelSize.w) return;
+    _MainTex[id] = _InitialColor;
+}
+[numthreads(8, 8, 1)]
+void SaveToBuffer(uint2 id : SV_DISPATCHTHREADID)
+{
+    if(id.x > _MainTex_TexelSize.z || id.y > _MainTex_TexelSize.w) return;
+    uint i = (uint)(id.y * ceil(_MainTex_TexelSize.z) + id.x + 0.1);
+    _ColorBuffer[i] = _MainTex[id];
+}
+[numthreads(8,8,1)]
+void ColorTexBlend_Random (uint2 id : SV_DispatchThreadID)
+{
+     ColorBlend(id, true);
+}

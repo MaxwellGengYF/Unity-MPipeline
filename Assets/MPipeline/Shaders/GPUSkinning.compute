@@ -1,0 +1,24 @@
+﻿#pragma kernel SkinUpdate
+#include "UnityCG.cginc"
+#include "CGINC/Skin.cginc"
+uint _Count;
+StructuredBuffer<SkinVertex> _SkinVerticesBuffer;
+StructuredBuffer<float3x4> _BonesBuffer;
+RWStructuredBuffer<Vertex> verticesBuffer;
+[numthreads(64,1,1)]
+void SkinUpdate (uint id : SV_DISPATCHTHREADID)
+{
+    if(id >= _Count) return;
+    SkinVertex sk = _SkinVerticesBuffer[id];
+    float3x4 mat = _BonesBuffer[sk.boneIndex.x]  * sk.boneWeight.x
+    + _BonesBuffer[sk.boneIndex.y]  * sk.boneWeight.y
+    + _BonesBuffer[sk.boneIndex.z]  * sk.boneWeight.z
+    + _BonesBuffer[sk.boneIndex.w]  * sk.boneWeight.w;
+    Vertex vt;
+    vt.position = mul(mat, float4(sk.position, 1));
+    vt.normal = mul(mat, float4(sk.normal, 0));
+    vt.tangent.xyz = mul(mat, float4(sk.tangent.xyz, 0));
+    vt.tangent.w = sk.tangent.w;
+    vt.uv = sk.uv;
+    verticesBuffer[id] = vt;
+}

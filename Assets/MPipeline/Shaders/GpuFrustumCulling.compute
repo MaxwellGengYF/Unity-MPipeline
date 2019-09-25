@@ -1,0 +1,212 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel ClusterCull
+#pragma kernel ClearCluster
+#pragma kernel UnsafeCull
+#pragma kernel MoveVertex
+#pragma kernel MoveCluster
+#pragma kernel FrustumFilter
+#pragma kernel OcclusionRecheck
+#pragma kernel ClearOcclusionData
+#define COMPUTESHADER
+#include "UnityCG.cginc"
+#include "CGINC/Procedural.cginc"
+float4 planes[PLANECOUNT];
+float3 _FrustumMinPoint;
+float3 _FrustumMaxPoint;
+struct ClusterMeshData
+{
+    float3 extent;
+    float3 position;
+    int index;
+};
+RWStructuredBuffer<ClusterMeshData> clusterBuffer;
+RWStructuredBuffer<uint> instanceCountBuffer;
+RWStructuredBuffer<uint> resultBuffer;
+Texture2D<half> _HizDepthTex;  SamplerState sampler_HizDepthTex;
+uint _Count;
+float3 _CameraUpVector;
+float4x4 _NonJitterVP;
+float PlaneTest(ClusterMeshData info){
+    float3 position = info.position;
+    float3 extent = info.extent;
+    float3 minPos = position - extent;
+    float3 maxPos = position + extent;
+    float outOfRange = dot(_FrustumMinPoint > maxPos, 1) + dot(_FrustumMaxPoint < minPos, 1);
+    if(outOfRange > 0.5) return 0;
+    [unroll]
+    for(uint i = 0; i < 6; ++i)
+    {
+        float4 plane = planes[i];
+        float3 absNormal = abs(plane.xyz);
+        if((dot(position, plane.xyz) - dot(absNormal, extent)) > -plane.w)
+        {
+            return 0;
+        }
+    }
+    return 1;
+}
+static const float3 aggressiveExtentArray[8] =
+{
+    float3(1, 1, 1),
+    float3(1, 1, -1),
+    float3(1, -1, 1),
+    float3(1, -1, -1),
+    float3(-1, 1, 1),
+    float3(-1, 1, -1),
+    float3(-1, -1, 1),
+    float3(-1, -1, -1)
+};
+float4 _HizScreenRes;
+float OcclusionTest(ClusterMeshData info, float4x4 vpMat)
+{
+    #ifdef UNITY_REVERSED_Z
+    float minZ = 0;
+    #else
+    float minZ = 1;
+    #endif
+    float2 maxXY = 0; float2 minXY = 1;
+    for(uint i = 0; i < 8; ++i)
+    {
+       float3 boxCorner = info.position + info.extent * aggressiveExtentArray[i]; 
+       float4 clipPos = mul(vpMat, float4(boxCorner, 1));
+       clipPos /= clipPos.w;
+       minXY = min(clipPos.xy, minXY);
+       maxXY = max(clipPos.xy, maxXY);
+       #ifdef UNITY_REVERSED_Z
+       minZ = max(minZ, clipPos.z);
+       #else
+       minZ = min(minZ, clipPos.z);
+       #endif
+    }
+    float4 boxUVs = float4(minXY, maxXY);
+    boxUVs = saturate(boxUVs * 0.5 + 0.5);
+    float2 size = (boxUVs.zw - boxUVs.xy) * _HizScreenRes.xy;
+    float mip = (log2(max(size.x, size.y)));
+    if(mip > _HizScreenRes.z)
+    {
+        return 1;
+    }
+    mip = ceil(mip);
+    mip = min(mip, _HizScreenRes.w);
+     float  level_lower = max(mip - 1, 0);
+        float2 scale = exp2(-level_lower) * _HizScreenRes.xy;
+        float2 a = floor(boxUVs.xy*scale);
+        float2 b = ceil(boxUVs.zw*scale);
+        float2 dims = b - a;
+ 
+        // Use the lower level if we only touch <= 2 texels in both dimensions
+        if (dims.x <= 2 && dims.y <= 2)
+            mip = level_lower;
+
+    float4 depth = float4(_HizDepthTex.SampleLevel(sampler_HizDepthTex, boxUVs.xy, mip),
+                         _HizDepthTex.SampleLevel(sampler_HizDepthTex, boxUVs.zy, mip),
+                         _HizDepthTex.SampleLevel(sampler_HizDepthTex, boxUVs.xw, mip),
+                         _HizDepthTex.SampleLevel(sampler_HizDepthTex, boxUVs.zw, mip)
+    );
+    #ifdef UNITY_REVERSED_Z
+    depth.xy = min(depth.xy, depth.zw);
+    depth.x = min(depth.x, depth.y);
+    return minZ >= depth.x;
+    #else
+    depth.xy = max(depth.xy, depth.zw);
+    depth.x = max(depth.x, depth.y);
+    return minZ <= depth.x;
+    #endif
+    
+}
+
+[numthreads(64, 1, 1)]
+void ClusterCull (uint id : SV_DISPATCHTHREADID)
+{
+    if(id >= _Count) return; 
+    ClusterMeshData currentObject = clusterBuffer[id];
+    float result =  PlaneTest(currentObject);
+    if(result > 0.5){
+        uint currentIndex;
+        InterlockedAdd(instanceCountBuffer[1], 1, currentIndex);
+        resultBuffer[currentIndex] = id;
+    }
+}
+
+[numthreads(1,1,1)]
+void ClearCluster(uint id : SV_DISPATCHTHREADID)
+{
+    instanceCountBuffer[1] = 0;
+}
+
+[numthreads(64, 1, 1)]
+void UnsafeCull(uint id : SV_DISPATCHTHREADID)
+{
+    if(id >= _Count) return; 
+    ClusterMeshData currentObject = clusterBuffer[id];
+    if((PlaneTest(currentObject) * OcclusionTest(currentObject, _NonJitterVP)) > 0.5)
+    {
+        uint currentIndex;
+        InterlockedAdd(instanceCountBuffer[1], 1, currentIndex);
+        resultBuffer[currentIndex] = id;
+    }
+}
+RWStructuredBuffer<Point> verticesBuffer;
+float3 _SceneOffset;
+uint _OffsetIndex;
+[numthreads(1, CLUSTERCLIPCOUNT, 1)]
+void MoveVertex(uint2 id : SV_DISPATCHTHREADID)
+{
+    verticesBuffer[(id.x + _OffsetIndex) * CLUSTERCLIPCOUNT + id.y].vertex += _SceneOffset;
+}
+
+[numthreads(64, 1, 1)]
+void MoveCluster(uint id : SV_DISPATCHTHREADID)
+{
+    if(id >= _Count) return; 
+    clusterBuffer[id + _OffsetIndex].position += _SceneOffset;
+}
+
+
+RWStructuredBuffer<uint> reCheckResult;
+RWStructuredBuffer<uint> reCheckCount;
+RWStructuredBuffer<uint> dispatchBuffer;
+float4x4 _LastVp;
+[numthreads(64, 1, 1)]
+void FrustumFilter(uint id : SV_DISPATCHTHREADID)
+{
+    if(id >= _Count) return; 
+    ClusterMeshData currentObject = clusterBuffer[id];
+    if(PlaneTest(currentObject) > 0.5)
+    {
+        uint currentIndex;
+        [branch]
+        if(OcclusionTest(currentObject, _LastVp) > 0.5){
+            InterlockedAdd(instanceCountBuffer[1], 1, currentIndex);
+            resultBuffer[currentIndex] = id;
+        } else{
+            InterlockedAdd(dispatchBuffer[4], 1, currentIndex);
+            reCheckResult[currentIndex] = id;
+        }
+    }
+}
+
+[numthreads(64, 1, 1)]
+void OcclusionRecheck(uint id : SV_DISPATCHTHREADID)
+{
+    if(id >= dispatchBuffer[3]) return;
+    int index = reCheckResult[id];
+    ClusterMeshData currentObject = clusterBuffer[index];
+    [branch]
+    if(OcclusionTest(currentObject, _NonJitterVP) > 0.5)
+    {
+        uint currentIndex;
+        InterlockedAdd(reCheckCount[1], 1, currentIndex);
+        resultBuffer[currentIndex] = index;
+    }
+}
+
+[numthreads(1,1,1)]
+void ClearOcclusionData(uint id : SV_DISPATCHTHREADID)
+{
+    uint threadCount = dispatchBuffer[4];
+    dispatchBuffer[0] = uint(ceil(threadCount / 64.0));
+    dispatchBuffer[3] = threadCount;
+    dispatchBuffer[4] = 0;
+    reCheckCount[1] = 0;
+}

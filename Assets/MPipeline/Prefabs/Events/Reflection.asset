@@ -1,0 +1,31 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: fcd0c6469ac1cd442b693ea77f1a521b, type: 3}
+  m_Name: Reflection
+  m_EditorClassIdentifier: 
+  enabled: 1
+  backgroundCubemap: {fileID: 8900000, guid: cfbac04d95f652844b617b7130731e72, type: 3}
+  availiableDistance: 100
+  ssrEvents:
+    enabled: 1
+    downSample: 0
+    Thickness: 0.3
+    brdfBias: 0
+    ScreenFade: 0
+    HiZ_RaySteps: 64
+    HiZ_MaxLevel: 4
+    HiZ_StartLevel: 1
+    HiZ_StopLevel: 0
+    DynamicTemporalWeight: 0.8
+    StaticTemporalWeight: 0.97
+    MaximumAllowedTemporalDepthBias: 1
+    RunTimeDebugMod: 1

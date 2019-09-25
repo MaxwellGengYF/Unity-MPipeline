@@ -1,0 +1,36 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel ReflectionCull
+#include "CGINC/VoxelLight.cginc"
+#define COMPUTE_SHADER
+#include "CGINC/Reflection.cginc"
+
+Texture3D<float4> _XYPlaneTexture;
+Texture2D<float4> _ZPlaneTexture;
+RWStructuredBuffer<uint> _ReflectionIndices;
+StructuredBuffer<ReflectionData> _ReflectionData;
+TextureCubeArray<float4> _ReflectionTextures;
+int _Count;
+
+[numthreads(XRES, YRES, 1)]
+void ReflectionCull (uint3 id : SV_DispatchThreadID)
+{
+    int i;
+    int index = DownDimension(id, uint2(XRES, YRES), MAXIMUM_PROBE + 1);
+    float4 planes[6];
+    for(i = 0; i < 4; ++i)
+        planes[i] = _XYPlaneTexture[uint3(id.xy, i)];
+    planes[4] = _ZPlaneTexture[uint2(id.z, 0)];
+    planes[5] = _ZPlaneTexture[uint2(id.z, 1)];
+    int count = 1;
+    [loop]
+    for(i = 0; i < _Count; ++i)
+    {
+        ReflectionData data = _ReflectionData[i];
+        if(BoxIntersect(data.maxExtent, data.position, planes) > 0.5)
+        {
+            _ReflectionIndices[index + count] = i;
+            count++;
+        }
+    }
+    _ReflectionIndices[index] = count;
+}

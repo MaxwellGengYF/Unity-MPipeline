@@ -1,0 +1,70 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+#pragma kernel FinalResult
+#pragma kernel LoadRT
+#include "GI/GlobalIllumination.cginc"
+#include "CGINC/Shader_Include/Montcalo_Library.hlsl"
+float _Radius;
+TextureCube<float> _DepthCubemap; SamplerState sampler_DepthCubemap;
+RWStructuredBuffer<SH9> _OcclusionResult;
+RWStructuredBuffer<SH9> _FinalBuffer;
+inline float calculateOcclusion(float dist, float radius)
+{
+    float v = saturate(dist / radius); 
+    return pow(v, 0.8);
+}
+inline uint GetIndex(uint3 id, uint3 size);
+
+[numthreads(1024, 1 ,1)]
+void CSMain (uint id : SV_DISPATCHTHREADID)
+{
+    float2 rand = Hammersley(id, 1024 * 1024);
+    float3 normal = normalize(UniformSampleSphere(rand).xyz);
+    SH9 shConst = SHCosineLobe(normal);
+    float dist = _DepthCubemap.SampleLevel(sampler_DepthCubemap, -normal, 0);
+    dist = calculateOcclusion(dist, _Radius);
+    for(uint i = 0; i < 9; ++i)
+    {
+        shConst.c[i] *= dist * 9;
+    }
+    _OcclusionResult[id] = shConst;
+}
+
+
+[numthreads(1024, 1, 1)]
+void FinalResult(uint id : SV_GROUPTHREADID)
+{
+    uint startID = id * 1024;
+    uint a;
+    SH9 sh = (SH9)0;
+    [loop]
+    for(uint i = 0; i < 1024; ++i)
+    {
+        SH9 newSH = _OcclusionResult[startID];
+        startID++;
+        for(a = 0; a < 9; ++a)
+        {
+            sh.c[a] += newSH.c[a] / 1024.0;
+        }
+    }
+    _FinalBuffer[id] = sh;
+}
+uint3 _Resolution;
+RWTexture3D<float4> _Src0;
+RWTexture3D<float4> _Src1;
+RWTexture3D<float> _Src2;
+StructuredBuffer<SH9> _SHBuffer;
+[numthreads(4, 4, 4)]
+void LoadRT(uint3 id : SV_DISPATCHTHREADID)
+{
+    if(dot(id >= _Resolution, 1) >= 1) return;
+    uint index = GetIndex(id, _Resolution);
+    SH9 sh = _SHBuffer[index];
+    _Src0[id] = float4(sh.c[0], sh.c[1] ,sh.c[2], sh.c[3]);
+    _Src1[id] = float4(sh.c[4], sh.c[5], sh.c[6], sh.c[7]);
+    _Src2[id] = sh.c[8];
+}
+inline uint GetIndex(uint3 id, uint3 size){
+    uint3 multiValue = uint3(1, size.x, size.x * size.y);
+    return dot(id, multiValue);
+}

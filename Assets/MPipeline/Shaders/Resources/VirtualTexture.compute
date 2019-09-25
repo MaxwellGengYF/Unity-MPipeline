@@ -1,0 +1,66 @@
+﻿#pragma kernel SetIndexTex
+#pragma kernel SetIndexIndependentTex
+#pragma kernel BlitTex
+#pragma kernel CopyTex
+#include "UnityCG.cginc"
+RWTexture2D<half4> _IndexTexture;
+float4 _TextureSize; // X: virtual texture element's size Y: index texture size ZW: Start Index
+uint _TargetElement;
+RWTexture2DArray<float4> _VirtualTexture;
+
+Texture2DArray<float4> _TextureBuffer; SamplerState sampler_TextureBuffer;
+
+RWTexture2D<float4> _BlendTex;
+int4 _VTVariables;//XY: Start Index Z: Size W: TargetIndex
+uint2 _IndexTextureSize;
+StructuredBuffer<uint> _ElementBuffer;
+Texture2D<float4> _MainTex; SamplerState sampler_MainTex;
+uint2 RepeatUV(uint2 uv)
+{
+    return uv % _IndexTextureSize;
+}
+
+[numthreads(8, 8, 1)]
+void SetIndexTex(uint2 id : SV_DISPATCHTHREADID)
+{
+    if(id.x >= _VTVariables.z || id.y >= _VTVariables.z) return;
+    uint2 indx = id + _VTVariables.xy;
+    float size = 1.0 / _VTVariables.z;
+    float2 offset = ((float2)id) / (float)_VTVariables.z;
+    _IndexTexture[RepeatUV(indx)] = float4(size, offset, _VTVariables.w + 0.2);
+}
+[numthreads(8,8,1)]
+void SetIndexIndependentTex(uint2 id : SV_DISPATCHTHREADID)
+{
+    if(id.x >= _VTVariables.z || id.y >= _VTVariables.z) return;
+    uint2 indx = id + _VTVariables.xy;
+    _IndexTexture[RepeatUV(indx)] = float4(1, 0, 0, _ElementBuffer[id.y * _VTVariables.z + id.x] + 0.2);
+}
+
+[numthreads(8,8,1)]
+void BlitTex(uint2 id : SV_DISPATCHTHREADID)
+{
+    //_TextureSize: 
+    // X: TexSize     Y: Index Scale      Z: VT Chunk Size
+    float2 uv = ((id + 0.5) / _TextureSize.x);
+    float2 scaledUV = uv * _TextureSize.y;
+    uint2 startIndex = (uint2)(scaledUV);
+    uint targetIndex = _ElementBuffer[startIndex.y * _TextureSize.y + startIndex.x];
+    float2 localUV = frac(scaledUV);
+    _VirtualTexture[uint3(localUV * _TextureSize.z + 0.5, targetIndex)] = _MainTex.SampleLevel(sampler_MainTex, uv, 0);
+}
+//_TextureSize: XY: destScale        ZW: destOffset
+//_VTVariables: XY: StartIndex      Z: size
+uint _Count;
+[numthreads(8,8,1)]
+void CopyTex(uint2 id : SV_DISPATCHTHREADID)
+{
+    float2 uv = ((id + 0.5) / _Count) * _VTVariables.z;
+    uint2 indx = uv + _VTVariables.xy;
+    float4 scaleOffset = _IndexTexture[RepeatUV(indx)];
+    float3 uvw =  float3(frac(uv) * scaleOffset.x + scaleOffset.yz, scaleOffset.w);
+    #ifdef UNITY_REVERSED_Z
+    id.y = _Count - id.y - 1;
+    #endif
+    _BlendTex[id] = _TextureBuffer.SampleLevel(sampler_TextureBuffer, uvw, 0);
+}

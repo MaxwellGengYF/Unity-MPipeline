@@ -1,0 +1,17 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel Update
+#include "../CGINC/PerlinNoise.cginc"
+RWTexture3D<float4> _AlbedoVoxel;
+float4 _TextureSize;
+float4 _VolumetricLightVar; //X: Scale Y: Offset Z: Time Slice W: Fracture
+float4 _OffsetScale;//XYZ: Scale
+[numthreads(8, 1, 8)]
+void Update(uint3 id : SV_DISPATCHTHREADID)
+{
+    float3 uv = (id + 0.5) / _TextureSize.xyz;
+    uint frac = (uint)_VolumetricLightVar.w;
+    float3 scaledUV = uv * _OffsetScale.xyz;
+    float acc = 1- exp(-max(0, (Fbm(scaledUV.x, scaledUV.z, scaledUV.y + _VolumetricLightVar.z, frac)  + _VolumetricLightVar.y) * _VolumetricLightVar.x));
+    acc = lerp(acc, 0, pow(uv.y, _TextureSize.w));
+    _AlbedoVoxel[id] = float4(1, 1, 1, acc);
+}

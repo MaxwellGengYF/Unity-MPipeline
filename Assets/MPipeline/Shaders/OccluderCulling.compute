@@ -1,0 +1,29 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel Cull
+#pragma kernel Clear
+#include "CGINC/Plane.cginc"
+RWStructuredBuffer<uint> instanceCountBuffer;
+RWStructuredBuffer<uint> resultBuffer;
+StructuredBuffer<float3x4> clusterBuffer; 
+float4 planes[6];
+uint _Count;
+//float BoxIntersect(float3 extent, float3x3 boxLocalToWorld, float3 position, float4 planes[6])
+[numthreads(64,1,1)]
+void Cull (uint id : SV_DispatchThreadID)
+{
+    if(id >= _Count) return;
+    float3x4 mat = clusterBuffer[id];
+    float3 position = float3(mat[0][3], mat[1][3], mat[2][3]);
+    if(BoxIntersect(float3(0.5,0.5,0.5), (float3x3)mat, position, planes) > 0.5)
+    {
+        uint count;
+        InterlockedAdd(instanceCountBuffer[1], 1, count);
+        resultBuffer[count] = id;
+    }
+}
+
+[numthreads(1, 1, 1)]
+void Clear(uint id : SV_DISPATCHTHREADID)
+{
+    instanceCountBuffer[1] = 0;
+}

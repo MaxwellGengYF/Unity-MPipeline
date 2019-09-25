@@ -1,0 +1,35 @@
+﻿#pragma kernel Cull
+#pragma kernel Clear
+#include "../CGINC/Plane.cginc"
+uint _Count;
+struct TerrainChunkBuffer
+{
+    float2 worldPos;
+    float2 minMaxHeight;
+    float2 scale;
+    uint2 vtUV;
+};
+RWStructuredBuffer<TerrainChunkBuffer> _TerrainChunks;
+RWStructuredBuffer<uint> _CullResultBuffer;
+RWStructuredBuffer<uint> _DispatchBuffer;
+float4 planes[6];
+[numthreads(64, 1, 1)]
+void Cull(uint id : SV_DISPATCHTHREADID)
+{
+    if(id >= _Count) return;
+    uint len;
+    TerrainChunkBuffer buffer = _TerrainChunks[id];
+    float3 startPos = float3(buffer.worldPos.x, buffer.minMaxHeight.x, buffer.worldPos.y);
+    float3 extents = float3(buffer.scale.x, buffer.minMaxHeight.y - buffer.minMaxHeight.x, buffer.scale.x) * 0.5;
+    if(BoxIntersect(extents, startPos + extents, planes))
+    {
+        InterlockedAdd(_DispatchBuffer[1], 1, len);
+        _CullResultBuffer[len] = id;
+    }
+}
+
+[numthreads(1, 1, 1)]
+void Clear(uint id : SV_DISPATCHTHREADID)
+{
+    _DispatchBuffer[1] = 0;
+}

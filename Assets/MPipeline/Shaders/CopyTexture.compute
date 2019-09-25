@@ -1,0 +1,56 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel TexToBuffer RGBM
+#pragma kernel BufferToTex RGBM
+#pragma kernel TexToBuffer ARGB
+#pragma kernel BufferToTex ARGB
+#pragma kernel TexToBuffer NORM
+#pragma kernel CopyIES
+#include "CGINC/Texture.cginc"
+#include "UnityCG.cginc"
+    uint DownDim(uint2 uv, uint width)
+    {
+        return uv.y * width + uv.x;
+    }
+
+Texture2D<float4> _InputTex; SamplerState sampler_InputTex;
+RWTexture2DArray<float4> _OutputTex;
+RWStructuredBuffer<float4> _Buffer;
+uint _Width;
+uint _OffsetIndex;
+uint _Scale;
+[numthreads(8,8,1)]
+void TexToBuffer (uint2 id : SV_DispatchThreadID)
+{
+    uint index = DownDim(id, _Width);
+    #ifdef RGBM
+  //  _Buffer[index] = EncodeColor(_InputTex[id].xyz);
+    #endif
+    #ifdef ARGB
+    _Buffer[index] = _InputTex[id];
+    #endif
+    #ifdef NORM
+    float3 normal = UnpackNormal(_InputTex.SampleLevel(sampler_InputTex, id / (float)_Width, 0));
+    normal = normalize(normal);
+    _Buffer[index] = float4(normal.xy, 0, 0);
+    #endif
+}
+
+[numthreads(8,8,1)]
+void BufferToTex (uint2 id : SV_DispatchThreadID)
+{
+    uint index = DownDim(id / _Scale, _Width);
+    #ifdef RGBM
+   // _OutputTex[uint3(id, _OffsetIndex)] = float4(DecodeColor(_Buffer[index]), 1);
+    #endif
+    #ifdef ARGB
+   // _OutputTex[uint3(id, _OffsetIndex)] = Decode(_Buffer[index]);
+    #endif
+}
+RWTexture2DArray<float> _IESAtlas;
+Texture2D<float> _IESTex;
+uint _Count;
+[numthreads(64, 1, 1)]
+void CopyIES(uint id : SV_DISPATCHTHREADID)
+{
+    _IESAtlas[uint3(id, 0, _Count)] = _IESTex[uint2(id, 0)];
+}
