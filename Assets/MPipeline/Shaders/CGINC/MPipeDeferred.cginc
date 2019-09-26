@@ -160,7 +160,9 @@ inline UnityTessellationFactors hsconst_surf (InputPatch<InternalTessInterp_appd
   float3 triangleNormal = cross(worldPos1 - worldPos0, worldPos2 - worldPos0);
 
   float3 tf = tessDist(worldPos0, worldPos1, worldPos2);
+    #ifdef USE_UV4
   tf = clamp(tf * float3(v[0].uv4.x, v[1].uv4.x, v[2].uv4.x), 1, 64);
+  #endif
   tf = (dot(_WorldSpaceCameraPos - worldPos0, triangleNormal) > -1e-4) ? tf : 0;
   o.edge[0] = tf.x;
   o.edge[1] = tf.y;
@@ -378,8 +380,10 @@ else
   float3 triangleNormal = cross(worldPos1 - worldPos0, worldPos2 - worldPos0);
 
   float3 tf = tessDist(worldPos0, worldPos1, worldPos2);
+    #ifdef USE_UV4
     tf = clamp(tf * float3(v[0].uv4.x, v[1].uv4.x, v[2].uv4.x), 1, 64);
-  tf = (dot(_WorldSpaceCameraPos - worldPos0, triangleNormal) > -1e-4) ? tf : 0;
+	#endif
+	  tf = (dot(_WorldSpaceCameraPos - worldPos0, triangleNormal) > -1e-4) ? tf : 0;
   o.edge[0] = tf.x;
   o.edge[1] = tf.y;
   o.edge[2] = tf.z;

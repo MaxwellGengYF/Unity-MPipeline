@@ -36,12 +36,12 @@ public unsafe sealed class Test : MonoBehaviour
 
     private void Start()
     {
-        int minRes = int.MaxValue;
+        int minRes = 256;
         int maxRes = 0;
         int capacity = 0;
         foreach (var i in allTextures)
         {
-            minRes = min(i.width, minRes);
+           
             maxRes = max(i.width, maxRes);
         }
         foreach (var i in allTextures)
@@ -52,7 +52,7 @@ public unsafe sealed class Test : MonoBehaviour
     {
             new VirtualTextureFormat((VirtualTextureSize)minRes, RenderTextureFormat.ARGB32, "_ColorVT")
         };
-        vt = new VirtualTexture(capacity, int2(capacity, maxRes), formats, 1);
+        vt = new VirtualTexture(2048, int2(capacity, maxRes), formats, 1);
 
         for (int i = 0, offset = 0; i < allTextures.Length; ++i)
         {

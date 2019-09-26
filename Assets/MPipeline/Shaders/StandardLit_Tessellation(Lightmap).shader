@@ -40,7 +40,7 @@ CGINCLUDE
 #pragma target 5.0
 #define DECAL
 #define TESSELLATION_SHADER
-#define USE_UV4
+//#define USE_UV4
 #pragma shader_feature CUT_OFF
 
 //#define MOTION_VECTOR
