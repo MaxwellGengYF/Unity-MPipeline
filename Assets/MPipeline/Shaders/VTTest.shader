@@ -3,6 +3,8 @@
     Properties
     {
         _TileOffset("Tile Offset", vector) = (1,1,0,0)
+        _MainTex ("maintex", 2D) = "white"{}
+        _Level("level", float) = 0
     }
     SubShader
     {
@@ -44,8 +46,8 @@ Cull back
                 float4 vertex : SV_POSITION;
             };
 float4 _TileOffset;
-            
-
+            Texture2D<float4> _MainTex; SamplerState sampler_MainTex;
+float _Level;
             v2f vert (appdata v)
             {
                 v2f o;
@@ -57,7 +59,8 @@ float4 _TileOffset;
             Texture2DArray<float4> _ColorVT; SamplerState sampler_ColorVT;
             float4 frag (v2f i) : SV_Target3
             {
-                return SampleVirtualTexture(_ColorVT, sampler_ColorVT, floor(i.uv), frac(i.uv));
+                return _MainTex.SampleLevel(sampler_MainTex, i.uv, _Level);
+               // return SampleVirtualTextureLevel(_ColorVT, sampler_ColorVT, floor(i.uv), frac(i.uv), 3);
             }
             ENDCG
         }

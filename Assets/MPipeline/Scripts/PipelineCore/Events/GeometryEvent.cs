@@ -62,7 +62,7 @@ namespace MPipeline
 
             if (useHiZ && Application.isPlaying)
             {
-                return linearMat && linearDrawerMat && hizDepth.Check() && clusterMat;
+                return linearMat && linearDrawerMat && clusterMat;
             }
             else
                 return linearMat && linearDrawerMat;
@@ -74,7 +74,6 @@ namespace MPipeline
             decalEvt.Dispose();
             if (useHiZ)
             {
-                hizDepth.DisposeHiZ();
                 DestroyImmediate(clusterMat);
             }
             if(m_afterGeometryBuffer != null)
@@ -235,7 +234,6 @@ namespace MPipeline
     public class HizOcclusionData : IPerCameraData
     {
         public RenderTexture historyDepth { get; private set; }
-        public RenderTexture backupDepth { get; private set; }
         public int targetWidth { get; private set; }
         public int mip { get; private set; }
         private int GetWidthFromScreen(int screenWidth)
@@ -264,17 +262,10 @@ namespace MPipeline
             historyDepth = new RenderTexture(targetWidth, targetWidth / 2, 0, RenderTextureFormat.RHalf, 9);
             historyDepth.useMipMap = true;
             historyDepth.autoGenerateMips = false;
-            historyDepth.enableRandomWrite = false;
+            historyDepth.enableRandomWrite = true;
             historyDepth.wrapMode = TextureWrapMode.Clamp;
             historyDepth.filterMode = FilterMode.Point;
             historyDepth.Create();
-            backupDepth = new RenderTexture(targetWidth / 2, targetWidth / 4, 0, RenderTextureFormat.RHalf, 8);
-            backupDepth.useMipMap = true;
-            backupDepth.autoGenerateMips = false;
-            backupDepth.enableRandomWrite = false;
-            backupDepth.wrapMode = TextureWrapMode.Clamp;
-            backupDepth.filterMode = FilterMode.Point;
-            backupDepth.Create();
         }
 
         public void UpdateWidth(int screenWidth)
@@ -288,10 +279,6 @@ namespace MPipeline
                 historyDepth.width = tar;
                 historyDepth.height = tar / 2;
                 historyDepth.Create();
-                backupDepth.Release();
-                backupDepth.width = tar / 2;
-                backupDepth.height = tar / 4;
-                backupDepth.Create();
             }
         }
         public override void DisposeProperty()

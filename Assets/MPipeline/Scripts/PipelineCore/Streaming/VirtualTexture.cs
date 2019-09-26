@@ -142,7 +142,7 @@ namespace MPipeline
         /// <param name="maximumSize">Virtual texture's array size</param>
         /// <param name="indexSize">Index Texture's size</param>
         /// <param name="formats">Each VT's format</param>
-        public VirtualTexture(int maximumSize, int2 indexSize, VirtualTextureFormat* formats, int formatLen)
+        public VirtualTexture(int maximumSize, int2 indexSize, VirtualTextureFormat* formats, int formatLen, int mipCount = 0)
         {
             if(maximumSize > 2048)
             {
@@ -172,17 +172,11 @@ namespace MPipeline
             for (int i = 0; i < formatLen; ++i)
             {
                 VirtualTextureFormat format = formats[i];
-                textures[i] = new RenderTexture(new RenderTextureDescriptor
-                {
-                    colorFormat = format.format,
-                    depthBufferBits = 0,
-                    dimension = TextureDimension.Tex2DArray,
-                    enableRandomWrite = true,
-                    width = (int)format.perElementSize,
-                    height = (int)format.perElementSize,
-                    volumeDepth = maximumSize,
-                    msaaSamples = 1
-                });
+                textures[i] = new RenderTexture((int)format.perElementSize, (int)format.perElementSize, 0, format.format, mipCount);
+                textures[i].useMipMap = mipCount > 0;
+                textures[i].enableRandomWrite = true;
+                textures[i].dimension = TextureDimension.Tex2DArray;
+                textures[i].volumeDepth = maximumSize;
                 textures[i].Create();
             }
         }
@@ -254,7 +248,7 @@ namespace MPipeline
             return sizeElement;
         }
 
-        public NativeArray<int> LoadNewTextureChunks(int2 startIndex, int size, Allocator alloc, Texture sourceTex = null, Texture[] sourceTexs = null)
+        public NativeArray<int> LoadNewTextureChunks(int2 startIndex, int size, Allocator alloc, int loadLod = 0, Texture sourceTex = null, Texture[] sourceTexs = null)
         {
             if (size * size > setIndexBuffer.count)
             {
@@ -283,13 +277,16 @@ namespace MPipeline
             setIndexBuffer.SetData(texs);
             int dispatchCount = Mathf.CeilToInt(size / 8f);
             shader.Dispatch(1, dispatchCount, dispatchCount, 1);
+            int powValue = (int)(0.1 + pow(2.0, loadLod));
             if (sourceTex)
             {
-                shader.SetVector(ShaderIDs._TextureSize, float4(sourceTex.width, size, (int)allFormats[0].perElementSize, 0));
+
+                int width = sourceTex.width / powValue;
+                shader.SetVector(ShaderIDs._TextureSize, float4(width, size, (int)allFormats[0].perElementSize / powValue, 0));
                 shader.SetBuffer(2, ShaderIDs._ElementBuffer, setIndexBuffer);
-                shader.SetTexture(2, ShaderIDs._VirtualTexture, textures[0]);
+                shader.SetTexture(2, ShaderIDs._VirtualTexture, textures[0], loadLod);
                 shader.SetTexture(2, ShaderIDs._MainTex, sourceTex);
-                int disp = Mathf.CeilToInt(sourceTex.width / 8f);
+                int disp = Mathf.CeilToInt(width / 8f);
                 shader.Dispatch(2, disp, disp, 1);
             }
             if (sourceTexs != null)
@@ -298,10 +295,11 @@ namespace MPipeline
                 shader.SetBuffer(2, ShaderIDs._ElementBuffer, setIndexBuffer);
                 for (int i = 0; i < ite; ++i)
                 {
-                    shader.SetVector(ShaderIDs._TextureSize, float4(sourceTexs[i].width, size, (int)allFormats[0].perElementSize, 0));
-                    shader.SetTexture(2, ShaderIDs._VirtualTexture, textures[i]);
+                    int width = sourceTexs[i].width / powValue;
+                    shader.SetVector(ShaderIDs._TextureSize, float4(width, size, (int)allFormats[0].perElementSize / powValue, 0));
+                    shader.SetTexture(2, ShaderIDs._VirtualTexture, textures[i], loadLod);
                     shader.SetTexture(2, ShaderIDs._MainTex, sourceTexs[i]);
-                    int disp = Mathf.CeilToInt(sourceTexs[i].width / 8f);
+                    int disp = Mathf.CeilToInt(width / 8f);
                     shader.Dispatch(2, disp, disp, 1);
                 }
             }

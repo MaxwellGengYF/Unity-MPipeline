@@ -40,8 +40,7 @@
             sampler2D _CameraMotionVectorsTexture;
             void frag (v2f i, out float4 col : SV_TARGET)
             {
-                col = _MainTex.SampleLevel(sampler_MainTex, float3(i.uv, 0), 0) * 5;
-                if(col.r < 1e-5) col = 1;
+                col = _MainTex.SampleLevel(sampler_MainTex, float3(i.uv, 0), 7);
             }
             ENDCG
         }

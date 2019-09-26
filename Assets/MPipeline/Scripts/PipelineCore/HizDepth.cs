@@ -8,29 +8,28 @@ namespace MPipeline
 {
     public unsafe struct HizDepth
     {
-        private Material getLodMat;
-        public bool Check()
-        {
-            return getLodMat != null;
-        }
+        static int _SourceTex = Shader.PropertyToID("_SourceTex");
+        static int _DestTex = Shader.PropertyToID("_DestTex");
+        ComputeShader sd;
         public void InitHiZ(PipelineResources resources)
         {
-            getLodMat = new Material(resources.shaders.HizLodShader);
+            sd = resources.shaders.HizLodShader;
         }
-        public void GetMipMap(RenderTexture depthMip, RenderTexture backupMip, CommandBuffer buffer, int mip)
+        public void GetMipMap(RenderTexture depthMip, CommandBuffer buffer, int mip)
         {
             buffer.SetGlobalTexture(ShaderIDs._MainTex, depthMip);
+            int2 size = int2(depthMip.width, depthMip.height);
             for (int i = 1; i < mip; ++i)
             {
-                buffer.SetGlobalInt(ShaderIDs._PreviousLevel, i - 1);
-                buffer.SetRenderTarget(backupMip, i - 1);
-                buffer.DrawMesh(GraphicsUtility.mesh, Matrix4x4.identity, getLodMat, 0, 0);
-                buffer.CopyTexture(backupMip, 0, i - 1, depthMip, 0, i);
+                size = max(1, size / 2);
+                buffer.SetComputeTextureParam(sd, 0, _SourceTex, depthMip, i - 1);
+                buffer.SetComputeTextureParam(sd, 0, _DestTex, depthMip, i);
+                buffer.SetComputeVectorParam(sd, ShaderIDs._Count, float4(size - float2(0.5f), 0, 0));
+                int x, y;
+                x = Mathf.CeilToInt(size.x / 8f);
+                y = Mathf.CeilToInt(size.y / 8f);
+                buffer.DispatchCompute(sd, 0, x, y, 1);
             }
-        }
-        public void DisposeHiZ()
-        {
-            Object.DestroyImmediate(getLodMat);
         }
     }
 }

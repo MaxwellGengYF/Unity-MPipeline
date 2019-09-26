@@ -427,7 +427,7 @@ options.frustumPlanes);
             ComputeShader gpuFrustumShader = options.cullingShader;
 
             buffer.BlitSRT(hizOpts.historyDepth, linearLODMaterial, 0);
-            hizDepth.GetMipMap(hizOpts.historyDepth, hizOpts.backupDepth, buffer, hizOpts.mip);
+            hizDepth.GetMipMap(hizOpts.historyDepth, buffer, hizOpts.mip);
             //double check
             PipelineFunctions.ClearOcclusionData(baseBuffer, buffer, gpuFrustumShader);
             PipelineFunctions.OcclusionRecheck(baseBuffer, gpuFrustumShader, buffer, hizOpts);

@@ -17,11 +17,11 @@ namespace MPipeline
         public ComputeShader voxelNoise;
         public ComputeShader occlusionProbeCalculate;
         public ComputeShader minMaxDepthCompute;
+        public ComputeShader HizLodShader;
         public Shader minMaxDepthBounding;
         public Shader taaShader;
         public Shader ssrShader;
         public Shader indirectDepthShader;
-        public Shader HizLodShader;
         public Shader reflectionShader;
         public Shader linearDepthShader;
         public Shader linearDrawerShader;

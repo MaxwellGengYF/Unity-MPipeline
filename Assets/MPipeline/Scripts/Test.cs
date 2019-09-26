@@ -27,43 +27,38 @@ public unsafe sealed class Test : MonoBehaviour
     {
         Shader.DisableKeyword("USE_WHITE");
     }
-    private VirtualTexture vt;
 
-    [SerializeField]
-    private Texture[] allTextures;
-    [SerializeField]
-    private Material[] mats;
+    [EasyButtons.Button]
+    void GenerateMip()
+    {
+        RenderTexture rt = new RenderTexture(1024, 1024, 0, RenderTextureFormat.ARGB32, 5);
+        rt.useMipMap = true;
+        rt.enableRandomWrite = true;
+        rt.Create();
+        Graphics.Blit(tex, rt);
+        for (int i = 1; i < 5; ++i)
+        {
+            shad.SetTexture(0, "_SourceTex", rt, i - 1);
+            shad.SetTexture(0, "_DestTex", rt, i);
+            int disp = (1024 / (int)(pow(2.0, i) + 0.1)) / 8;
+            shad.Dispatch(0, disp, disp, 1);
+        }
+        mat.SetTexture("_MainTex", rt);
+    }
+    private VirtualTexture vt;
+    public Texture tex;
+    public Material mat;
 
     private void Start()
     {
-        int minRes = 256;
-        int maxRes = 0;
-        int capacity = 0;
-        foreach (var i in allTextures)
-        {
-           
-            maxRes = max(i.width, maxRes);
-        }
-        foreach (var i in allTextures)
-        {
-            capacity += (i.width / minRes) * (i.height / minRes);
-        }
         VirtualTextureFormat* formats = stackalloc VirtualTextureFormat[]
-    {
-            new VirtualTextureFormat((VirtualTextureSize)minRes, RenderTextureFormat.ARGB32, "_ColorVT")
+   {
+            new VirtualTextureFormat((VirtualTextureSize)256, RenderTextureFormat.ARGB32, "_ColorVT")
         };
-        vt = new VirtualTexture(2048, int2(capacity, maxRes), formats, 1);
-
-        for (int i = 0, offset = 0; i < allTextures.Length; ++i)
-        {
-            int size = allTextures[i].width / minRes;
-            int ele = vt.LoadNewTexture(int2(offset, 0), size);
-            mats[i].SetVector("_TileOffset", new Vector4(size, size, offset, 0));
-            offset += size;
-            Graphics.Blit(allTextures[i], vt.GetTexture(0), 0, ele);
-        }
-        Debug.Log(vt.LeftedTextureElement);     //8
+        vt = new VirtualTexture(9, 3, formats, 1, 5);
+        vt.LoadNewTextureChunks(0, 3, Allocator.Temp, 3, tex);
     }
+
     private void Update()
     {
         vt.Update();

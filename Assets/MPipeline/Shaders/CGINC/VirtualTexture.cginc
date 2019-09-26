@@ -13,6 +13,11 @@ inline float4 SampleVirtualTexture(Texture2DArray<float4> tex, SamplerState samp
     return tex.Sample(samp, GetVirtualTextureUV(targetChunk, localUV));
 }
 
+inline float4 SampleVirtualTextureLevel(Texture2DArray<float4> tex, SamplerState samp, float2 targetChunk, float2 localUV, float mip)
+{
+    return tex.SampleLevel(samp, GetVirtualTextureUV(targetChunk, localUV), mip);
+}
+
 /// startChunkPos: absolute index in indextex(adaptive)
 ///localUV: 0-1 uv
 inline float3 GetVirtualTextureUV(float2 startChunkPos, float2 localUV)
