@@ -4,6 +4,7 @@ using Unity.Jobs;
 using System;
 using UnityEngine.Rendering;
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using Unity.Collections;
 using Unity.Mathematics;
 using Unity.Collections.LowLevel.Unsafe;
@@ -51,6 +52,15 @@ namespace MPipeline
         private static NativeDictionary<UIntPtr, int, PtrEqual> eventsGuideBook;
         private static NativeList<int> waitReleaseRT;
         private static List<PipelineCamera> preFrameRenderCamera = new List<PipelineCamera>(10);
+        private struct IntEqual : IFunction<int, int, bool>
+        {
+            [MethodImpl(MethodImplOptions.AggressiveInlining)]
+            public bool Run(ref int a, ref int b)
+            {
+                return a == b;
+            }
+        }
+        private static NativeDictionary<int, ulong, IntEqual> iRunnableObjects;
         public static void AddPreRenderCamera(PipelineCamera tar)
         {
             preFrameRenderCamera.Add(tar);
@@ -58,6 +68,18 @@ namespace MPipeline
         public static void ReleaseRTAfterFrame(int targetRT)
         {
             waitReleaseRT.Add(targetRT);
+        }
+        public static void AddRunnableObject(int id, IPipelineRunnable func)
+        {
+            if (!iRunnableObjects.isCreated)
+                iRunnableObjects = new NativeDictionary<int, ulong, IntEqual>(10, Allocator.Persistent, new IntEqual());
+            iRunnableObjects.Add(id, (ulong)MUnsafeUtility.GetManagedPtr(func));
+        }
+
+        public static void RemoveRunnableObject(int id)
+        {
+            if (iRunnableObjects.isCreated)
+                iRunnableObjects.Remove(id);
         }
 #if UNITY_EDITOR
         private struct EditorBakeCommand
@@ -124,7 +146,6 @@ namespace MPipeline
             var allEvents = resources.allEvents;
             GraphicsUtility.UpdatePlatform();
             MLight.ClearLightDict();
-
             CustomDrawRequest.Initialize();
             data.buffer = new CommandBuffer();
             for (int i = 0; i < resources.availiableEvents.Length; ++i)
@@ -150,6 +171,7 @@ namespace MPipeline
             {
                 current = null;
             }
+            iRunnableObjects.Dispose();
             CustomDrawRequest.Dispose();
             if (m_afterFrameBuffer != null)
             {
@@ -211,7 +233,7 @@ namespace MPipeline
             }
             MotionVectorDrawer.ExecuteBeforeFrame(motionVectorMatricesBuffer);
             data.buffer.SetGlobalBuffer(ShaderIDs._LastFrameModel, motionVectorMatricesBuffer);
-            
+
 #if UNITY_EDITOR
             int tempID = Shader.PropertyToID("_TempRT");
 
@@ -248,7 +270,14 @@ namespace MPipeline
                 needSubmit = false;
             }
             preFrameRenderCamera.Clear();
-
+            if (iRunnableObjects.isCreated)
+            {
+                foreach (var i in iRunnableObjects)
+                {
+                    IPipelineRunnable func = MUnsafeUtility.GetObject<IPipelineRunnable>((void*)i.value);
+                    func.PipelineUpdate(ref data);
+                }
+            }
             if (CustomDrawRequest.allEvents.Count > 0 || JobProcessEvent.allEvents.Count > 0)
             {
                 foreach (var i in CustomDrawRequest.allEvents)
@@ -269,7 +298,7 @@ namespace MPipeline
                     i.FinishJob();
                 }
             }
-            if(Application.isPlaying && resources.clusterResources)
+            if (Application.isPlaying && resources.clusterResources)
             {
                 resources.clusterResources.UpdateData(data.buffer, resources);
             }

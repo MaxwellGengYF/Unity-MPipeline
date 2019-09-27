@@ -227,7 +227,7 @@ MonoBehaviour:
   enableShadow: 1
   resolution: 2048
   farestZ: 500
-  firstLevelDistance: 10
+  firstLevelDistance: 5.97
   secondLevelDistance: 25
   thirdLevelDistance: 55
   farestDistance: 100
@@ -742,7 +742,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a73ab954ccf9e8f43ae274d1dd395ee8, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  txt: {fileID: 770130603}
 --- !u!1 &1838210753
 GameObject:
   m_ObjectHideFlags: 0

@@ -174,6 +174,7 @@ namespace MPipeline
                 VirtualTextureFormat format = formats[i];
                 textures[i] = new RenderTexture((int)format.perElementSize, (int)format.perElementSize, 0, format.format, mipCount);
                 textures[i].useMipMap = mipCount > 0;
+                textures[i].autoGenerateMips = false;
                 textures[i].enableRandomWrite = true;
                 textures[i].dimension = TextureDimension.Tex2DArray;
                 textures[i].volumeDepth = maximumSize;

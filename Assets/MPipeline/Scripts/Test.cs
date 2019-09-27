@@ -12,7 +12,7 @@ using UnityEngine.AddressableAssets;
 using MPipeline.PCG;
 
 
-public unsafe sealed class Test : MonoBehaviour
+public unsafe sealed class Test : MonoBehaviour, IPipelineRunnable
 {
     public GeometryEvent evt;
     public ComputeShader shad;
@@ -27,23 +27,28 @@ public unsafe sealed class Test : MonoBehaviour
     {
         Shader.DisableKeyword("USE_WHITE");
     }
-    private VirtualTexture vt;
     public Texture tex;
     public Material mat;
-
-    private void Start()
+    void EnableRunnable()
     {
-        VirtualTextureFormat* formats = stackalloc VirtualTextureFormat[]
-   {
-            new VirtualTextureFormat((VirtualTextureSize)256, RenderTextureFormat.ARGB32, "_ColorVT")
-        };
-        vt = new VirtualTexture(9, 3, formats, 1, 5);
-        vt.LoadNewTextureChunks(0, 3, Allocator.Temp, 3, tex);
+        RenderPipeline.AddRunnableObject(GetInstanceID(), this);
+    }
+
+    void DisableRunnable()
+    {
+        RenderPipeline.RemoveRunnableObject(GetInstanceID());
+    }
+    public void PipelineUpdate(ref PipelineCommandData data)
+    {
+        Debug.Log("Test");
+    }
+    private void OnEnable()
+    {
+        EnableRunnable();
     }
 
     private void Update()
     {
-        vt.Update();
         /*if (Input.GetKeyDown(KeyCode.Space))
         {
             for (int i = 0; i < 3; i++)
@@ -87,9 +92,9 @@ public unsafe sealed class Test : MonoBehaviour
         }
     }
 
-    private void OnDestroy()
+    private void OnDisable()
     {
-        vt.Dispose();
+        DisableRunnable();
     }
 }
 
