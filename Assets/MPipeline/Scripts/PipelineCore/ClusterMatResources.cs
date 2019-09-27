@@ -1,6 +1,8 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using static Unity.Mathematics.math;
+using Unity.Mathematics;
 using Unity.Collections;
 using UnityEngine.Rendering;
 using UnityEngine.AddressableAssets;
@@ -23,7 +25,19 @@ namespace MPipeline
     public class ClusterMatResources : ScriptableObject
     {
         #region SERIALIZABLE
-        public int fixedTextureSize = 2048;
+        public enum TextureSize
+        {
+            x32 = 32,
+            x64 = 64,
+            x128 = 128,
+            x256 = 256,
+            x512 = 512,
+            x1024 = 1024,
+            x2048 = 2048,
+            x4096 = 4096,
+            x8192 = 8192
+        };
+        public TextureSize fixedTextureSize = TextureSize.x2048;
         public int maximumClusterCount = 100000;
         public int maximumMaterialCount = 1;
         public int materialPoolSize = 500;
@@ -70,14 +84,14 @@ namespace MPipeline
                 cur.Init(i, msbForCluster, this);
             }
 
-            rgbaPool.Init(0, RenderTextureFormat.ARGB32, fixedTextureSize, this, false);
-            normalPool.Init(1, RenderTextureFormat.RGHalf, fixedTextureSize, this, true);
-            emissionPool.Init(2, RenderTextureFormat.ARGBHalf, fixedTextureSize, this, false);
-            heightPool.Init(3, RenderTextureFormat.R8, fixedTextureSize, this, true);
+            rgbaPool.Init(0, RenderTextureFormat.ARGB32, (int) fixedTextureSize, this, false);
+            normalPool.Init(1, RenderTextureFormat.RGHalf, (int)fixedTextureSize, this, true);
+            emissionPool.Init(2, RenderTextureFormat.ARGBHalf, (int)fixedTextureSize, this, false);
+            heightPool.Init(3, RenderTextureFormat.R8, (int)fixedTextureSize, this, true);
             vmManager = new VirtualMaterialManager(materialPoolSize, maximumMaterialCount, res.shaders.streamingShader);
         }
 
-        public void UpdateData()
+        public void UpdateData(CommandBuffer buffer, PipelineResources res)
         {
             for (int i = 0; i < asyncLoader.Count; ++i)
             {
@@ -95,6 +109,18 @@ namespace MPipeline
                         Graphics.Blit(loader.loader.Result, loader.targetTexArray, blitNormalMat, 0, loader.targetIndex);
                     else
                         Graphics.Blit(loader.loader.Result, loader.targetTexArray, 0, loader.targetIndex);
+                    ComputeShader loadShader = res.shaders.streamingShader;
+                    int resolution = loader.targetTexArray.width;
+                    int targetLevel = (int)(log2(resolution + 0.1)) - 4;
+                    buffer.SetComputeIntParam(loadShader, ShaderIDs._Count, loader.targetIndex);
+                    for(int mip = 1; mip < targetLevel; ++mip)
+                    {
+                        resolution /= 2;
+                        buffer.SetComputeTextureParam(loadShader, 4, ShaderIDs._SourceTex, loader.targetTexArray, mip - 1);
+                        buffer.SetComputeTextureParam(loadShader, 4, ShaderIDs._DestTex, loader.targetTexArray, mip);
+                        int disp = resolution / 8;
+                        buffer.DispatchCompute(loadShader, 4, disp, disp, 1);
+                    }
                     loader.aref.ReleaseAsset();
                     asyncLoader[i] = asyncLoader[asyncLoader.Count - 1];
                     asyncLoader.RemoveAt(asyncLoader.Count - 1);

@@ -8,8 +8,7 @@ namespace MPipeline
 {
     public unsafe struct HizDepth
     {
-        static int _SourceTex = Shader.PropertyToID("_SourceTex");
-        static int _DestTex = Shader.PropertyToID("_DestTex");
+        
         ComputeShader sd;
         public void InitHiZ(PipelineResources resources)
         {
@@ -22,8 +21,8 @@ namespace MPipeline
             for (int i = 1; i < mip; ++i)
             {
                 size = max(1, size / 2);
-                buffer.SetComputeTextureParam(sd, 0, _SourceTex, depthMip, i - 1);
-                buffer.SetComputeTextureParam(sd, 0, _DestTex, depthMip, i);
+                buffer.SetComputeTextureParam(sd, 0, ShaderIDs._SourceTex, depthMip, i - 1);
+                buffer.SetComputeTextureParam(sd, 0, ShaderIDs._DestTex, depthMip, i);
                 buffer.SetComputeVectorParam(sd, ShaderIDs._Count, float4(size - float2(0.5f), 0, 0));
                 int x, y;
                 x = Mathf.CeilToInt(size.x / 8f);

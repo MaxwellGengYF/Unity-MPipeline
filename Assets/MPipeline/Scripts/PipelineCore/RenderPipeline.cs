@@ -271,7 +271,7 @@ namespace MPipeline
             }
             if(Application.isPlaying && resources.clusterResources)
             {
-                resources.clusterResources.UpdateData();
+                resources.clusterResources.UpdateData(data.buffer, resources);
             }
             resources.loadingThread.Update();
             if (useBeforeFrameBuffer)

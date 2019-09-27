@@ -27,24 +27,6 @@ public unsafe sealed class Test : MonoBehaviour
     {
         Shader.DisableKeyword("USE_WHITE");
     }
-
-    [EasyButtons.Button]
-    void GenerateMip()
-    {
-        RenderTexture rt = new RenderTexture(1024, 1024, 0, RenderTextureFormat.ARGB32, 5);
-        rt.useMipMap = true;
-        rt.enableRandomWrite = true;
-        rt.Create();
-        Graphics.Blit(tex, rt);
-        for (int i = 1; i < 5; ++i)
-        {
-            shad.SetTexture(0, "_SourceTex", rt, i - 1);
-            shad.SetTexture(0, "_DestTex", rt, i);
-            int disp = (1024 / (int)(pow(2.0, i) + 0.1)) / 8;
-            shad.Dispatch(0, disp, disp, 1);
-        }
-        mat.SetTexture("_MainTex", rt);
-    }
     private VirtualTexture vt;
     public Texture tex;
     public Material mat;

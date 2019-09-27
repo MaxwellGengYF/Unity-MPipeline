@@ -191,5 +191,7 @@ public static partial class ShaderIDs
     public static readonly int _GPURPBumpMap = Shader.PropertyToID("_GPURPBumpMap");
     public static readonly int _GPURPEmissionMap = Shader.PropertyToID("_GPURPEmissionMap");
     public static readonly int _GPURPHeightMap = Shader.PropertyToID("_GPURPHeightMap");
+    public static readonly int _SourceTex = Shader.PropertyToID("_SourceTex");
+    public static readonly int _DestTex = Shader.PropertyToID("_DestTex");
 
 }

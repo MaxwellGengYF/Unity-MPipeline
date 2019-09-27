@@ -3,6 +3,7 @@
 #pragma kernel PointFunc
 #pragma kernel MaterialFunc
 #pragma kernel IndexFunc
+#pragma kernel MipFunc
 #define COMPUTESHADER
 #include "CGINC/Procedural.cginc"
 struct ClusterMeshData
@@ -56,4 +57,12 @@ void IndexFunc(uint2 id : SV_DISPATCHTHREADID)
 {
     uint2 index = _IndexBuffer[id.x] * CLUSTERTRIANGLECOUNT + id.y;
     _TriangleMaterialBuffer[index.x] = _TriangleMaterialBuffer[index.y];
+}
+RWTexture2DArray<float4> _SourceTex;
+RWTexture2DArray<float4> _DestTex;
+[numthreads(8,8,1)]
+void MipFunc(uint2 id : SV_DISPATCHTHREADID)
+{
+    uint2 idx = id * 2;
+    _DestTex[uint3(id, _Count)] = 0.25 * (_SourceTex[uint3(idx, _Count)] + _SourceTex[uint3(idx + uint2(0, 1), _Count)] + _SourceTex[uint3(idx + uint2(1, 1), _Count)] + _SourceTex[uint3(idx + uint2(1, 0), _Count)]);
 }
