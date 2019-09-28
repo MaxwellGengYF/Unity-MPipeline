@@ -12,7 +12,6 @@ using MPipeline;
 
 public unsafe static class PipelineFunctions
 {
-
     public static void GetOrthoCullingPlanes(ref OrthoCam orthoCam, float4* planes)
     {
         planes[0] = MathLib.GetPlane(orthoCam.forward, orthoCam.position + orthoCam.forward * orthoCam.farClipPlane);

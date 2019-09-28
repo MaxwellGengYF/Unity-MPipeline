@@ -6,13 +6,14 @@ using static Unity.Mathematics.math;
 using MPipeline;
 using Unity.Jobs;
 using Unity.Collections;
+using System.IO;
 using Unity.Collections.LowLevel.Unsafe;
 using Random = UnityEngine.Random;
 using UnityEngine.AddressableAssets;
 using MPipeline.PCG;
 
 
-public unsafe sealed class Test : MonoBehaviour, IPipelineRunnable
+public unsafe sealed class Test : MonoBehaviour
 {
     public GeometryEvent evt;
     public ComputeShader shad;
@@ -27,25 +28,9 @@ public unsafe sealed class Test : MonoBehaviour, IPipelineRunnable
     {
         Shader.DisableKeyword("USE_WHITE");
     }
+
     public Texture tex;
     public Material mat;
-    void EnableRunnable()
-    {
-        RenderPipeline.AddRunnableObject(GetInstanceID(), this);
-    }
-
-    void DisableRunnable()
-    {
-        RenderPipeline.RemoveRunnableObject(GetInstanceID());
-    }
-    public void PipelineUpdate(ref PipelineCommandData data)
-    {
-        Debug.Log("Test");
-    }
-    private void OnEnable()
-    {
-        EnableRunnable();
-    }
 
     private void Update()
     {
@@ -92,9 +77,5 @@ public unsafe sealed class Test : MonoBehaviour, IPipelineRunnable
         }
     }
 
-    private void OnDisable()
-    {
-        DisableRunnable();
-    }
 }
 

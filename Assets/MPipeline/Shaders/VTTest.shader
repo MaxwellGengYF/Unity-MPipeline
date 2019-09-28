@@ -59,8 +59,7 @@ float _Level;
             Texture2DArray<float4> _ColorVT; SamplerState sampler_ColorVT;
             float4 frag (v2f i) : SV_Target3
             {
-                return _MainTex.SampleLevel(sampler_MainTex, i.uv, _Level);
-               // return SampleVirtualTextureLevel(_ColorVT, sampler_ColorVT, floor(i.uv), frac(i.uv), 3);
+                return SampleVirtualTextureLevel(_ColorVT, sampler_ColorVT, floor(i.uv), frac(i.uv), 0);
             }
             ENDCG
         }

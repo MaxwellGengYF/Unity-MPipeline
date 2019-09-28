@@ -97,7 +97,7 @@ namespace MPipeline
         private static int[] texSize = new int[2];
         private ComputeBuffer setIndexBuffer;
         private const int START_CHUNKSIZE = 8;
-        private int2 indexSize;
+        public int2 indexSize { get; private set; }
         private struct VTChunkHandleEqual : IFunction<int2, int2, bool>
         {
             public bool Run(ref int2 a, ref int2 b)

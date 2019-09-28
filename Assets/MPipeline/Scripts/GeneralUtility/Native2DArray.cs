@@ -21,7 +21,6 @@ namespace MPipeline
         {
             get
             {
-                index %= Length;
                 return ref m_ptr[getLength(index)];
             }
         }
