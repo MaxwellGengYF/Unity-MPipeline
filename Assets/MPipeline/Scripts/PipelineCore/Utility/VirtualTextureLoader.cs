@@ -17,18 +17,27 @@ namespace MPipeline
         {
             public AssetReference reference;
             public Texture loadedTexture;
+            private IEnumerator loader;
             public bool isLoading { get; private set; }
-            public IEnumerator Load()
+            public bool Load(out IEnumerator result)
             {
-                if (isLoading) return null;
-                if (loadedTexture) return null;
+                result = null;
+                if (loadedTexture) return false;
+                if (isLoading)
+                {
+                    result = loader;
+                    return true;
+                }
                 isLoading = true;
-                return LoadFunc();
+                result = LoadFunc();
+                loader = result;
+                return true;
             }
             private IEnumerator LoadFunc()
             {
                 var asyncLoad = reference.LoadAssetAsync<Texture>();
                 yield return asyncLoad;
+                isLoading = false;
                 loadedTexture = asyncLoad.Result;
             }
 
@@ -93,8 +102,8 @@ namespace MPipeline
         public float4 scaleOffset2;
         public float4 scaleOffset3;
         private bool isCreate;
-        private const int GUID_LENGTH = 4 * 3 + 1;
-        private const int SCALEOFFSET_COUNT = 4 * 4;
+        public const int GUID_LENGTH = 4 * 3 + 1;
+        public const int SCALEOFFSET_COUNT = 4 * 4;
         public const int CHUNK_DATASIZE = FileGUID.PTR_LENGTH * 8 * GUID_LENGTH + 4 * SCALEOFFSET_COUNT;
         public void Init(byte* arr)
         {
@@ -166,7 +175,7 @@ namespace MPipeline
             oneChunkSize = null;
         }
 
-        public static void GetBytesArray(Native2DArray<VirtualTextureChunk>[] allMipLevel, string targetPath)
+        public static void SaveBytesArray(Native2DArray<VirtualTextureChunk>[] allMipLevel, string targetPath)
         {
             int count = 0;
             foreach (var i in allMipLevel)

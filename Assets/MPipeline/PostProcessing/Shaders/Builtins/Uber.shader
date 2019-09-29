@@ -67,11 +67,16 @@ Shader "Hidden/PostProcessing/Uber"
 		float4 vertex : SV_POSITION;
 		float2 uv : TEXCOORD0;
 	};
+	float2 DistortCheck(float2 uv, bool l)
+	{
+		return l ? uv : Distort(uv);
+	}
 	float4 FragUber(v2f i) : SV_Target
 	{
 		//>>> Automatically skipped by the shader optimizer when not used
 		float2 uv = i.uv;
-		float2 uvDistorted = Distort(uv);
+		bool weight = dot(abs(uv - 0.5) , 0.5) <= dot(_MainTex_TexelSize.xy, 0.5);
+		float2 uvDistorted = DistortCheck(uv, weight);
 		//<<<
 
 		float autoExposure = SAMPLE_TEXTURE2D(_AutoExposureTex, sampler_AutoExposureTex, uv).r;
@@ -93,7 +98,7 @@ Shader "Hidden/PostProcessing/Uber"
 			for (int i = 0; i < samples; i++)
 			{
 				float t = (i + 0.5) / samples;
-				float4 s = SAMPLE_TEXTURE2D_LOD(_MainTex, sampler_MainTex, UnityStereoTransformScreenSpaceTex(Distort(pos)), 0);
+				float4 s = SAMPLE_TEXTURE2D_LOD(_MainTex, sampler_MainTex, UnityStereoTransformScreenSpaceTex(DistortCheck(pos,weight)), 0);
 				float4 filter = float4(SAMPLE_TEXTURE2D_LOD(_ChromaticAberration_SpectralLut, sampler_ChromaticAberration_SpectralLut, float2(t, 0.0), 0).rgb, 1.0);
 
 				sum += s * filter;
@@ -113,9 +118,9 @@ Shader "Hidden/PostProcessing/Uber"
 			float4 filterB = float4(SAMPLE_TEXTURE2D_LOD(_ChromaticAberration_SpectralLut, sampler_ChromaticAberration_SpectralLut, float2(1.5 / 3, 0.0), 0).rgb, 1.0);
 			float4 filterC = float4(SAMPLE_TEXTURE2D_LOD(_ChromaticAberration_SpectralLut, sampler_ChromaticAberration_SpectralLut, float2(2.5 / 3, 0.0), 0).rgb, 1.0);
 
-			float4 texelA = SAMPLE_TEXTURE2D_LOD(_MainTex, sampler_MainTex, UnityStereoTransformScreenSpaceTex(Distort(uv)), 0);
-			float4 texelB = SAMPLE_TEXTURE2D_LOD(_MainTex, sampler_MainTex, UnityStereoTransformScreenSpaceTex(Distort(delta + uv)), 0);
-			float4 texelC = SAMPLE_TEXTURE2D_LOD(_MainTex, sampler_MainTex, UnityStereoTransformScreenSpaceTex(Distort(delta * 2.0 + uv)), 0);
+			float4 texelA = SAMPLE_TEXTURE2D_LOD(_MainTex, sampler_MainTex, UnityStereoTransformScreenSpaceTex(DistortCheck(uv,weight)), 0);
+			float4 texelB = SAMPLE_TEXTURE2D_LOD(_MainTex, sampler_MainTex, UnityStereoTransformScreenSpaceTex(DistortCheck(delta + uv,weight)), 0);
+			float4 texelC = SAMPLE_TEXTURE2D_LOD(_MainTex, sampler_MainTex, UnityStereoTransformScreenSpaceTex(DistortCheck(delta * 2.0 + uv,weight)), 0);
 
 			float4 sum = texelA * filterA + texelB * filterB + texelC * filterC;
 			float4 filterSum = filterA + filterB + filterC;

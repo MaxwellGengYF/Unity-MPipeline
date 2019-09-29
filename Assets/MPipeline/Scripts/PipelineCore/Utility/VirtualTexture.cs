@@ -194,6 +194,16 @@ namespace MPipeline
             poolDict.Dispose();
         }
 
+        public int GetChunkIndex(int2 startIndex)
+        {
+            int2 result;
+            if (poolDict.Get(startIndex, out result))
+            {
+                return result.y;
+            }
+            return -1;
+        }
+
         private int GetChunk(ref int2 startIndex, int size)
         {
             startIndex %= indexSize;

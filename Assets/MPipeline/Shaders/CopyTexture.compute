@@ -5,6 +5,7 @@
 #pragma kernel BufferToTex ARGB
 #pragma kernel TexToBuffer NORM
 #pragma kernel CopyIES
+#pragma kernel BlendToArray
 #include "CGINC/Texture.cginc"
 #include "UnityCG.cginc"
     uint DownDim(uint2 uv, uint width)
@@ -53,4 +54,25 @@ uint _Count;
 void CopyIES(uint id : SV_DISPATCHTHREADID)
 {
     _IESAtlas[uint3(id, 0, _Count)] = _IESTex[uint2(id, 0)];
+}
+
+RWTexture2DArray<float4> _VirtualMainTex;
+RWTexture2DArray<float2> _VirtualBumpMap;
+RWTexture2DArray<float4> _VirtualSMO;
+Texture2D<float4> _CameraGBufferTexture0;//Diffuse
+Texture2D<float4> _CameraGBufferTexture1;//SMO
+Texture2D<float2> _CameraGBufferTexture2;//Normal
+[numthreads(8,8,1)]
+void BlendToArray(uint2 id : SV_DISPATCHTHREADID)
+{
+    float4 v = _CameraGBufferTexture0[id];
+    float4 col = _VirtualMainTex[uint3(id, _Count)];
+    col.xyz = lerp(col.xyz, v.xyz, v.w);
+    _VirtualMainTex[uint3(id, _Count)] = col;
+    float2 nor = _VirtualBumpMap[uint3(id, _Count)];
+    nor = lerp(nor, _CameraGBufferTexture2[id], v.w);
+    _VirtualBumpMap[uint3(id, _Count)] = nor;
+    col = _VirtualSMO[uint3(id, _Count)];
+    col.xyz = lerp(col.xyz, _CameraGBufferTexture1[id].xyz, v.w);
+    _VirtualSMO[uint3(id, _Count)] = col;
 }

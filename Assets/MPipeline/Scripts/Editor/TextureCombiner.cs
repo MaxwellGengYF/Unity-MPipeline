@@ -24,7 +24,7 @@ public class TextureCombiner : EditorWindow
     public Texture2D a;
     public ChannelUsage aTextureChannel;
     public bool srgb = false;
-    public string fileName = "_Generate";
+    public static string fileName = "_SMO";
 
     private float GetColor(ChannelUsage usage, Color c)
     {

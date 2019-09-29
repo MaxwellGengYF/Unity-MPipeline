@@ -25,6 +25,11 @@ namespace MPipeline
             public RenderTargetIdentifier smoRT;
             public int depthSlice;
         }
+        [EasyButtons.Button]
+        void SetAspect()
+        {
+            GetComponent<Camera>().aspect = 1;
+        }
         private Camera cam;
         private RenderTargetIdentifier[] idfs;
         public NativeList<CameraState> renderingCommand { get; private set; }
@@ -78,14 +83,29 @@ namespace MPipeline
                 {
                     perObjectData = UnityEngine.Rendering.PerObjectData.None
                 };
-                idfs[0] = orthoCam.albedoRT;
-                idfs[1] = orthoCam.normalRT;
-                idfs[2] = orthoCam.smoRT;
-                buffer.GetTemporaryRT(ShaderIDs._DepthBufferTexture, orthoCam.resolution, orthoCam.resolution, 16, FilterMode.Point, RenderTextureFormat.Depth, RenderTextureReadWrite.Linear, 1, false);
-                buffer.SetRenderTarget(colors: idfs, depth: idfs[0], 0, CubemapFace.Unknown, orthoCam.depthSlice);
-                buffer.ClearRenderTarget(true, false, Color.black);
+                buffer.GetTemporaryRT(RenderTargets.gbufferIndex[0], orthoCam.resolution, orthoCam.resolution, 16, FilterMode.Point, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear, 1, false);
+                buffer.GetTemporaryRT(RenderTargets.gbufferIndex[2], orthoCam.resolution, orthoCam.resolution, 0, FilterMode.Point, RenderTextureFormat.RGHalf, RenderTextureReadWrite.Linear, 1, false);
+                buffer.GetTemporaryRT(RenderTargets.gbufferIndex[1], orthoCam.resolution, orthoCam.resolution, 0, FilterMode.Point, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear, 1, false);
+                idfs[0] = RenderTargets.gbufferIndex[0];
+                idfs[1] = RenderTargets.gbufferIndex[2];
+                idfs[2] = RenderTargets.gbufferIndex[1];
+                buffer.SetRenderTarget(colors: idfs, depth: idfs[0]);
+                buffer.ClearRenderTarget(true, true, new Color(0,0,0,0));
                 data.ExecuteCommandBuffer();
                 data.context.DrawRenderers(result, ref drawS, ref filter);
+                ComputeShader copyShader = data.resources.shaders.texCopyShader;
+                buffer.SetComputeTextureParam(copyShader, 6, ShaderIDs._VirtualMainTex, orthoCam.albedoRT);
+                buffer.SetComputeTextureParam(copyShader, 6, ShaderIDs._VirtualBumpMap, orthoCam.normalRT);
+                buffer.SetComputeTextureParam(copyShader, 6, ShaderIDs._VirtualSMO, orthoCam.smoRT);
+                buffer.SetComputeTextureParam(copyShader, 6, RenderTargets.gbufferIndex[0], RenderTargets.gbufferIndex[0]);
+                buffer.SetComputeTextureParam(copyShader, 6, RenderTargets.gbufferIndex[1], RenderTargets.gbufferIndex[1]);
+                buffer.SetComputeTextureParam(copyShader, 6, RenderTargets.gbufferIndex[2], RenderTargets.gbufferIndex[2]);
+                buffer.SetComputeIntParam(copyShader, ShaderIDs._Count, orthoCam.depthSlice);
+                int disp = orthoCam.resolution / 8;
+                buffer.DispatchCompute(copyShader, 6, disp, disp, 1);
+                buffer.ReleaseTemporaryRT(RenderTargets.gbufferIndex[0]);
+                buffer.ReleaseTemporaryRT(RenderTargets.gbufferIndex[1]);
+                buffer.ReleaseTemporaryRT(RenderTargets.gbufferIndex[2]);
                 data.ExecuteCommandBuffer();
                 #endregion
             }

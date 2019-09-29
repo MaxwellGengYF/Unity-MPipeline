@@ -1,0 +1,40 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel ColorBlend
+#pragma kernel NormalBlend
+#include "UnityCG.cginc"
+float2 _TextureSize;
+Texture2D<float4> _Tex0; SamplerState sampler_Tex0;
+Texture2D<float4> _Tex1; SamplerState sampler_Tex1;
+Texture2D<float4> _Tex2; SamplerState sampler_Tex2;
+Texture2D<float4> _Tex3; SamplerState sampler_Tex3;
+Texture2D<float4> _Mask;
+RWTexture2DArray<float4> _VirtualTexture;
+uint _Count;
+[numthreads(8,8,1)]
+void ColorBlend (uint2 id : SV_DispatchThreadID)
+{
+    float4 mask = _Mask[id];
+    mask = mask * 2 - 1;
+    mask *= 5;
+    mask = saturate(mask) * 0.5 + 0.5;
+    float4 col = _Tex0[id] * mask.r + _Tex1[id] * mask.g + _Tex2[id] * mask.b + _Tex3[id] * mask.a;
+    col /= dot(mask, 1);
+    _VirtualTexture[uint3(id, _Count)] = col;
+}
+
+[numthreads(8,8,1)]
+void NormalBlend (uint2 id : SV_DispatchThreadID)
+{
+    float4 mask = _Mask[id];
+    mask = mask * 2 - 1;
+    mask *= 5;
+    mask = saturate(mask) * 0.5 + 0.5;
+    float2 uv = (id + 0.5) / _TextureSize.xy;
+    float4 col = _Tex0.SampleLevel(sampler_Tex0, uv, 0) * mask.r
+     + _Tex1.SampleLevel(sampler_Tex1, uv, 0) * mask.g
+     + _Tex2.SampleLevel(sampler_Tex2, uv, 0) * mask.b
+     + _Tex3.SampleLevel(sampler_Tex3, uv, 0) * mask.a;
+    col /= dot(mask, 1);
+    _VirtualTexture[uint3(id, _Count)] = float4(UnpackNormal(col).xy, 0, 0);
+}
+

@@ -437,13 +437,7 @@ namespace MPipeline
     {
         public RenderTargetIdentifier renderTargetIdentifier;
         public RenderTargetIdentifier backupIdentifier;
-        public int[] gbufferIndex;
-        public RenderTargetIdentifier[] gbufferIdentifier;
-        public bool initialized;
-        public static RenderTargets Init()
-        {
-            RenderTargets rt;
-            rt.gbufferIndex = new int[]
+        public static readonly int[] gbufferIndex = new int[]
             {
                 Shader.PropertyToID("_CameraGBufferTexture0"),
                 Shader.PropertyToID("_CameraGBufferTexture1"),
@@ -451,10 +445,15 @@ namespace MPipeline
                 Shader.PropertyToID("_CameraGBufferTexture3"),
                 ShaderIDs._CameraMotionVectorsTexture
             };
-            rt.gbufferIdentifier = new RenderTargetIdentifier[rt.gbufferIndex.Length];
-            for (int i = 0; i < rt.gbufferIndex.Length; ++i)
+        public RenderTargetIdentifier[] gbufferIdentifier;
+        public bool initialized;
+        public static RenderTargets Init()
+        {
+            RenderTargets rt;
+            rt.gbufferIdentifier = new RenderTargetIdentifier[gbufferIndex.Length];
+            for (int i = 0; i < gbufferIndex.Length; ++i)
             {
-                rt.gbufferIdentifier[i] = rt.gbufferIndex[i];
+                rt.gbufferIdentifier[i] = gbufferIndex[i];
             }
             rt.backupIdentifier = default;
             rt.renderTargetIdentifier = default;

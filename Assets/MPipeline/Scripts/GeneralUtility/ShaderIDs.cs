@@ -193,5 +193,8 @@ public static partial class ShaderIDs
     public static readonly int _GPURPHeightMap = Shader.PropertyToID("_GPURPHeightMap");
     public static readonly int _SourceTex = Shader.PropertyToID("_SourceTex");
     public static readonly int _DestTex = Shader.PropertyToID("_DestTex");
+    public static readonly int _VirtualMainTex = Shader.PropertyToID("_VirtualMainTex");
+    public static readonly int _VirtualBumpMap = Shader.PropertyToID("_VirtualBumpMap");
+    public static readonly int _VirtualSMO = Shader.PropertyToID("_VirtualSMO");
 
 }

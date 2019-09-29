@@ -22,6 +22,7 @@
             ZTest Always
             Cull back
             ZWrite off
+            Blend srcAlpha oneMinusSrcAlpha
             
             CGPROGRAM
             #pragma vertex vert

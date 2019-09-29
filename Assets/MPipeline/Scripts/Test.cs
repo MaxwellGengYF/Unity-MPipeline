@@ -15,6 +15,8 @@ using MPipeline.PCG;
 
 public unsafe sealed class Test : MonoBehaviour
 {
+    public static Dictionary<string, bool> allGUIDs;
+    public Texture[] objs;
     public GeometryEvent evt;
     public ComputeShader shad;
     [EasyButtons.Button]
@@ -31,6 +33,14 @@ public unsafe sealed class Test : MonoBehaviour
 
     public Texture tex;
     public Material mat;
+    private void Awake()
+    {
+        allGUIDs = new Dictionary<string, bool>(objs.Length);
+        foreach(var i in objs)
+        {
+            allGUIDs.Add(UnityEditor.AssetDatabase.AssetPathToGUID(UnityEditor.AssetDatabase.GetAssetPath(i)), true);
+        }
+    }
 
     private void Update()
     {

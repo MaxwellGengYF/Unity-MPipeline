@@ -479,16 +479,16 @@ public unsafe class TransformTextureSettings : ScriptableWizard
                 imp.filterMode = FilterMode.Bilinear;
             }
  
-            if (i.name.Contains("_SMO"))
+            if (i.name.ToLower().Contains("_smo"))
             {
                 imp.sRGBTexture = false;
                 
             }
-            else if (i.name.Contains("_normal"))
+            else if (i.name.ToLower().Contains("_normal"))
             {
                 imp.textureType = TextureImporterType.NormalMap;
             }
-            else if(i.name.Contains("_height"))
+            else if(i.name.ToLower().Contains("_height"))
             {
                 imp.sRGBTexture = false;
             }
