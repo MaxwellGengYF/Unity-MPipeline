@@ -1,5 +1,9 @@
 #ifndef __UPSAMPLE_INCLUDE__
 #define __UPSAMPLE_INCLUDE__
+#ifdef COMPUTE_SHADER
+
+
+#else
 #include "UnityCG.cginc"
 float4 Upsampling(float2 UV, float2 SamplerSize, sampler2D depthTexture, sampler2D targetRT, sampler2D normalTex)
 {
@@ -31,5 +35,5 @@ float4 Upsampling(float2 UV, float2 SamplerSize, sampler2D depthTexture, sampler
 		
 	return filtered;
 }
-
+#endif
 #endif

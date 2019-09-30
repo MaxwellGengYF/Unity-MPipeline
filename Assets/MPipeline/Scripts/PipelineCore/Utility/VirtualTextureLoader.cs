@@ -9,120 +9,29 @@ using UnityEngine.AddressableAssets;
 using System.IO;
 namespace MPipeline
 {
-    public unsafe struct AddressableReferenceHolder
-    {
-        //TODO
-        //Auto Disposer
-        public class TextureReference
-        {
-            public AssetReference reference;
-            public Texture loadedTexture;
-            private IEnumerator loader;
-            public bool isLoading { get; private set; }
-            public bool Load(out IEnumerator result)
-            {
-                result = null;
-                if (loadedTexture) return false;
-                if (isLoading)
-                {
-                    result = loader;
-                    return true;
-                }
-                isLoading = true;
-                result = LoadFunc();
-                loader = result;
-                return true;
-            }
-            private IEnumerator LoadFunc()
-            {
-                var asyncLoad = reference.LoadAssetAsync<Texture>();
-                yield return asyncLoad;
-                isLoading = false;
-                loadedTexture = asyncLoad.Result;
-            }
-
-            public void Dispose()
-            {
-                loadedTexture = null;
-                reference.ReleaseAsset();
-            }
-        }
-        private Dictionary<string, TextureReference> allReferences;
-        private MStringBuilder msb;
-        public AddressableReferenceHolder(int capacity)
-        {
-            allReferences = new Dictionary<string, TextureReference>(capacity);
-            msb = new MStringBuilder(32);
-        }
-
-        public TextureReference GetReference(FileGUID guid)
-        {
-            guid.GetString(msb);
-            TextureReference aref;
-            if (allReferences.TryGetValue(msb.str, out aref))
-            {
-                return aref;
-            }
-            else
-            {
-                aref = new TextureReference();
-                string guidStr = guid.ToString();
-                aref.reference = new AssetReference(guidStr);
-                aref.loadedTexture = null;
-                allReferences.Add(guidStr, aref);
-                return aref;
-            }
-        }
-        public void Dispose()
-        {
-            foreach (var i in allReferences)
-            {
-                i.Value.Dispose();
-            }
-            allReferences = null;
-        }
-    }
     public unsafe struct VirtualTextureChunk
     {
-        public FileGUID albedo0;
-        public FileGUID albedo1;
-        public FileGUID albedo2;
-        public FileGUID albedo3;
-        public FileGUID normal0;
-        public FileGUID normal1;
-        public FileGUID normal2;
-        public FileGUID normal3;
-        public FileGUID smo0;
-        public FileGUID smo1;
-        public FileGUID smo2;
-        public FileGUID smo3;
         public FileGUID mask;
-        public float4 scaleOffset0;
-        public float4 scaleOffset1;
-        public float4 scaleOffset2;
-        public float4 scaleOffset3;
+        public FileGUID height;
         private bool isCreate;
-        public const int GUID_LENGTH = 4 * 3 + 1;
-        public const int SCALEOFFSET_COUNT = 4 * 4;
-        public const int CHUNK_DATASIZE = FileGUID.PTR_LENGTH * 8 * GUID_LENGTH + 4 * SCALEOFFSET_COUNT;
+        private const int GUID_LENGTH = 2;
+        public const int CHUNK_DATASIZE = FileGUID.PTR_LENGTH * 8 * GUID_LENGTH;
         public void Init(byte* arr)
         {
             isCreate = true;
-            FileGUID* guidPtr = albedo0.Ptr();
+            FileGUID* guidPtr = mask.Ptr();
             for (int i = 0; i < GUID_LENGTH; ++i)
             {
                 guidPtr[i] = new FileGUID(arr, Allocator.Persistent);
                 arr += FileGUID.PTR_LENGTH * sizeof(ulong);
             }
-            float4* floatPtr = scaleOffset0.Ptr();
-            UnsafeUtility.MemCpy(floatPtr, arr, sizeof(float) * SCALEOFFSET_COUNT);
         }
 
         public void Dispose()
         {
             if (!isCreate) return;
             isCreate = false;
-            FileGUID* guidPtr = albedo0.Ptr();
+            FileGUID* guidPtr = mask.Ptr();
             for (int i = 0; i < GUID_LENGTH; ++i)
             {
                 guidPtr[i].Dispose();
@@ -131,13 +40,11 @@ namespace MPipeline
 
         public void OutputBytes(byte* arr)
         {
-            FileGUID* guidPtr = albedo0.Ptr();
+            FileGUID* guidPtr = mask.Ptr();
             for (int i = 0; i < GUID_LENGTH; ++i)
             {
                 arr += guidPtr[i].ToBytes(arr);
             }
-            float4* floatPtr = scaleOffset0.Ptr();
-            UnsafeUtility.MemCpy(arr, floatPtr, sizeof(float) * SCALEOFFSET_COUNT);
         }
     }
     public unsafe struct VirtualTextureLoader
