@@ -113,6 +113,7 @@ namespace MPipeline
         private void EnableSelfRendering()
         {
             isRendering = true;
+
             //TODO
             //Load virtual texture
         }
@@ -200,6 +201,7 @@ namespace MPipeline
                 Separate();
 
             }
+           
             if (leftDown != null)
             {
                 leftDown->CheckUpdate(camXZPos);

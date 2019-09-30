@@ -65,7 +65,8 @@ void frag_surf (v2f_surf IN,
 		out float4 outGBuffer0 : SV_Target0,
     out float4 outGBuffer1 : SV_Target1,
     out float4 outGBuffer2 : SV_Target2,
-    out float4 outEmission : SV_Target3
+    out float4 outEmission : SV_Target3,
+	out float2 outMotionVector : SV_TARGET4
 ) {
 	
   // prepare and unpack data
@@ -73,6 +74,16 @@ void frag_surf (v2f_surf IN,
 	float linearEye = LinearEyeDepth(depth);
 	float2 screenUV = IN.screenUV.xy / IN.screenUV.z;
   float3 worldPos = IN.worldPos;
+  float4 nonJitterScreenUV = ComputeScreenPos(mul(_NonJitterVP, float4(worldPos, 1)));
+  nonJitterScreenUV.xy /= nonJitterScreenUV.w;
+  float4 lastClip = ComputeScreenPos(mul(_LastVp, float4(worldPos, 1)));
+  lastClip.xy /= lastClip.w;
+  float4 velocity = float4(nonJitterScreenUV.xy, lastClip.xy);
+	#if UNITY_UV_STARTS_AT_TOP
+				outMotionVector = velocity.xw - velocity.zy;
+#else
+				outMotionVector =  velocity.xy - velocity.zw;
+#endif
   float3 worldViewDir = normalize(_WorldSpaceCameraPos - worldPos.xyz);
   SurfaceOutputStandardSpecular o;
   //float3x3 wdMatrix= float3x3(float3(1, 0, 0), float3(0, 1, 0), float3(0, 0, 1));
