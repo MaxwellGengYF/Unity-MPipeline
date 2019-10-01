@@ -13,11 +13,13 @@ namespace MPipeline
     {
         public FileGUID mask;
         public FileGUID height;
-        private bool isCreate;
+        public bool isCreate { get; private set; }
+        public float2 minMaxHeightBounding;
         private const int GUID_LENGTH = 2;
-        public const int CHUNK_DATASIZE = FileGUID.PTR_LENGTH * 8 * GUID_LENGTH;
+        public const int CHUNK_DATASIZE = FileGUID.PTR_LENGTH * 8 * GUID_LENGTH + 8;
         public void Init(byte* arr)
         {
+            if (isCreate) return;
             isCreate = true;
             FileGUID* guidPtr = mask.Ptr();
             for (int i = 0; i < GUID_LENGTH; ++i)
@@ -25,6 +27,7 @@ namespace MPipeline
                 guidPtr[i] = new FileGUID(arr, Allocator.Persistent);
                 arr += FileGUID.PTR_LENGTH * sizeof(ulong);
             }
+            UnsafeUtility.MemCpy(minMaxHeightBounding.Ptr(), arr, 8);
         }
 
         public void Dispose()
@@ -45,6 +48,7 @@ namespace MPipeline
             {
                 arr += guidPtr[i].ToBytes(arr);
             }
+            UnsafeUtility.MemCpy(arr, minMaxHeightBounding.Ptr(), 8);
         }
     }
     public unsafe struct VirtualTextureLoader

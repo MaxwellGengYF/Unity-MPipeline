@@ -324,18 +324,6 @@ namespace MPipeline
         public void UnloadTexture(int2 startIndex)
         {
             UnloadChunk(ref startIndex);
-         /*   if (size.x <= 0) return;
-            texSize[0] = indexSize.x;
-            texSize[1] = indexSize.y;
-            shader.SetInts(ShaderIDs._IndexTextureSize, texSize);
-            vtVariables[0] = startIndex.x;
-            vtVariables[1] = startIndex.y;
-            vtVariables[2] = size.x;
-            vtVariables[3] = -2;
-            shader.SetInts(ShaderIDs._VTVariables, vtVariables);
-            shader.SetTexture(0, ShaderIDs._IndexTexture, indexTex);
-            int dispatchCount = Mathf.CeilToInt(size.x / 8f);
-            shader.Dispatch(0, dispatchCount, dispatchCount, 1);*/
         }
 
         public void CombineTexture(int2 startIndex, int targetSize, bool releaseCheck = false)

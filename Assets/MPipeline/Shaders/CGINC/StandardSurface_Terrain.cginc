@@ -15,11 +15,10 @@ float3 ProcessNormal(float4 value)
     return n;
 }
 		void surf (float2 uv, uint2 vtIndex, inout SurfaceOutputStandardSpecular o) {
-			uv = frac(uv);
-			float3 vtUV = GetVirtualTextureUV(vtIndex, uv);
+			float3 vtUV = GetVirtualTextureUV(vtIndex + floor(uv), frac(uv));
 #ifdef LIT_ENABLE
 			float4 spec = float4(0, 0, 1, 1);//_VirtualSMOMap.SampleLevel(sampler_VirtualSMOMap, vtUV, 0);
-			float4 c =  float4(uv, 1, 1);//_VirtualAlbedoMap.SampleLevel(sampler_VirtualAlbedoMap, vtUV, 0);
+			float4 c =  float4(uv.xy, 1, 1);//_VirtualAlbedoMap.SampleLevel(sampler_VirtualAlbedoMap, vtUV, 0);
 			o.Normal = float3(0, 0, 1);// ProcessNormal(_VirtualNormalMap.SampleLevel(sampler_VirtualNormalMap, vtUV, 0));
 			o.Albedo = c.rgb;
 

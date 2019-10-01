@@ -16,6 +16,7 @@ namespace MPipeline
         public double2 screenOffset;
         public NativeList_Float allLodLevles;
         public float lodDeferredOffset;
+        public VirtualTextureLoader loader;
     }
     public unsafe struct TerrainQuadTree
     {
@@ -23,29 +24,24 @@ namespace MPipeline
         {
             LeftDown, LeftUp, RightDown, RightUp
         };
+        public static TerrainQuadTreeSettings setting;
         public TerrainQuadTree* leftDown { get; private set; }
         public TerrainQuadTree* leftUp { get; private set; }
         public TerrainQuadTree* rightDown { get; private set; }
         public TerrainQuadTree* rightUp { get; private set; }
-        private TerrainQuadTreeSettings* setting;
         private bool isCreated;
         public int lodLevel;
         public int2 localPosition;
-        public int2 rootPosition;
-        private float distOffset;
-        public int2 VirtualTextureIndex
-        {
-            get
-            {
-                return localPosition * (int)(0.5 + pow(2.0, setting->allLodLevles.Length - 1 - lodLevel)) + rootPosition * (int)(0.5 + pow(2.0, setting->allLodLevles.Length - 1));
-            }
-        }
+        private double distOffset;
+        private VirtualTextureChunk textureChunk;
+        private float2 minMaxBounding;
+        public int2 VirtualTextureIndex => localPosition * (int)(0.5 + pow(2.0, setting.allLodLevles.Length - 1 - lodLevel));
         public bool isRendering { get; private set; }
-        public TerrainQuadTree(int parentLodLevel, TerrainQuadTreeSettings* setting, LocalPos sonPos, int2 parentPos, int2 rootPosition)
+        public TerrainQuadTree(int parentLodLevel, LocalPos sonPos, int2 parentPos)
         {
-            distOffset = setting->lodDeferredOffset;
-            this.setting = setting;
-            this.rootPosition = rootPosition;
+            distOffset = setting.lodDeferredOffset;
+            textureChunk = new VirtualTextureChunk();
+            minMaxBounding = 0;
             isCreated = true;
             isRendering = false;
             lodLevel = parentLodLevel + 1;
@@ -67,29 +63,30 @@ namespace MPipeline
                     break;
             }
         }
-        public float2 CornerWorldPos
+        public int VirtualTextureSize => (int)(0.1 + pow(2.0, setting.allLodLevles.Length - 1 - lodLevel));
+        public double2 CornerWorldPos
         {
             get
             {
-                double2 chunkPos = rootPosition + setting->screenOffset;
-                chunkPos *= setting->largestChunkSize;
-                chunkPos += (setting->largestChunkSize / pow(2, lodLevel)) * (double2)localPosition;
-                return (float2)chunkPos;
+                double2 chunkPos = setting.screenOffset;
+            //    chunkPos *= setting.largestChunkSize;
+                chunkPos += (setting.largestChunkSize / pow(2, lodLevel)) * (double2)localPosition;
+                return chunkPos;
             }
         }
-        public float2 CenterWorldPos
+        public double2 CenterWorldPos
         {
             get
             {
-                double2 chunkPos = rootPosition + setting->screenOffset;
-                chunkPos *= setting->largestChunkSize;
-                chunkPos += (setting->largestChunkSize / pow(2, lodLevel)) * ((double2)(localPosition) + 0.5);
-                return (float2)chunkPos;
+                double2 chunkPos = setting.screenOffset;
+                //chunkPos *= setting.largestChunkSize;
+                chunkPos += (setting.largestChunkSize / pow(2, lodLevel)) * ((double2)(localPosition) + 0.5);
+                return chunkPos;
             }
         }
         public void Dispose()
         {
-            DisableSelfRendering();
+            isRendering = false;
             if (leftDown != null)
             {
                 leftDown->Dispose();
@@ -104,54 +101,52 @@ namespace MPipeline
             }
             isCreated = false;
         }
-        private void DisableSelfRendering()
-        {
-            isRendering = false;
-            //TODO
-            //Release self's virtual texture
-        }
-        private void EnableSelfRendering()
-        {
-            isRendering = true;
-
-            //TODO
-            //Load virtual texture
-        }
+        //TODO
         private void Separate()
         {
-            if (lodLevel >= setting->allLodLevles.Length - 1)
+            if (lodLevel >= setting.allLodLevles.Length - 1)
             {
-                EnableSelfRendering();
+                isRendering = true;
             }
             else
             {
-                DisableSelfRendering();
+                isRendering = false;
                 if (leftDown == null)
                 {
                     leftDown = MUnsafeUtility.Malloc<TerrainQuadTree>(sizeof(TerrainQuadTree) * 4, Allocator.Persistent);
                     leftUp = leftDown + 1;
                     rightDown = leftDown + 2;
                     rightUp = leftDown + 3;
-                    *leftDown = new TerrainQuadTree(lodLevel, setting, LocalPos.LeftDown, localPosition, rootPosition);
-                    *leftUp = new TerrainQuadTree(lodLevel, setting, LocalPos.LeftUp, localPosition, rootPosition);
-                    *rightDown = new TerrainQuadTree(lodLevel, setting, LocalPos.RightDown, localPosition, rootPosition);
-                    *rightUp = new TerrainQuadTree(lodLevel, setting, LocalPos.RightUp, localPosition, rootPosition);
+                    *leftDown = new TerrainQuadTree(lodLevel, LocalPos.LeftDown, localPosition);
+                    *leftUp = new TerrainQuadTree(lodLevel, LocalPos.LeftUp, localPosition);
+                    *rightDown = new TerrainQuadTree(lodLevel, LocalPos.RightDown, localPosition);
+                    *rightUp = new TerrainQuadTree(lodLevel, LocalPos.RightUp, localPosition);
                 }
-                leftDown->EnableSelfRendering();
-                leftUp->EnableSelfRendering();
-                rightDown->EnableSelfRendering();
-                rightUp->EnableSelfRendering();
+                leftDown->isRendering = true;
+                leftUp->isRendering = true;
+                rightDown->isRendering = true;
+                rightUp->isRendering = true;
             }
-            distOffset = -setting->lodDeferredOffset;
+            distOffset = -setting.lodDeferredOffset;
         }
+
+        //TODO
         private void Combine(bool enableSelf)
         {
             if (leftDown != null)
             {
+                float min0 = min(leftDown->minMaxBounding.x, leftUp->minMaxBounding.x);
+                float min1 = min(rightDown->minMaxBounding.x, rightUp->minMaxBounding.x);
+                float max0 = max(leftDown->minMaxBounding.y, leftUp->minMaxBounding.y);
+                float max1 = max(rightDown->minMaxBounding.y, rightUp->minMaxBounding.y);
+                minMaxBounding.x = min(min0, min1);
+                minMaxBounding.y = max(max0, max1);
                 leftDown->Dispose();
                 leftUp->Dispose();
                 rightDown->Dispose();
                 rightUp->Dispose();
+                /// TODO:
+                /// Send Virtual Texture Combine Command
                 UnsafeUtility.Free(leftDown, Allocator.Persistent);
                 leftDown = null;
                 leftUp = null;
@@ -159,9 +154,8 @@ namespace MPipeline
                 rightUp = null;
                 isRendering = true;
             }
-            distOffset = setting->lodDeferredOffset;
-            if (enableSelf) EnableSelfRendering();
-            else DisableSelfRendering();
+            distOffset = setting.lodDeferredOffset;
+            isRendering = enableSelf;
         }
         public void PushDrawRequest(NativeList<MTerrain.TerrainChunkBuffer> loadedBufferList)
         {
@@ -177,8 +171,8 @@ namespace MPipeline
                 loadedBufferList.Add(new MTerrain.TerrainChunkBuffer
                 {
                     minMaxHeight = 0,
-                    scale = float2((float)(setting->largestChunkSize / pow(2, lodLevel)), pow(2, setting->allLodLevles.Length - 1 - lodLevel)),
-                    worldPos = CornerWorldPos,
+                    scale = float2((float)(setting.largestChunkSize / pow(2, lodLevel)), (float)pow(2.0, setting.allLodLevles.Length - 1 - lodLevel)),
+                    worldPos = (float2)CornerWorldPos,
                     uvStartIndex = (uint2)VirtualTextureIndex
                 });
             }
@@ -188,11 +182,11 @@ namespace MPipeline
             if (!isCreated) return;
             double2 worldPos = CenterWorldPos;
             double dist = distance(worldPos, camXZPos);
-            if (dist > setting->allLodLevles[lodLevel] - distOffset)
+            if (dist > setting.allLodLevles[lodLevel] - distOffset)
             {
                 Combine(lodLevel != 0);
             }
-            else if (dist > setting->allLodLevles[lodLevel + 1] - distOffset)
+            else if (dist > setting.allLodLevles[lodLevel + 1] - distOffset)
             {
                 Combine(true);
             }

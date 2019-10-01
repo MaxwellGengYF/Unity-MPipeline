@@ -20,15 +20,14 @@ namespace MPipeline
             public float2 scale;
             public uint2 uvStartIndex;
         }
-        public int chunkCount = 8;
-        [Range(0f, 1000f)]
-        public double chunkSize = 10;
+        public double chunkSize = 1000;
         public float[] lodDistances = new float[]
         {
             150,
             100,
             50
         };
+        public string readWritePath = "Assets/Terrain.mquad";
         public int planarResolution = 10;
         public Material drawTerrainMaterial;
         public double2 chunkOffset = 0;
@@ -40,27 +39,25 @@ namespace MPipeline
         private ComputeShader shader;
         private NativeList<TerrainChunkBuffer> loadedBufferList;
         private static Vector4[] planes = new Vector4[6];
-        private Native2DArray<TerrainQuadTree> allTrees;
-        TerrainQuadTreeSettings setting;
+        private TerrainQuadTree tree;
         private JobHandle calculateHandle;
-                /*    arr[getLength(x, y)] = float2(x, y) / planarResolution;
-                    arr[getLength(x, y) + 1] = float2(x, y + 1) / planarResolution;
-                    arr[getLength(x, y) + 2] = float2(x + 1, y) / planarResolution;
-                    arr[getLength(x, y) + 3] = float2(x, y + 1) / planarResolution;
-                    arr[getLength(x, y) + 4] = float2(x + 1, y + 1) / planarResolution;
-                    arr[getLength(x, y) + 5] = float2(x + 1, y) / planarResolution;*/
+        /*    arr[getLength(x, y)] = float2(x, y) / planarResolution;
+            arr[getLength(x, y) + 1] = float2(x, y + 1) / planarResolution;
+            arr[getLength(x, y) + 2] = float2(x + 1, y) / planarResolution;
+            arr[getLength(x, y) + 3] = float2(x, y + 1) / planarResolution;
+            arr[getLength(x, y) + 4] = float2(x + 1, y + 1) / planarResolution;
+            arr[getLength(x, y) + 5] = float2(x + 1, y) / planarResolution;*/
 
 
         public override void PrepareJob()
         {
             loadedBufferList.Clear();
-            int len = allTrees.Length.x * allTrees.Length.y;
+            TerrainQuadTree.setting.screenOffset = chunkOffset;
             calculateHandle = new CalculateQuadTree
             {
-                allTrees = allTrees.ptr,
+                tree = tree.Ptr(),
                 cameraXZPos = double2(cam.position.x, cam.position.z),
                 loadedBuffer = loadedBufferList,
-                len = len
             }.Schedule();
         }
 
@@ -83,8 +80,6 @@ namespace MPipeline
             {
                 indexMapSize *= 2;
             }
-            indexMapSize *= chunkCount;
-
             dispatchDrawBuffer = new ComputeBuffer(5, sizeof(int), ComputeBufferType.IndirectArguments);
             const int INIT_LENGTH = 500;
             culledResultsBuffer = new ComputeBuffer(INIT_LENGTH, sizeof(int));
@@ -94,8 +89,7 @@ namespace MPipeline
             NativeArray<uint> dispatchDraw = new NativeArray<uint>(5, Allocator.Temp, NativeArrayOptions.ClearMemory);
             dispatchDraw[0] = 6;
             dispatchDrawBuffer.SetData(dispatchDraw);
-            allTrees = new Native2DArray<TerrainQuadTree>(chunkCount, Allocator.Persistent, true);
-            setting = new TerrainQuadTreeSettings
+            TerrainQuadTree.setting = new TerrainQuadTreeSettings
             {
                 allLodLevles = new NativeList_Float(lodDistances.Length + 1, Allocator.Persistent),
                 largestChunkSize = chunkSize,
@@ -104,15 +98,11 @@ namespace MPipeline
             };
             for (int i = 0; i < lodDistances.Length; ++i)
             {
-                setting.allLodLevles.Add(min(lodDistances[max(0, i - 1)], lodDistances[i]));
+                TerrainQuadTree.setting.allLodLevles.Add(min(lodDistances[max(0, i - 1)], lodDistances[i]));
             }
-            setting.allLodLevles[lodDistances.Length] = 0;
-            int2 len = allTrees.Length;
-            for (int x = 0; x < len.x; ++x)
-                for (int y = 0; y < len.y; ++y)
-                {
-                    allTrees[int2(x, y)] = new TerrainQuadTree(-1, setting.Ptr(), TerrainQuadTree.LocalPos.LeftDown, 0, int2(x, y));
-                }
+            TerrainQuadTree.setting.allLodLevles[lodDistances.Length] = 0;
+            tree = new TerrainQuadTree(-1, TerrainQuadTree.LocalPos.LeftDown, 0);
+            TerrainQuadTree.setting.loader = new VirtualTextureLoader(lodDistances.Length, readWritePath);
         }
         void UpdateBuffer()
         {
@@ -130,7 +120,7 @@ namespace MPipeline
         public void DrawTerrain(CommandBuffer buffer, int pass, Vector4[] planes)
         {
             if (loadedBufferList.Length <= 0) return;
-          
+
             buffer.SetComputeBufferParam(shader, 1, ShaderIDs._DispatchBuffer, dispatchDrawBuffer);
             buffer.SetComputeBufferParam(shader, 0, ShaderIDs._DispatchBuffer, dispatchDrawBuffer);
             buffer.SetComputeBufferParam(shader, 0, ShaderIDs._CullResultBuffer, culledResultsBuffer);
@@ -157,30 +147,22 @@ namespace MPipeline
             if (loadedBuffer != null) loadedBuffer.Dispose();
             if (dispatchDrawBuffer != null) dispatchDrawBuffer.Dispose();
             if (loadedBufferList.isCreated) loadedBufferList.Dispose();
-            int2 len = allTrees.Length;
-            for (int x = 0; x < len.x; ++x)
-                for (int y = 0; y < len.y; ++y)
-                {
-                    allTrees[int2(x, y)].Dispose();
-                }
-            allTrees.Dispose();
+            tree.Dispose();
+            TerrainQuadTree.setting.loader.Dispose();
         }
-        [Unity.Burst.BurstCompile]
+
         private struct CalculateQuadTree : IJob
         {
             [NativeDisableUnsafePtrRestriction]
-            public TerrainQuadTree* allTrees;
+            public TerrainQuadTree* tree;
             public double2 cameraXZPos;
             public NativeList<TerrainChunkBuffer> loadedBuffer;
-            public int len;
+
             public void Execute()
             {
-                for (int index = 0; index < len; ++index)
-                {
-                    ref TerrainQuadTree tree = ref allTrees[index];
-                    tree.CheckUpdate(cameraXZPos);
-                    tree.PushDrawRequest(loadedBuffer);
-                }
+
+                tree->CheckUpdate(cameraXZPos);
+                tree->PushDrawRequest(loadedBuffer);
             }
         }
     }

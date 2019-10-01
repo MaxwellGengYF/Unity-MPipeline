@@ -41,7 +41,9 @@ struct v2f_surf {
 	float3 screenUV : TEXCOORD1;
 	float3 worldPos : TEXCOORD2;
 	nointerpolation uint2 vtUV : TEXCOORD3;
+	#ifdef DEBUG_QUAD_TREE
 	nointerpolation float scale : TEXCOORD4;
+	#endif
 };
 
 v2f_surf vert_surf (uint instanceID : SV_INSTANCEID, uint vertexID : SV_VERTEXID) 
@@ -55,9 +57,10 @@ v2f_surf vert_surf (uint instanceID : SV_INSTANCEID, uint vertexID : SV_VERTEXID
 		o.pos.y = -o.pos.y;
 		#endif*/
 	  o.worldPos = v.position;
-	  o.scale = v.scale;
 	o.screenUV = ComputeScreenPos(o.pos).xyw;
-
+	#ifdef DEBUG_QUAD_TREE
+	o.scale = v.scale;
+	#endif
   	return o;
 }
 
@@ -88,7 +91,7 @@ void frag_surf (v2f_surf IN,
   SurfaceOutputStandardSpecular o;
   //float3x3 wdMatrix= float3x3(float3(1, 0, 0), float3(0, 1, 0), float3(0, 0, 1));
   // call surface function
-  surf (IN.pack0.xy / IN.scale, IN.vtUV + (uint2)IN.pack0.xy, o);
+  surf (IN.pack0.xy, IN.vtUV + (uint2)IN.pack0.xy, o);
   o.Normal = normalize(o.Normal);
   outEmission = ProceduralStandardSpecular_Deferred (o, outGBuffer0, outGBuffer1, outGBuffer2); //GI neccessary here!
 
