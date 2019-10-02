@@ -24,6 +24,8 @@ public static partial class ShaderIDs
     public static readonly int _DirLightPos = Shader.PropertyToID("_DirLightPos");
     public static readonly int _LightPos = Shader.PropertyToID("_LightPos");
     public static readonly int _MainTex = Shader.PropertyToID("_MainTex");
+    public static readonly int _BumpMap = Shader.PropertyToID("_BumpMap");
+    public static readonly int _SMMap = Shader.PropertyToID("_SMMap");
     public static readonly int _SoftParam = Shader.PropertyToID("_SoftParam");
     public static readonly int _OffsetIndex = Shader.PropertyToID("_OffsetIndex");
     public static readonly int _ShadowOffset = Shader.PropertyToID("_ShadowOffset");
@@ -191,10 +193,15 @@ public static partial class ShaderIDs
     public static readonly int _GPURPBumpMap = Shader.PropertyToID("_GPURPBumpMap");
     public static readonly int _GPURPEmissionMap = Shader.PropertyToID("_GPURPEmissionMap");
     public static readonly int _GPURPHeightMap = Shader.PropertyToID("_GPURPHeightMap");
+
+    public static readonly int _TerrainMainTexArray = Shader.PropertyToID("_TerrainMainTexArray");
+    public static readonly int _TerrainBumpMapArray = Shader.PropertyToID("_TerrainBumpMapArray");
+    public static readonly int _TerrainSMTexArray = Shader.PropertyToID("_TerrainSMTexArray");
     public static readonly int _SourceTex = Shader.PropertyToID("_SourceTex");
     public static readonly int _DestTex = Shader.PropertyToID("_DestTex");
     public static readonly int _VirtualMainTex = Shader.PropertyToID("_VirtualMainTex");
     public static readonly int _VirtualBumpMap = Shader.PropertyToID("_VirtualBumpMap");
     public static readonly int _VirtualSMO = Shader.PropertyToID("_VirtualSMO");
+    public static readonly int _VirtualHeightmap = Shader.PropertyToID("_VirtualHeightmap");
 
 }

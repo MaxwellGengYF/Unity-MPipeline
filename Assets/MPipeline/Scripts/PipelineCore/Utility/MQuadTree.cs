@@ -17,6 +17,19 @@ namespace MPipeline
         public NativeList_Float allLodLevles;
         public float lodDeferredOffset;
         public VirtualTextureLoader loader;
+        public NativeList<TerrainLoadData> loadDataList;
+    }
+
+    public struct TerrainLoadData
+    {
+        public enum Operator
+        {
+            Combine, Load, Unload
+        }
+        public Operator ope;
+        public int2 startIndex;
+        public int size;
+        public VirtualTextureChunk targetLoadChunk;
     }
     public unsafe struct TerrainQuadTree
     {
@@ -62,6 +75,7 @@ namespace MPipeline
                     localPosition += 1;
                     break;
             }
+            setting.loader.ReadChunkData(ref textureChunk, localPosition, parentLodLevel);
         }
         public int VirtualTextureSize => (int)(0.1 + pow(2.0, setting.allLodLevles.Length - 1 - lodLevel));
         public double2 CornerWorldPos
@@ -69,7 +83,7 @@ namespace MPipeline
             get
             {
                 double2 chunkPos = setting.screenOffset;
-            //    chunkPos *= setting.largestChunkSize;
+                //    chunkPos *= setting.largestChunkSize;
                 chunkPos += (setting.largestChunkSize / pow(2, lodLevel)) * (double2)localPosition;
                 return chunkPos;
             }
@@ -86,6 +100,14 @@ namespace MPipeline
         }
         public void Dispose()
         {
+            if (isRendering)
+            {
+                setting.loadDataList.Add(new TerrainLoadData
+                {
+                    ope = TerrainLoadData.Operator.Unload,
+                    startIndex = VirtualTextureIndex
+                });
+            }
             isRendering = false;
             if (leftDown != null)
             {
@@ -100,17 +122,47 @@ namespace MPipeline
                 rightUp = null;
             }
             isCreated = false;
+            textureChunk.Dispose();
+        }
+        private void EnableRendering()
+        {
+            if (!isRendering)
+            {
+                setting.loadDataList.Add(new TerrainLoadData
+                {
+                    ope = TerrainLoadData.Operator.Load,
+                    size = VirtualTextureSize,
+                    startIndex = VirtualTextureIndex,
+                    targetLoadChunk = textureChunk
+                });
+            }
+
+            isRendering = true;
+        }
+
+        private void DisableRendering()
+        {
+            if (isRendering)
+            {
+                setting.loadDataList.Add(new TerrainLoadData
+                {
+                    ope = TerrainLoadData.Operator.Unload,
+                    size = VirtualTextureSize,
+                    startIndex = VirtualTextureIndex
+                });
+            }
+            isRendering = false;
         }
         //TODO
         private void Separate()
         {
             if (lodLevel >= setting.allLodLevles.Length - 1)
             {
-                isRendering = true;
+                EnableRendering();
             }
             else
             {
-                isRendering = false;
+                DisableRendering();
                 if (leftDown == null)
                 {
                     leftDown = MUnsafeUtility.Malloc<TerrainQuadTree>(sizeof(TerrainQuadTree) * 4, Allocator.Persistent);
@@ -122,10 +174,10 @@ namespace MPipeline
                     *rightDown = new TerrainQuadTree(lodLevel, LocalPos.RightDown, localPosition);
                     *rightUp = new TerrainQuadTree(lodLevel, LocalPos.RightUp, localPosition);
                 }
-                leftDown->isRendering = true;
-                leftUp->isRendering = true;
-                rightDown->isRendering = true;
-                rightUp->isRendering = true;
+                leftDown->EnableRendering();
+                leftUp->EnableRendering();
+                rightDown->EnableRendering();
+                rightUp->EnableRendering();
             }
             distOffset = -setting.lodDeferredOffset;
         }
@@ -145,14 +197,17 @@ namespace MPipeline
                 leftUp->Dispose();
                 rightDown->Dispose();
                 rightUp->Dispose();
-                /// TODO:
-                /// Send Virtual Texture Combine Command
+                setting.loadDataList.Add(new TerrainLoadData
+                {
+                    ope = TerrainLoadData.Operator.Combine,
+                    startIndex = VirtualTextureIndex,
+                    size = VirtualTextureSize
+                });
                 UnsafeUtility.Free(leftDown, Allocator.Persistent);
                 leftDown = null;
                 leftUp = null;
                 rightDown = null;
                 rightUp = null;
-                isRendering = true;
             }
             distOffset = setting.lodDeferredOffset;
             isRendering = enableSelf;
@@ -195,7 +250,7 @@ namespace MPipeline
                 Separate();
 
             }
-           
+
             if (leftDown != null)
             {
                 leftDown->CheckUpdate(camXZPos);

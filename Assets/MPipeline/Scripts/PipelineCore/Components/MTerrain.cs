@@ -7,6 +7,8 @@ using Unity.Collections.LowLevel.Unsafe;
 using static Unity.Mathematics.math;
 using Unity.Jobs;
 using System.Threading;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.Rendering;
 namespace MPipeline
 {
@@ -20,12 +22,21 @@ namespace MPipeline
             public float2 scale;
             public uint2 uvStartIndex;
         }
+        [System.Serializable]
+        public struct PBRTexture
+        {
+            public AssetReference albedoOccTex;
+            public AssetReference normalTex;
+            public AssetReference SMTex;
+        }
+        public const int HEIGHT_RESOLUTION = 256;
+        public const int COLOR_RESOLUTION = 1024;
         public double chunkSize = 1000;
         public float[] lodDistances = new float[]
         {
-            150,
-            100,
-            50
+            1000,
+            600,
+            300
         };
         public string readWritePath = "Assets/Terrain.mquad";
         public int planarResolution = 10;
@@ -33,21 +44,32 @@ namespace MPipeline
         public double2 chunkOffset = 0;
         public float lodDeferredOffset = 2;
         public Transform cam;
+        public PBRTexture[] textures;
+
         private ComputeBuffer culledResultsBuffer;
         private ComputeBuffer loadedBuffer;
         private ComputeBuffer dispatchDrawBuffer;
         private ComputeShader shader;
+        private ComputeShader textureShader;
+
+        private RenderTexture albedoTex;
+        private RenderTexture normalTex;
+        private RenderTexture smTex;
+
         private NativeList<TerrainChunkBuffer> loadedBufferList;
         private static Vector4[] planes = new Vector4[6];
         private TerrainQuadTree tree;
         private JobHandle calculateHandle;
-        /*    arr[getLength(x, y)] = float2(x, y) / planarResolution;
-            arr[getLength(x, y) + 1] = float2(x, y + 1) / planarResolution;
-            arr[getLength(x, y) + 2] = float2(x + 1, y) / planarResolution;
-            arr[getLength(x, y) + 3] = float2(x, y + 1) / planarResolution;
-            arr[getLength(x, y) + 4] = float2(x + 1, y + 1) / planarResolution;
-            arr[getLength(x, y) + 5] = float2(x + 1, y) / planarResolution;*/
-
+        private MStringBuilder msb;
+        private VirtualTexture vt;
+        private struct TerrainLoadHandler
+        {
+            public AssetReference maskRefs;
+            public AssetReference heightRefs;
+            public int2 startIndex;
+            public int size;
+        }
+        private List<TerrainLoadHandler> allCommands = new List<TerrainLoadHandler>(100);
 
         public override void PrepareJob()
         {
@@ -64,10 +86,98 @@ namespace MPipeline
         public override void FinishJob()
         {
             calculateHandle.Complete();
+            vt.Update(drawTerrainMaterial);
+            for (int i = 0; i < TerrainQuadTree.setting.loadDataList.Length; ++i)
+            {
+                ref TerrainLoadData loadData = ref TerrainQuadTree.setting.loadDataList[i];
+                switch (loadData.ope)
+                {
+                    case TerrainLoadData.Operator.Combine:
+                        vt.CombineTexture(loadData.startIndex, loadData.size);
+                        break;
+                    case TerrainLoadData.Operator.Unload:
+                        vt.UnloadTexture(loadData.startIndex);
+                        break;
+                    case TerrainLoadData.Operator.Load:
+                        TerrainLoadHandler handler;
+                        loadData.targetLoadChunk.height.GetString(msb);
+                        handler.heightRefs = new AssetReference(msb.str);
+                        loadData.targetLoadChunk.mask.GetString(msb);
+                        handler.maskRefs = new AssetReference(msb.str);
+                        handler.size = loadData.size;
+                        handler.startIndex = loadData.startIndex;
+                        break;
+                }
+            }
+            TerrainQuadTree.setting.loadDataList.Clear();
             UpdateBuffer();
         }
+
+        IEnumerator AsyncLoader()
+        {
+            textureShader.SetTexture(1, ShaderIDs._VirtualMainTex, albedoTex);
+            textureShader.SetTexture(1, ShaderIDs._VirtualBumpMap, normalTex);
+            textureShader.SetTexture(1, ShaderIDs._VirtualSMO, smTex);
+            for(int i = 0; i < textures.Length; ++i)
+            {
+                PBRTexture texs = textures[i];
+                AsyncOperationHandle<Texture> albedoLoader = texs.albedoOccTex.LoadAssetAsync<Texture>();
+                AsyncOperationHandle<Texture> normalLoader = texs.normalTex.LoadAssetAsync<Texture>();
+                AsyncOperationHandle<Texture> smLoader = texs.SMTex.LoadAssetAsync<Texture>();
+                yield return albedoLoader;
+                yield return normalLoader;
+                yield return smLoader;
+                yield return null;
+                textureShader.SetTexture(1, ShaderIDs._TerrainMainTexArray, albedoLoader.Result);
+                textureShader.SetTexture(1, ShaderIDs._TerrainBumpMapArray, normalLoader.Result);
+                textureShader.SetTexture(1, ShaderIDs._TerrainSMTexArray, smLoader.Result);
+                textureShader.SetInt(ShaderIDs._OffsetIndex, i);
+                const int disp = COLOR_RESOLUTION / 8;
+                textureShader.Dispatch(1, disp, disp, 1);
+                texs.albedoOccTex.ReleaseAsset();
+                texs.normalTex.ReleaseAsset();
+                texs.SMTex.ReleaseAsset();
+            }
+            textureShader.SetInt(ShaderIDs._Count, textures.Length);
+            while (enabled)
+            {
+                for (int i = 0; i < allCommands.Count; ++i)
+                {
+                    TerrainLoadHandler handler = allCommands[i];
+                    var maskHandler = handler.maskRefs.LoadAssetAsync<Texture>();
+                    var heightHandler = handler.heightRefs.LoadAssetAsync<Texture>();
+                    yield return maskHandler;
+                    yield return heightHandler;
+                    yield return null;
+                    Texture mask = maskHandler.Result;
+                    int texElement = vt.LoadNewTexture(handler.startIndex, handler.size);
+                    textureShader.SetTexture(0, ShaderIDs._SourceTex, mask);
+                    textureShader.SetTexture(0, ShaderIDs._MainTex, albedoTex);
+                    textureShader.SetTexture(0, ShaderIDs._BumpMap, normalTex);
+                    textureShader.SetTexture(0, ShaderIDs._SMMap, smTex);
+                    textureShader.SetTexture(0, ShaderIDs._VirtualMainTex, vt.GetTexture(1));
+                    textureShader.SetTexture(0, ShaderIDs._VirtualBumpMap, vt.GetTexture(2));
+                    textureShader.SetTexture(0, ShaderIDs._VirtualSMO, vt.GetTexture(3));
+                    textureShader.SetInt(ShaderIDs._OffsetIndex, texElement);
+                    textureShader.SetVector(ShaderIDs._TextureSize, float4(mask.width, mask.height, COLOR_RESOLUTION, COLOR_RESOLUTION));
+                    const int disp = COLOR_RESOLUTION / 8;
+                    textureShader.Dispatch(0, disp, disp, 1);
+                    textureShader.SetTexture(2, ShaderIDs._VirtualHeightmap, vt.GetTexture(0));
+                    textureShader.SetTexture(2, ShaderIDs.heightMapBuffer, heightHandler.Result);
+                    const int dispH = HEIGHT_RESOLUTION / 8;
+                    textureShader.Dispatch(2, dispH, dispH, 1);
+                    handler.maskRefs.ReleaseAsset();
+                    handler.heightRefs.ReleaseAsset();
+                }
+                allCommands.Clear();
+            }
+        }
+
         protected override void OnEnableFunc()
         {
+            msb = new MStringBuilder(32);
+            textureShader = Resources.Load<ComputeShader>("ProceduralTexture");
+            shader = Resources.Load<ComputeShader>("TerrainCompute");
             if (current && current != this)
             {
                 enabled = false;
@@ -85,10 +195,18 @@ namespace MPipeline
             culledResultsBuffer = new ComputeBuffer(INIT_LENGTH, sizeof(int));
             loadedBuffer = new ComputeBuffer(INIT_LENGTH, sizeof(TerrainChunkBuffer));
             loadedBufferList = new NativeList<TerrainChunkBuffer>(INIT_LENGTH, Allocator.Persistent);
-            shader = Resources.Load<ComputeShader>("TerrainCompute");
+            
             NativeArray<uint> dispatchDraw = new NativeArray<uint>(5, Allocator.Temp, NativeArrayOptions.ClearMemory);
             dispatchDraw[0] = 6;
             dispatchDrawBuffer.SetData(dispatchDraw);
+            VirtualTextureFormat* formats = stackalloc VirtualTextureFormat[]
+            {
+                new VirtualTextureFormat((VirtualTextureSize)HEIGHT_RESOLUTION, RenderTextureFormat.R16, "_VirtualHeightmap"),
+                new VirtualTextureFormat((VirtualTextureSize)COLOR_RESOLUTION, RenderTextureFormat.ARGB32, "_VirtualMainTex"),
+                new VirtualTextureFormat((VirtualTextureSize)COLOR_RESOLUTION, RenderTextureFormat.RGHalf, "_VirtualBumpMap"),
+                new VirtualTextureFormat((VirtualTextureSize)COLOR_RESOLUTION, RenderTextureFormat.RG16, "_VirtualSMMap")
+            };
+            vt = new VirtualTexture(128, min(2048, (int)(pow(2.0, lodDistances.Length) + 0.1)), formats, 4);
             TerrainQuadTree.setting = new TerrainQuadTreeSettings
             {
                 allLodLevles = new NativeList_Float(lodDistances.Length + 1, Allocator.Persistent),
@@ -100,9 +218,44 @@ namespace MPipeline
             {
                 TerrainQuadTree.setting.allLodLevles.Add(min(lodDistances[max(0, i - 1)], lodDistances[i]));
             }
+            StartCoroutine(AsyncLoader());
             TerrainQuadTree.setting.allLodLevles[lodDistances.Length] = 0;
             tree = new TerrainQuadTree(-1, TerrainQuadTree.LocalPos.LeftDown, 0);
             TerrainQuadTree.setting.loader = new VirtualTextureLoader(lodDistances.Length, readWritePath);
+            TerrainQuadTree.setting.loadDataList = new NativeList<TerrainLoadData>(100, Allocator.Persistent);
+            albedoTex = new RenderTexture(new RenderTextureDescriptor
+            {
+                colorFormat = RenderTextureFormat.ARGB32,
+                dimension = TextureDimension.Tex2DArray,
+                width = COLOR_RESOLUTION,
+                height = COLOR_RESOLUTION,
+                volumeDepth = textures.Length,
+                enableRandomWrite = true,
+                msaaSamples = 1
+            });
+            albedoTex.Create();
+            normalTex = new RenderTexture(new RenderTextureDescriptor
+            {
+                colorFormat = RenderTextureFormat.RGHalf,
+                dimension = TextureDimension.Tex2DArray,
+                width = COLOR_RESOLUTION,
+                height = COLOR_RESOLUTION,
+                volumeDepth = textures.Length,
+                enableRandomWrite = true,
+                msaaSamples = 1
+            });
+            normalTex.Create();
+            smTex = new RenderTexture(new RenderTextureDescriptor
+            {
+                colorFormat = RenderTextureFormat.RG16,
+                dimension = TextureDimension.Tex2DArray,
+                width = COLOR_RESOLUTION,
+                height = COLOR_RESOLUTION,
+                volumeDepth = textures.Length,
+                enableRandomWrite = true,
+                msaaSamples = 1
+            });
+            smTex.Create();
         }
         void UpdateBuffer()
         {
@@ -148,7 +301,13 @@ namespace MPipeline
             if (dispatchDrawBuffer != null) dispatchDrawBuffer.Dispose();
             if (loadedBufferList.isCreated) loadedBufferList.Dispose();
             tree.Dispose();
+            vt.Dispose();
+            TerrainQuadTree.setting.loadDataList.Dispose();
             TerrainQuadTree.setting.loader.Dispose();
+            allCommands.Clear();
+            DestroyImmediate(albedoTex);
+            DestroyImmediate(normalTex);
+            DestroyImmediate(smTex);
         }
 
         private struct CalculateQuadTree : IJob
