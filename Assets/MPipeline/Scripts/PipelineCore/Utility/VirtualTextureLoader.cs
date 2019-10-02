@@ -41,6 +41,14 @@ namespace MPipeline
             }
         }
 
+        public static void OutputDefaultValue(byte* arr)
+        {
+            const int guidOffset = FileGUID.PTR_LENGTH * 8 * GUID_LENGTH;
+            UnsafeUtility.MemClear(arr, guidOffset);
+            float2* floatPtr =(float2*)(arr + guidOffset);
+            *floatPtr = 0;
+        }
+
         public void OutputBytes(byte* arr)
         {
             FileGUID* guidPtr = mask.Ptr();
@@ -60,9 +68,8 @@ namespace MPipeline
         public VirtualTextureLoader(int mipLevel, string path)
         {
             oneChunkSize = new byte[VirtualTextureChunk.CHUNK_DATASIZE];
-            streamer = new FileStream(path, FileMode.Open, FileAccess.Read);
             this.mipLevel = mipLevel;
-            streamPositionOffset = new NativeArray<long>(mipLevel, Allocator.Persistent);
+            streamPositionOffset = new NativeArray<long>(mipLevel, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
             long offset = 0;
             for (int i = 0; i < mipLevel; ++i)
             {
@@ -70,6 +77,23 @@ namespace MPipeline
                 long curOffset = (long)(0.1 + pow(2, i));
                 offset += curOffset * curOffset;
             }
+#if UNITY_EDITOR
+            if (!File.Exists(path))
+            {
+                long curOffset = (long)(0.1 + pow(2, mipLevel - 1));
+                curOffset *= curOffset;
+                long count = (streamPositionOffset[mipLevel - 1] + curOffset);
+                byte[] arr = new byte[count * VirtualTextureChunk.CHUNK_DATASIZE];
+                byte* arrPtr = arr.Ptr();
+                for(long i = 0; i < count; ++i)
+                {
+                    VirtualTextureChunk.OutputDefaultValue(arrPtr);
+                    arrPtr += VirtualTextureChunk.CHUNK_DATASIZE;
+                }
+                File.WriteAllBytes(path, arr);
+            }
+#endif
+            streamer = new FileStream(path, FileMode.Open, FileAccess.Read);
         }
 
         public void ReadChunkData(ref VirtualTextureChunk result, int2 position, int targetMipLevel)
