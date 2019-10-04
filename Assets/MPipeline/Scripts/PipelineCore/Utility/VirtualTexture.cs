@@ -92,6 +92,7 @@ namespace MPipeline
         public RenderTexture indexTex { get; private set; }
         private RenderTexture[] textures;
         private TexturePool pool;
+        private int indexTexID;
         private NativeArray<VirtualTextureFormat> allFormats;
         private static int[] vtVariables = new int[4];
         private static int[] texSize = new int[2];
@@ -121,7 +122,7 @@ namespace MPipeline
         public void Update()
         {
             CommandBuffer beforeFrameBuffer = RenderPipeline.BeforeFrameBuffer;
-            beforeFrameBuffer.SetGlobalTexture(ShaderIDs._IndexTexture, indexTex);
+            beforeFrameBuffer.SetGlobalTexture(indexTexID, indexTex);
             for (int i = 0; i < allFormats.Length; ++i)
             {
                 beforeFrameBuffer.SetGlobalTexture(allFormats[i].rtPropertyID, textures[i]);
@@ -129,7 +130,7 @@ namespace MPipeline
         }
         public void Update(Material targetMaterial)
         {
-            targetMaterial.SetTexture(ShaderIDs._IndexTexture, indexTex);
+            targetMaterial.SetTexture(indexTexID, indexTex);
             for (int i = 0; i < allFormats.Length; ++i)
             {
                 targetMaterial.SetTexture(allFormats[i].rtPropertyID, textures[i]);
@@ -142,12 +143,13 @@ namespace MPipeline
         /// <param name="maximumSize">Virtual texture's array size</param>
         /// <param name="indexSize">Index Texture's size</param>
         /// <param name="formats">Each VT's format</param>
-        public VirtualTexture(int maximumSize, int2 indexSize, VirtualTextureFormat* formats, int formatLen, int mipCount = 0)
+        public VirtualTexture(int maximumSize, int2 indexSize, VirtualTextureFormat* formats, int formatLen, string indexTexName, int mipCount = 0)
         {
             if(maximumSize > 2048)
             {
                 throw new System.Exception("Virtual Texture Maximum Size can not larger than 2048");
             }
+            indexTexID = Shader.PropertyToID(indexTexName);
             this.indexSize = indexSize;
             setIndexBuffer = new ComputeBuffer(START_CHUNKSIZE * START_CHUNKSIZE, sizeof(uint));
             allFormats = new NativeArray<VirtualTextureFormat>(formatLen, Allocator.Persistent);

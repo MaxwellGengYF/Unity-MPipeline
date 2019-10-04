@@ -37,7 +37,38 @@ namespace MPipeline
             600,
             300
         };
-
+        public Texture defaultMaskTex;
+        public Texture defaultHeightTex;
+        [EasyButtons.Button]
+        void GenerateDefaultFile()
+        {
+            VirtualTextureChunk chunk = new VirtualTextureChunk();
+            string maskGUID = UnityEditor.AssetDatabase.AssetPathToGUID(UnityEditor.AssetDatabase.GetAssetPath(defaultMaskTex));
+            string heightGUID = UnityEditor.AssetDatabase.AssetPathToGUID(UnityEditor.AssetDatabase.GetAssetPath(defaultHeightTex));
+            chunk.mask = new FileGUID(maskGUID, Allocator.Temp);
+            chunk.height = new FileGUID(heightGUID, Allocator.Temp);
+            chunk.minMaxHeightBounding = float2(heightOffset, heightScale + heightOffset);
+            long count = 0;
+            for (int i = 0; i < lodDistances.Length; ++i)
+            {
+                long cr = (long)(0.1 + pow(2.0, i));
+                count += cr * cr;
+            }
+            byte[] allBytes = new byte[count * VirtualTextureChunk.CHUNK_DATASIZE];
+            byte* allBytesPtr = allBytes.Ptr();
+            long indexCount = 0;
+            for (int i = 0; i < lodDistances.Length; ++i)
+            {
+                long cr = (long)(0.1 + pow(2.0, i));
+                cr *= cr;
+                for (long x = 0; x < cr; ++x)
+                {
+                    chunk.OutputBytes(allBytesPtr);
+                    allBytesPtr += VirtualTextureChunk.CHUNK_DATASIZE;
+                }
+            }
+            System.IO.File.WriteAllBytes(readWritePath, allBytes);
+        }
         #region QUADTREE
         public float heightOffset = 0;
         public float heightScale = 10;
@@ -130,22 +161,25 @@ namespace MPipeline
             while (enabled)
             {
                 TerrainLoadData loadData;
-                if(loadDataList.TryDequeue(out loadData)) {
+                if (loadDataList.TryDequeue(out loadData))
+                {
                     switch (loadData.ope)
                     {
                         case TerrainLoadData.Operator.Load:
-                            loadData.targetLoadChunk.mask.GetString(msb);
-                            AssetReference maskRef = new AssetReference(msb.str);
-                            loadData.targetLoadChunk.height.GetString(msb);
-                            AssetReference heightRef = new AssetReference(msb.str);
-                            //TODO
-                            //Test two ref similar?
-                            var maskHandler = maskRef.LoadAssetAsync<Texture>();
-                            var heightHandler = heightRef.LoadAssetAsync<Texture>();
-                            yield return maskHandler;
-                            yield return heightHandler;
-                            yield return null;
-                            Texture mask = maskHandler.Result;
+                            /*   loadData.targetLoadChunk.mask.GetString(msb);
+                               AssetReference maskRef = new AssetReference(msb.str);
+                               loadData.targetLoadChunk.height.GetString(msb);
+                               AssetReference heightRef = new AssetReference(msb.str);
+
+                               //TODO
+                               //Test two ref similar?
+                               var maskHandler = maskRef.LoadAssetAsync<Texture>();
+                               var heightHandler = heightRef.LoadAssetAsync<Texture>();
+                               yield return maskHandler;
+                               yield return heightHandler;
+                               yield return null;*/
+                            Texture mask = defaultMaskTex;// maskHandler.Result;
+                            Texture height = defaultHeightTex;// heightHandler.Result;
                             int texElement = vt.LoadNewTexture(loadData.startIndex, loadData.size);
                             int colorPass;
                             if (mask)
@@ -169,17 +203,17 @@ namespace MPipeline
                             const int disp = COLOR_RESOLUTION / 8;
                             textureShader.Dispatch(colorPass, disp, disp, 1);
                             int heightPass;
-                            if (heightHandler.Result)
+                            if (height)
                             {
                                 heightPass = 2;
-                                textureShader.SetTexture(2, ShaderIDs.heightMapBuffer, heightHandler.Result);
+                                textureShader.SetTexture(2, ShaderIDs.heightMapBuffer, height);
                             }
                             else heightPass = 4;
                             textureShader.SetTexture(heightPass, ShaderIDs._VirtualHeightmap, vt.GetTexture(0));
                             const int dispH = HEIGHT_RESOLUTION / 8;
                             textureShader.Dispatch(heightPass, dispH, dispH, 1);
-                            maskRef.ReleaseAsset();
-                            heightRef.ReleaseAsset();
+                            //   maskRef.ReleaseAsset();
+                            //     heightRef.ReleaseAsset();
                             break;
                         case TerrainLoadData.Operator.Unload:
                             vt.UnloadTexture(loadData.startIndex);
@@ -189,8 +223,7 @@ namespace MPipeline
                             break;
                     }
                 }
-
-                yield return null;
+                else yield return null;
             }
         }
 
@@ -218,7 +251,6 @@ namespace MPipeline
             loadedBufferList = new NativeList<TerrainChunkBuffer>(INIT_LENGTH, Allocator.Persistent);
             loader = new VirtualTextureLoader(lodDistances.Length, readWritePath);
             loadDataList = new NativeQueue<TerrainLoadData>(100, Allocator.Persistent);
-            Debug.Log("First");
             NativeArray<uint> dispatchDraw = new NativeArray<uint>(5, Allocator.Temp, NativeArrayOptions.ClearMemory);
             dispatchDraw[0] = 6;
             dispatchDrawBuffer.SetData(dispatchDraw);
@@ -229,7 +261,7 @@ namespace MPipeline
                 new VirtualTextureFormat((VirtualTextureSize)COLOR_RESOLUTION, RenderTextureFormat.RGHalf, "_VirtualBumpMap"),
                 new VirtualTextureFormat((VirtualTextureSize)COLOR_RESOLUTION, RenderTextureFormat.RG16, "_VirtualSMMap")
             };
-            vt = new VirtualTexture(128, min(2048, (int)(pow(2.0, lodDistances.Length) + 0.1)), formats, 4);
+            vt = new VirtualTexture(128, min(2048, (int)(pow(2.0, lodDistances.Length) + 0.1)), formats, 4, "_TerrainVTIndexTex");
             allLodLevles = new NativeList_Float(lodDistances.Length, Allocator.Persistent);
             for (int i = 0; i < lodDistances.Length; ++i)
             {

@@ -161,11 +161,12 @@ namespace MPipeline
                     *leftUp = new TerrainQuadTree(lodLevel, LocalPos.LeftUp, localPosition);
                     *rightDown = new TerrainQuadTree(lodLevel, LocalPos.RightDown, localPosition);
                     *rightUp = new TerrainQuadTree(lodLevel, LocalPos.RightUp, localPosition);
+                    leftDown->EnableRendering();
+                    leftUp->EnableRendering();
+                    rightDown->EnableRendering();
+                    rightUp->EnableRendering();
                 }
-                leftDown->EnableRendering();
-                leftUp->EnableRendering();
-                rightDown->EnableRendering();
-                rightUp->EnableRendering();
+                
             }
             distOffset = -MTerrain.current.lodDeferredOffset;
         }
@@ -198,7 +199,10 @@ namespace MPipeline
                 rightUp = null;
             }
             distOffset = MTerrain.current.lodDeferredOffset;
-            isRendering = enableSelf;
+            if (enableSelf)
+                EnableRendering();
+            else
+                DisableRendering();
         }
         public void PushDrawRequest(NativeList<MTerrain.TerrainChunkBuffer> loadedBufferList)
         {
@@ -231,6 +235,7 @@ namespace MPipeline
             else if (dist > MTerrain.current.allLodLevles[lodLevel + 1] - distOffset)
             {
                 Combine(true);
+                
             }
             else
             {

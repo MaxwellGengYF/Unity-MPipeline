@@ -99,8 +99,6 @@ inline UnityTessellationFactors hsconst_surf (InputPatch<InternalTessInterp_appd
 inline InternalTessInterp_appdata_full hs_surf (InputPatch<InternalTessInterp_appdata_full,3> v, uint id : SV_OutputControlPointID) {
   return v[id];
 }
-
-
 [UNITY_domain("tri")]
 inline v2f_surf ds_surf (UnityTessellationFactors tessFactors, const OutputPatch<InternalTessInterp_appdata_full,3> vi, float3 bary : SV_DomainLocation) {
   v2f_surf o;
@@ -109,6 +107,8 @@ inline v2f_surf ds_surf (UnityTessellationFactors tessFactors, const OutputPatch
 o.screenUV = vi[0].screenUV*bary.x + vi[1].screenUV*bary.y + vi[2].screenUV*bary.z;
 o.pack0 = vi[0].pack0*bary.x + vi[1].pack0*bary.y + vi[2].pack0*bary.z;
 o.vtUV = vi[0].vtUV;
+  float3 vtUV = GetVirtualTextureUV(_TerrainVTIndexTex, _TerrainVTIndexTex_TexelSize, o.vtUV + floor(o.pack0), frac(o.pack0));
+  worldPos.y +=_VirtualHeightmap.SampleLevel(sampler_VirtualHeightmap, vtUV, 0) * _HeightScaleOffset.x;
 o.pos= mul(UNITY_MATRIX_VP, worldPos);
 o.worldPos = worldPos.xyz;
 #ifdef DEBUG_QUAD_TREE
@@ -178,49 +178,64 @@ else
 //Shadow pass
 /////////////
 float4x4 _ShadowMapVP;
-			struct appdata_shadow
-			{
-				float4 vertex : POSITION;
-				#if CUT_OFF
-				float2 texcoord : TEXCOORD0;
-				#endif
-			};
-			struct v2f_shadow
-			{
-				float4 vertex : SV_POSITION;
-				#if POINT_LIGHT_SHADOW
-				float3 worldPos : TEXCOORD1;
-				#endif
-				#if CUT_OFF
-				float2 texcoord : TEXCOORD0;
-				#endif
-			};
 
-			v2f_shadow vert_shadow (uint instanceID : SV_INSTANCEID, uint vertexID : SV_VERTEXID) 
-			{
-				Terrain_Appdata v = GetTerrain(instanceID, vertexID);
-				v2f_shadow o;
-				#if POINT_LIGHT_SHADOW
-				o.worldPos = v.position;
-				#endif
-				o.vertex = mul(_ShadowMapVP, float4(v.position, 1));
-				#if CUT_OFF
-				o.texcoord = TRANSFORM_TEX(v.texcoord, _MainTex);
-				#endif
-				return o;
-			}
 
+struct InternalTessInterp_appdata_shadow {
+  float4 pos : INTERNALTESSPOS;
+  float2 pack0 : TEXCOORD0; 
+	nointerpolation uint2 vtUV : TEXCOORD3;
+};
+
+struct v2f_shadow {
+  UNITY_POSITION(pos);
+};
+
+InternalTessInterp_appdata_shadow tessvert_shadow (uint instanceID : SV_INSTANCEID, uint vertexID : SV_VERTEXID) 
+{
+	Terrain_Appdata v = GetTerrain(instanceID, vertexID);
+  	InternalTessInterp_appdata_shadow o;
+  	o.pack0 = v.uv;
+		o.vtUV = v.vtUV;
+  	o.pos = float4(v.position, 1);
+  	return o;
+}
+
+
+inline UnityTessellationFactors hsconst_shadow (InputPatch<InternalTessInterp_appdata_shadow,3> v) {
+  UnityTessellationFactors o;
+
+  o.edge[0] = 63;
+  o.edge[1] = 63;
+  o.edge[2] = 63;
+  o.inside = 63;
+
+  return o;
+}
+
+[UNITY_domain("tri")]
+[UNITY_partitioning("fractional_odd")]
+[UNITY_outputtopology("triangle_cw")]
+[UNITY_patchconstantfunc("hsconst_shadow")]
+[UNITY_outputcontrolpoints(3)]
+inline InternalTessInterp_appdata_shadow hs_shadow (InputPatch<InternalTessInterp_appdata_shadow,3> v, uint id : SV_OutputControlPointID) {
+  return v[id];
+}
+
+[UNITY_domain("tri")]
+inline v2f_shadow ds_shadow (UnityTessellationFactors tessFactors, const OutputPatch<InternalTessInterp_appdata_shadow,3> vi, float3 bary : SV_DomainLocation) {
+  v2f_shadow o;
+  float4 worldPos =  vi[0].pos*bary.x + vi[1].pos*bary.y + vi[2].pos*bary.z;
+  worldPos.y += _HeightScaleOffset.y;
+ float2 pack0 = vi[0].pack0*bary.x + vi[1].pack0*bary.y + vi[2].pack0*bary.z;
+  uint2 vtUVIKndex = vi[0].vtUV;
+  float3 vtUV = GetVirtualTextureUV(_TerrainVTIndexTex, _TerrainVTIndexTex_TexelSize, vtUVIKndex + floor(pack0), frac(pack0));
+  worldPos.y +=_VirtualHeightmap.SampleLevel(sampler_VirtualHeightmap, vtUV, 0) * _HeightScaleOffset.x;
+o.pos= mul(_ShadowMapVP, worldPos);
+return o;
+}
 			
 			float frag_shadow (v2f_shadow i)  : SV_TARGET
 			{
-				#if CUT_OFF
-				float4 c = tex2D(_MainTex, i.texcoord);
-				clip(c.a * _Color.a - _Cutoff);
-				#endif
-				#if POINT_LIGHT_SHADOW
-				return distance(i.worldPos, _LightPos.xyz) / _LightPos.w;
-				#else
-				return i.vertex.z;
-				#endif
+				return i.pos.z;
 			}
 #endif

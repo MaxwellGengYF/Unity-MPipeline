@@ -42,7 +42,7 @@ namespace MPipeline
             sb = msb;
             this.propertyCount = propertyCount;
             state = State.Unloaded;
- 
+
         }
         static string[] allStrings = new string[3];
         private static byte[] bytesArray = new byte[8192];
@@ -114,7 +114,7 @@ namespace MPipeline
             using (FileStream reader = new FileStream(sb.str, FileMode.Open, FileAccess.Read))
             {
                 int length = (int)reader.Length;
-               
+
                 byte[] bytes = GetByteArray(length);
                 reader.Read(bytes, 0, length);
                 fixed (byte* b = bytes)
@@ -126,16 +126,7 @@ namespace MPipeline
             }
             for (int i = 0; i < triangleMatBuffer.Length; ++i)
             {
-                try
-                {
-                    triangleMatData[i] = materialIndexBuffer[triangleMatData[i]];
-                }
-                catch
-                {
-                    Debug.LogError(triangleMatData[i]);
-                    triangleMatData[i] = materialIndexBuffer[0];
-                    
-                }
+                triangleMatData[i] = materialIndexBuffer[triangleMatData[i]];
             }
             //Transform Points in runtime
             LoadingCommandQueue commandQueue = LoadingThread.commandQueue;

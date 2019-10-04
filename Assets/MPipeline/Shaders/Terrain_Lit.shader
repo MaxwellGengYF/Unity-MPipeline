@@ -11,7 +11,8 @@ CGINCLUDE
 #define DECAL
 #define LIT_ENABLE
 #define DEFAULT_LIT
-
+Texture2D<float4> _TerrainVTIndexTex;
+float4 _TerrainVTIndexTex_TexelSize;
 #include "UnityCG.cginc"
 #include "UnityDeferredLibrary.cginc"
 #include "UnityPBSLighting.cginc"
@@ -52,8 +53,10 @@ ENDCG
 			Cull back
 			Tags {"LightMode" = "Shadow"}
 			CGPROGRAM
-			#pragma vertex vert_shadow
-			#pragma fragment frag_shadow
+			#pragma vertex tessvert_shadow
+#pragma hull hs_shadow
+#pragma domain ds_shadow
+#pragma fragment frag_shadow
 			ENDCG
 		}
 

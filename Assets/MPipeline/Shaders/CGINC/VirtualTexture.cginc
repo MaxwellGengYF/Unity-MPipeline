@@ -1,29 +1,12 @@
 #ifndef VIRTUAL_TEXTURE
 #define VIRTUAL_TEXTURE
-Texture2D<half4> _IndexTexture;
-SamplerState sampler_IndexTexture;
-float4 _IndexTexture_TexelSize;
-inline float3 GetVirtualTextureUV(float2 startChunkPos, float2 localUV);
-///Sample Virtual TExture
-///tex: target texture
-/// targetChunk: absolute index in indextex(adaptive)
-///localUV: 0-1 uv
-inline float4 SampleVirtualTexture(Texture2DArray<float4> tex, SamplerState samp, float2 targetChunk, float2 localUV)
-{
-    return tex.Sample(samp, GetVirtualTextureUV(targetChunk, localUV));
-}
-
-inline float4 SampleVirtualTextureLevel(Texture2DArray<float4> tex, SamplerState samp, float2 targetChunk, float2 localUV, float mip)
-{
-    return tex.SampleLevel(samp, GetVirtualTextureUV(targetChunk, localUV), mip);
-}
 
 /// startChunkPos: absolute index in indextex(adaptive)
 ///localUV: 0-1 uv
-inline float3 GetVirtualTextureUV(float2 startChunkPos, float2 localUV)
+inline float3 GetVirtualTextureUV(Texture2D<float4> indexTex, float4 indexTexelSize, float2 startChunkPos, float2 localUV)
 {
-    startChunkPos = (0.25 + startChunkPos) % _IndexTexture_TexelSize.zw;
-    float4 scaleOffset = _IndexTexture[startChunkPos];
+    startChunkPos = (0.25 + startChunkPos) % indexTexelSize.zw;
+    float4 scaleOffset = indexTex[startChunkPos];
     scaleOffset.w *= 2048;
     localUV = localUV * scaleOffset.x + scaleOffset.yz;
     return float3(localUV, scaleOffset.w);
