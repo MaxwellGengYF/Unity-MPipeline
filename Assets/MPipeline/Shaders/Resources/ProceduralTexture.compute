@@ -59,8 +59,10 @@ void NormalToTex (uint2 id : SV_DISPATCHTHREADID)
 {
     uint3 idx = uint3(id, _OffsetIndex);
     _VirtualBumpMap[idx] = UnpackNormal(_TerrainBumpMapArray[id]).xy;
-    _VirtualMainTex[idx] = _TerrainMainTexArray[id];
-    _VirtualSMO[idx] = _TerrainSMTexArray[id];
+    float3 smo = _TerrainSMTexArray[id].xyz;
+    float3 albedo = _TerrainMainTexArray[id].xyz;
+    _VirtualMainTex[idx] = float4(albedo, smo.z);
+    _VirtualSMO[idx] = float4(smo.xy, 0, 0);
 }
 RWTexture2DArray<float> _VirtualHeightmap;
 Texture2D<float> heightMapBuffer;

@@ -118,14 +118,14 @@ namespace MPipeline
                 renderQueueRange = new RenderQueueRange(2000, 2449)
             };
             DrawingSettings depthAlphaTestDrawSettings = new DrawingSettings(new ShaderTagId("Depth"),
-                new SortingSettings(cam.cam) { criteria = SortingCriteria.QuantizedFrontToBack | SortingCriteria.OptimizeStateChanges })
+                new SortingSettings(cam.cam) { criteria = SortingCriteria.OptimizeStateChanges })
             {
                 perObjectData = UnityEngine.Rendering.PerObjectData.None,
                 enableDynamicBatching = true,
                 enableInstancing = false
             };
             DrawingSettings depthOpaqueDrawSettings = new DrawingSettings(new ShaderTagId("Depth"),
-                new SortingSettings(cam.cam) { criteria = SortingCriteria.QuantizedFrontToBack })
+                new SortingSettings(cam.cam) { criteria = SortingCriteria.None })
             {
                 perObjectData = UnityEngine.Rendering.PerObjectData.None,
                 enableDynamicBatching = true,

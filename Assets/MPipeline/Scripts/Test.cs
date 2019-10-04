@@ -14,7 +14,6 @@ using UnityEngine.AddressableAssets;
 using MPipeline.PCG;
 namespace MPipeline
 {
-
     public unsafe sealed class Test : MonoBehaviour
     {
         [EasyButtons.Button]
@@ -28,44 +27,36 @@ namespace MPipeline
         {
             Shader.DisableKeyword("USE_WHITE");
         }
-        public ComputeShader shader;
-        public Texture matIDTex;
-        public Texture[] colorTex;
-        private RenderTexture colArray;
-        private RenderTexture rt;
-        public Material testMat;
+
         [EasyButtons.Button]
-        void RunBilinearIDSample()
+        void TestQueue()
         {
-            if (!colArray)
+            NativeQueue<int> queueTester = new NativeQueue<int>(50, Allocator.Temp);
+            for(int i = 0; i < 100; ++i)
             {
-                colArray = new RenderTexture(1024, 1024, 0, RenderTextureFormat.ARGB32, 0);
-                colArray.dimension = TextureDimension.Tex2DArray;
-                colArray.volumeDepth = 8;
-                colArray.autoGenerateMips = false;
-                colArray.useMipMap = false;
-                colArray.Create();
-                int len = min(8, colorTex.Length);
-                for (int i = 0; i < len; ++i)
+                queueTester.Add(i);
+                if(queueTester.Length != i + 1)
                 {
-                    Graphics.Blit(colorTex[i], colArray, 0, i);
+                    Debug.LogError("Wrong Length!");
                 }
             }
-            if (!rt)
+            for(int i = 0; i < 100; ++i)
             {
-                rt = new RenderTexture(1024, 1024, 0, RenderTextureFormat.ARGB32, 0);
-                rt.useMipMap = false;
-                rt.autoGenerateMips = false;
-                rt.enableRandomWrite = true;
-                rt.Create();
+                int vv = queueTester.Dequeue();
+                if(i != vv)
+                {
+                    Debug.LogError("Wrong Dequeue!" + "  " + vv);
+                }
             }
-            shader.SetTexture(0, ShaderIDs._SourceTex, matIDTex);
-            shader.SetTexture(0, ShaderIDs._MainTex, colArray);
-            shader.SetTexture(0, ShaderIDs._DestTex, rt);
-            shader.SetVector(ShaderIDs._TextureSize, float4(matIDTex.width, matIDTex.height, 1024, 1024));
-            int disp = 1024 / 8;
-            shader.Dispatch(0, disp, disp, 1);
-            testMat.SetTexture("_EmissionMap", rt);
+            int v;
+            if(queueTester.TryDequeue(out v))
+            {
+                Debug.LogError("Should say no!");
+            }
+            Debug.Log(queueTester.Length);
+            queueTester.Dispose();
+            Debug.Log("Finish Unit Test!");
+
         }
 
         private void Update()
@@ -114,5 +105,4 @@ namespace MPipeline
         }
 
     }
-
 }

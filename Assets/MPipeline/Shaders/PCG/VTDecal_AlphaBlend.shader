@@ -1,4 +1,4 @@
-﻿Shader "Unlit/VTDecal"
+﻿Shader "VTDecal/VTDecal_AlphaBlend"
 {
     Properties
     {

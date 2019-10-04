@@ -326,9 +326,9 @@ namespace MPipeline
             UnloadChunk(ref startIndex);
         }
 
-        public void CombineTexture(int2 startIndex, int targetSize, bool releaseCheck = false)
+        public void CombineTexture(int2 startIndex, int targetSize, bool unloadCheck)
         {
-            if (releaseCheck)
+            if (unloadCheck)
             {
                 for (int y = 0; y < targetSize; ++y)
                 {

@@ -9,6 +9,7 @@
 #include "DecalShading.cginc"
 #include "Shader_Include/ImageBasedLighting.hlsl"
 #include "Terrain.cginc"
+#include "Tessellation.cginc"
 
 #define GetScreenPos(pos) ((float2(pos.x, pos.y) * 0.5) / pos.w + 0.5)
 
@@ -34,6 +35,17 @@ float4 ProceduralStandardSpecular_Deferred (inout SurfaceOutputStandardSpecular 
 float4x4 _LastVp;
 float4x4 _NonJitterVP;
 float3 _SceneOffset;
+float2 _HeightScaleOffset;
+
+struct InternalTessInterp_appdata_full {
+  float4 pos : INTERNALTESSPOS;
+  float2 pack0 : TEXCOORD0; 
+	float3 screenUV : TEXCOORD1;
+	nointerpolation uint2 vtUV : TEXCOORD3;
+	#ifdef DEBUG_QUAD_TREE
+	nointerpolation float scale : TEXCOORD4;
+	#endif
+};
 
 struct v2f_surf {
   UNITY_POSITION(pos);
@@ -45,23 +57,64 @@ struct v2f_surf {
 	nointerpolation float scale : TEXCOORD4;
 	#endif
 };
+struct UnityTessellationFactors {
+    float edge[3] : SV_TessFactor;
+    float inside : SV_InsideTessFactor;
+};
 
-v2f_surf vert_surf (uint instanceID : SV_INSTANCEID, uint vertexID : SV_VERTEXID) 
+InternalTessInterp_appdata_full tessvert_surf (uint instanceID : SV_INSTANCEID, uint vertexID : SV_VERTEXID) 
 {
 	Terrain_Appdata v = GetTerrain(instanceID, vertexID);
-  	v2f_surf o;
+  	InternalTessInterp_appdata_full o;
   	o.pack0 = v.uv;
 		o.vtUV = v.vtUV;
-  	o.pos = mul(UNITY_MATRIX_VP, float4(v.position, 1));
+  	o.pos = float4(v.position, 1);
 /*		#if UNITY_UV_STARTS_AT_TOP
 		o.pos.y = -o.pos.y;
 		#endif*/
-	  o.worldPos = v.position;
 	o.screenUV = ComputeScreenPos(o.pos).xyw;
 	#ifdef DEBUG_QUAD_TREE
 	o.scale = v.scale;
 	#endif
   	return o;
+}
+
+
+inline UnityTessellationFactors hsconst_surf (InputPatch<InternalTessInterp_appdata_full,3> v) {
+  UnityTessellationFactors o;
+
+  o.edge[0] = 63;
+  o.edge[1] = 63;
+  o.edge[2] = 63;
+  o.inside = 63;
+
+  return o;
+}
+
+[UNITY_domain("tri")]
+[UNITY_partitioning("fractional_odd")]
+[UNITY_outputtopology("triangle_cw")]
+[UNITY_patchconstantfunc("hsconst_surf")]
+[UNITY_outputcontrolpoints(3)]
+inline InternalTessInterp_appdata_full hs_surf (InputPatch<InternalTessInterp_appdata_full,3> v, uint id : SV_OutputControlPointID) {
+  return v[id];
+}
+
+
+[UNITY_domain("tri")]
+inline v2f_surf ds_surf (UnityTessellationFactors tessFactors, const OutputPatch<InternalTessInterp_appdata_full,3> vi, float3 bary : SV_DomainLocation) {
+  v2f_surf o;
+  float4 worldPos =  vi[0].pos*bary.x + vi[1].pos*bary.y + vi[2].pos*bary.z;
+  worldPos.y += _HeightScaleOffset.y;
+o.screenUV = vi[0].screenUV*bary.x + vi[1].screenUV*bary.y + vi[2].screenUV*bary.z;
+o.pack0 = vi[0].pack0*bary.x + vi[1].pack0*bary.y + vi[2].pack0*bary.z;
+o.vtUV = vi[0].vtUV;
+o.pos= mul(UNITY_MATRIX_VP, worldPos);
+o.worldPos = worldPos.xyz;
+#ifdef DEBUG_QUAD_TREE
+o.scale = vi[0].scale;
+#endif
+return o;
 }
 
 void frag_surf (v2f_surf IN,
@@ -89,10 +142,10 @@ void frag_surf (v2f_surf IN,
 #endif
   float3 worldViewDir = normalize(_WorldSpaceCameraPos - worldPos.xyz);
   SurfaceOutputStandardSpecular o;
-  //float3x3 wdMatrix= float3x3(float3(1, 0, 0), float3(0, 1, 0), float3(0, 0, 1));
+  float3x3 wdMatrix= float3x3(float3(1, 0, 0), float3(0, 0, 1), float3(0, 1, 0));
   // call surface function
-  surf (IN.pack0.xy, IN.vtUV + (uint2)IN.pack0.xy, o);
-  o.Normal = normalize(o.Normal);
+  surf (IN.pack0.xy, IN.vtUV, o);
+  o.Normal = normalize(mul(o.Normal, wdMatrix));
   outEmission = ProceduralStandardSpecular_Deferred (o, outGBuffer0, outGBuffer1, outGBuffer2); //GI neccessary here!
 
 

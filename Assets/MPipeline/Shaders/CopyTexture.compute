@@ -68,11 +68,14 @@ void BlendToArray(uint2 id : SV_DISPATCHTHREADID)
     float4 v = _CameraGBufferTexture0[id];
     float4 col = _VirtualMainTex[uint3(id, _Count)];
     col.xyz = lerp(col.xyz, v.xyz, v.w);
-    _VirtualMainTex[uint3(id, _Count)] = col;
+    float4 albedo;
+    albedo.xyz = col;  
     float2 nor = _VirtualBumpMap[uint3(id, _Count)];
     nor = lerp(nor, _CameraGBufferTexture2[id], v.w);
     _VirtualBumpMap[uint3(id, _Count)] = nor;
     col = _VirtualSMO[uint3(id, _Count)];
     col.xyz = lerp(col.xyz, _CameraGBufferTexture1[id].xyz, v.w);
-    _VirtualSMO[uint3(id, _Count)] = col;
+    _VirtualSMO[uint3(id, _Count)] = float4(col.xy, 1, 1);
+    albedo.w = col.z;
+    _VirtualMainTex[uint3(id, _Count)] = albedo;
 }

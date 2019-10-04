@@ -203,5 +203,6 @@ public static partial class ShaderIDs
     public static readonly int _VirtualBumpMap = Shader.PropertyToID("_VirtualBumpMap");
     public static readonly int _VirtualSMO = Shader.PropertyToID("_VirtualSMO");
     public static readonly int _VirtualHeightmap = Shader.PropertyToID("_VirtualHeightmap");
+    public static readonly int _HeightScaleOffset = Shader.PropertyToID("_HeightScaleOffset");
 
 }

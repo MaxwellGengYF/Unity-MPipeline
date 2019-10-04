@@ -40,7 +40,9 @@ ZTest Less
 ZWrite on
 Cull back
 CGPROGRAM
-#pragma vertex vert_surf
+#pragma vertex tessvert_surf
+#pragma hull hs_surf
+#pragma domain ds_surf
 #pragma fragment frag_surf
 ENDCG
 }
