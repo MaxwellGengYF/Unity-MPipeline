@@ -43,7 +43,7 @@ namespace MPipeline
         public bool isRendering { get; private set; }
         public TerrainQuadTree(int parentLodLevel, LocalPos sonPos, int2 parentPos)
         {
-            distOffset = MTerrain.current.lodDeferredOffset;
+            distOffset = MTerrain.current.terrainData.lodDeferredOffset;
             textureChunk = new VirtualTextureChunk();
             minMaxBounding = 0;
             isRendering = false;
@@ -72,9 +72,9 @@ namespace MPipeline
         {
             get
             {
-                double2 chunkPos = MTerrain.current.screenOffset;
+                double2 chunkPos = MTerrain.current.terrainData.screenOffset;
                 //    chunkPos *= MTerrain.current.largestChunkSize;
-                chunkPos += (MTerrain.current.largestChunkSize / pow(2, lodLevel)) * (double2)localPosition;
+                chunkPos += (MTerrain.current.terrainData.largestChunkSize / pow(2, lodLevel)) * (double2)localPosition;
                 return chunkPos;
             }
         }
@@ -82,9 +82,9 @@ namespace MPipeline
         {
             get
             {
-                double2 chunkPos = MTerrain.current.screenOffset;
+                double2 chunkPos = MTerrain.current.terrainData.screenOffset;
                 //chunkPos *= MTerrain.current.largestChunkSize;
-                chunkPos += (MTerrain.current.largestChunkSize / pow(2, lodLevel)) * ((double2)(localPosition) + 0.5);
+                chunkPos += (MTerrain.current.terrainData.largestChunkSize / pow(2, lodLevel)) * ((double2)(localPosition) + 0.5);
                 return chunkPos;
             }
         }
@@ -144,7 +144,7 @@ namespace MPipeline
 
             isRendering = false;
         }
-        //TODO
+
         private void Separate()
         {
             if (lodLevel >= MTerrain.current.allLodLevles.Length - 1)
@@ -180,12 +180,11 @@ namespace MPipeline
                     rightDown->isRendering = true;
                     rightUp->isRendering = true;
                 }
-                
+
             }
-            distOffset = -MTerrain.current.lodDeferredOffset;
+            distOffset = -MTerrain.current.terrainData.lodDeferredOffset;
         }
 
-        //TODO
         private void Combine(bool enableSelf)
         {
             if (leftDown != null)
@@ -200,26 +199,34 @@ namespace MPipeline
                 leftUp->Dispose();
                 rightDown->Dispose();
                 rightUp->Dispose();
-                MTerrain.current.loadDataList.Add(new TerrainLoadData
+                if (enableSelf)
                 {
-                    ope = TerrainLoadData.Operator.Combine,
-                    startIndex = VirtualTextureIndex,
-                    size = VirtualTextureSize
-                });
-                isRendering = true;
+                    MTerrain.current.loadDataList.Add(new TerrainLoadData
+                    {
+                        ope = TerrainLoadData.Operator.Combine,
+                        startIndex = VirtualTextureIndex,
+                        size = VirtualTextureSize 
+                    });
+                    isRendering = true;
+                }
+                else
+                {
+                    DisableRendering();
+                }
                 UnsafeUtility.Free(leftDown, Allocator.Persistent);
                 leftDown = null;
                 leftUp = null;
                 rightDown = null;
                 rightUp = null;
             }
-            distOffset = MTerrain.current.lodDeferredOffset;
-            if (enableSelf)
-            {
-                EnableRendering();
-            }
             else
-                DisableRendering();
+            {
+                if (enableSelf)
+                    EnableRendering();
+                else
+                    DisableRendering();
+            }
+            distOffset = MTerrain.current.terrainData.lodDeferredOffset;
         }
         public void PushDrawRequest(NativeList<MTerrain.TerrainChunkBuffer> loadedBufferList)
         {
@@ -235,7 +242,7 @@ namespace MPipeline
                 loadedBufferList.Add(new MTerrain.TerrainChunkBuffer
                 {
                     minMaxHeight = 0,
-                    scale = float2((float)(MTerrain.current.largestChunkSize / pow(2, lodLevel)), (float)pow(2.0, MTerrain.current.allLodLevles.Length - 1 - lodLevel)),
+                    scale = float2((float)(MTerrain.current.terrainData.largestChunkSize / pow(2, lodLevel)), (float)pow(2.0, MTerrain.current.allLodLevles.Length - 1 - lodLevel)),
                     worldPos = (float2)CornerWorldPos,
                     uvStartIndex = (uint2)VirtualTextureIndex
                 });
@@ -252,7 +259,7 @@ namespace MPipeline
             else if (dist > MTerrain.current.allLodLevles[lodLevel + 1] - distOffset)
             {
                 Combine(true);
-                
+
             }
             else
             {

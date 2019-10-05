@@ -69,23 +69,21 @@ namespace MPipeline
                     arrayPool.Add(i);
                 }
             }
-            public int Get()
+            public bool Get(out int t)
             {
-                int t;
+
                 do
                 {
                     if (arrayPool.Length <= 0)
                     {
-#if UNITY_EDITOR
-                        throw new System.Exception("Virtual Texture Pool is out of range!!");
-#endif
-                        return -1;
+                        t = -1;
+                        return false;
                     }
                     t = arrayPool[arrayPool.Length - 1];
                     arrayPool.RemoveLast();
                 } while (marks[t]);
                 marks[t] = true;
-                return t;
+                return true;
             }
         }
         private ComputeShader shader;
@@ -206,7 +204,7 @@ namespace MPipeline
             return -1;
         }
 
-        private int GetChunk(ref int2 startIndex, int size)
+        private bool GetChunk(ref int2 startIndex, int size, out int element)
         {
             startIndex %= indexSize;
             int2 result;
@@ -217,11 +215,13 @@ namespace MPipeline
                     result = int2(size, result.y);
                     poolDict[startIndex] = result;
                 }
-                return result.y;
+                element = result.y;
+                return true;
             }
-            result = int2(size, pool.Get());
+            bool res = pool.Get(out element);
+            result = int2(size, element);
             poolDict.Add(startIndex, result);
-            return result.y;
+            return res;
         }
 
         private int UnloadChunk(ref int2 startIndex)
@@ -244,13 +244,13 @@ namespace MPipeline
         /// <param name="startIndex">Start Index in the index texture</param>
         /// <param name="size">Pixel count in index texture</param>
         /// <returns>The target array index in TextureArray, return -1 if the pool is full</returns>
-        public int LoadNewTexture(int2 startIndex, int size)
+        public bool LoadNewTexture(int2 startIndex, int size, out int element)
         {
-            int sizeElement = GetChunk(ref startIndex, size);
+            bool res = GetChunk(ref startIndex, size, out element);
             vtVariables[0] = startIndex.x;
             vtVariables[1] = startIndex.y;
             vtVariables[2] = size;
-            vtVariables[3] = sizeElement;
+            vtVariables[3] = element;
             shader.SetInts(ShaderIDs._VTVariables, vtVariables);
             texSize[0] = indexSize.x;
             texSize[1] = indexSize.y;
@@ -258,7 +258,7 @@ namespace MPipeline
             shader.SetTexture(0, ShaderIDs._IndexTexture, indexTex);
             int dispatchCount = Mathf.CeilToInt(size / 8f);
             shader.Dispatch(0, dispatchCount, dispatchCount, 1);
-            return sizeElement;
+            return res;
         }
 
         public NativeArray<int> LoadNewTextureChunks(int2 startIndex, int size, Allocator alloc, int loadLod = 0, Texture sourceTex = null, Texture[] sourceTexs = null)
@@ -275,7 +275,7 @@ namespace MPipeline
                 for (int x = 0; x < size; ++x)
                 {
                     int2 idx = startIndex + int2(x, y);
-                    ptr[x + y * size] = GetChunk(ref idx, 1);
+                    bool res = GetChunk(ref idx, 1, out ptr[x + y * size]);
                 }
             startIndex %= indexSize;
             vtVariables[0] = startIndex.x;
@@ -341,7 +341,8 @@ namespace MPipeline
                     }
                 }
             }
-            int targetElement = GetChunk(ref startIndex, targetSize);
+            int targetElement;
+            if (!GetChunk(ref startIndex, targetSize, out targetElement)) return;
             int3* vtPtr = (int3*)vtVariables.Ptr();
             *vtPtr = int3(startIndex, targetSize);
             shader.SetInts(ShaderIDs._VTVariables, vtVariables);

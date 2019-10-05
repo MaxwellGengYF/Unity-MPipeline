@@ -12,12 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e1a49654a285f6645961f5fdf60ff457, type: 3}
   m_Name: AO
   m_EditorClassIdentifier: 
-  enabled: 1
+  enabled: 0
   DirSampler: 4
   SliceSampler: 4
   Radius: 1
   Intensity: 1
-  Power: 0.5
+  Power: 0.75
   Sharpeness: 0.25
   TemporalScale: 5
   TemporalResponse: 0.8

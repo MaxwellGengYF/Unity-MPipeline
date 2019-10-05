@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   enabled: 1
   enableSuperSample: 0
-  availableDistance: 32
-  indirectIntensity: 0.01
+  availableDistance: 25
+  indirectIntensity: 0.16666667
   linearFogDensity: 0
   darkerWeight: 0.75
   brighterWeight: 0.95

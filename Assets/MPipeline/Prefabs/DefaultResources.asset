@@ -12,8 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2dbd0823b00f58a4caf0bda5f81b5c91, type: 3}
   m_Name: DefaultResources
   m_EditorClassIdentifier: 
-  useSRPBatcher: 0
-  clusterResources: {fileID: 0}
+  clusterResources: {fileID: 11400000, guid: 5c18b7c9458e3ea488761f9c56016cba, type: 2}
   availiableEvents:
   - {fileID: 11400000, guid: cfd7bbc3e9481ec458e874a8577ee260, type: 2}
   - {fileID: 11400000, guid: 2b92438e0f21bc94abd6c4972ddb265a, type: 2}
@@ -46,14 +45,13 @@ MonoBehaviour:
       type: 3}
     minMaxDepthCompute: {fileID: 7200000, guid: 6aaf1a29656a5cc498374f10f462d143,
       type: 3}
-    readRTData: {fileID: 7200000, guid: 1f0ae0e104fbea145b178dd0e1db0080, type: 3}
+    HizLodShader: {fileID: 7200000, guid: 0e792891767d1d44e832f8f215f490f5, type: 3}
     minMaxDepthBounding: {fileID: 4800000, guid: 824d4dd9940244f43a887c89dfbfdcd5,
       type: 3}
     taaShader: {fileID: 4800000, guid: 51bcf79c50dc92e47ba87821b61100c3, type: 3}
     ssrShader: {fileID: 4800000, guid: 18704a45733ea43459834cc74c454ac8, type: 3}
     indirectDepthShader: {fileID: 4800000, guid: 2896c2d5ef5101b46942a11a481cb2d6,
       type: 3}
-    HizLodShader: {fileID: 4800000, guid: 26c0c9d0c19bd4f4d958db01aa775f53, type: 3}
     reflectionShader: {fileID: 4800000, guid: 570f61f4159173a449116b777a6d5480, type: 3}
     linearDepthShader: {fileID: 4800000, guid: 77485821d74bdd841b30cd6723eff35e, type: 3}
     linearDrawerShader: {fileID: 4800000, guid: 2e72d662f1ade4d4793cb016a15b5b17,
@@ -68,8 +66,8 @@ MonoBehaviour:
     gtaoShader: {fileID: 4800000, guid: 2dbab40b5193e7640a8d53163872d2f7, type: 3}
     overrideOpaqueShader: {fileID: 4800000, guid: ffeed60062f9fde43bd897fe88a5ad6b,
       type: 3}
-    ssgiShader: {fileID: 4800000, guid: 96507b1ae4f2e70449d65df7bc0fd3ec, type: 3}
     sssShader: {fileID: 4800000, guid: e897628345ef1444bb78afdf212e8b9b, type: 3}
     bakePreIntShader: {fileID: 4800000, guid: f4fb6e2c64982644f98560203441b9dd, type: 3}
     rapidBlurShader: {fileID: 4800000, guid: 14ceb9d3d9ad7db44ae2f5e8c3d77867, type: 3}
+    blitNormalShader: {fileID: 4800000, guid: 2b29461aabbb9f943ac5754156bab1eb, type: 3}
     cyberGlitchShader: {fileID: 4800000, guid: 54000453458bb2b49b3f44bd9cab343d, type: 3}

@@ -21,9 +21,10 @@ public class ShouShouEditor : ShaderGUI
         }
         Material targetMat = materialEditor.target as Material;
         Undo.RecordObject(targetMat, targetMat.name);
-        bool useMotionVector = targetMat.GetShaderPassEnabled("MotionVector");
+        bool useMotionVector = targetMat.IsKeywordEnabled("USE_MOTIONVECTOR");
         useMotionVector = EditorGUILayout.Toggle("MotionVector", useMotionVector);
-        targetMat.SetShaderPassEnabled("MotionVector", useMotionVector);
+        if (useMotionVector) targetMat.EnableKeyword("USE_MOTIONVECTOR");
+        else targetMat.DisableKeyword("USE_MOTIONVECTOR");
         bool targetMatEnabled = targetMat.IsKeywordEnabled("CUT_OFF");
         bool targetUseTessellation = targetMat.shader.name.Contains("Tessellation");
         targetMatEnabled = EditorGUILayout.Toggle("Cut off", targetMatEnabled);

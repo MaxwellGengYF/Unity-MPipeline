@@ -18,7 +18,7 @@ MonoBehaviour:
   enableInEditor: 1
   cyberGlitch:
     enabled: 0
-    scanLineJitter: 1.45
-    horizontalShake: 1.59
-    colorDrift: 2.35
+    scanLineJitter: 0.1
+    horizontalShake: 0.1
+    colorDrift: 0.1
   customLut: {fileID: 0}

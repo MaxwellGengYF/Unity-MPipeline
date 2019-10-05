@@ -31,12 +31,8 @@ namespace MPipeline
         }
         public const int HEIGHT_RESOLUTION = 256;
         public const int COLOR_RESOLUTION = 1024;
-        public float[] lodDistances = new float[]
-        {
-            1000,
-            600,
-            300
-        };
+        public MTerrainData terrainData;
+#if UNITY_EDITOR
         public Texture defaultMaskTex;
         public Texture defaultHeightTex;
         [EasyButtons.Button]
@@ -47,16 +43,16 @@ namespace MPipeline
             string heightGUID = UnityEditor.AssetDatabase.AssetPathToGUID(UnityEditor.AssetDatabase.GetAssetPath(defaultHeightTex));
             chunk.mask = new FileGUID(maskGUID, Allocator.Temp);
             chunk.height = new FileGUID(heightGUID, Allocator.Temp);
-            chunk.minMaxHeightBounding = float2(heightOffset, heightScale + heightOffset);
+            chunk.minMaxHeightBounding = float2(terrainData.heightOffset, terrainData.heightScale + terrainData.heightOffset);
             long count = 0;
-            for (int i = 0; i < lodDistances.Length; ++i)
+            for (int i = 0; i < terrainData.lodDistances.Length; ++i)
             {
                 long cr = (long)(0.1 + pow(2.0, i));
                 count += cr * cr;
             }
             byte[] allBytes = new byte[count * VirtualTextureChunk.CHUNK_DATASIZE];
             byte* allBytesPtr = allBytes.Ptr();
-            for (int i = 0; i < lodDistances.Length; ++i)
+            for (int i = 0; i < terrainData.lodDistances.Length; ++i)
             {
                 long cr = (long)(0.1 + pow(2.0, i));
                 cr *= cr;
@@ -66,25 +62,16 @@ namespace MPipeline
                     allBytesPtr += VirtualTextureChunk.CHUNK_DATASIZE;
                 }
             }
-            System.IO.File.WriteAllBytes(readWritePath, allBytes);
+            System.IO.File.WriteAllBytes(terrainData.readWritePath, allBytes);
         }
+#endif
         #region QUADTREE
-        public float heightOffset = 0;
-        public float heightScale = 10;
-        public double largestChunkSize = 1000;
-        public double2 screenOffset;
         public NativeList_Float allLodLevles;
-        public float lodDeferredOffset = 2;
         public VirtualTextureLoader loader;
         public NativeQueue<TerrainLoadData> loadDataList;
         #endregion
 
-        public string readWritePath = "Assets/BinaryData/Terrain.mquad";
-        public int planarResolution = 10;
-        public Material drawTerrainMaterial;
         public Transform cam;
-        public PBRTexture[] textures;
-
         private ComputeBuffer culledResultsBuffer;
         private ComputeBuffer loadedBuffer;
         private ComputeBuffer dispatchDrawBuffer;
@@ -116,14 +103,21 @@ namespace MPipeline
         public override void FinishJob()
         {
             calculateHandle.Complete();
-            vt.Update(drawTerrainMaterial);
+            vt.Update(terrainData.drawTerrainMaterial);
 
             UpdateBuffer();
         }
 
         void LoadTexture(Texture mask, Texture height, int2 startIndex, int size)
         {
-            int texElement = vt.LoadNewTexture(startIndex, size);
+            int texElement;
+            //Could Debug lefted pool
+            //Debug.Log(vt.LeftedTextureElement);
+            if (!vt.LoadNewTexture(startIndex, size, out texElement))
+            {
+                Debug.LogError("Terrain Virtual Texture Pool Not Enough!");
+                return;
+            }
             int colorPass;
             if (mask)
             {
@@ -165,9 +159,9 @@ namespace MPipeline
             textureShader.SetTexture(3, ShaderIDs._VirtualMainTex, albedoTex);
             textureShader.SetTexture(3, ShaderIDs._VirtualBumpMap, normalTex);
             textureShader.SetTexture(3, ShaderIDs._VirtualSMO, smTex);
-            for (int i = 0; i < textures.Length; ++i)
+            for (int i = 0; i < terrainData.textures.Length; ++i)
             {
-                PBRTexture texs = textures[i];
+                PBRTexture texs = terrainData.textures[i];
                 AsyncOperationHandle<Texture> albedoLoader = texs.albedoOccTex.LoadAssetAsync<Texture>();
                 AsyncOperationHandle<Texture> normalLoader = texs.normalTex.LoadAssetAsync<Texture>();
                 AsyncOperationHandle<Texture> smLoader = texs.SMTex.LoadAssetAsync<Texture>();
@@ -192,7 +186,7 @@ namespace MPipeline
                 texs.normalTex.ReleaseAsset();
                 texs.SMTex.ReleaseAsset();
             }
-            textureShader.SetInt(ShaderIDs._Count, textures.Length);
+            textureShader.SetInt(ShaderIDs._Count, terrainData.textures.Length);
             while (enabled)
             {
                 TerrainLoadData loadData;
@@ -282,18 +276,24 @@ namespace MPipeline
 
         protected override void OnEnableFunc()
         {
-            msb = new MStringBuilder(32);
-            textureShader = Resources.Load<ComputeShader>("ProceduralTexture");
-            shader = Resources.Load<ComputeShader>("TerrainCompute");
             if (current && current != this)
             {
                 enabled = false;
                 Debug.LogError("Only One Terrain allowed!");
                 return;
             }
+            if(!terrainData)
+            {
+                enabled = false;
+                Debug.LogError("No Data!");
+                return;
+            }
+            msb = new MStringBuilder(32);
+            textureShader = Resources.Load<ComputeShader>("ProceduralTexture");
+            shader = Resources.Load<ComputeShader>("TerrainCompute");
             current = this;
             int indexMapSize = 1;
-            for (int i = 1; i < lodDistances.Length; ++i)
+            for (int i = 1; i < terrainData.lodDistances.Length; ++i)
             {
                 indexMapSize *= 2;
             }
@@ -302,7 +302,7 @@ namespace MPipeline
             culledResultsBuffer = new ComputeBuffer(INIT_LENGTH, sizeof(int));
             loadedBuffer = new ComputeBuffer(INIT_LENGTH, sizeof(TerrainChunkBuffer));
             loadedBufferList = new NativeList<TerrainChunkBuffer>(INIT_LENGTH, Allocator.Persistent);
-            loader = new VirtualTextureLoader(lodDistances.Length, readWritePath);
+            loader = new VirtualTextureLoader(terrainData.lodDistances.Length, terrainData.readWritePath);
             loadDataList = new NativeQueue<TerrainLoadData>(100, Allocator.Persistent);
             NativeArray<uint> dispatchDraw = new NativeArray<uint>(5, Allocator.Temp, NativeArrayOptions.ClearMemory);
             dispatchDraw[0] = 6;
@@ -314,13 +314,13 @@ namespace MPipeline
                 new VirtualTextureFormat((VirtualTextureSize)COLOR_RESOLUTION, RenderTextureFormat.RGHalf, "_VirtualBumpMap"),
                 new VirtualTextureFormat((VirtualTextureSize)COLOR_RESOLUTION, RenderTextureFormat.RG16, "_VirtualSMMap")
             };
-            vt = new VirtualTexture(128, min(2048, (int)(pow(2.0, lodDistances.Length) + 0.1)), formats, 4, "_TerrainVTIndexTex");
-            allLodLevles = new NativeList_Float(lodDistances.Length, Allocator.Persistent);
-            for (int i = 0; i < lodDistances.Length; ++i)
+            vt = new VirtualTexture(terrainData.virtualTexCapacity, min(2048, (int)(pow(2.0, terrainData.lodDistances.Length) + 0.1)), formats, 4, "_TerrainVTIndexTex");
+            allLodLevles = new NativeList_Float(terrainData.lodDistances.Length, Allocator.Persistent);
+            for (int i = 0; i < terrainData.lodDistances.Length; ++i)
             {
-                allLodLevles.Add(min(lodDistances[max(0, i - 1)], lodDistances[i]));
+                allLodLevles.Add(min(terrainData.lodDistances[max(0, i - 1)], terrainData.lodDistances[i]));
             }
-            allLodLevles[lodDistances.Length] = 0;
+            allLodLevles[terrainData.lodDistances.Length] = 0;
 
             albedoTex = new RenderTexture(new RenderTextureDescriptor
             {
@@ -328,7 +328,7 @@ namespace MPipeline
                 dimension = TextureDimension.Tex2DArray,
                 width = COLOR_RESOLUTION,
                 height = COLOR_RESOLUTION,
-                volumeDepth = Mathf.Max(1, textures.Length),
+                volumeDepth = Mathf.Max(1, terrainData.textures.Length),
                 enableRandomWrite = true,
                 msaaSamples = 1
             });
@@ -339,7 +339,7 @@ namespace MPipeline
                 dimension = TextureDimension.Tex2DArray,
                 width = COLOR_RESOLUTION,
                 height = COLOR_RESOLUTION,
-                volumeDepth = Mathf.Max(1, textures.Length),
+                volumeDepth = Mathf.Max(1, terrainData.textures.Length),
                 enableRandomWrite = true,
                 msaaSamples = 1
             });
@@ -350,7 +350,7 @@ namespace MPipeline
                 dimension = TextureDimension.Tex2DArray,
                 width = COLOR_RESOLUTION,
                 height = COLOR_RESOLUTION,
-                volumeDepth = Mathf.Max(1, textures.Length),
+                volumeDepth = Mathf.Max(1, terrainData.textures.Length),
                 enableRandomWrite = true,
                 msaaSamples = 1
             });
@@ -379,12 +379,12 @@ namespace MPipeline
             buffer.SetComputeBufferParam(shader, 0, ShaderIDs._CullResultBuffer, culledResultsBuffer);
             buffer.SetComputeBufferParam(shader, 0, ShaderIDs._TerrainChunks, loadedBuffer);
             buffer.SetGlobalBuffer(ShaderIDs._TerrainChunks, loadedBuffer);
-            buffer.SetGlobalVector(ShaderIDs._HeightScaleOffset, float4(heightScale, heightOffset, 1, 1));
+            buffer.SetGlobalVector(ShaderIDs._HeightScaleOffset, float4(terrainData.heightScale, terrainData.heightOffset, 1, 1));
             buffer.SetGlobalBuffer(ShaderIDs._CullResultBuffer, culledResultsBuffer);
             buffer.SetComputeVectorArrayParam(shader, ShaderIDs.planes, planes);
             buffer.DispatchCompute(shader, 1, 1, 1, 1);
             ComputeShaderUtility.Dispatch(shader, buffer, 0, loadedBufferList.Length);
-            buffer.DrawProceduralIndirect(Matrix4x4.identity, drawTerrainMaterial, pass, MeshTopology.Triangles, dispatchDrawBuffer);
+            buffer.DrawProceduralIndirect(Matrix4x4.identity, terrainData.drawTerrainMaterial, pass, MeshTopology.Triangles, dispatchDrawBuffer);
         }
 
         public void DrawTerrain(CommandBuffer buffer, int pass, float4* planePtr)
