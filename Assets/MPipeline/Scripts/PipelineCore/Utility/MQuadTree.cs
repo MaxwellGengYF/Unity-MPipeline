@@ -192,6 +192,7 @@ namespace MPipeline
                     startIndex = VirtualTextureIndex,
                     size = VirtualTextureSize
                 });
+                isRendering = true;
                 UnsafeUtility.Free(leftDown, Allocator.Persistent);
                 leftDown = null;
                 leftUp = null;
@@ -200,7 +201,9 @@ namespace MPipeline
             }
             distOffset = MTerrain.current.lodDeferredOffset;
             if (enableSelf)
+            {
                 EnableRendering();
+            }
             else
                 DisableRendering();
         }

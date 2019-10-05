@@ -60,8 +60,5 @@ void CopyTex(uint2 id : SV_DISPATCHTHREADID)
     float4 scaleOffset = _IndexTexture[RepeatUV(indx)];
     scaleOffset.w *= 2048.0;
     float3 uvw =  float3(frac(uv) * scaleOffset.x + scaleOffset.yz, scaleOffset.w);
-    #ifdef UNITY_REVERSED_Z
-    id.y = _Count - id.y - 1;
-    #endif
     _BlendTex[id] = _TextureBuffer.SampleLevel(sampler_TextureBuffer, uvw, 0);
 }
