@@ -89,7 +89,6 @@ namespace MPipeline
             }
         }
         private ComputeShader shader;
-        public RenderTexture indexTex { get; private set; }
         private RenderTexture[] textures;
         private TexturePool pool;
         private int indexTexID;
@@ -99,6 +98,7 @@ namespace MPipeline
         private ComputeBuffer setIndexBuffer;
         private const int START_CHUNKSIZE = 8;
         public int2 indexSize { get; private set; }
+        public RenderTexture indexTex { get; private set; }
         private struct VTChunkHandleEqual : IFunction<int2, int2, bool>
         {
             public bool Run(ref int2 a, ref int2 b)
@@ -145,7 +145,7 @@ namespace MPipeline
         /// <param name="formats">Each VT's format</param>
         public VirtualTexture(int maximumSize, int2 indexSize, VirtualTextureFormat* formats, int formatLen, string indexTexName, int mipCount = 0)
         {
-            if(maximumSize > 2048)
+            if (maximumSize > 2048)
             {
                 throw new System.Exception("Virtual Texture Maximum Size can not larger than 2048");
             }

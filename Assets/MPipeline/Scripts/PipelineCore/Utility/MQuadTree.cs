@@ -14,12 +14,15 @@ namespace MPipeline
     {
         public enum Operator
         {
-            Combine, Load, Unload
+            Combine, Load, Unload, Separate
         }
         public Operator ope;
         public int2 startIndex;
         public int size;
         public VirtualTextureChunk targetLoadChunk;
+        public VirtualTextureChunk nextChunk0;
+        public VirtualTextureChunk nextChunk1;
+        public VirtualTextureChunk nextChunk2;
     }
     public unsafe struct TerrainQuadTree
     {
@@ -119,7 +122,7 @@ namespace MPipeline
                     ope = TerrainLoadData.Operator.Load,
                     size = VirtualTextureSize,
                     startIndex = VirtualTextureIndex,
-                    targetLoadChunk = textureChunk
+                    targetLoadChunk = textureChunk.CopyTo()
                 });
             }
 
@@ -161,10 +164,21 @@ namespace MPipeline
                     *leftUp = new TerrainQuadTree(lodLevel, LocalPos.LeftUp, localPosition);
                     *rightDown = new TerrainQuadTree(lodLevel, LocalPos.RightDown, localPosition);
                     *rightUp = new TerrainQuadTree(lodLevel, LocalPos.RightUp, localPosition);
-                    leftDown->EnableRendering();
-                    leftUp->EnableRendering();
-                    rightDown->EnableRendering();
-                    rightUp->EnableRendering();
+                    MTerrain.current.loadDataList.Add(new TerrainLoadData
+                    {
+                        targetLoadChunk = leftDown->textureChunk.CopyTo(),
+                        nextChunk0 = leftUp->textureChunk.CopyTo(),
+                        nextChunk1 = rightDown->textureChunk.CopyTo(),
+                        nextChunk2 = rightUp->textureChunk.CopyTo(),
+                        ope = TerrainLoadData.Operator.Separate,
+                        size = VirtualTextureSize,
+                        startIndex = VirtualTextureIndex
+                    });
+
+                    leftDown->isRendering = true;
+                    leftUp->isRendering = true;
+                    rightDown->isRendering = true;
+                    rightUp->isRendering = true;
                 }
                 
             }

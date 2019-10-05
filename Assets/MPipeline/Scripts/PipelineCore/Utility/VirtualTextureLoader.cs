@@ -13,14 +13,14 @@ namespace MPipeline
     {
         public FileGUID mask;
         public FileGUID height;
-        public bool isCreate { get; private set; }
+        public int* refCount;
         public float2 minMaxHeightBounding;
         private const int GUID_LENGTH = 2;
         public const int CHUNK_DATASIZE = FileGUID.PTR_LENGTH * 8 * GUID_LENGTH + 8;
         public void Init(byte* arr)
         {
-            if (isCreate) return;
-            isCreate = true;
+            refCount = MUnsafeUtility.Malloc<int>(sizeof(int), Allocator.Persistent);
+            *refCount = 1;
             FileGUID* guidPtr = mask.Ptr();
             for (int i = 0; i < GUID_LENGTH; ++i)
             {
@@ -32,13 +32,33 @@ namespace MPipeline
 
         public void Dispose()
         {
-            if (!isCreate) return;
-            isCreate = false;
-            FileGUID* guidPtr = mask.Ptr();
-            for (int i = 0; i < GUID_LENGTH; ++i)
+            if (refCount != null && *refCount > 0)
             {
-                guidPtr[i].Dispose();
+                (*refCount)--;
+                if (*refCount <= 0)
+                {
+                    FileGUID* guidPtr = mask.Ptr();
+                    for (int i = 0; i < GUID_LENGTH; ++i)
+                    {
+                        guidPtr[i].Dispose();
+                    }
+                    UnsafeUtility.Free(refCount, Allocator.Persistent);
+                    refCount = null;
+                }
             }
+        }
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public VirtualTextureChunk CopyTo()
+        {
+            VirtualTextureChunk other = new VirtualTextureChunk
+            {
+                height = height,
+                mask = mask,
+                minMaxHeightBounding = minMaxHeightBounding,
+                refCount = refCount
+            };
+            (*refCount)++;
+            return other;
         }
 
         public static void OutputDefaultValue(byte* arr)
