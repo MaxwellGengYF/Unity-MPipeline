@@ -1,0 +1,73 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 2dbd0823b00f58a4caf0bda5f81b5c91, type: 3}
+  m_Name: DefaultResources
+  m_EditorClassIdentifier: 
+  clusterResources: {fileID: 11400000, guid: 5c18b7c9458e3ea488761f9c56016cba, type: 2}
+  availiableEvents:
+  - {fileID: 11400000, guid: cfd7bbc3e9481ec458e874a8577ee260, type: 2}
+  - {fileID: 11400000, guid: 2b92438e0f21bc94abd6c4972ddb265a, type: 2}
+  - {fileID: 11400000, guid: b9e7b54c776eb18408cdafca469b13e0, type: 2}
+  - {fileID: 11400000, guid: bd3ad988b135ba44abd421986d3d7561, type: 2}
+  - {fileID: 11400000, guid: ec8cef056d08590479397b93336d090c, type: 2}
+  - {fileID: 11400000, guid: 4ba4d0b7b30f88a4d92a2fccd277f94c, type: 2}
+  - {fileID: 11400000, guid: eed54e1aa86953840809795e80367826, type: 2}
+  - {fileID: 11400000, guid: a87fe8bf9e8887d43a76c168c3f6949e, type: 2}
+  - {fileID: 11400000, guid: 2bb796fcf46451949826a32497c5f2ed, type: 2}
+  - {fileID: 11400000, guid: 6fe05694a7e3c07469031a6ab5c74e0d, type: 2}
+  - {fileID: 11400000, guid: bdee0411038a22f49a6293ec9d53091f, type: 2}
+  - {fileID: 11400000, guid: 198dfbd8e0e7de24c8ed0a157067a057, type: 2}
+  - {fileID: 11400000, guid: f7267997fb1d08d44a48b6d32dd56920, type: 2}
+  shaders:
+    cbdrShader: {fileID: 7200000, guid: 32eda6600c320d948b7c69a6823d3bf9, type: 3}
+    gpuFrustumCulling: {fileID: 7200000, guid: 27a4a69f28f2cb946a2de4928422fcd8, type: 3}
+    gpuSkin: {fileID: 7200000, guid: 29ddbd48a6e7b1d4c896301aca827469, type: 3}
+    streamingShader: {fileID: 7200000, guid: c1cd0cb9f5eddbf489aa459bceba9e14, type: 3}
+    pointLightFrustumCulling: {fileID: 7200000, guid: 7011edaf13151fd4d8c2d60c5d147390,
+      type: 3}
+    terrainCompute: {fileID: 7200000, guid: 6aaf1a29656a5cc498374f10f462d143, type: 3}
+    volumetricScattering: {fileID: 7200000, guid: f0b93ef950efeed42866aebefd835cc2,
+      type: 3}
+    texCopyShader: {fileID: 7200000, guid: f6e116db19c13064cad38faa281ae1c4, type: 3}
+    reflectionCullingShader: {fileID: 7200000, guid: a1fa3016d1a7dba49b1e80f5c5d3139d,
+      type: 3}
+    voxelNoise: {fileID: 7200000, guid: f7fd67eb107ed9e4cad86e295cbafc9e, type: 3}
+    occlusionProbeCalculate: {fileID: 7200000, guid: 4251ad5f26891974885cb27d7ebccb7a,
+      type: 3}
+    minMaxDepthCompute: {fileID: 7200000, guid: 6aaf1a29656a5cc498374f10f462d143,
+      type: 3}
+    HizLodShader: {fileID: 7200000, guid: 0e792891767d1d44e832f8f215f490f5, type: 3}
+    minMaxDepthBounding: {fileID: 4800000, guid: 824d4dd9940244f43a887c89dfbfdcd5,
+      type: 3}
+    taaShader: {fileID: 4800000, guid: 51bcf79c50dc92e47ba87821b61100c3, type: 3}
+    ssrShader: {fileID: 4800000, guid: 18704a45733ea43459834cc74c454ac8, type: 3}
+    indirectDepthShader: {fileID: 4800000, guid: 2896c2d5ef5101b46942a11a481cb2d6,
+      type: 3}
+    reflectionShader: {fileID: 4800000, guid: 570f61f4159173a449116b777a6d5480, type: 3}
+    linearDepthShader: {fileID: 4800000, guid: 77485821d74bdd841b30cd6723eff35e, type: 3}
+    linearDrawerShader: {fileID: 4800000, guid: 2e72d662f1ade4d4793cb016a15b5b17,
+      type: 3}
+    cubeDepthShader: {fileID: 4800000, guid: b33fc3a2454d9ca46b31777fb5e46e00, type: 3}
+    clusterRenderShader: {fileID: 4800000, guid: 7d416c36f35f64342a489eff340c024b,
+      type: 3}
+    volumetricShader: {fileID: 4800000, guid: b18907693260b7442b86918d80df23f8, type: 3}
+    terrainShader: {fileID: 4800000, guid: 2fd0da8ddd8c25e4aaf985179be3cfbf, type: 3}
+    spotLightDepthShader: {fileID: 4800000, guid: bed89509ad0b6d844a4a9086fbabac3c,
+      type: 3}
+    gtaoShader: {fileID: 4800000, guid: 2dbab40b5193e7640a8d53163872d2f7, type: 3}
+    overrideOpaqueShader: {fileID: 4800000, guid: ffeed60062f9fde43bd897fe88a5ad6b,
+      type: 3}
+    sssShader: {fileID: 4800000, guid: e897628345ef1444bb78afdf212e8b9b, type: 3}
+    bakePreIntShader: {fileID: 4800000, guid: f4fb6e2c64982644f98560203441b9dd, type: 3}
+    rapidBlurShader: {fileID: 4800000, guid: 14ceb9d3d9ad7db44ae2f5e8c3d77867, type: 3}
+    blitNormalShader: {fileID: 4800000, guid: 2b29461aabbb9f943ac5754156bab1eb, type: 3}
+    cyberGlitchShader: {fileID: 4800000, guid: 54000453458bb2b49b3f44bd9cab343d, type: 3}

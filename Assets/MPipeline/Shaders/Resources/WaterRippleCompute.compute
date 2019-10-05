@@ -1,0 +1,54 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+#pragma kernel RippleCalculate
+#include "UnityCG.cginc"
+#include "../CGINC/Random.cginc"
+struct Ripple
+{
+    uint2 position;
+    uint range;
+    float timeLine;
+};
+RWStructuredBuffer<Ripple> _RippleBuffer;
+RWTexture2DArray<float2> _MainTex;
+#define RIPPLE_SIZE 16
+uint _TextureSize;
+uint _Count;
+static const float pi = 3.14159265;
+            void GetRipple(float timeLine, float2 uvDiff, float dist, out float2 offset, out float transparency)
+            {
+                float value = sin((1 - exp(-dist * 7) * 30) - timeLine * pi * 5);
+                offset = (uvDiff / dist) * value;
+                transparency = saturate(dist * 2 - sqrt(timeLine) + 1);
+            }
+[numthreads(RIPPLE_SIZE,RIPPLE_SIZE,1)]
+void CSMain (uint3 id : SV_DispatchThreadID)
+{
+    Ripple rip = _RippleBuffer[id.z];
+    float2 uv = id.xy / ((float)RIPPLE_SIZE *  rip.range);
+    if(uv.x > 1 || uv.y > 1) return;
+    int2 pixelPos = id.xy + rip.position;
+    pixelPos = lerp(pixelPos, pixelPos - _TextureSize, pixelPos >= _TextureSize);
+    float2 offset; float trans;
+    float2 uvDiff = uv - 0.5;
+    float dist = length(uvDiff);
+    if(dist > 0.5) return;
+    GetRipple(rip.timeLine, uvDiff, dist, offset, trans);
+    trans = lerp(trans, 1, saturate(pow(rip.timeLine, 0.2)));
+    _MainTex[uint3(pixelPos, _Count)] = lerp(clamp(offset, -1, 1), _MainTex[uint3(pixelPos, _Count)], trans);
+}
+float _DeltaTime;
+[numthreads(64, 1, 1)]
+void RippleCalculate(uint id : SV_DISPATCHTHREADID)
+{
+    Ripple rip = _RippleBuffer[id];
+    rip.timeLine += _DeltaTime / rip.range;
+    if(rip.timeLine > 1)
+    {
+        rip.timeLine -=1;
+        rip.position = (uint2)(MNoise(rip.position / (float)_TextureSize) * _TextureSize);
+        rip.range += 1;
+        if(rip.range >= 6) rip.range = 1;
+    }
+    _RippleBuffer[id] = rip;
+}

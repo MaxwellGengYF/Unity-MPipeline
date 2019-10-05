@@ -1,0 +1,68 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel ClusterFunc
+#pragma kernel PointFunc
+#pragma kernel MaterialFunc
+#pragma kernel IndexFunc
+#pragma kernel MipFunc
+#define COMPUTESHADER
+#include "CGINC/Procedural.cginc"
+struct ClusterMeshData
+{
+    float3 extent;
+    float3 position;
+    int index;
+};
+RWStructuredBuffer<ClusterMeshData> clusterBuffer;
+RWStructuredBuffer<Point> verticesBuffer;
+RWStructuredBuffer<int2> _IndexBuffer;
+RWStructuredBuffer<int> instanceCountBuffer;//0, 1, 2: x, y, z    3: offset 4:targetScene
+uint _Count;
+[numthreads(64, 1, 1)]
+void ClusterFunc(uint id : SV_DISPATCHTHREADID)
+{
+    if(id >= _Count) return;
+    ClusterMeshData meshData = clusterBuffer[id];
+    if(meshData.index == instanceCountBuffer[4])
+    {
+        int currentIndex;
+        do{
+            InterlockedAdd(instanceCountBuffer[3], 1, currentIndex);
+        }while(clusterBuffer[currentIndex].index == instanceCountBuffer[4]);
+        int2 indexLead = int2(id, currentIndex);
+        clusterBuffer[indexLead.x] = clusterBuffer[indexLead.y];
+        InterlockedAdd(instanceCountBuffer[0], 1, currentIndex);
+        _IndexBuffer[currentIndex] = indexLead;
+    }
+}
+
+[numthreads(1, CLUSTERCLIPCOUNT, 1)]
+void PointFunc(uint2 id : SV_DISPATCHTHREADID)
+{
+    uint2 index = _IndexBuffer[id.x] * CLUSTERCLIPCOUNT + id.y;
+    verticesBuffer[index.x] = verticesBuffer[index.y];
+}
+RWStructuredBuffer<MaterialProperties> _MaterialBuffer;
+StructuredBuffer<MaterialProperties> _MaterialAddBuffer;
+RWStructuredBuffer<uint> _TriangleMaterialBuffer;
+StructuredBuffer<int> _OffsetIndex;
+[numthreads(64, 1, 1)]
+void MaterialFunc(uint id : SV_DISPATCHTHREADID)
+{
+    if(id >= _Count) return;
+    _MaterialBuffer[_OffsetIndex[id]] = _MaterialAddBuffer[id];
+}
+
+[numthreads(1, CLUSTERTRIANGLECOUNT, 1)]
+void IndexFunc(uint2 id : SV_DISPATCHTHREADID)
+{
+    uint2 index = _IndexBuffer[id.x] * CLUSTERTRIANGLECOUNT + id.y;
+    _TriangleMaterialBuffer[index.x] = _TriangleMaterialBuffer[index.y];
+}
+RWTexture2DArray<float4> _SourceTex;
+RWTexture2DArray<float4> _DestTex;
+[numthreads(8,8,1)]
+void MipFunc(uint2 id : SV_DISPATCHTHREADID)
+{
+    uint2 idx = id * 2;
+    _DestTex[uint3(id, _Count)] = 0.25 * (_SourceTex[uint3(idx, _Count)] + _SourceTex[uint3(idx + uint2(0, 1), _Count)] + _SourceTex[uint3(idx + uint2(1, 1), _Count)] + _SourceTex[uint3(idx + uint2(1, 0), _Count)]);
+}

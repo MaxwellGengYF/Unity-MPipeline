@@ -1,0 +1,64 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel Perlin2D
+#pragma kernel Perlin2D USE_GRADIENT
+#include "../CGINC/PerlinNoise.cginc"
+
+struct PerlinProcedural
+{
+    //0: Cover   1: Add  2: Blend  3: Max   4:Min    5: multiply     6:  divide
+    uint accumulateType;   
+    int fractureValue;
+    float seed;
+    float multiplyValue;
+    float addedValue;
+    float calculateVariable;
+};
+
+StructuredBuffer<PerlinProcedural> _ProceduralBuffer;
+uint _ProceduralCount;
+float2 _TextureSize;
+RWTexture2D<float4> _MainTex;
+Texture2D<float> _GradientMap; SamplerState sampler_GradientMap;
+float _Offset;
+[numthreads(8,8,1)]
+void Perlin2D (uint3 id : SV_DispatchThreadID)
+{
+    float2 uv = (0.5 + id.xy) * _TextureSize.xy;
+    
+    float value = 0;
+    [loop]
+    for(uint i = 0; i < _ProceduralCount; ++i)
+    {
+        PerlinProcedural proc = _ProceduralBuffer[i];
+        float noiseValue =  ( Fbm(uv.x, uv.y, proc.seed, proc.fractureValue) * proc.multiplyValue + proc.addedValue);
+        switch(proc.accumulateType)
+        {
+            case 0:
+            value = noiseValue;
+            break;
+            case 1:
+            value += noiseValue;
+            break;
+            case 2:
+            value = lerp(value, noiseValue, proc.calculateVariable);
+            break;
+            case 3:
+            value = max(value, noiseValue);
+            break;
+            case 4:
+            value = min(value, noiseValue);
+            break;
+            case 5:
+            value *= noiseValue;
+            break;
+            case 6:
+            value /= noiseValue;
+            break;
+        }
+    }
+    #ifdef USE_GRADIENT
+    _MainTex[id.xy] = _GradientMap.SampleLevel(sampler_GradientMap, float2(value, _Offset), 0).x;
+    #else
+    _MainTex[id.xy] = value;
+    #endif
+}

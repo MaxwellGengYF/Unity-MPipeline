@@ -1,0 +1,74 @@
+﻿#pragma kernel Mipmap
+
+
+groupshared float _SharedDepth[256];
+groupshared float2 _DepthBound[64];
+Texture2D<float> _DepthBufferTexture; SamplerState sampler_DepthBufferTexture;
+RWTexture2D<float2> _TargetDepthTexture;
+float2 _TextureSize;
+uint DownDim(uint2 idb)
+{
+return idb.y * 16 + idb.x;
+}
+[numthreads(16,16,1)]
+void Mipmap (uint2 id : SV_DISPATCHTHREADID, uint2 groupID : SV_GROUPTHREADID)
+{
+    float2 uv = saturate((id + 0.5) / _TextureSize);
+    uint downDimID = DownDim(groupID);
+    uint targetID = 64;
+    _SharedDepth[downDimID] = _DepthBufferTexture.SampleLevel(sampler_DepthBufferTexture, uv, 0);
+    GroupMemoryBarrierWithGroupSync();
+    bool initRet = downDimID < targetID;
+    uint2 startPos = groupID * 2;
+    uint startPosLeftDown = DownDim(startPos);
+    uint startPosRightDown = DownDim(startPos + uint2(1, 0));
+    uint startPosLeftUp = DownDim(startPos + uint2(0, 1));
+    uint startPosRightUp = DownDim(startPos + 1);
+    if(initRet) {
+    
+    float4 currDepth = float4(
+        _SharedDepth[startPosLeftDown],
+        _SharedDepth[startPosRightDown],
+        _SharedDepth[startPosLeftUp],
+        _SharedDepth[startPosRightUp]
+    );
+    
+    float2 minDepth = min(currDepth.xy, currDepth.zw);
+    minDepth.x = min(minDepth.x, minDepth.y);
+    float2 maxDepth = max(currDepth.xy, currDepth.zw);
+    maxDepth.x = max(maxDepth.x, maxDepth.y);
+    _DepthBound[downDimID] = float2(minDepth.x, maxDepth.x);
+    }
+    for(uint i = 0; i < 3; ++i)
+    {
+        GroupMemoryBarrierWithGroupSync();
+         if(initRet) {
+        targetID /= 4;
+        if(downDimID < targetID) {
+        float2 minDepth = float2(min(
+            _DepthBound[startPosLeftDown].x,
+            _DepthBound[startPosRightDown].x),
+        min(
+            _DepthBound[startPosLeftUp].x,
+            _DepthBound[startPosRightUp].x)
+        );
+        minDepth.x = min(minDepth.x, minDepth.y);
+        float2 maxDepth = float2(max(
+            _DepthBound[startPosLeftDown].y,
+            _DepthBound[startPosRightDown].y),
+        max(
+            _DepthBound[startPosLeftUp].y,
+            _DepthBound[startPosRightUp].y)
+        );
+        maxDepth.x = max(maxDepth.x, maxDepth.y);
+        _DepthBound[downDimID] = float2(minDepth.x, maxDepth.x);
+        }
+         }
+        
+    }
+    
+    GroupMemoryBarrierWithGroupSync();
+    if(downDimID == 0)
+        _TargetDepthTexture[id / 16] = _DepthBound[0];
+    
+}

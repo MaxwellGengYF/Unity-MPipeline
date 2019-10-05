@@ -1,0 +1,70 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel ReadPixel
+#pragma kernel ReadPixel3D
+#pragma kernel ReadPixelNormal3D
+#pragma kernel WritePixel
+#pragma kernel WritePixelNormal
+#pragma kernel WritePixelToArray
+#include "UnityCG.cginc"
+RWStructuredBuffer<float4> _TextureDatas;
+Texture2D<float4> _TargetTexture; SamplerState sampler_TargetTexture;
+RWTexture2D<float4> _TargetRT;
+RWTexture2DArray<float4> _TargetRTArray; 
+int _Width;
+int _Height;
+int _Offset;
+[numthreads(8,8,1)]
+void ReadPixel (uint3 id : SV_DispatchThreadID)
+{
+    float2 uv = (id.xy + 0.5) / float2(_Width, _Height);
+    float4 col = _TargetTexture.SampleLevel(sampler_TargetTexture, uv, 0);
+    #if UNITY_UV_STARTS_AT_TOP
+    id.y = _Height - id.y - 1;
+    #endif
+    _TextureDatas[id.x + id.y * _Width] = col;
+}
+
+[numthreads(8,8,1)]
+void ReadPixel3D (uint3 id : SV_DispatchThreadID)
+{
+    float2 uv = (id.xy + 0.5) / float2(_Width, _Height);
+    float4 col = _TargetTexture.SampleLevel(sampler_TargetTexture, uv, 0);
+    #if UNITY_UV_STARTS_AT_TOP
+    id.y = _Height - id.y - 1;
+    #endif
+    _TextureDatas[id.x + id.y * _Width + _Offset * _Width * _Height] = col;
+}
+
+[numthreads(8,8,1)]
+void ReadPixelNormal3D (uint3 id : SV_DispatchThreadID)
+{
+    float2 uv = (id.xy + 0.5) / float2(_Width, _Height);
+    float4 col = _TargetTexture.SampleLevel(sampler_TargetTexture, uv, 0);
+    #if UNITY_UV_STARTS_AT_TOP
+    id.y = _Height - id.y - 1;
+    #endif
+    _TextureDatas[id.x + id.y * _Width + _Offset * _Width * _Height] = float4(UnpackNormal(col), 0);
+}
+
+[numthreads(8,8,1)]
+void WritePixel (uint2 id : SV_DispatchThreadID)
+{
+    _TargetRT[id + uint2(_Width, _Height)] = _TargetTexture[id];
+}
+
+[numthreads(8,8,1)]
+void WritePixelNormal (uint2 id : SV_DispatchThreadID)
+{
+    _TargetRT[id + uint2(_Width, _Height)] = float4(UnpackNormal(_TargetTexture[id]), 1);
+}
+
+[numthreads(8,8,1)]
+void WritePixelToArray(uint2 id : SV_DISPATCHTHREADID)
+{
+    #if UNITY_UV_STARTS_AT_TOP
+    int2 texID = uint2(id.x, _Width - id.y);
+    #else
+    int2 texID = id.x;
+    #endif
+    _TargetRTArray[uint3(texID - uint2(0, _Height), _Offset)] = _TargetTexture[id];
+}
