@@ -1,13 +1,10 @@
 ﻿#pragma kernel Cull
 #pragma kernel Clear
-#pragma kernel DecodeR16
-#pragma kernel DecodeHeight
 #include "../CGINC/Plane.cginc"
 uint _Count;
 struct TerrainChunkBuffer
 {
     float2 worldPos;
-    float2 minMaxHeight;
     float2 scale;
     uint2 vtUV;
 };
@@ -15,14 +12,15 @@ RWStructuredBuffer<TerrainChunkBuffer> _TerrainChunks;
 RWStructuredBuffer<uint> _CullResultBuffer;
 RWStructuredBuffer<uint> _DispatchBuffer;
 float4 planes[6];
+float2 _HeightScaleOffset;
 [numthreads(64, 1, 1)]
 void Cull(uint id : SV_DISPATCHTHREADID)
 {
     if(id >= _Count) return;
     uint len;
     TerrainChunkBuffer buffer = _TerrainChunks[id];
-    float3 startPos = float3(buffer.worldPos.x, buffer.minMaxHeight.x, buffer.worldPos.y);
-    float3 extents = float3(buffer.scale.x, buffer.minMaxHeight.y - buffer.minMaxHeight.x, buffer.scale.x) * 0.5;
+    float3 startPos = float3(buffer.worldPos.x, _HeightScaleOffset.y, buffer.worldPos.y);
+    float3 extents = float3(buffer.scale.x, _HeightScaleOffset.x, buffer.scale.x) * 0.5;
     if(BoxIntersect(extents, startPos + extents, planes))
     {
         InterlockedAdd(_DispatchBuffer[1], 1, len);
@@ -34,27 +32,4 @@ void Cull(uint id : SV_DISPATCHTHREADID)
 void Clear(uint id : SV_DISPATCHTHREADID)
 {
     _DispatchBuffer[1] = 0;
-}
-
-StructuredBuffer<uint> _TextureBuffer;
-RWTexture2D<float> _MainTex;
-uint _Count;
-
-[numthreads(8,8,1)]
-void DecodeR8(uint2 id : SV_DISPATCHTHREADID)
-{
-    uint index = id.y * _Count + id.x;
-    uint bufferIndex = index / 4;
-    uint bufferOffset = 3 - index % 4;
-    uint result = (_TextureBuffer[bufferIndex] >> 8 * bufferOffset) & 255;
-    _MainTex[id] = result / 255.0;
-}
-[numthreads(8,8,1)]
-void DecodeR16(uint2 id : SV_DISPATCHTHREADID)
-{
-    uint index = id.y * _Count + id.x;
-    uint bufferIndex = index / 2;
-    uint bufferOffset = 1 - index % 2;
-    uint result = (_TextureBuffer[bufferIndex] >> 16 * bufferOffset) & 65535;
-    _MainTex[id] = result / 65535.0;
 }

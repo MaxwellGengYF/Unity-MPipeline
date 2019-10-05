@@ -38,14 +38,12 @@ namespace MPipeline
         public int2 localPosition;
         private double distOffset;
         private VirtualTextureChunk textureChunk;
-        private float2 minMaxBounding;
         public int2 VirtualTextureIndex => localPosition * (int)(0.5 + pow(2.0, MTerrain.current.allLodLevles.Length - 1 - lodLevel));
         public bool isRendering { get; private set; }
         public TerrainQuadTree(int parentLodLevel, LocalPos sonPos, int2 parentPos)
         {
             distOffset = MTerrain.current.terrainData.lodDeferredOffset;
             textureChunk = new VirtualTextureChunk();
-            minMaxBounding = 0;
             isRendering = false;
             lodLevel = parentLodLevel + 1;
             leftDown = null;
@@ -189,12 +187,6 @@ namespace MPipeline
         {
             if (leftDown != null)
             {
-                float min0 = min(leftDown->minMaxBounding.x, leftUp->minMaxBounding.x);
-                float min1 = min(rightDown->minMaxBounding.x, rightUp->minMaxBounding.x);
-                float max0 = max(leftDown->minMaxBounding.y, leftUp->minMaxBounding.y);
-                float max1 = max(rightDown->minMaxBounding.y, rightUp->minMaxBounding.y);
-                minMaxBounding.x = min(min0, min1);
-                minMaxBounding.y = max(max0, max1);
                 leftDown->Dispose();
                 leftUp->Dispose();
                 rightDown->Dispose();
@@ -241,7 +233,6 @@ namespace MPipeline
             {
                 loadedBufferList.Add(new MTerrain.TerrainChunkBuffer
                 {
-                    minMaxHeight = 0,
                     scale = float2((float)(MTerrain.current.terrainData.largestChunkSize / pow(2, lodLevel)), (float)pow(2.0, MTerrain.current.allLodLevles.Length - 1 - lodLevel)),
                     worldPos = (float2)CornerWorldPos,
                     uvStartIndex = (uint2)VirtualTextureIndex
