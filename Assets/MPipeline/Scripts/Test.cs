@@ -28,37 +28,6 @@ namespace MPipeline
             Shader.DisableKeyword("USE_WHITE");
         }
 
-        [EasyButtons.Button]
-        void TestQueue()
-        {
-            NativeQueue<int> queueTester = new NativeQueue<int>(50, Allocator.Temp);
-            for(int i = 0; i < 100; ++i)
-            {
-                queueTester.Add(i);
-                if(queueTester.Length != i + 1)
-                {
-                    Debug.LogError("Wrong Length!");
-                }
-            }
-            for(int i = 0; i < 100; ++i)
-            {
-                int vv = queueTester.Dequeue();
-                if(i != vv)
-                {
-                    Debug.LogError("Wrong Dequeue!" + "  " + vv);
-                }
-            }
-            int v;
-            if(queueTester.TryDequeue(out v))
-            {
-                Debug.LogError("Should say no!");
-            }
-            Debug.Log(queueTester.Length);
-            queueTester.Dispose();
-            Debug.Log("Finish Unit Test!");
-
-        }
-
         private void Update()
         {
             /*if (Input.GetKeyDown(KeyCode.Space))

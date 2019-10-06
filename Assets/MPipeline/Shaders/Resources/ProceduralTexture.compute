@@ -1,9 +1,7 @@
 ﻿// Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel UpSample
 #pragma kernel NormalToTex
-#pragma kernel HeightToTex
 #pragma kernel ClearColorTex
-#pragma kernel ClearHeightTex
 #include "UnityCG.cginc"
 Texture2D<float> _SourceTex;
 Texture2DArray<float4> _MainTex; SamplerState sampler_MainTex;
@@ -64,15 +62,7 @@ void NormalToTex (uint2 id : SV_DISPATCHTHREADID)
     _VirtualMainTex[idx] = float4(albedo, smo.z);
     _VirtualSMO[idx] = float4(smo.xy, 0, 0);
 }
-RWTexture2DArray<float> _VirtualHeightmap;
-Texture2D<float> heightMapBuffer;
 
-[numthreads(8,8,1)]
-void HeightToTex(uint2 id : SV_DISPATCHTHREADID)
-{
-    uint3 idx = uint3(id, _OffsetIndex);
-    _VirtualHeightmap[idx] = heightMapBuffer[id];
-}
 [numthreads(8,8,1)]
 void ClearColorTex(uint2 id : SV_DISPATCHTHREADID)
 {
@@ -80,11 +70,4 @@ void ClearColorTex(uint2 id : SV_DISPATCHTHREADID)
     _VirtualBumpMap[idx] = 0;
     _VirtualMainTex[idx] = 1;
     _VirtualSMO[idx] = 1;
-}
-
-[numthreads(8,8,1)]
-void ClearHeightTex(uint2 id : SV_DISPATCHTHREADID)
-{
-    uint3 idx = uint3(id, _OffsetIndex);
-    _VirtualHeightmap[idx] = 0;
 }
