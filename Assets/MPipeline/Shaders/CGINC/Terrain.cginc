@@ -3,7 +3,6 @@
 struct TerrainChunkBuffer
 {
     float2 worldPos;
-    float2 minMaxHeight;
     float2 scale;
     uint2 vtUV;
 };

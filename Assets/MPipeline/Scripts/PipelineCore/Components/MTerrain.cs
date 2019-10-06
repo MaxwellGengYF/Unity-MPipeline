@@ -18,7 +18,6 @@ namespace MPipeline
         public struct TerrainChunkBuffer
         {
             public float2 worldPos;
-            public float2 minMaxHeight;
             public float2 scale;
             public uint2 uvStartIndex;
         }
