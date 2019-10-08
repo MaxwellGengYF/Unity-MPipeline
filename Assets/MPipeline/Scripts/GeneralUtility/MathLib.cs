@@ -171,6 +171,17 @@ namespace MPipeline
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double DistanceToQuad(double size, double2 quadToTarget)
+        {
+            quadToTarget = abs(quadToTarget);
+            double len = length(quadToTarget);
+            quadToTarget /= len;
+            double dotV = max(dot(float2(0, 1), quadToTarget), dot(float2(1, 0), quadToTarget));
+            double leftLen = size / dotV;
+            return len - leftLen;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float3x4 GetWorldToLocal(Transform trans)
         {
             float4x4 fx = trans.worldToLocalMatrix;

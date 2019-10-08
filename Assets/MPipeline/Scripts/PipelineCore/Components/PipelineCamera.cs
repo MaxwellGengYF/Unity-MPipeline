@@ -48,7 +48,6 @@ namespace MPipeline
         public Dictionary<Type, IPerCameraData> allDatas = new Dictionary<Type, IPerCameraData>(17);
         public bool inverseRender = false;
         public RenderTargetIdentifier cameraTarget = BuiltinRenderTextureType.CameraTarget;
-      //  private Dictionary<Type, CommandBuffer> commandBuffers = new Dictionary<Type, CommandBuffer>(10);
         public static List<PipelineCamera> allCameras = new List<PipelineCamera>(10);
         private int index = -1;
         [HideInInspector]

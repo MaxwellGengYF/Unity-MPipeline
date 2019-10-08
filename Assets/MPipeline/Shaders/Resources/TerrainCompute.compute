@@ -1,5 +1,7 @@
 ﻿#pragma kernel Cull
 #pragma kernel Clear
+#pragma kernel DecodeR8
+#pragma kernel DecodeR16
 #include "../CGINC/Plane.cginc"
 uint _Count;
 struct TerrainChunkBuffer
@@ -32,4 +34,27 @@ void Cull(uint id : SV_DISPATCHTHREADID)
 void Clear(uint id : SV_DISPATCHTHREADID)
 {
     _DispatchBuffer[1] = 0;
+}
+RWTexture2D<float> _MainTex;
+StructuredBuffer<uint> _TextureBuffer; 
+RWTexture2DArray<float> _VirtualHeightmap;
+uint _OffsetIndex;
+[numthreads(8,8,1)]
+void DecodeR8(uint2 id : SV_DISPATCHTHREADID)
+{
+    uint index = id.y * _Count + id.x;
+    uint value = _TextureBuffer[index / 4];
+    value >>= (index % 4) * 8;
+    value &= 255;
+    _MainTex[id] = value / 255.0;
+}
+
+[numthreads(8,8,1)]
+void DecodeR16(uint2 id : SV_DISPATCHTHREADID)
+{
+    uint index = id.y * _Count + id.x;
+    uint value = _TextureBuffer[index / 2];
+    value >>= (index % 2) * 16;
+    value &= 65535;
+    _VirtualHeightmap[uint3(id, _OffsetIndex)] = value / 65535.0;
 }

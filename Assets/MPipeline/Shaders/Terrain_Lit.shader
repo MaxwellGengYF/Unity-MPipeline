@@ -9,6 +9,7 @@
 CGINCLUDE
 #pragma target 5.0
 #define DECAL
+#define DEBUG_QUAD_TREE
 #define LIT_ENABLE
 #define DEFAULT_LIT
 Texture2D<float4> _TerrainVTIndexTex;

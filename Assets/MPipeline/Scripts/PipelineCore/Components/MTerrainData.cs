@@ -12,8 +12,10 @@ namespace MPipeline
         public double largestChunkSize = 1000;
         public double2 screenOffset;
         public float lodDeferredOffset = 2;
+        public int renderingLevelCount = 3;
         public float[] lodDistances = new float[]
         {
+            3000,
             1000,
             600,
             300

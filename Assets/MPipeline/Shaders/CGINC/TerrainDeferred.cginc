@@ -144,6 +144,9 @@ void frag_surf (v2f_surf IN,
   SurfaceOutputStandardSpecular o;
   float3x3 wdMatrix= float3x3(float3(1, 0, 0), float3(0, 0, 1), float3(0, 1, 0));
   // call surface function
+  #ifdef DEBUG_QUAD_TREE
+  IN.pack0 /= IN.scale; 
+  #endif
   surf (IN.pack0.xy, IN.vtUV, o);
   o.Normal = normalize(mul(o.Normal, wdMatrix));
   outEmission = ProceduralStandardSpecular_Deferred (o, outGBuffer0, outGBuffer1, outGBuffer2); //GI neccessary here!
@@ -227,8 +230,7 @@ inline v2f_shadow ds_shadow (UnityTessellationFactors tessFactors, const OutputP
   float4 worldPos =  vi[0].pos*bary.x + vi[1].pos*bary.y + vi[2].pos*bary.z;
   worldPos.y += _HeightScaleOffset.y;
  float2 pack0 = vi[0].pack0*bary.x + vi[1].pack0*bary.y + vi[2].pack0*bary.z;
-  uint2 vtUVIKndex = vi[0].vtUV;
-  float3 vtUV = GetVirtualTextureUV(_TerrainVTIndexTex, _TerrainVTIndexTex_TexelSize, vtUVIKndex + floor(pack0), frac(pack0));
+  float3 vtUV = GetVirtualTextureUV(_TerrainVTIndexTex, _TerrainVTIndexTex_TexelSize, vi[0].vtUV + floor(pack0), frac(pack0));
   worldPos.y +=_VirtualHeightmap.SampleLevel(sampler_VirtualHeightmap, vtUV, 0) * _HeightScaleOffset.x;
 o.pos= mul(_ShadowMapVP, worldPos);
 return o;

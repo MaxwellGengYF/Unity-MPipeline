@@ -12,22 +12,42 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 010ce77163682284691fda8b292bbe7b, type: 3}
   m_Name: TerrainData
   m_EditorClassIdentifier: 
-  heightOffset: -22.26
-  heightScale: 33.8
+  heightOffset: 0
+  heightScale: 0
   largestChunkSize: 1000
   screenOffset:
     x: 0
     y: 0
   lodDeferredOffset: 5
+  renderingLevelCount: 4
   lodDistances:
   - 10000
-  - 800
   - 500
-  - 300
+  - 100
+  - 50
+  - 20
   virtualTexCapacity: 128
   readWritePath: Assets/BinaryData/Terrain.mquad
   drawTerrainMaterial: {fileID: 2100000, guid: 895d3f610aae4944b88c1b1fc7f46f4d, type: 2}
   textures:
+  - albedoOccTex:
+      m_AssetGUID: dcfe9a8fb0122de42996598dee2f7e63
+      m_SubObjectName: 
+    normalTex:
+      m_AssetGUID: f9b118112ee229b4eae601dcea670900
+      m_SubObjectName: 
+    SMTex:
+      m_AssetGUID: 0e9ef0391720441418b962e92a5a2f2f
+      m_SubObjectName: 
+  - albedoOccTex:
+      m_AssetGUID: 2eb1283d998576b40a61659cc7339f72
+      m_SubObjectName: 
+    normalTex:
+      m_AssetGUID: 260a191ad64df6d41ab6c6f751473ba9
+      m_SubObjectName: 
+    SMTex:
+      m_AssetGUID: 7f3d7289b34024c4bb7c61fd87f8032e
+      m_SubObjectName: 
   - albedoOccTex:
       m_AssetGUID: c836481579ce0a345a44045d39b91028
       m_SubObjectName: 
@@ -45,13 +65,4 @@ MonoBehaviour:
       m_SubObjectName: 
     SMTex:
       m_AssetGUID: 9858954fb12a608449ef2af1a17ede66
-      m_SubObjectName: 
-  - albedoOccTex:
-      m_AssetGUID: 2eb1283d998576b40a61659cc7339f72
-      m_SubObjectName: 
-    normalTex:
-      m_AssetGUID: 260a191ad64df6d41ab6c6f751473ba9
-      m_SubObjectName: 
-    SMTex:
-      m_AssetGUID: 7f3d7289b34024c4bb7c61fd87f8032e
       m_SubObjectName: 

@@ -1,9 +1,7 @@
 ﻿// Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel UpSample
 #pragma kernel NormalToTex
-#pragma kernel HeightToTex
 #pragma kernel ClearColorTex
-#pragma kernel ClearHeightTex
 #include "UnityCG.cginc"
 Texture2D<float> _SourceTex;
 Texture2DArray<float4> _MainTex; SamplerState sampler_MainTex;
@@ -18,16 +16,21 @@ uint _OffsetIndex;
 [numthreads(8,8,1)]
 void UpSample (uint2 id : SV_DispatchThreadID)
 {
-    //_TextureSize.xy: _SourceTex's size        _TextureSize.zw:  _VirtualMainTex's size
-    float2 destUV = (id + 0.5) / _TextureSize.zw;
-    float2 sourcePixelUV = destUV * (_TextureSize.xy - 1) + 1;
+    //_TextureSize   x: Mask's size    y:1 / size    z: chunk size
+    float2 destUV = (id + 0.5) * _TextureSize.y;
+    //Get Mask Pixel Position
+    float2 sourcePixelUV = destUV * (_TextureSize.x - 1) + 1;
+    destUV *= _TextureSize.z;
     float2 sourcePixelUVAdded = sourcePixelUV + 0.5;
     float2 sourcePixelUVMinus = sourcePixelUV - 0.5;
+    //LeftDown & RightDown Mask Value
     float2 low = float2(_SourceTex[sourcePixelUVMinus], _SourceTex[float2(sourcePixelUVAdded.x, sourcePixelUVMinus.y)]);
     low = low * _Count + 0.1;
+    //LeftUp & RightUp Mask Value
     float2 up = float2( _SourceTex[float2(sourcePixelUVMinus.x, sourcePixelUVAdded.y)], _SourceTex[sourcePixelUVAdded]);
     up = up * _Count + 0.1;
     sourcePixelUVAdded = frac(sourcePixelUVAdded);
+    //Sample Albedo+Occlusion Texture
     float4 leftDown = _MainTex.SampleLevel(sampler_MainTex, float3(destUV, low.x), 0);
     float4 rightDown = _MainTex.SampleLevel(sampler_MainTex, float3(destUV, low.y), 0);
     float4 leftUp = _MainTex.SampleLevel(sampler_MainTex, float3(destUV, up.x), 0);
@@ -35,7 +38,7 @@ void UpSample (uint2 id : SV_DispatchThreadID)
     leftDown = lerp(leftDown, rightDown, sourcePixelUVAdded.x);
     leftUp = lerp(leftUp, rightUp, sourcePixelUVAdded.x);
     _VirtualMainTex[uint3(id, _OffsetIndex)] = lerp(leftDown, leftUp, sourcePixelUVAdded.y);
-
+    //Sample Normal Texture
     leftDown.xy = _BumpMap.SampleLevel(sampler_BumpMap, float3(destUV, low.x), 0);
     rightDown.xy = _BumpMap.SampleLevel(sampler_BumpMap, float3(destUV, low.y), 0);
     leftUp.xy = _BumpMap.SampleLevel(sampler_BumpMap, float3(destUV, up.x), 0);
@@ -43,6 +46,7 @@ void UpSample (uint2 id : SV_DispatchThreadID)
     leftDown.xy = lerp(leftDown.xy, rightDown.xy, sourcePixelUVAdded.x);
     leftUp.xy = lerp(leftUp.xy, rightUp.xy, sourcePixelUVAdded.x);
     _VirtualBumpMap[uint3(id, _OffsetIndex)] = lerp(leftDown.xy, leftUp.xy, sourcePixelUVAdded.y);
+    //Sample Smoothness+Metallic Texture
     leftDown = _SMMap.SampleLevel(sampler_SMMap, float3(destUV, low.x), 0);
     rightDown = _SMMap.SampleLevel(sampler_SMMap, float3(destUV, low.y), 0);
     leftUp = _SMMap.SampleLevel(sampler_SMMap, float3(destUV, up.x), 0);
@@ -64,15 +68,7 @@ void NormalToTex (uint2 id : SV_DISPATCHTHREADID)
     _VirtualMainTex[idx] = float4(albedo, smo.z);
     _VirtualSMO[idx] = float4(smo.xy, 0, 0);
 }
-RWTexture2DArray<float> _VirtualHeightmap;
-Texture2D<float> heightMapBuffer;
 
-[numthreads(8,8,1)]
-void HeightToTex(uint2 id : SV_DISPATCHTHREADID)
-{
-    uint3 idx = uint3(id, _OffsetIndex);
-    _VirtualHeightmap[idx] = heightMapBuffer[id];
-}
 [numthreads(8,8,1)]
 void ClearColorTex(uint2 id : SV_DISPATCHTHREADID)
 {
@@ -80,11 +76,4 @@ void ClearColorTex(uint2 id : SV_DISPATCHTHREADID)
     _VirtualBumpMap[idx] = 0;
     _VirtualMainTex[idx] = 1;
     _VirtualSMO[idx] = 1;
-}
-
-[numthreads(8,8,1)]
-void ClearHeightTex(uint2 id : SV_DISPATCHTHREADID)
-{
-    uint3 idx = uint3(id, _OffsetIndex);
-    _VirtualHeightmap[idx] = 0;
 }
