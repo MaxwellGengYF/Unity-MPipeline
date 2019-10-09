@@ -70,6 +70,8 @@ namespace MPipeline
         #region QUADTREE
         public NativeList_Float allLodLevles;
         public VirtualTextureLoader loader;
+        [System.NonSerialized]
+        public int lodOffset;
         public NativeQueue<TerrainLoadData> loadDataList;
         #endregion
 
@@ -132,7 +134,7 @@ namespace MPipeline
             textureShader.SetTexture(0, ShaderIDs._MainTex, albedoTex);
             textureShader.SetTexture(0, ShaderIDs._BumpMap, normalTex);
             textureShader.SetTexture(0, ShaderIDs._SMMap, smTex);
-            textureShader.SetVector(ShaderIDs._TextureSize, float4(mask.width, mask.height, COLOR_RESOLUTION, COLOR_RESOLUTION));
+            textureShader.SetVector(ShaderIDs._TextureSize, float4(MASK_RESOLUTION, 1f / COLOR_RESOLUTION, size, 1));
 
             textureShader.SetTexture(0, ShaderIDs._VirtualMainTex, vt.GetTexture(1));
             textureShader.SetTexture(0, ShaderIDs._VirtualBumpMap, vt.GetTexture(2));
@@ -169,7 +171,6 @@ namespace MPipeline
                 yield return albedoLoader;
                 yield return normalLoader;
                 yield return smLoader;
-                yield return null;
                 const int disp = COLOR_RESOLUTION / 8;
                 textureShader.SetInt(ShaderIDs._OffsetIndex, i);
                 if (albedoLoader.Result && normalLoader.Result && smLoader.Result)
@@ -260,10 +261,11 @@ namespace MPipeline
             culledResultsBuffer = new ComputeBuffer(INIT_LENGTH, sizeof(int));
             loadedBuffer = new ComputeBuffer(INIT_LENGTH, sizeof(TerrainChunkBuffer));
             loadedBufferList = new NativeList<TerrainChunkBuffer>(INIT_LENGTH, Allocator.Persistent);
-            loader = new VirtualTextureLoader(terrainData.lodDistances.Length, terrainData.readWritePath, this);
+            lodOffset = terrainData.lodDistances.Length - terrainData.renderingLevelCount;
+            loader = new VirtualTextureLoader(lodOffset, terrainData.renderingLevelCount, terrainData.readWritePath, this);
             loadDataList = new NativeQueue<TerrainLoadData>(100, Allocator.Persistent);
             NativeArray<uint> dispatchDraw = new NativeArray<uint>(5, Allocator.Temp, NativeArrayOptions.ClearMemory);
-            dispatchDraw[0] = 6;
+            dispatchDraw[0] = 96;
             dispatchDrawBuffer.SetData(dispatchDraw);
             VirtualTextureFormat* formats = stackalloc VirtualTextureFormat[]
             {
@@ -313,6 +315,9 @@ namespace MPipeline
                 msaaSamples = 1
             });
             smTex.Create();
+            smTex.wrapMode = TextureWrapMode.Repeat;
+            normalTex.wrapMode = TextureWrapMode.Repeat;
+            albedoTex.wrapMode = TextureWrapMode.Repeat;
             mask = new RenderTexture(new RenderTextureDescriptor
             {
                 colorFormat = RenderTextureFormat.R8,
@@ -325,7 +330,7 @@ namespace MPipeline
             });
             mask.Create();
             textureBuffer = new ComputeBuffer(max(MASK_RESOLUTION * MASK_RESOLUTION / 4, HEIGHT_RESOLUTION * HEIGHT_RESOLUTION / 2), 4);
-            tree = new TerrainQuadTree(-1, TerrainQuadTree.LocalPos.LeftDown, 0);
+            tree = new TerrainQuadTree(-1, TerrainQuadTree.LocalPos.LeftDown, 0, terrainData.largestChunkSize);
             StartCoroutine(AsyncLoader());
         }
         void UpdateBuffer()

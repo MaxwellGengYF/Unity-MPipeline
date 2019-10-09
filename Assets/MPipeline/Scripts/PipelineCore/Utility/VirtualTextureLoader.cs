@@ -41,25 +41,33 @@ namespace MPipeline
         private AutoResetEvent resetEvent;
         private Thread loadingThread;
         private bool enabled;
+        private int initialMipCount;
         private byte[] bufferBytes;
         private const long CHUNK_SIZE = MTerrain.HEIGHT_RESOLUTION * MTerrain.HEIGHT_RESOLUTION * 2 + MTerrain.MASK_RESOLUTION * MTerrain.MASK_RESOLUTION;
-        public VirtualTextureLoader(int mipLevel, string path, object lockerObj)
+        public static NativeArray<long> GetStreamingPositionOffset(int initialMipCount, int mipLevel, Allocator alloc = Allocator.Persistent)
+        {
+            var streamPositionOffset = new NativeArray<long>(mipLevel, alloc, NativeArrayOptions.UninitializedMemory);
+            long offset = 0;
+            for (int i = 0; i < mipLevel; ++i)
+            {
+                streamPositionOffset[i] = offset;
+                long curOffset = (long)(0.1 + pow(2, i + initialMipCount));
+                offset += curOffset * curOffset;
+            }
+            return streamPositionOffset;
+        }
+
+        public VirtualTextureLoader(int initialMipCount, int mipLevel, string path, object lockerObj)
         {
             enabled = true;
+            this.initialMipCount = initialMipCount;
             handlerQueue = new NativeQueue<LoadingHandler>(100, Allocator.Persistent);
             this.lockerObj = lockerObj;
             this.mipLevel = mipLevel;
             resetEvent = new AutoResetEvent(true);
-            streamPositionOffset = new NativeArray<long>(mipLevel, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-            long offset = 0;
             bufferBytes = new byte[CHUNK_SIZE];
-            for (int i = 0; i < mipLevel; ++i)
-            {
-                streamPositionOffset[i] = offset;
-                long curOffset = (long)(0.1 + pow(2, i));
-                offset += curOffset * curOffset;
-            }
-            streamer = new FileStream(path, FileMode.Open, FileAccess.Read);
+            streamPositionOffset = GetStreamingPositionOffset(initialMipCount, mipLevel);
+            streamer = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.Read, (int)CHUNK_SIZE);
             loadingThread = new Thread(() =>
             {
                 while (enabled)
@@ -74,7 +82,7 @@ namespace MPipeline
                         }
                         try
                         {
-                            streamer.Position = CHUNK_SIZE * ((long)(0.1 + pow(2.0, handler.mipLevel)) * handler.position.y + handler.position.x + streamPositionOffset[handler.mipLevel]);
+                            streamer.Position = CHUNK_SIZE * ((long)(0.1 + pow(2.0, handler.mipLevel)) * handler.position.y + handler.position.x + streamPositionOffset[handler.mipLevel - initialMipCount]);
                             streamer.Read(bufferBytes, 0, (int)CHUNK_SIZE);
                             UnsafeUtility.MemCpy(handler.allBytes, bufferBytes.Ptr(), CHUNK_SIZE);
                         }

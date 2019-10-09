@@ -1,0 +1,58 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel CSMain
+#pragma kernel GenerateMip
+#pragma kernel GenerateMip NOT_COMBINE
+#pragma kernel DecodeR8
+#pragma kernel DecodeR16
+RWStructuredBuffer<float> _TextureBuffer;
+Texture2D<float> _MainTex; SamplerState sampler_MainTex;
+
+float4 _TextureSize;
+uint _Count;
+[numthreads(8,8,1)]
+void CSMain (uint2 id : SV_DispatchThreadID)
+{
+    uint index = id.y * _Count + id.x;
+    float2 uv = (id + 0.5) * _TextureSize.xy + _TextureSize.zw;
+    _TextureBuffer[index] = _MainTex.SampleLevel(sampler_MainTex, uv, 0);
+}
+uint2 _OffsetIndex;
+RWTexture2D<float> _SourceTex;
+RWStructuredBuffer<uint> _SourceBuffer;
+RWTexture2D<float> _DestTex;
+[numthreads(8,8,1)]
+void GenerateMip(uint2 id : SV_DISPATCHTHREADID)
+{
+    float4 v = float4(_SourceTex[id * 2], _SourceTex[id * 2 + 1],  _SourceTex[id * 2 + uint2(0, 1)] , _SourceTex[id * 2 + uint2(1, 0)]);
+    #ifdef NOT_COMBINE
+    if(abs(v.x - v.y) < 1.0/256 || abs(v.x - v.z) < 1.0/256 || abs(v.x - v.w) < 1.0/256)
+        _DestTex[id] = v.x;
+    else if(abs(v.y - v.x) < 1.0/256 || abs(v.y - v.z) < 1.0/256 || abs(v.y - v.w) < 1.0/256)
+        _DestTex[id] = v.y;
+    else if(abs(v.z - v.x) < 1.0/256 || abs(v.z - v.y) < 1.0/256 || abs(v.z - v.w) < 1.0/256)
+        _DestTex[id] = v.z;
+    else _DestTex[id] = v.w;
+    #else
+    _DestTex[id] = dot(v, 0.25);
+    #endif
+}
+
+[numthreads(8,8,1)]
+void DecodeR8(uint2 id : SV_DISPATCHTHREADID)
+{
+    uint index = id.y * _Count + id.x;
+    uint value = _SourceBuffer[index / 4];
+    value >>= (index % 4) * 8;
+    value &= 255;
+    _DestTex[id+_OffsetIndex] = value / 255.0;
+}
+
+[numthreads(8,8,1)]
+void DecodeR16(uint2 id : SV_DISPATCHTHREADID)
+{
+    uint index = id.y * _Count + id.x;
+    uint value = _SourceBuffer[index / 2];
+    value >>= (index % 2) * 16;
+    value &= 65535;
+    _DestTex[id+_OffsetIndex] = value / 65535.0;
+}

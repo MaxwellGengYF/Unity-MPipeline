@@ -39,8 +39,10 @@ namespace MPipeline
         private double distOffset;
         public int2 VirtualTextureIndex => localPosition * (int)(0.5 + pow(2.0, MTerrain.current.allLodLevles.Length - 1 - lodLevel));
         public bool isRendering { get; private set; }
-        public TerrainQuadTree(int parentLodLevel, LocalPos sonPos, int2 parentPos)
+        private double worldSize;
+        public TerrainQuadTree(int parentLodLevel, LocalPos sonPos, int2 parentPos, double worldSize)
         {
+            this.worldSize = worldSize;
             distOffset = MTerrain.current.terrainData.lodDeferredOffset;
             isRendering = false;
             lodLevel = parentLodLevel + 1;
@@ -118,7 +120,7 @@ namespace MPipeline
                     size = VirtualTextureSize,
                     handler0 = MTerrain.current.loader.LoadChunk(localPosition, lodLevel)
                 });
-                
+
             }
 
             isRendering = true;
@@ -140,6 +142,22 @@ namespace MPipeline
             isRendering = false;
         }
 
+        private void LogicSeparate()
+        {
+            if (leftDown == null)
+            {
+                leftDown = MUnsafeUtility.Malloc<TerrainQuadTree>(sizeof(TerrainQuadTree) * 4, Allocator.Persistent);
+                leftUp = leftDown + 1;
+                rightDown = leftDown + 2;
+                rightUp = leftDown + 3;
+                double subSize = worldSize * 0.5;
+                *leftDown = new TerrainQuadTree(lodLevel, LocalPos.LeftDown, localPosition, subSize);
+                *leftUp = new TerrainQuadTree(lodLevel, LocalPos.LeftUp, localPosition, subSize);
+                *rightDown = new TerrainQuadTree(lodLevel, LocalPos.RightDown, localPosition, subSize);
+                *rightUp = new TerrainQuadTree(lodLevel, LocalPos.RightUp, localPosition, subSize);
+            }
+        }
+
         private void Separate()
         {
             if (lodLevel >= MTerrain.current.allLodLevles.Length - 1)
@@ -155,10 +173,11 @@ namespace MPipeline
                     leftUp = leftDown + 1;
                     rightDown = leftDown + 2;
                     rightUp = leftDown + 3;
-                    *leftDown = new TerrainQuadTree(lodLevel, LocalPos.LeftDown, localPosition);
-                    *leftUp = new TerrainQuadTree(lodLevel, LocalPos.LeftUp, localPosition);
-                    *rightDown = new TerrainQuadTree(lodLevel, LocalPos.RightDown, localPosition);
-                    *rightUp = new TerrainQuadTree(lodLevel, LocalPos.RightUp, localPosition);
+                    double subSize = worldSize * 0.5;
+                    *leftDown = new TerrainQuadTree(lodLevel, LocalPos.LeftDown, localPosition, subSize);
+                    *leftUp = new TerrainQuadTree(lodLevel, LocalPos.LeftUp, localPosition, subSize);
+                    *rightDown = new TerrainQuadTree(lodLevel, LocalPos.RightDown, localPosition, subSize);
+                    *rightUp = new TerrainQuadTree(lodLevel, LocalPos.RightUp, localPosition, subSize);
                     MTerrain.current.loadDataList.Add(new TerrainLoadData
                     {
                         ope = TerrainLoadData.Operator.Separate,
@@ -194,7 +213,7 @@ namespace MPipeline
                     {
                         ope = TerrainLoadData.Operator.Combine,
                         startIndex = VirtualTextureIndex,
-                        size = VirtualTextureSize 
+                        size = VirtualTextureSize
                     });
                     isRendering = true;
                 }
@@ -238,15 +257,16 @@ namespace MPipeline
         }
         public void CheckUpdate(double2 camXZPos)
         {
-            double2 worldPos = CenterWorldPos;
-            double dist = distance(worldPos, camXZPos);
+            double2 toPoint = camXZPos - CenterWorldPos;
+            double dist = MathLib.DistanceToQuad(worldSize, toPoint);
+
             if (dist > MTerrain.current.allLodLevles[lodLevel] - distOffset)
             {
-                Combine(lodLevel != 0);
+                Combine(lodLevel > MTerrain.current.lodOffset);
             }
             else if (dist > MTerrain.current.allLodLevles[lodLevel + 1] - distOffset)
             {
-                Combine(true);
+                Combine(lodLevel >=MTerrain.current.lodOffset);
 
             }
             else
@@ -254,6 +274,7 @@ namespace MPipeline
                 Separate();
 
             }
+
 
             if (leftDown != null)
             {
