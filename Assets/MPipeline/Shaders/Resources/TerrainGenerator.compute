@@ -30,7 +30,7 @@ void GenerateMip(uint2 id : SV_DISPATCHTHREADID)
     else if(abs(v.y - v.x) < 1.0/256 || abs(v.y - v.z) < 1.0/256 || abs(v.y - v.w) < 1.0/256)
         _DestTex[id] = v.y;
     else if(abs(v.z - v.x) < 1.0/256 || abs(v.z - v.y) < 1.0/256 || abs(v.z - v.w) < 1.0/256)
-        _DestTex[id] = v.y;
+        _DestTex[id] = v.z;
     else _DestTex[id] = v.w;
     #else
     _DestTex[id] = dot(v, 0.25);

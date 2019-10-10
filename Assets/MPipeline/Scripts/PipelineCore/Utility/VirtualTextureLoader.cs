@@ -82,9 +82,7 @@ namespace MPipeline
                         }
                         try
                         {
-                            handler.mipLevel -= this.initialMipCount;
-                            handler.mipLevel = max(0, handler.mipLevel);
-                            streamer.Position = CHUNK_SIZE * ((long)(0.1 + pow(2.0, handler.mipLevel)) * handler.position.y + handler.position.x + streamPositionOffset[handler.mipLevel]);
+                            streamer.Position = CHUNK_SIZE * ((long)(0.1 + pow(2.0, handler.mipLevel)) * handler.position.y + handler.position.x + streamPositionOffset[handler.mipLevel - initialMipCount]);
                             streamer.Read(bufferBytes, 0, (int)CHUNK_SIZE);
                             UnsafeUtility.MemCpy(handler.allBytes, bufferBytes.Ptr(), CHUNK_SIZE);
                         }

@@ -19,8 +19,9 @@ void UpSample (uint2 id : SV_DispatchThreadID)
     //_TextureSize   x: Mask's size    y:1 / size    z: chunk size
     float2 destUV = (id + 0.5) * _TextureSize.y;
     //Get Mask Pixel Position
-    float2 sourcePixelUV = destUV * (_TextureSize.x - 1) + 1;
+    float2 sourcePixelUV = destUV * (_TextureSize.x - 2) + 1;
     destUV *= _TextureSize.z;
+    destUV = frac(destUV);
     float2 sourcePixelUVAdded = sourcePixelUV + 0.5;
     float2 sourcePixelUVMinus = sourcePixelUV - 0.5;
     //LeftDown & RightDown Mask Value

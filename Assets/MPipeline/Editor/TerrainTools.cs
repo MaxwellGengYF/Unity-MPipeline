@@ -8,7 +8,7 @@ using static Unity.Mathematics.math;
 namespace MPipeline
 {
    
-    public class GenerateMip : EditorWindow
+    public class TerrainTools : EditorWindow
     {
         public MTerrainData terrainData;
         public Vector2Int chunkPosition;
@@ -18,7 +18,7 @@ namespace MPipeline
         [MenuItem("MPipeline/Terrain/Generate Tool")]
         private static void CreateInstance()
         {
-            GenerateMip mip = GetWindow(typeof(GenerateMip)) as GenerateMip;
+            TerrainTools mip = GetWindow(typeof(TerrainTools)) as TerrainTools;
             mip.Show();
         }
         private void OnGUI()
