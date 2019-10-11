@@ -89,7 +89,7 @@ namespace MPipeline
         private ComputeShader shader;
         private RenderTexture[] textures;
         private TexturePool pool;
-        private int indexTexID;
+        public int indexTexID { get; private set; }
         private NativeArray<VirtualTextureFormat> allFormats;
         private static int[] vtVariables = new int[4];
         private static int[] texSize = new int[2];
@@ -99,18 +99,26 @@ namespace MPipeline
         public RenderTexture indexTex { get; private set; }
         private struct VTChunkHandleEqual : IFunction<int2, int2, bool>
         {
+            [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             public bool Run(ref int2 a, ref int2 b)
             {
                 return a.x == b.x && a.y == b.y;
             }
         }
         private NativeDictionary<int2, int2, VTChunkHandleEqual> poolDict;
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public RenderTexture GetTexture(int index)
         {
             return textures[index];
         }
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public VirtualTextureFormat GetTextureFormat(int index)
+        {
+            return allFormats[index];
+        }
         public int LeftedTextureElement
         {
+            [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             get
             {
                 return pool.LeftedElement;
@@ -323,6 +331,7 @@ namespace MPipeline
         /// </summary>
         /// <param name="startIndex">Start Index in IndexTexture </param>
         /// <param name="size">Target Size in IndexTexture</param>
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void UnloadTexture(int2 startIndex)
         {
             UnloadChunk(ref startIndex);

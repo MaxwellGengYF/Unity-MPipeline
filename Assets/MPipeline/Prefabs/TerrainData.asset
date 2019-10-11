@@ -12,14 +12,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 010ce77163682284691fda8b292bbe7b, type: 3}
   m_Name: TerrainData
   m_EditorClassIdentifier: 
-  heightOffset: -40.35
-  heightScale: 53.7
+  heightOffset: 0
+  heightScale: 23.6
   largestChunkSize: 1000
   screenOffset:
     x: 0
     y: 0
   lodDeferredOffset: 5
   renderingLevelCount: 4
+  allMaskTextures:
+  - m_AssetGUID: 6f9c34edfdbf309459e912f8ad8137bf
+    m_SubObjectName: 
+  - m_AssetGUID: 3a6e2d1a6e3ba1c4a973622a72149252
+    m_SubObjectName: 
+  - m_AssetGUID: 7800ce859ebf596418206993f7ffe7b9
+    m_SubObjectName: 
+  - m_AssetGUID: f1fc44431ff931e40ab70c9a5acc7d4f
+    m_SubObjectName: 
   lodDistances:
   - 10000
   - 500

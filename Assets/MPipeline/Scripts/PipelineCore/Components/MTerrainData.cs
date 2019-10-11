@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Mathematics;
+using UnityEngine.AddressableAssets;
 namespace MPipeline
 {
     [CreateAssetMenu(fileName = "TerrainData", menuName ="PCG/Terrain")]
@@ -13,6 +14,7 @@ namespace MPipeline
         public double2 screenOffset;
         public float lodDeferredOffset = 2;
         public int renderingLevelCount = 3;
+        public AssetReference[] allMaskTextures;
         public float[] lodDistances = new float[]
         {
             3000,

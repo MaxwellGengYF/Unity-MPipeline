@@ -19,6 +19,8 @@ namespace MPipeline
         public Operator ope;
         public int size;
         public int2 startIndex;
+        public int2 rootPos;
+        public float3 maskScaleOffset;
         public VirtualTextureLoader.LoadingHandler handler0;
         public VirtualTextureLoader.LoadingHandler handler1;
         public VirtualTextureLoader.LoadingHandler handler2;
@@ -40,7 +42,9 @@ namespace MPipeline
         public int2 VirtualTextureIndex => localPosition * (int)(0.5 + pow(2.0, MTerrain.current.allLodLevles.Length - 1 - lodLevel));
         public bool isRendering { get; private set; }
         private double worldSize;
-        public TerrainQuadTree(int parentLodLevel, LocalPos sonPos, int2 parentPos, double worldSize)
+        private int2 rootPos;
+        public double3 maskScaleOffset;
+        public TerrainQuadTree(int parentLodLevel, LocalPos sonPos, int2 parentPos, double worldSize, double3 maskScaleOffset, int2 rootPos)
         {
             this.worldSize = worldSize;
             distOffset = MTerrain.current.terrainData.lodDeferredOffset;
@@ -62,6 +66,39 @@ namespace MPipeline
                 case LocalPos.RightUp:
                     localPosition += 1;
                     break;
+            }
+            if(lodLevel > MTerrain.current.lodOffset - 1)
+            {
+                this.rootPos = rootPos;
+                double subScale = maskScaleOffset.x * 0.5;
+                double2 offset = maskScaleOffset.yz;
+                switch (sonPos)
+                {
+                    case LocalPos.LeftUp:
+                        offset += double2(0, subScale);
+                        break;
+                    case LocalPos.RightDown:
+                        offset += double2(subScale, 0);
+                        break;
+                    case LocalPos.RightUp:
+                        offset += subScale;
+                        break;
+                }
+                this.maskScaleOffset = double3(subScale, offset);
+            }
+           
+            else
+            {
+                this.rootPos = localPosition / 2;
+                this.maskScaleOffset = maskScaleOffset;
+            }
+            if (lodLevel == MTerrain.current.lodOffset)
+            {
+                MTerrain.current.maskLoadList.Add(new MTerrain.MaskLoadCommand
+                {
+                    load = true,
+                    pos = this.rootPos + (int2)this.maskScaleOffset.yz
+                });
             }
         }
         public int VirtualTextureSize => (int)(0.1 + pow(2.0, MTerrain.current.allLodLevles.Length - 1 - lodLevel));
@@ -87,6 +124,14 @@ namespace MPipeline
         }
         public void Dispose()
         {
+            if (lodLevel == MTerrain.current.lodOffset)
+            {
+                MTerrain.current.maskLoadList.Add(new MTerrain.MaskLoadCommand
+                {
+                    load = false,
+                    pos = rootPos + (int2)maskScaleOffset.yz
+                });
+            }
             if (isRendering && MTerrain.current != null)
             {
                 MTerrain.current.loadDataList.Add(new TerrainLoadData
@@ -118,7 +163,9 @@ namespace MPipeline
                     ope = TerrainLoadData.Operator.Load,
                     startIndex = VirtualTextureIndex,
                     size = VirtualTextureSize,
-                    handler0 = MTerrain.current.loader.LoadChunk(localPosition, lodLevel)
+                    handler0 = MTerrain.current.loader.LoadChunk(localPosition, lodLevel),
+                    rootPos = rootPos,
+                    maskScaleOffset = (float3)maskScaleOffset
                 });
 
             }
@@ -151,10 +198,10 @@ namespace MPipeline
                 rightDown = leftDown + 2;
                 rightUp = leftDown + 3;
                 double subSize = worldSize * 0.5;
-                *leftDown = new TerrainQuadTree(lodLevel, LocalPos.LeftDown, localPosition, subSize);
-                *leftUp = new TerrainQuadTree(lodLevel, LocalPos.LeftUp, localPosition, subSize);
-                *rightDown = new TerrainQuadTree(lodLevel, LocalPos.RightDown, localPosition, subSize);
-                *rightUp = new TerrainQuadTree(lodLevel, LocalPos.RightUp, localPosition, subSize);
+                *leftDown = new TerrainQuadTree(lodLevel, LocalPos.LeftDown, localPosition, subSize, maskScaleOffset, rootPos);
+                *leftUp = new TerrainQuadTree(lodLevel, LocalPos.LeftUp, localPosition, subSize, maskScaleOffset, rootPos);
+                *rightDown = new TerrainQuadTree(lodLevel, LocalPos.RightDown, localPosition, subSize, maskScaleOffset, rootPos);
+                *rightUp = new TerrainQuadTree(lodLevel, LocalPos.RightUp, localPosition, subSize, maskScaleOffset, rootPos);
             }
         }
 
@@ -174,15 +221,19 @@ namespace MPipeline
                     rightDown = leftDown + 2;
                     rightUp = leftDown + 3;
                     double subSize = worldSize * 0.5;
-                    *leftDown = new TerrainQuadTree(lodLevel, LocalPos.LeftDown, localPosition, subSize);
-                    *leftUp = new TerrainQuadTree(lodLevel, LocalPos.LeftUp, localPosition, subSize);
-                    *rightDown = new TerrainQuadTree(lodLevel, LocalPos.RightDown, localPosition, subSize);
-                    *rightUp = new TerrainQuadTree(lodLevel, LocalPos.RightUp, localPosition, subSize);
+                    *leftDown = new TerrainQuadTree(lodLevel, LocalPos.LeftDown, localPosition, subSize, this.maskScaleOffset, rootPos);
+                    *leftUp = new TerrainQuadTree(lodLevel, LocalPos.LeftUp, localPosition, subSize, this.maskScaleOffset, rootPos);
+                    *rightDown = new TerrainQuadTree(lodLevel, LocalPos.RightDown, localPosition, subSize, this.maskScaleOffset, rootPos);
+                    *rightUp = new TerrainQuadTree(lodLevel, LocalPos.RightUp, localPosition, subSize, this.maskScaleOffset, rootPos);
+                    float3 maskScaleOffset = (float3)this.maskScaleOffset;
+                    maskScaleOffset.x *= 0.5f;
                     MTerrain.current.loadDataList.Add(new TerrainLoadData
                     {
                         ope = TerrainLoadData.Operator.Separate,
                         startIndex = VirtualTextureIndex,
                         size = VirtualTextureSize,
+                        rootPos = rootPos,
+                        maskScaleOffset = maskScaleOffset,
                         handler0 = MTerrain.current.loader.LoadChunk(leftDown->localPosition, leftDown->lodLevel),
                         handler1 = MTerrain.current.loader.LoadChunk(leftUp->localPosition, leftUp->lodLevel),
                         handler2 = MTerrain.current.loader.LoadChunk(rightDown->localPosition, rightDown->lodLevel),
