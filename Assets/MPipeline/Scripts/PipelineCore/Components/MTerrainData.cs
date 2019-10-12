@@ -15,6 +15,7 @@ namespace MPipeline
         public float lodDeferredOffset = 2;
         public int renderingLevelCount = 3;
         public AssetReference[] allMaskTextures;
+        public Texture2D warpNoiseTexture;
         public float[] lodDistances = new float[]
         {
             3000,

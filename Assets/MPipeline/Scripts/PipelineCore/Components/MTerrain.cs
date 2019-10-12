@@ -34,7 +34,7 @@ namespace MPipeline
             public bool load;
             public int2 pos;
         }
-        //public const int MASK_RESOLUTION = 64;
+        public const int MASK_RESOLUTION = 64;
         public const int HEIGHT_RESOLUTION = 256;
         public const int COLOR_RESOLUTION = 1024;
         public MTerrainData terrainData;
@@ -104,7 +104,7 @@ namespace MPipeline
             textureShader.SetTexture(0, ShaderIDs._VirtualSMO, vt.GetTexture(3));
             textureShader.SetInt(ShaderIDs._Count, COLOR_RESOLUTION);
             textureShader.SetVector(ShaderIDs._IndexBuffer, float4(rootPos, 1, 1));
-            textureShader.SetVector(ShaderIDs._IndexTextureSize, float4(1f / 2048, terrainData.allMaskTextures.Length, vt.indexSize));
+            textureShader.SetVector(ShaderIDs._IndexTextureSize, float4(MASK_RESOLUTION, terrainData.allMaskTextures.Length, vt.indexSize));
             textureShader.SetVector(ShaderIDs._TextureSize, float4(maskScaleOffset, size));
             int rtID = maskVT.GetTextureFormat(0).rtPropertyID;
             textureShader.SetTexture(0, rtID, maskVT.GetTexture(0));
@@ -182,7 +182,6 @@ namespace MPipeline
                 {
                     if (maskCommand.load)
                     {
-                        Debug.Log(maskCommand.pos);
                         AssetReference arf = terrainData.allMaskTextures[maskCommand.pos.y * largestChunkCount + maskCommand.pos.x];
                         var maskLoader = arf.LoadAssetAsync<Texture>();
                         yield return maskLoader;
@@ -209,6 +208,7 @@ namespace MPipeline
                         case TerrainLoadData.Operator.Load:
                             while (!GetComplete(ref loadData.handler0))
                                 yield return null;
+                            textureShader.SetTexture(0, ShaderIDs._NoiseTexture, terrainData.warpNoiseTexture);
                             LoadTexture(loadData.handler0, loadData.startIndex, loadData.size, loadData.rootPos, loadData.maskScaleOffset);
                             loadData.handler0.Dispose();
                             break;
@@ -226,6 +226,7 @@ namespace MPipeline
                             float2 leftUpOffset = float2(loadData.maskScaleOffset.yz + float2(0, subScale));
                             float2 rightDownOffset = float2(loadData.maskScaleOffset.yz + float2(subScale, 0));
                             float2 rightUpOffset = float2(loadData.maskScaleOffset.yz + subScale);
+                            textureShader.SetTexture(0, ShaderIDs._NoiseTexture, terrainData.warpNoiseTexture);
                             LoadTexture(loadData.handler0, loadData.startIndex, subSize, loadData.rootPos, loadData.maskScaleOffset);
                             LoadTexture(loadData.handler1, loadData.startIndex + int2(0, subSize), subSize, loadData.rootPos, float3(subScale, leftUpOffset));
                             LoadTexture(loadData.handler2, loadData.startIndex + int2(subSize, 0), subSize, loadData.rootPos, float3(subScale, rightDownOffset));
@@ -297,10 +298,10 @@ namespace MPipeline
                 new VirtualTextureFormat((VirtualTextureSize)COLOR_RESOLUTION, RenderTextureFormat.RGHalf, "_VirtualBumpMap"),
                 new VirtualTextureFormat((VirtualTextureSize)COLOR_RESOLUTION, RenderTextureFormat.RG16, "_VirtualSMMap")
             };
-            vt = new VirtualTexture(terrainData.virtualTexCapacity, min(2048, (int)(pow(2.0, terrainData.lodDistances.Length) + 0.1)), formats, 4, "_TerrainVTIndexTex");
+            vt = new VirtualTexture(terrainData.virtualTexCapacity, min(MASK_RESOLUTION, (int)(pow(2.0, terrainData.lodDistances.Length) + 0.1)), formats, 4, "_TerrainVTIndexTex");
             VirtualTextureFormat* maskFormats = stackalloc VirtualTextureFormat[]
             {
-                new VirtualTextureFormat(VirtualTextureSize.x2048, RenderTextureFormat.R8, "_VirtualMaskmap")
+                new VirtualTextureFormat((VirtualTextureSize)MASK_RESOLUTION, RenderTextureFormat.R8, "_VirtualMaskmap")
             };
             maskVT = new VirtualTexture(6, largestChunkCount, maskFormats, 1, "_MaskIndexMap");
             maskVT.GetTexture(0).filterMode = FilterMode.Point;

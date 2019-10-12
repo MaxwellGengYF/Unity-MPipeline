@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: TerrainData
   m_EditorClassIdentifier: 
   heightOffset: 0
-  heightScale: 23.6
+  heightScale: 0
   largestChunkSize: 1000
   screenOffset:
     x: 0
@@ -29,6 +29,7 @@ MonoBehaviour:
     m_SubObjectName: 
   - m_AssetGUID: f1fc44431ff931e40ab70c9a5acc7d4f
     m_SubObjectName: 
+  warpNoiseTexture: {fileID: 2800000, guid: 3c89b5fa2b08f70419bf82268aa0e064, type: 3}
   lodDistances:
   - 10000
   - 500

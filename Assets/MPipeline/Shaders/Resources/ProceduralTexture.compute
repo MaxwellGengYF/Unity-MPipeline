@@ -4,6 +4,7 @@
 #pragma kernel ClearColorTex
 #include "UnityCG.cginc"
 #include "../CGINC/VirtualTexture.cginc"
+Texture2D<float> _NoiseTexture; SamplerState sampler_NoiseTexture;
 Texture2DArray<float4> _MainTex; SamplerState sampler_MainTex;
 Texture2DArray<float2> _BumpMap; SamplerState sampler_BumpMap;
 Texture2DArray<float4> _SMMap; SamplerState sampler_SMMap;
@@ -13,10 +14,41 @@ RWTexture2DArray<float4> _VirtualMainTex;
 RWTexture2DArray<float2> _VirtualBumpMap;
 RWTexture2DArray<float4> _VirtualSMO;
 float4 _TextureSize;
-float4 _IndexTextureSize;//X: 1 / mask pixel  Y: arrayCount
+float4 _IndexTextureSize;//X: mask pixel  Y: arrayCount
 float4 _IndexBuffer;
 uint _Count;
 uint _OffsetIndex;
+
+inline float SampleMask(float2 uv)
+{
+    float3 realUV = GetVirtualTextureUV(_MaskIndexMap, _IndexTextureSize, _IndexBuffer.xy + floor(uv), frac(uv));
+    return _VirtualMaskmap.SampleLevel(sampler_VirtualMaskmap, realUV, 0);
+}
+float2 BilinearSampleMask(float2 uv, out float4 result)
+{
+    float2 absoluteUV = uv.xy * _IndexTextureSize.x;
+    float pixelLength = 1.0 / _IndexTextureSize.x;
+    uv.xy -= frac(absoluteUV) > 0.5 ? 0 : pixelLength;
+    float2 lastUV = absoluteUV - 0.5;
+    float2 lerpValue = frac(absoluteUV + 0.5);
+    result = float4(
+       SampleMask(uv),
+       SampleMask(uv + float2(pixelLength, 0)),
+        SampleMask(uv + float2(0, pixelLength)),
+       SampleMask(uv + pixelLength)
+    );
+    return lerpValue;
+}
+
+#define BILINEAR_INTERPOLATION(Type, Tex, uv, mask, lerpValue, Result)\
+    Type Tex##_leftDown = Tex.SampleLevel(sampler##Tex, float3(uv, mask##.x), 0);\
+    Type Tex##_rightDown = Tex.SampleLevel(sampler##Tex, float3(uv,mask##.y), 0);\
+    Type Tex##_leftUp = Tex.SampleLevel(sampler##Tex, float3(uv, mask##.z), 0);\
+    Type Tex##_rightUp = Tex.SampleLevel(sampler##Tex, float3(uv, mask##.w), 0);\
+    Type Tex##_leftValue = lerp(Tex##_leftDown, Tex##_leftUp, lerpValue##.y);\
+    Type Tex##_rightValue = lerp(Tex##_rightDown, Tex##_rightUp, lerpValue##.y);\
+    Result = lerp(Tex##_leftValue, Tex##_rightValue, lerpValue##.x);
+
 [numthreads(8,8,1)]
 void UpSample (uint2 id : SV_DispatchThreadID)
 {
@@ -25,12 +57,19 @@ void UpSample (uint2 id : SV_DispatchThreadID)
     //absoluteUV.y = 1 - absoluteUV.y;
     float2 maskVirtualUV = absoluteUV * _TextureSize.x + _TextureSize.yz;
     float2 uv = absoluteUV * _TextureSize.w;
-    float3 maskUV = GetVirtualTextureUV(_MaskIndexMap, _IndexTextureSize, _IndexBuffer.xy, maskVirtualUV);
-    float mask = _VirtualMaskmap.SampleLevel(sampler_VirtualMaskmap, maskUV, 0);
+    float4 mask;
+    float2 lerpValue = BilinearSampleMask(maskVirtualUV, mask);
+    float noiseValue = _NoiseTexture.SampleLevel(sampler_NoiseTexture, maskVirtualUV, 0);
+    lerpValue = pow(lerpValue, max(1e-4, 5 * noiseValue));
     mask *= _IndexTextureSize.y;
+    //lerpValue = pow
+    BILINEAR_INTERPOLATION(float4, _MainTex, uv, mask, lerpValue, _VirtualMainTex[uint3(id, _OffsetIndex)])
+    BILINEAR_INTERPOLATION(float2, _BumpMap, uv, mask, lerpValue, _VirtualBumpMap[uint3(id, _OffsetIndex)])
+    BILINEAR_INTERPOLATION(float4, _SMMap, uv, mask, lerpValue, _VirtualSMO[uint3(id, _OffsetIndex)])
+    /*
     _VirtualMainTex[uint3(id, _OffsetIndex)] = _MainTex.SampleLevel(sampler_MainTex, float3(uv,mask), 0);
     _VirtualBumpMap[uint3(id, _OffsetIndex)] = _BumpMap.SampleLevel(sampler_BumpMap, float3(uv,mask), 0);
-    _VirtualSMO[uint3(id, _OffsetIndex)] = _SMMap.SampleLevel(sampler_SMMap, float3(uv,mask), 0);
+    _VirtualSMO[uint3(id, _OffsetIndex)] = _SMMap.SampleLevel(sampler_SMMap, float3(uv,mask), 0);*/
 }
 Texture2D<float4> _TerrainMainTexArray;
 Texture2D<float4> _TerrainBumpMapArray;
