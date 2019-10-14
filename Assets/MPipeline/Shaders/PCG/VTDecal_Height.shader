@@ -5,7 +5,7 @@
         _MainTex ("Texture", 2D) = "white" {}
         [NoScaleOffset]_BumpMap("Bump", 2D) = "bump"{}
         [NoScaleOffset] _SMO("SMO", 2D) = "white"{}
-        _HeightBlendScale("Height blend scale", Range(0, 1)) = 0
+        _HeightBlendScale("Height blend scale", float) = 0
         _Color ("Color", Color) = (1,1,1,1)
         _Glossiness ("Smoothness", Range(0,1)) = 0.5
         _Occlusion("Occlusion Scale", Range(0,1)) = 1
@@ -46,7 +46,7 @@ cbuffer UnityPerMaterial
             sampler2D _SMO;
             float2 _HeightScaleOffset;
             Texture2DArray<float> _VirtualHeightmap; SamplerState sampler_VirtualHeightmap;
-            float _Count;
+            uint _OffsetIndex;
             struct appdata
             {
                 float4 vertex : POSITION;
@@ -63,6 +63,7 @@ cbuffer UnityPerMaterial
                 float3 tangent : TEXCOORD2;
                 float4 binormal : TEXCOORD3;        //XYZ : binormal   W: height
                 float3 screenUV : TEXCOORD4;
+                float3 worldPos : TEXCOORD5;
             };
 
             v2f vert (appdata v)
@@ -77,17 +78,23 @@ cbuffer UnityPerMaterial
                 float3 worldPos = mul(unity_ObjectToWorld, v.vertex).xyz;
                 float height = (worldPos.y - _HeightScaleOffset.y) / _HeightScaleOffset.x;
                 o.binormal.w = height;
+                o.worldPos = worldPos;
                 return o;
+            }
+
+            float GetBlendWeight(float worldHeight, float2 screenUV)
+            {
+                float vtHeight = _VirtualHeightmap.SampleLevel(sampler_VirtualHeightmap, float3(screenUV, _OffsetIndex + 0.2), 0);
+                float vtWorldHeight = vtHeight * _HeightScaleOffset.x + _HeightScaleOffset.y;
+                float blendWeight = (worldHeight - vtWorldHeight) * _HeightBlendScale;
+                return saturate(blendWeight * 0.5 + 0.5);
             }
 
             void frag (v2f i, out float4 albedoOut : SV_TARGET0, out float4 normalOut : SV_TARGET1, out float4 smoOut : SV_TARGET2)
             {
                 float2 screenUV = i.screenUV.xy / i.screenUV.z;
-                float screenHeight = _VirtualHeightmap.SampleLevel(sampler_VirtualHeightmap, float3(screenUV, _Count), 0);
-                float heightDifference = i.binormal.w - screenHeight;
-                float alphaBlend = heightDifference / max(1e-4, _HeightBlendScale);
                 float4 albedo = tex2D(_MainTex, i.uv) * _Color;
-                albedo.w *= alphaBlend;
+                //albedo.w *= alphaBlend;
                 float3 normal = UnpackNormal(tex2D(_BumpMap, i.uv));
                 float3x3 TBN = float3x3(normalize(i.tangent) * _NormalIntensity.x, normalize(i.binormal.xyz) * _NormalIntensity.y, normalize(i.normal));
                 normal = normalize(mul(normal, TBN));

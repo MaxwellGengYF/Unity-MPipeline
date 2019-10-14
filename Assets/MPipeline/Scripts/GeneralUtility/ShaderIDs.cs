@@ -171,6 +171,8 @@ public static partial class ShaderIDs
     public static readonly int _ElementBuffer = Shader.PropertyToID("_ElementBuffer");
 
     public static readonly int _TerrainChunks = Shader.PropertyToID("_TerrainChunks");
+    public static readonly int _TerrainWorldPosToVTUV = Shader.PropertyToID("_TerrainWorldPosToVTUV");
+    public static readonly int _TerrainVTOffset = Shader.PropertyToID("_TerrainVTOffset");
     public static readonly int _CullResultBuffer = Shader.PropertyToID("_CullResultBuffer");
     public static readonly int _DispatchBuffer = Shader.PropertyToID("_DispatchBuffer");
 

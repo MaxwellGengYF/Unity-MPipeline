@@ -19,10 +19,10 @@ namespace MPipeline
             public float size;
             public float nearClipPlane;
             public float farClipPlane;
-            public int resolution;
             public RenderTargetIdentifier albedoRT;
             public RenderTargetIdentifier normalRT;
             public RenderTargetIdentifier smoRT;
+            public RenderTargetIdentifier heightRT;
             public int depthSlice;
         }
         [EasyButtons.Button]
@@ -83,9 +83,20 @@ namespace MPipeline
                 {
                     perObjectData = UnityEngine.Rendering.PerObjectData.None
                 };
-                buffer.GetTemporaryRT(RenderTargets.gbufferIndex[0], orthoCam.resolution, orthoCam.resolution, 16, FilterMode.Point, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear, 1, false);
-                buffer.GetTemporaryRT(RenderTargets.gbufferIndex[2], orthoCam.resolution, orthoCam.resolution, 0, FilterMode.Point, RenderTextureFormat.RGHalf, RenderTextureReadWrite.Linear, 1, false);
-                buffer.GetTemporaryRT(RenderTargets.gbufferIndex[1], orthoCam.resolution, orthoCam.resolution, 0, FilterMode.Point, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear, 1, false);
+                DrawingSettings drawH = new DrawingSettings(new ShaderTagId("TerrainDisplacement"), sort)
+                {
+                    perObjectData = UnityEngine.Rendering.PerObjectData.None
+                };
+                ComputeShader copyShader = data.resources.shaders.texCopyShader;
+                buffer.GetTemporaryRT(ShaderIDs._GPURPHeightMap, MTerrain.HEIGHT_RESOLUTION, MTerrain.HEIGHT_RESOLUTION, 16, FilterMode.Bilinear, MTerrain.HEIGHT_FORMAT);
+                buffer.CopyTexture(orthoCam.heightRT, orthoCam.depthSlice, ShaderIDs._GPURPHeightMap, 0);
+                buffer.SetGlobalTexture(ShaderIDs._VirtualHeightmap, orthoCam.heightRT);
+                buffer.SetGlobalInt(ShaderIDs._OffsetIndex, orthoCam.depthSlice);
+                var terrainData = MTerrain.current.terrainData;
+                buffer.SetGlobalVector(ShaderIDs._HeightScaleOffset, float4(terrainData.heightScale, terrainData.heightOffset, 1, 1));
+                buffer.GetTemporaryRT(RenderTargets.gbufferIndex[0], MTerrain.COLOR_RESOLUTION, MTerrain.COLOR_RESOLUTION, 16, FilterMode.Point, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear, 1, false);
+                buffer.GetTemporaryRT(RenderTargets.gbufferIndex[2], MTerrain.COLOR_RESOLUTION, MTerrain.COLOR_RESOLUTION, 0, FilterMode.Point, RenderTextureFormat.RGHalf, RenderTextureReadWrite.Linear, 1, false);
+                buffer.GetTemporaryRT(RenderTargets.gbufferIndex[1], MTerrain.COLOR_RESOLUTION, MTerrain.COLOR_RESOLUTION, 0, FilterMode.Point, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear, 1, false);
                 idfs[0] = RenderTargets.gbufferIndex[0];
                 idfs[1] = RenderTargets.gbufferIndex[2];
                 idfs[2] = RenderTargets.gbufferIndex[1];
@@ -93,7 +104,10 @@ namespace MPipeline
                 buffer.ClearRenderTarget(true, true, new Color(0,0,0,0));
                 data.ExecuteCommandBuffer();
                 data.context.DrawRenderers(result, ref drawS, ref filter);
-                ComputeShader copyShader = data.resources.shaders.texCopyShader;
+                buffer.SetRenderTarget(color: ShaderIDs._GPURPHeightMap, depth:ShaderIDs._GPURPHeightMap);
+                buffer.ClearRenderTarget(true, false, Color.black);
+                data.ExecuteCommandBuffer();
+                data.context.DrawRenderers(result, ref drawH, ref filter);
                 buffer.SetComputeTextureParam(copyShader, 6, ShaderIDs._VirtualMainTex, orthoCam.albedoRT);
                 buffer.SetComputeTextureParam(copyShader, 6, ShaderIDs._VirtualBumpMap, orthoCam.normalRT);
                 buffer.SetComputeTextureParam(copyShader, 6, ShaderIDs._VirtualSMO, orthoCam.smoRT);
@@ -101,11 +115,13 @@ namespace MPipeline
                 buffer.SetComputeTextureParam(copyShader, 6, RenderTargets.gbufferIndex[1], RenderTargets.gbufferIndex[1]);
                 buffer.SetComputeTextureParam(copyShader, 6, RenderTargets.gbufferIndex[2], RenderTargets.gbufferIndex[2]);
                 buffer.SetComputeIntParam(copyShader, ShaderIDs._Count, orthoCam.depthSlice);
-                int disp = orthoCam.resolution / 8;
+                int disp = MTerrain.COLOR_RESOLUTION / 8;
                 buffer.DispatchCompute(copyShader, 6, disp, disp, 1);
                 buffer.ReleaseTemporaryRT(RenderTargets.gbufferIndex[0]);
                 buffer.ReleaseTemporaryRT(RenderTargets.gbufferIndex[1]);
                 buffer.ReleaseTemporaryRT(RenderTargets.gbufferIndex[2]);
+                buffer.CopyTexture(ShaderIDs._GPURPHeightMap, 0, orthoCam.heightRT, orthoCam.depthSlice);
+                buffer.ReleaseTemporaryRT(ShaderIDs._GPURPHeightMap);
                 data.ExecuteCommandBuffer();
                 #endregion
             }

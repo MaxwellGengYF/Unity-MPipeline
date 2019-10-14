@@ -1,5 +1,6 @@
 #ifndef __STANDARDSURFACE_INCLUDE__
 #define __STANDARDSURFACE_INCLUDE__
+#include "VirtualTexture.cginc"
 	struct Input {
 			float2 uv_MainTex;
 			float3 viewDir;
@@ -50,6 +51,12 @@ float3 ProcessNormal(float4 value)
     n.z = sqrt(1 - dot(n.xy, n.xy));
     return n;
 }
+Texture2DArray<float4> _VirtualMainTex; SamplerState sampler_VirtualMainTex;
+Texture2DArray<float2> _VirtualBumpMap; SamplerState sampler_VirtualBumpMap;
+Texture2DArray<float2> _VirtualSMMap; SamplerState sampler_VirtualSMMap;
+Texture2D<float4> _TerrainVTIndexTex;
+float4 _TerrainVTIndexTex_TexelSize;
+
 		float surf (Input IN, inout SurfaceOutputStandardSpecular o) {
 			float2 originUv = IN.uv_MainTex;
 			float2 uv = originUv * _TileOffset.xy + _TileOffset.zw;
@@ -67,6 +74,21 @@ float3 ProcessNormal(float4 value)
 			c.xyz = lerp(c.xyz, secondCol.xyz, secondCol.w);
 			o.Normal = lerp(o.Normal, ProcessNormal(tex2D(_SecondaryBumpMap, secUV)), secondCol.w);
 			spec.xyz = lerp(spec.xyz, tex2D(_SecondarySpecularMap, secUV).xyz, secondCol.w);
+			#else
+			#ifdef USE_VT_BLEND
+			float4 virtualUV = WorldPosToUV(IN.worldPos.xz);
+			float3 vtUV = GetVirtualTextureUV(_TerrainVTIndexTex, _TerrainVTIndexTex_TexelSize, virtualUV.xy, virtualUV.zw);
+			float4 secondCol = _VirtualMainTex.SampleLevel(sampler_VirtualMainTex, vtUV, 0);
+			float3 secondNormal;
+			secondNormal.xy = _VirtualBumpMap.SampleLevel(sampler_VirtualBumpMap, vtUV, 0);
+			secondNormal.z = sqrt(1 - dot(secondNormal.xy, secondNormal.xy));
+			float2 sm = _VirtualSMMap.SampleLevel(sampler_VirtualSMMap, vtUV, 0);
+			float lerpValue = pow(saturate(0.1 * (10 - IN.worldPos.y)), 2.2);
+			c.xyz = lerp(c.xyz, secondCol.xyz, lerpValue);
+			spec.z = lerp(spec.z, secondCol.w, lerpValue);
+			spec.xy = lerp(spec.xy, sm, lerpValue);
+			o.Normal = lerp(o.Normal, secondNormal, lerpValue);
+			#endif
 			#endif
 			
 			o.Albedo = c.rgb;

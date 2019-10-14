@@ -23,8 +23,8 @@ namespace MPipeline
         private PostProcessRenderContext postContext;
         [SerializeField]
         private CyberSet cyberGlitch;
-          //public Shader debug;
-        //    private Material debugMat;
+      //  public Shader debug;
+      //  private Material debugMat;
         public Texture3D customLut;
 
         T AddEvents<S, T>(bool useBlit = false) where T : PostProcessEffectRenderer, new()
@@ -36,7 +36,8 @@ namespace MPipeline
         }
         protected override void Init(PipelineResources res)
         {
-          //     debugMat = new Material(debug);
+        //    debugMat = new Material(debug);
+        
             allPostEffects = new List<PostEffect>(10);
             AddEvents<DepthOfField, DepthOfFieldRenderer>(true);
             AddEvents<MotionBlur, MotionBlurRenderer>(true);
@@ -136,9 +137,9 @@ namespace MPipeline
             allSettings.Dispose();
             //   data.buffer.Blit(ShaderIDs._CameraMotionVectorsTexture, cam.cameraTarget);
             //     data.buffer.BlitSRT(cam.cameraTarget, debugMat, 0);
-               //  HizOcclusionData occD = IPerCameraData.GetProperty(cam, (c) => new HizOcclusionData(c.cam.pixelWidth));
+            //  HizOcclusionData occD = IPerCameraData.GetProperty(cam, (c) => new HizOcclusionData(c.cam.pixelWidth));
             //   data.buffer.Blit(occD.historyDepth, cam.cameraTarget, debugMat, 0);
-            data.buffer.BlitSRT(cam.targets.renderTargetIdentifier, cam.cameraTarget, postContext.uberSheet.material, 0, postContext.uberSheet.properties);
+             data.buffer.BlitSRT(cam.targets.renderTargetIdentifier, cam.cameraTarget, postContext.uberSheet.material, 0, postContext.uberSheet.properties);
             if (postContext.bloomBufferNameID > -1) data.buffer.ReleaseTemporaryRT(postContext.bloomBufferNameID);
         }
     }
