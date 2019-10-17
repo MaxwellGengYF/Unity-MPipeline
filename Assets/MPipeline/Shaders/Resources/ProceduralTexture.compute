@@ -3,6 +3,7 @@
 #pragma kernel NormalToTex
 #pragma kernel ClearColorTex
 #pragma kernel HeightToNormal
+#pragma kernel NormalToWorld
 #include "UnityCG.cginc"
 #include "../CGINC/VirtualTexture.cginc"
 Texture2D<float> _NoiseTexture; SamplerState sampler_NoiseTexture;
@@ -20,8 +21,9 @@ RWTexture2D<float4> _DestTex;
 float4 _TextureSize;
 float4 _IndexTextureSize;//X: mask pixel  Y: arrayCount
 float4 _IndexBuffer;
-uint _Count;
 uint _OffsetIndex;
+uint _HeightResolution;
+uint _ColorResolution;
 
 inline float SampleMask(float2 uv)
 {
@@ -57,7 +59,7 @@ float2 BilinearSampleMask(float2 uv, out float4 result)
 void UpSample (uint2 id : SV_DispatchThreadID)
 {
     //_TextureSize   x:mask scale,  yz: mask offset   w: chunk scale
-    float2 absoluteUV = (id + 0.5) / _Count;
+    float2 absoluteUV = (id + 0.5) / _ColorResolution;
     //absoluteUV.y = 1 - absoluteUV.y;
     float2 maskVirtualUV = absoluteUV * _TextureSize.x + _TextureSize.yz;
     float2 uv = absoluteUV * _TextureSize.w;
@@ -66,19 +68,10 @@ void UpSample (uint2 id : SV_DispatchThreadID)
     float noiseValue = _NoiseTexture.SampleLevel(sampler_NoiseTexture, maskVirtualUV, 0);
     lerpValue = pow(lerpValue, max(1e-4, 0.5 + 3 * noiseValue));
     mask *= _IndexTextureSize.y;
-    float2 tangentNormalXY;
     BILINEAR_INTERPOLATION(float4, _MainTex, uv, mask, lerpValue, _VirtualMainTex[uint3(id, _OffsetIndex)])
-    BILINEAR_INTERPOLATION(float2, _BumpMap, uv, mask, lerpValue, tangentNormalXY)
+    BILINEAR_INTERPOLATION(float2, _BumpMap, uv, mask, lerpValue,  _VirtualBumpMap[uint3(id, _OffsetIndex)])
     BILINEAR_INTERPOLATION(float4, _SMMap, uv, mask, lerpValue, _VirtualSMO[uint3(id, _OffsetIndex)])
-    float3 tangentNormal = float3(tangentNormalXY, sqrt(1 - dot(tangentNormalXY, tangentNormalXY)));
-    float3 worldNormal;
-    worldNormal.xz = _SourceTex.SampleLevel(sampler_SourceTex, absoluteUV, 0).xy;
-    worldNormal.y = sqrt(1 - dot(worldNormal.xz, worldNormal.xz));
-    float3 tangent = float3(1,0,0);
-    float3 binormal = normalize(cross(tangent, worldNormal));
-    tangent = normalize(cross(worldNormal, binormal));
-    float3x3 TBN = float3x3(tangent, binormal, worldNormal);
-    _VirtualBumpMap[uint3(id, _OffsetIndex)] = normalize(mul(tangentNormal, TBN)).xz;
+  
 
 }
 Texture2D<float4> _TerrainMainTexArray;
@@ -143,4 +136,20 @@ void HeightToNormal(uint2 id : SV_DISPATCHTHREADID)
     }
     normalSum = normalize(normalSum);
     _DestTex[id] = float4(normalSum.xz, 1, 1);
+}
+
+[numthreads(8,8,1)]
+void NormalToWorld(uint2 id : SV_DISPATCHTHREADID)
+{
+    float2 absoluteUV = (id + 0.5) / _ColorResolution;
+    float2 tangentNormalXY = _VirtualBumpMap[uint3(id, _OffsetIndex)].xy;
+    float3 tangentNormal = float3(tangentNormalXY, sqrt(1 - dot(tangentNormalXY, tangentNormalXY)));
+    float3 worldNormal;
+    worldNormal.xz = _SourceTex.SampleLevel(sampler_SourceTex, absoluteUV, 0).xy;
+    worldNormal.y = sqrt(1 - dot(worldNormal.xz, worldNormal.xz));
+    float3 tangent = float3(1,0,0);
+    float3 binormal = normalize(cross(tangent, worldNormal));
+    tangent = normalize(cross(worldNormal, binormal));
+    float3x3 TBN = float3x3(tangent, binormal, worldNormal);
+    _VirtualBumpMap[uint3(id, _OffsetIndex)] = normalize(mul(tangentNormal, TBN)).xz;
 }

@@ -8,6 +8,7 @@ using static Unity.Mathematics.math;
 using Unity.Jobs;
 using System.IO;
 using System.Threading;
+using UnityEngine.Experimental.Rendering;
 using UnityEngine.AddressableAssets;
 using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.Rendering;
@@ -34,10 +35,10 @@ namespace MPipeline
             public bool load;
             public int2 pos;
         }
-        public const int MASK_RESOLUTION = 2048;
+        public const int MASK_RESOLUTION = 512;
         public const int HEIGHT_RESOLUTION = 256;
         public const int COLOR_RESOLUTION = 1024;
-        public const RenderTextureFormat HEIGHT_FORMAT = RenderTextureFormat.R16;
+        public const GraphicsFormat HEIGHT_FORMAT = GraphicsFormat.R16_UNorm;
         public MTerrainData terrainData;
         public VTDecalCamera decalCamera;
         #region QUADTREE
@@ -70,7 +71,9 @@ namespace MPipeline
         private MStringBuilder msb;
         private VirtualTexture vt;
         private double oneVTPixelWorldLength;
+        private RenderTexture worldNormalRT;
         private ComputeBuffer textureBuffer;
+        private int leastVirtualTextureLefted = int.MaxValue;
 
         public override void PrepareJob()
         {
@@ -108,11 +111,34 @@ namespace MPipeline
             UpdateBuffer();
         }
 
+        void ConvertNormalMap(int2 startIndex, int size, int texElement)
+        {
+            textureShader.SetInt(ShaderIDs._OffsetIndex, texElement);
+            textureShader.SetVector(ShaderIDs._IndexTextureSize, float4(float2((float)size / HEIGHT_RESOLUTION), vt.indexSize));
+            double oneHeightPixelSize = size * oneVTPixelWorldLength / HEIGHT_RESOLUTION;
+            textureShader.SetVector(ShaderIDs._IndexBuffer, float4(startIndex, terrainData.heightScale, (float)(1.0 / oneHeightPixelSize)));
+            textureShader.SetTexture(3, ShaderIDs._VirtualHeightmap, vt.GetTexture(0));
+            textureShader.SetTexture(3, ShaderIDs._IndexTexture, vt.indexTex);
+
+            textureShader.SetTexture(3, ShaderIDs._DestTex, worldNormalRT);
+            const int heightDisp = HEIGHT_RESOLUTION / 8;
+            const int disp = COLOR_RESOLUTION / 8;
+            textureShader.Dispatch(3, heightDisp, heightDisp, 1);
+            textureShader.SetTexture(4, ShaderIDs._VirtualBumpMap, vt.GetTexture(2));
+            textureShader.SetTexture(4, ShaderIDs._SourceTex, worldNormalRT);
+            textureShader.Dispatch(4, disp, disp, 1);
+        }
+
         int LoadTexture(VirtualTextureLoader.LoadingHandler handler, int2 startIndex, int size, int2 rootPos, float3 maskScaleOffset)
         {
             int texElement;
             //Could Debug lefted pool
-            //Debug.Log(vt.LeftedTextureElement);
+            if(leastVirtualTextureLefted > vt.LeftedTextureElement)
+            {
+                leastVirtualTextureLefted = vt.LeftedTextureElement;
+                Debug.Log(vt.LeftedTextureElement);
+            }
+            
             if (!vt.LoadNewTexture(startIndex, size, out texElement))
             {
                 Debug.LogError("Terrain Virtual Texture Pool Not Enough!");
@@ -122,41 +148,26 @@ namespace MPipeline
             textureBuffer.SetDataPtr((uint*)(handler.allBytes), HEIGHT_RESOLUTION * HEIGHT_RESOLUTION / 2);
             shader.SetBuffer(3, ShaderIDs._TextureBuffer, textureBuffer);
             shader.SetTexture(3, ShaderIDs._VirtualHeightmap, vt.GetTexture(0));
-            shader.SetInt(ShaderIDs._Count, HEIGHT_RESOLUTION);
             shader.Dispatch(3, HEIGHT_RESOLUTION / 8, HEIGHT_RESOLUTION / 8, 1);
 
-            textureShader.SetVector(ShaderIDs._IndexTextureSize, float4(float2((float)size / HEIGHT_RESOLUTION), vt.indexSize));
-            double oneHeightPixelSize = size * oneVTPixelWorldLength / HEIGHT_RESOLUTION;
-            textureShader.SetVector(ShaderIDs._IndexBuffer, float4(startIndex, terrainData.heightScale, (float)(1.0 / oneHeightPixelSize)));
-            textureShader.SetTexture(3, ShaderIDs._VirtualHeightmap, vt.GetTexture(0));
-            textureShader.SetTexture(3, ShaderIDs._IndexTexture, vt.indexTex);
-            RenderTexture worldNormalRT = RenderTexture.GetTemporary(HEIGHT_RESOLUTION, HEIGHT_RESOLUTION, 0, RenderTextureFormat.RGFloat,RenderTextureReadWrite.Linear);
-            worldNormalRT.filterMode = FilterMode.Bilinear;
-            worldNormalRT.enableRandomWrite = true;
-            worldNormalRT.Create();
-            textureShader.SetTexture(3, ShaderIDs._DestTex, worldNormalRT);
-            const int heightDisp = HEIGHT_RESOLUTION / 8;
-            textureShader.Dispatch(3, heightDisp, heightDisp, 1);
             rootPos += (int2)maskScaleOffset.yz;
             maskScaleOffset.yz = frac(maskScaleOffset.yz);
             textureShader.SetInt(ShaderIDs._OffsetIndex, texElement);
             textureShader.SetTexture(0, ShaderIDs._VirtualMainTex, vt.GetTexture(1));
             textureShader.SetTexture(0, ShaderIDs._VirtualBumpMap, vt.GetTexture(2));
             textureShader.SetTexture(0, ShaderIDs._VirtualSMO, vt.GetTexture(3));
-            textureShader.SetInt(ShaderIDs._Count, COLOR_RESOLUTION);
+
             textureShader.SetVector(ShaderIDs._IndexBuffer, float4(rootPos, 1, 1));
             textureShader.SetVector(ShaderIDs._IndexTextureSize, float4(MASK_RESOLUTION, terrainData.allMaskTextures.Length, vt.indexSize));
-            textureShader.SetVector(ShaderIDs._TextureSize, float4(maskScaleOffset, size));
+            textureShader.SetVector(ShaderIDs._TextureSize, float4(maskScaleOffset, size * terrainData.materialTillingScale));
             int rtID = maskVT.GetTextureFormat(0).rtPropertyID;
             textureShader.SetTexture(0, rtID, maskVT.GetTexture(0));
             textureShader.SetTexture(0, maskVT.indexTexID, maskVT.indexTex);
             textureShader.SetTexture(0, ShaderIDs._MainTex, albedoTex);
             textureShader.SetTexture(0, ShaderIDs._BumpMap, normalTex);
             textureShader.SetTexture(0, ShaderIDs._SMMap, smTex);
-            textureShader.SetTexture(0, ShaderIDs._SourceTex, worldNormalRT);
             const int disp = COLOR_RESOLUTION / 8;
             textureShader.Dispatch(0, disp, disp, 1);
-            RenderTexture.ReleaseTemporary(worldNormalRT);
             return texElement;
         }
         static bool GetComplete(ref VirtualTextureLoader.LoadingHandler handler)
@@ -222,11 +233,13 @@ namespace MPipeline
                 texs.normalTex.ReleaseAsset();
                 texs.SMTex.ReleaseAsset();
             }
-            textureShader.SetInt(ShaderIDs._Count, terrainData.textures.Length);
+            //textureShader.SetInt(ShaderIDs._Count, terrainData.textures.Length);
             while (enabled)
             {
                 TerrainLoadData loadData;
                 MaskLoadCommand maskCommand;
+                shader.SetInt(ShaderIDs._HeightResolution, HEIGHT_RESOLUTION);
+                textureShader.SetInt(ShaderIDs._ColorResolution, COLOR_RESOLUTION);
                 while (maskLoadList.TryDequeue(out maskCommand))
                 {
                     if (maskCommand.load)
@@ -259,6 +272,7 @@ namespace MPipeline
                                 yield return null;
                             textureShader.SetTexture(0, ShaderIDs._NoiseTexture, terrainData.warpNoiseTexture);
                             int targetElement = LoadTexture(loadData.handler0, loadData.startIndex, loadData.size, loadData.rootPos, loadData.maskScaleOffset);
+                            ConvertNormalMap(loadData.startIndex, loadData.size, targetElement);
                             if (loadData.targetDecalLayer != 0)
                             {
                                 DrawDecal(loadData.startIndex, loadData.size, targetElement, loadData.targetDecalLayer);
@@ -285,6 +299,12 @@ namespace MPipeline
                             int ele1 = LoadTexture(loadData.handler1, loadData.startIndex + int2(0, subSize), subSize, loadData.rootPos, float3(subScale, leftUpOffset));
                             int ele2 = LoadTexture(loadData.handler2, loadData.startIndex + int2(subSize, 0), subSize, loadData.rootPos, float3(subScale, rightDownOffset));
                             int ele3 = LoadTexture(loadData.handler3, loadData.startIndex + subSize, subSize, loadData.rootPos, float3(subScale, rightUpOffset));
+
+                            ConvertNormalMap(loadData.startIndex, subSize, ele0);
+                            ConvertNormalMap(loadData.startIndex + int2(0, subSize), subSize, ele1);
+                            ConvertNormalMap(loadData.startIndex + int2(subSize, 0), subSize, ele2);
+                            ConvertNormalMap(loadData.startIndex + subSize, subSize, ele3);
+
                             if (loadData.targetDecalLayer != 0)
                             {
                                 DrawDecal(loadData.startIndex, subSize, ele0, loadData.targetDecalLayer);
@@ -360,14 +380,14 @@ namespace MPipeline
             VirtualTextureFormat* formats = stackalloc VirtualTextureFormat[]
             {
                 new VirtualTextureFormat((VirtualTextureSize)HEIGHT_RESOLUTION, HEIGHT_FORMAT, "_VirtualHeightmap"),
-                new VirtualTextureFormat((VirtualTextureSize)COLOR_RESOLUTION, RenderTextureFormat.ARGB32, "_VirtualMainTex"),
-                new VirtualTextureFormat((VirtualTextureSize)COLOR_RESOLUTION, RenderTextureFormat.RGHalf, "_VirtualBumpMap"),
-                new VirtualTextureFormat((VirtualTextureSize)COLOR_RESOLUTION, RenderTextureFormat.RG16, "_VirtualSMMap")
+                new VirtualTextureFormat((VirtualTextureSize)COLOR_RESOLUTION, GraphicsFormat.R8G8B8A8_UNorm, "_VirtualMainTex"),
+                new VirtualTextureFormat((VirtualTextureSize)COLOR_RESOLUTION, GraphicsFormat.R16G16_SNorm, "_VirtualBumpMap"),
+                new VirtualTextureFormat((VirtualTextureSize)COLOR_RESOLUTION, GraphicsFormat.R8G8_UNorm, "_VirtualSMMap")
             };
             vt = new VirtualTexture(terrainData.virtualTexCapacity, min(MASK_RESOLUTION, (int)(pow(2.0, terrainData.lodDistances.Length) + 0.1)), formats, 4, "_TerrainVTIndexTex");
             VirtualTextureFormat* maskFormats = stackalloc VirtualTextureFormat[]
             {
-                new VirtualTextureFormat((VirtualTextureSize)MASK_RESOLUTION, RenderTextureFormat.R8, "_VirtualMaskmap")
+                new VirtualTextureFormat((VirtualTextureSize)MASK_RESOLUTION, GraphicsFormat.R8_UNorm, "_VirtualMaskmap")
             };
             maskVT = new VirtualTexture(6, largestChunkCount, maskFormats, 1, "_MaskIndexMap");
             maskVT.GetTexture(0).filterMode = FilterMode.Point;
@@ -411,6 +431,12 @@ namespace MPipeline
                 msaaSamples = 1
             });
             smTex.Create();
+            worldNormalRT = new RenderTexture(HEIGHT_RESOLUTION, HEIGHT_RESOLUTION, 0, RenderTextureFormat.RGFloat, 0);
+            worldNormalRT.useMipMap = false;
+            worldNormalRT.autoGenerateMips = false;
+            worldNormalRT.filterMode = FilterMode.Bilinear;
+            worldNormalRT.enableRandomWrite = true;
+            worldNormalRT.Create();
             smTex.wrapMode = TextureWrapMode.Repeat;
             normalTex.wrapMode = TextureWrapMode.Repeat;
             albedoTex.wrapMode = TextureWrapMode.Repeat;
@@ -470,6 +496,7 @@ namespace MPipeline
             allLodLevles.Dispose();
             textureBuffer.Dispose();
             maskLoadList.Dispose();
+            DestroyImmediate(worldNormalRT);
             DestroyImmediate(albedoTex);
             DestroyImmediate(normalTex);
             DestroyImmediate(smTex);

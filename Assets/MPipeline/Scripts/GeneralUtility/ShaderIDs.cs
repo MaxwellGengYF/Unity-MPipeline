@@ -5,6 +5,8 @@ using UnityEngine;
 public static partial class ShaderIDs
 {
     public static readonly int _Count = Shader.PropertyToID("_Count");
+    public static readonly int _HeightResolution = Shader.PropertyToID("_HeightResolution");
+    public static readonly int _ColorResolution = Shader.PropertyToID("_ColorResolution");
     public static readonly int planes = Shader.PropertyToID("planes");
     public static readonly int _FrustumMinPoint = Shader.PropertyToID("_FrustumMinPoint");
     public static readonly int _FrustumMaxPoint = Shader.PropertyToID("_FrustumMaxPoint");
