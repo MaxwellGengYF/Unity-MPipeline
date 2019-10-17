@@ -18,16 +18,20 @@ float3 ProcessNormal(float2 value)
 			o.Normal = ProcessNormal(_VirtualBumpMap.SampleLevel(sampler_VirtualBumpMap, vtUV, 0));
 			#ifdef DEBUG_QUAD_TREE
 			o.Albedo = float3(uv, 0);
+			o.Occlusion = 1;
+			o.Smoothness = 0;
+			o.Specular = 0.04;
+
 			#else
 			o.Albedo = c.rgb;
-			#endif
-
-			o.Alpha = 1;
+			
 			o.Occlusion = c.a;
 			float metallic =  spec.g;
 			o.Specular = lerp(0.04, o.Albedo, metallic); 
 			o.Albedo *= lerp(1 - 0.04, 0, metallic);
 			o.Smoothness = spec.r;
+			#endif
+			o.Alpha = 1;
 			o.Emission = 0;
 		}
 

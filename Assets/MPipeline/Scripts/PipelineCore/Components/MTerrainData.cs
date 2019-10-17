@@ -23,6 +23,7 @@ namespace MPipeline
             600,
             300
         };
+        public LayerMask[] allDecalLayers;
         [Range(1, 256)]
         public int virtualTexCapacity = 128;
         public string readWritePath = "Assets/BinaryData/Terrain.mquad";

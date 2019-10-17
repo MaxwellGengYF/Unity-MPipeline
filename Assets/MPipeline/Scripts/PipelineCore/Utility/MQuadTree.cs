@@ -18,6 +18,7 @@ namespace MPipeline
         }
         public Operator ope;
         public int size;
+        public LayerMask targetDecalLayer;
         public int2 startIndex;
         public int2 rootPos;
         public float3 maskScaleOffset;
@@ -44,6 +45,7 @@ namespace MPipeline
         private double worldSize;
         private int2 rootPos;
         public double3 maskScaleOffset;
+        private LayerMask decalMask;
         public TerrainQuadTree(int parentLodLevel, LocalPos sonPos, int2 parentPos, double worldSize, double3 maskScaleOffset, int2 rootPos)
         {
             this.worldSize = worldSize;
@@ -67,7 +69,9 @@ namespace MPipeline
                     localPosition += 1;
                     break;
             }
-            if(lodLevel > MTerrain.current.lodOffset - 1)
+            int decalLayer = lodLevel - MTerrain.current.decalLayerOffset;
+            decalMask = decalLayer < 0 ? (LayerMask)0 : MTerrain.current.terrainData.allDecalLayers[decalLayer];
+            if (lodLevel > MTerrain.current.lodOffset - 1)
             {
                 this.rootPos = rootPos;
                 double subScale = maskScaleOffset.x * 0.5;
@@ -86,7 +90,6 @@ namespace MPipeline
                 }
                 this.maskScaleOffset = double3(subScale, offset);
             }
-           
             else
             {
                 this.rootPos = localPosition / 2;
@@ -165,7 +168,8 @@ namespace MPipeline
                     size = VirtualTextureSize,
                     handler0 = MTerrain.current.loader.LoadChunk(localPosition, lodLevel),
                     rootPos = rootPos,
-                    maskScaleOffset = (float3)maskScaleOffset
+                    maskScaleOffset = (float3)maskScaleOffset,
+                    targetDecalLayer = decalMask
                 });
 
             }
@@ -238,8 +242,8 @@ namespace MPipeline
                         handler1 = MTerrain.current.loader.LoadChunk(leftUp->localPosition, leftUp->lodLevel),
                         handler2 = MTerrain.current.loader.LoadChunk(rightDown->localPosition, rightDown->lodLevel),
                         handler3 = MTerrain.current.loader.LoadChunk(rightUp->localPosition, rightUp->lodLevel),
+                        targetDecalLayer = leftDown->decalMask
                     });
-
                     leftDown->isRendering = true;
                     leftUp->isRendering = true;
                     rightDown->isRendering = true;

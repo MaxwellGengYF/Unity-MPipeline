@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 010ce77163682284691fda8b292bbe7b, type: 3}
   m_Name: TerrainData
   m_EditorClassIdentifier: 
-  heightOffset: -5.29
-  heightScale: 20
+  heightOffset: -30
+  heightScale: 50
   largestChunkSize: 1000
   screenOffset:
     x: 0
@@ -31,11 +31,18 @@ MonoBehaviour:
     m_SubObjectName: 
   warpNoiseTexture: {fileID: 2800000, guid: 3c89b5fa2b08f70419bf82268aa0e064, type: 3}
   lodDistances:
-  - 10000
+  - 1200
   - 500
   - 100
   - 50
   - 20
+  allDecalLayers:
+  - serializedVersion: 2
+    m_Bits: 2684356406
+  - serializedVersion: 2
+    m_Bits: 2684356406
+  - serializedVersion: 2
+    m_Bits: 2684356405
   virtualTexCapacity: 128
   readWritePath: Assets/BinaryData/Terrain.mquad
   drawTerrainMaterial: {fileID: 2100000, guid: 895d3f610aae4944b88c1b1fc7f46f4d, type: 2}
