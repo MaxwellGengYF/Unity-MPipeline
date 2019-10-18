@@ -19,3 +19,5 @@ void LerpMip (uint2 id : SV_DispatchThreadID)
                 _DestTex[id] = max(value.x, value.y);
                 #endif
 }
+
+

@@ -4,6 +4,7 @@
 #pragma kernel MaterialFunc
 #pragma kernel IndexFunc
 #pragma kernel MipFunc
+#pragma kernel MipGroupSync
 #define COMPUTESHADER
 #include "CGINC/Procedural.cginc"
 struct ClusterMeshData
@@ -65,4 +66,48 @@ void MipFunc(uint2 id : SV_DISPATCHTHREADID)
 {
     uint2 idx = id * 2;
     _DestTex[uint3(id, _Count)] = 0.25 * (_SourceTex[uint3(idx, _Count)] + _SourceTex[uint3(idx + uint2(0, 1), _Count)] + _SourceTex[uint3(idx + uint2(1, 1), _Count)] + _SourceTex[uint3(idx + uint2(1, 0), _Count)]);
+}
+
+inline uint2 GetDispatchID(uint2 groupID, uint2 threadID, uint2 threadCount)
+{
+    return groupID * threadCount + threadID;
+}
+
+#define CALCULATE_MIP(LastMip, NextMip, groupLength) \
+if(threadID.x < groupLength.x && threadID.y < groupLength.y){ \
+id = GetDispatchID(groupID, threadID, groupLength);\
+idx = id * 2;\
+NextMip[uint3(id, _Count)] = 0.25 * (LastMip[uint3(idx, _Count)] + LastMip[uint3(idx + uint2(0, 1), _Count)] + LastMip[uint3(idx + uint2(1, 1), _Count)] + LastMip[uint3(idx + uint2(1, 0), _Count)]); \
+} 
+
+#define GROUP_SYNC(groupLength) \
+groupLength /= 2;\
+AllMemoryBarrierWithGroupSync();\
+
+RWTexture2DArray<float4> _Mip0;
+RWTexture2DArray<float4> _Mip1;
+RWTexture2DArray<float4> _Mip2;
+RWTexture2DArray<float4> _Mip3;
+RWTexture2DArray<float4> _Mip4;
+RWTexture2DArray<float4> _Mip5;
+
+[numthreads(16, 16, 1)]
+void MipGroupSync(uint2 groupID : SV_GROUPID, uint2 threadID : SV_GROUPTHREADID)
+{
+    uint2 idx;
+    uint2 id;
+    uint2 current_Group_Length = uint2(16,16);
+    CALCULATE_MIP(_Mip0, _Mip1, current_Group_Length)
+    GROUP_SYNC(current_Group_Length)
+    //len = 8
+    CALCULATE_MIP(_Mip1, _Mip2, current_Group_Length)
+    GROUP_SYNC(current_Group_Length)
+    //len = 4
+    CALCULATE_MIP(_Mip2, _Mip3, current_Group_Length)
+    GROUP_SYNC(current_Group_Length)
+    //len = 2
+    CALCULATE_MIP(_Mip3, _Mip4, current_Group_Length)
+    GROUP_SYNC(current_Group_Length)
+    //len = 1
+    CALCULATE_MIP(_Mip4, _Mip5, current_Group_Length)
 }

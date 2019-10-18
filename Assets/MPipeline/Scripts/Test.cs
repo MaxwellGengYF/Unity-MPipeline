@@ -29,6 +29,12 @@ namespace MPipeline
             Shader.DisableKeyword("USE_WHITE");
         }
 
+        [EasyButtons.Button]
+        void TestCross()
+        {
+            Debug.Log(cross(float3(0, 0, 1), float3(1, 0, 0)));
+        }
+
         private void Update()
         {
             /*if (Input.GetKeyDown(KeyCode.Space))

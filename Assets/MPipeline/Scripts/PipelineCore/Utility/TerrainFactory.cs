@@ -17,7 +17,7 @@ namespace MPipeline
         private byte[] readBuffer;
         private int[] offsetIndicesArr = new int[2];
         private ComputeShader generatorShader;
-        private const int CHUNK_SIZE = MTerrain.MASK_RESOLUTION * MTerrain.MASK_RESOLUTION + MTerrain.HEIGHT_RESOLUTION * MTerrain.HEIGHT_RESOLUTION * 2;
+        private const int CHUNK_SIZE = MTerrain.HEIGHT_RESOLUTION * MTerrain.HEIGHT_RESOLUTION * 2;
         public TerrainFactory(int initialLevel, int mipLevel, string path)
         {
             initLevel = initialLevel;
@@ -37,35 +37,14 @@ namespace MPipeline
         {
             streamer.Position = GetOffset(position, mipLevel);
             streamer.Read(readBuffer, 0, readBuffer.Length);
-            UnsafeUtility.MemCpy(maskBytes.Ptr(), readBuffer.Ptr(), MTerrain.MASK_RESOLUTION * MTerrain.MASK_RESOLUTION);
-            UnsafeUtility.MemCpy(heightBytes.Ptr(), readBuffer.Ptr() + MTerrain.MASK_RESOLUTION * MTerrain.MASK_RESOLUTION, MTerrain.HEIGHT_RESOLUTION * MTerrain.HEIGHT_RESOLUTION * 2);
+            UnsafeUtility.MemCpy(heightBytes.Ptr(), readBuffer.Ptr(), MTerrain.HEIGHT_RESOLUTION * MTerrain.HEIGHT_RESOLUTION * 2);
         }
 
         public void WriteBytes(int2 position, int mipLevel, byte[] maskBytes, short[] heightBytes)
         {
             streamer.Position = GetOffset(position, mipLevel);
-            UnsafeUtility.MemCpy(readBuffer.Ptr(), maskBytes.Ptr(), MTerrain.MASK_RESOLUTION * MTerrain.MASK_RESOLUTION);
-            UnsafeUtility.MemCpy(readBuffer.Ptr() + MTerrain.MASK_RESOLUTION * MTerrain.MASK_RESOLUTION, heightBytes.Ptr(), MTerrain.HEIGHT_RESOLUTION * MTerrain.HEIGHT_RESOLUTION * 2);
+            UnsafeUtility.MemCpy(readBuffer.Ptr(), heightBytes.Ptr(), MTerrain.HEIGHT_RESOLUTION * MTerrain.HEIGHT_RESOLUTION * 2);
             streamer.Write(readBuffer, 0, readBuffer.Length);
-        }
-
-        public void BlitMask(int2 targetPosition, int mipLevel, Texture tex, float2 scale, float2 offset)
-        {
-            ComputeBuffer cb = new ComputeBuffer(MTerrain.MASK_RESOLUTION * MTerrain.MASK_RESOLUTION, sizeof(float));
-            generatorShader.SetTexture(0, ShaderIDs._MainTex, tex);
-            generatorShader.SetBuffer(0, ShaderIDs._TextureBuffer, cb);
-            generatorShader.SetVector(ShaderIDs._TextureSize , float4(scale / MTerrain.MASK_RESOLUTION, offset));
-            generatorShader.SetInt(ShaderIDs._Count, MTerrain.MASK_RESOLUTION);
-            generatorShader.Dispatch(0, MTerrain.MASK_RESOLUTION / 8, MTerrain.MASK_RESOLUTION / 8, 1);
-            float[] cbValue = new float[cb.count];
-            cb.GetData(cbValue);
-            for (int i = 0; i < cbValue.Length; ++i)
-            {
-                readBuffer[i] = (byte)(cbValue[i] * 255);
-            }
-            streamer.Position = GetOffset(targetPosition, mipLevel);
-            streamer.Write(readBuffer, 0, MTerrain.MASK_RESOLUTION * MTerrain.MASK_RESOLUTION);
-            cb.Dispose();
         }
 
         public void BlitHeight(int2 targetPosition, int mipLevel, Texture tex, float2 scale, float2 offset)
@@ -83,7 +62,7 @@ namespace MPipeline
             {
                 ptr[i] = (short)(cbValue[i] * 65535);
             }
-            streamer.Position = GetOffset(targetPosition, mipLevel) + MTerrain.MASK_RESOLUTION * MTerrain.MASK_RESOLUTION;
+            streamer.Position = GetOffset(targetPosition, mipLevel);
             streamer.Write(readBuffer, 0, cbValue.Length * 2);
             cb.Dispose();
         }
@@ -92,7 +71,7 @@ namespace MPipeline
         {
             offsetIndicesArr[0] = offset.x;
             offsetIndicesArr[1] = offset.y;
-            streamer.Position = GetOffset(targetPosition, mipLevel) + MTerrain.MASK_RESOLUTION * MTerrain.MASK_RESOLUTION;
+            streamer.Position = GetOffset(targetPosition, mipLevel);
             streamer.Read(readBuffer, 0, MTerrain.HEIGHT_RESOLUTION * MTerrain.HEIGHT_RESOLUTION * 2);
             ComputeBuffer cb = new ComputeBuffer(MTerrain.HEIGHT_RESOLUTION * MTerrain.HEIGHT_RESOLUTION / 2, sizeof(uint));
             cb.SetData(readBuffer, 0, 0, cb.count * 4);
@@ -103,46 +82,7 @@ namespace MPipeline
             generatorShader.Dispatch(4, MTerrain.HEIGHT_RESOLUTION / 8, MTerrain.HEIGHT_RESOLUTION / 8, 1);
             cb.Dispose();
         }
-
-        public void ReadMask(int2 targetPosition, int2 offset, int mipLevel, RenderTexture targetMask)
-        {
-            offsetIndicesArr[0] = offset.x;
-            offsetIndicesArr[1] = offset.y;
-            streamer.Position = GetOffset(targetPosition, mipLevel);
-            streamer.Read(readBuffer, 0, MTerrain.MASK_RESOLUTION * MTerrain.MASK_RESOLUTION);
-            ComputeBuffer cb = new ComputeBuffer(MTerrain.MASK_RESOLUTION * MTerrain.MASK_RESOLUTION / 4, sizeof(uint));
-            cb.SetData(readBuffer, 0, 0, cb.count * 4);
-            generatorShader.SetBuffer(3, "_SourceBuffer", cb);
-            generatorShader.SetInts(ShaderIDs._OffsetIndex, offsetIndicesArr);
-            generatorShader.SetTexture(3, ShaderIDs._DestTex, targetMask);
-            generatorShader.SetInt(ShaderIDs._Count, MTerrain.MASK_RESOLUTION);
-            generatorShader.Dispatch(3, MTerrain.MASK_RESOLUTION / 8, MTerrain.MASK_RESOLUTION / 8, 1);
-            cb.Dispose();
-        }
-
-        public void GenerateMaskMip(int2 targetPosition, int mipLevel)
-        {
-
-            RenderTexture tempMask = RenderTexture.GetTemporary(MTerrain.MASK_RESOLUTION * 2, MTerrain.MASK_RESOLUTION * 2, 0, RenderTextureFormat.R16, RenderTextureReadWrite.Linear, 1, RenderTextureMemoryless.None, VRTextureUsage.None, false);
-            tempMask.filterMode = FilterMode.Point;
-            tempMask.enableRandomWrite = true;
-            tempMask.Create();
-            ReadMask(targetPosition * 2, 0, mipLevel + 1, tempMask);
-            ReadMask(targetPosition * 2 + int2(1, 0), int2(MTerrain.MASK_RESOLUTION, 0), mipLevel + 1, tempMask);
-            ReadMask(targetPosition * 2 + int2(0, 1), int2(0, MTerrain.MASK_RESOLUTION), mipLevel + 1, tempMask);
-            ReadMask(targetPosition * 2 + 1, MTerrain.MASK_RESOLUTION, mipLevel + 1, tempMask);
-            RenderTexture mipMask = RenderTexture.GetTemporary(MTerrain.MASK_RESOLUTION, MTerrain.MASK_RESOLUTION, 0, RenderTextureFormat.R16, RenderTextureReadWrite.Linear, 1, RenderTextureMemoryless.None, VRTextureUsage.None, false);
-            mipMask.filterMode = FilterMode.Point;
-            mipMask.enableRandomWrite = true;
-            mipMask.Create();
-            generatorShader.SetTexture(2, ShaderIDs._SourceTex, tempMask);
-            generatorShader.SetTexture(2, ShaderIDs._DestTex, mipMask);
-            generatorShader.Dispatch(2, MTerrain.MASK_RESOLUTION / 8, MTerrain.MASK_RESOLUTION / 8, 1);
-            BlitMask(targetPosition, mipLevel, mipMask, 1, 0);
-            RenderTexture.ReleaseTemporary(tempMask);
-            RenderTexture.ReleaseTemporary(mipMask);
-        }
-
+            
         public void GenerateHeightMip(int2 targetPosition, int mipLevel)
         {
             RenderTexture tempHeight = RenderTexture.GetTemporary(MTerrain.HEIGHT_RESOLUTION * 2, MTerrain.HEIGHT_RESOLUTION * 2, 0, RenderTextureFormat.R16, RenderTextureReadWrite.Linear, 1, RenderTextureMemoryless.None, VRTextureUsage.None, false);

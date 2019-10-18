@@ -10,7 +10,6 @@
 #include "Shader_Include/ImageBasedLighting.hlsl"
 #include "Terrain.cginc"
 #include "Tessellation.cginc"
-
 #define GetScreenPos(pos) ((float2(pos.x, pos.y) * 0.5) / pos.w + 0.5)
 
 float4 ProceduralStandardSpecular_Deferred (inout SurfaceOutputStandardSpecular s, out float4 outGBuffer0, out float4 outGBuffer1, out float4 outGBuffer2)
@@ -142,13 +141,15 @@ void frag_surf (v2f_surf IN,
 #endif
   float3 worldViewDir = normalize(_WorldSpaceCameraPos - worldPos.xyz);
   SurfaceOutputStandardSpecular o;
-  float3x3 wdMatrix= float3x3(float3(1, 0, 0), float3(0, 0, 1), float3(0, 1, 0));
   // call surface function
   #ifdef DEBUG_QUAD_TREE
   IN.pack0 /= IN.scale; 
   #endif
   surf (IN.pack0.xy, IN.vtUV, o);
-  o.Normal = normalize(mul(o.Normal, wdMatrix));
+  //TODO
+  //Get TBN From height
+  o.Normal = o.Normal.xzy;
+  
   outEmission = ProceduralStandardSpecular_Deferred (o, outGBuffer0, outGBuffer1, outGBuffer2); //GI neccessary here!
 
 

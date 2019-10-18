@@ -6,6 +6,7 @@
 #pragma kernel TexToBuffer NORM
 #pragma kernel CopyIES
 #pragma kernel BlendToArray
+#pragma kernel BlendToTex
 #include "CGINC/Texture.cginc"
 #include "UnityCG.cginc"
     uint DownDim(uint2 uv, uint width)
@@ -58,24 +59,30 @@ void CopyIES(uint id : SV_DISPATCHTHREADID)
 
 RWTexture2DArray<float4> _VirtualMainTex;
 RWTexture2DArray<float2> _VirtualBumpMap;
-RWTexture2DArray<float4> _VirtualSMO;
-Texture2D<float4> _CameraGBufferTexture0;//Diffuse
-Texture2D<float4> _CameraGBufferTexture1;//SMO
-Texture2D<float2> _CameraGBufferTexture2;//Normal
+RWTexture2DArray<float2> _VirtualSMO;
+RWTexture2D<float4> _CameraGBufferTexture0;//Diffuse
+RWTexture2D<float4> _CameraGBufferTexture1;//SMO
+RWTexture2D<float2> _CameraGBufferTexture2;//Normal
 [numthreads(8,8,1)]
 void BlendToArray(uint2 id : SV_DISPATCHTHREADID)
 {
-    float4 v = _CameraGBufferTexture0[id];
-    float4 col = _VirtualMainTex[uint3(id, _Count)];
-    col.xyz = lerp(col.xyz, v.xyz, v.w);
-    float4 albedo;
-    albedo.xyz = col;  
-    float2 nor = _VirtualBumpMap[uint3(id, _Count)];
-    nor = lerp(nor, _CameraGBufferTexture2[id], v.w);
-    _VirtualBumpMap[uint3(id, _Count)] = nor;
-    col = _VirtualSMO[uint3(id, _Count)];
-    col.xyz = lerp(col.xyz, _CameraGBufferTexture1[id].xyz, v.w);
-    _VirtualSMO[uint3(id, _Count)] = float4(col.xy, 1, 1);
-    albedo.w = col.z;
-    _VirtualMainTex[uint3(id, _Count)] = albedo;
+    float4 albedo_trans = _CameraGBufferTexture0[id];
+    float3 smo = _CameraGBufferTexture1[id];
+    float2 normal = _CameraGBufferTexture2[id];
+    uint3 idx = uint3(id, _Count);
+    _VirtualMainTex[idx] = float4(albedo_trans.xyz, smo.z);
+    _VirtualBumpMap[idx] = normal;
+    _VirtualSMO[idx] = smo.xy;
+}
+
+[numthreads(8, 8, 1)]
+void BlendToTex(uint2 id : SV_DISPATCHTHREADID)
+{
+    uint3 idx = uint3(id, _Count);
+    float4 albedo_occ = _VirtualMainTex[idx];
+    float2 normal = _VirtualBumpMap[idx];
+    float2 sm = _VirtualSMO[idx];
+    _CameraGBufferTexture0[id] = float4(albedo_occ.xyz, 1);
+    _CameraGBufferTexture2[id] = normal;
+    _CameraGBufferTexture1[id] = float4(sm, albedo_occ.w, 1);
 }

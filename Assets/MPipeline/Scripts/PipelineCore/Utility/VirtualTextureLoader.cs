@@ -43,7 +43,7 @@ namespace MPipeline
         private bool enabled;
         private int initialMipCount;
         private byte[] bufferBytes;
-        private const long CHUNK_SIZE = MTerrain.HEIGHT_RESOLUTION * MTerrain.HEIGHT_RESOLUTION * 2 + MTerrain.MASK_RESOLUTION * MTerrain.MASK_RESOLUTION;
+        private const long CHUNK_SIZE = MTerrain.HEIGHT_RESOLUTION * MTerrain.HEIGHT_RESOLUTION * 2;
         public static NativeArray<long> GetStreamingPositionOffset(int initialMipCount, int mipLevel, Allocator alloc = Allocator.Persistent)
         {
             var streamPositionOffset = new NativeArray<long>(mipLevel, alloc, NativeArrayOptions.UninitializedMemory);

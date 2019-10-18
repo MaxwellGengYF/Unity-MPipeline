@@ -5,6 +5,7 @@ using UnityEngine.Rendering;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using static Unity.Mathematics.math;
+using UnityEngine.Experimental.Rendering;
 using Unity.Mathematics;
 namespace MPipeline
 {
@@ -24,9 +25,9 @@ namespace MPipeline
     public struct VirtualTextureFormat
     {
         public VirtualTextureSize perElementSize { get; private set; }
-        public RenderTextureFormat format { get; private set; }
+        public GraphicsFormat format { get; private set; }
         public int rtPropertyID { get; private set; }
-        public VirtualTextureFormat(VirtualTextureSize size, RenderTextureFormat format, string rtName)
+        public VirtualTextureFormat(VirtualTextureSize size, GraphicsFormat format, string rtName)
         {
             perElementSize = size;
             this.format = format;
@@ -89,7 +90,7 @@ namespace MPipeline
         private ComputeShader shader;
         private RenderTexture[] textures;
         private TexturePool pool;
-        private int indexTexID;
+        public int indexTexID { get; private set; }
         private NativeArray<VirtualTextureFormat> allFormats;
         private static int[] vtVariables = new int[4];
         private static int[] texSize = new int[2];
@@ -99,18 +100,26 @@ namespace MPipeline
         public RenderTexture indexTex { get; private set; }
         private struct VTChunkHandleEqual : IFunction<int2, int2, bool>
         {
+            [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             public bool Run(ref int2 a, ref int2 b)
             {
                 return a.x == b.x && a.y == b.y;
             }
         }
         private NativeDictionary<int2, int2, VTChunkHandleEqual> poolDict;
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public RenderTexture GetTexture(int index)
         {
             return textures[index];
         }
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public VirtualTextureFormat GetTextureFormat(int index)
+        {
+            return allFormats[index];
+        }
         public int LeftedTextureElement
         {
+            [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             get
             {
                 return pool.LeftedElement;
@@ -157,7 +166,7 @@ namespace MPipeline
             pool = new TexturePool(maximumSize);
             indexTex = new RenderTexture(new RenderTextureDescriptor
             {
-                colorFormat = RenderTextureFormat.ARGB64,
+                graphicsFormat = GraphicsFormat.R16G16B16A16_UNorm,
                 depthBufferBits = 0,
                 dimension = TextureDimension.Tex2D,
                 enableRandomWrite = true,
@@ -171,13 +180,21 @@ namespace MPipeline
             textures = new RenderTexture[formatLen];
             for (int i = 0; i < formatLen; ++i)
             {
-                VirtualTextureFormat format = formats[i];
-                textures[i] = new RenderTexture((int)format.perElementSize, (int)format.perElementSize, 0, format.format, mipCount);
-                textures[i].useMipMap = mipCount > 0;
-                textures[i].autoGenerateMips = false;
-                textures[i].enableRandomWrite = true;
-                textures[i].dimension = TextureDimension.Tex2DArray;
-                textures[i].volumeDepth = maximumSize;
+                ref VirtualTextureFormat format = ref formats[i];
+                textures[i] = new RenderTexture(new RenderTextureDescriptor
+                {
+                    graphicsFormat = format.format,
+                    width = (int)format.perElementSize,
+                    height = (int)format.perElementSize,
+                    volumeDepth = maximumSize,
+                    dimension = TextureDimension.Tex2DArray,
+                    mipCount = mipCount,
+                    autoGenerateMips = false,
+                    useMipMap = mipCount > 0,
+                    enableRandomWrite = true,
+                    msaaSamples = 1,
+                    depthBufferBits = 0,
+                });
                 textures[i].Create();
             }
         }
@@ -323,6 +340,7 @@ namespace MPipeline
         /// </summary>
         /// <param name="startIndex">Start Index in IndexTexture </param>
         /// <param name="size">Target Size in IndexTexture</param>
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public void UnloadTexture(int2 startIndex)
         {
             UnloadChunk(ref startIndex);
@@ -358,7 +376,7 @@ namespace MPipeline
                     width = (int)fmt.perElementSize,
                     height = (int)fmt.perElementSize,
                     volumeDepth = 1,
-                    colorFormat = fmt.format,
+                    graphicsFormat = fmt.format,
                     dimension = TextureDimension.Tex2D,
                     enableRandomWrite = true,
                     msaaSamples = 1
@@ -369,7 +387,7 @@ namespace MPipeline
                 shader.SetTexture(3, ShaderIDs._BlendTex, blendRT);
                 int disp = Mathf.CeilToInt((int)fmt.perElementSize / 8f);
                 shader.Dispatch(3, disp, disp, 1);
-                Graphics.Blit(blendRT, textures[i], 0, targetElement);
+                Graphics.CopyTexture(blendRT, 0, 0, textures[i], targetElement, 0);
                 RenderTexture.ReleaseTemporary(blendRT);
             }
             vtVariables[0] = startIndex.x;

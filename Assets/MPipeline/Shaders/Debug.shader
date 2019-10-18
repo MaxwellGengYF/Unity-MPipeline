@@ -16,7 +16,7 @@
             #pragma fragment frag
             #pragma target 5.0
             #include "UnityCG.cginc"
-            Texture2D _MainTex; SamplerState sampler_MainTex;
+            Texture2DArray _MainTex; SamplerState sampler_MainTex;
             struct appdata
             {
                 float4 vertex : POSITION;
@@ -40,7 +40,7 @@
             sampler2D _CameraMotionVectorsTexture;
             void frag (v2f i, out float4 col : SV_TARGET)
             {
-                col = _MainTex.SampleLevel(sampler_MainTex, float3(i.uv, 0), 5);
+                col = _MainTex.SampleLevel(sampler_MainTex, float3(i.uv, 0), 0);
             }
             ENDCG
         }

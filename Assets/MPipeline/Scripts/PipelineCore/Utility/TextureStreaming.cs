@@ -29,7 +29,7 @@ namespace MPipeline
             this.isNormal = isNormal;
             this.clusterRes = clusterRes;
             this.streamingIndex = streamingIndex;
-            int targetLevel = (int)(log2(resolution + 0.1)) - 4;
+            const int targetLevel = 6;
             rt = new RenderTexture(resolution, resolution, 0, format, targetLevel);
             rt.useMipMap = targetLevel > 1;
             rt.autoGenerateMips = false;
