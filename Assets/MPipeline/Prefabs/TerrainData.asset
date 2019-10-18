@@ -40,6 +40,23 @@ MonoBehaviour:
   renderingLevelCount: 5
   allDecalLayers: []
   virtualTexCapacity: 128
+  allMaterials:
+  - firstMaterialIndex: 0
+    secondMaterialIndex: 1
+    offset: 0
+    heightBlendScale: 0
+  - firstMaterialIndex: 1
+    secondMaterialIndex: 2
+    offset: 0
+    heightBlendScale: 0
+  - firstMaterialIndex: 2
+    secondMaterialIndex: 3
+    offset: 0
+    heightBlendScale: 0
+  - firstMaterialIndex: 3
+    secondMaterialIndex: 0
+    offset: 0
+    heightBlendScale: 0
   readWritePath: Assets/BinaryData/Terrain.mquad
   drawTerrainMaterial: {fileID: 2100000, guid: 895d3f610aae4944b88c1b1fc7f46f4d, type: 2}
   textures:

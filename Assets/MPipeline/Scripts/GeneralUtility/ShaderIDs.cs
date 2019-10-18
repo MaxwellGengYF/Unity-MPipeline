@@ -170,7 +170,6 @@ public static partial class ShaderIDs
     public static readonly int _IndexTexture = Shader.PropertyToID("_IndexTexture");
     public static readonly int _IndexTextureSize = Shader.PropertyToID("_IndexTextureSize");
     public static readonly int _VirtualTexture = Shader.PropertyToID("_VirtualTexture");
-
     public static readonly int _VTVariables = Shader.PropertyToID("_VTVariables");
     public static readonly int _ElementBuffer = Shader.PropertyToID("_ElementBuffer");
 
