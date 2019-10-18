@@ -24,4 +24,12 @@ void GetHeightBlendMaterial(float bufferIndex, float2 uv, out float4 albedo_occ,
     sm = lerp(_SMMap.SampleLevel(sampler_SMMap, float3(uv, mat.firstMaterialIndex), 0).xy, _SMMap.SampleLevel(sampler_SMMap, float3(uv, mat.secondMaterialIndex), 0).xy, blendWeight);
 }
 
+void GetHeightBlendInEditor(HeightBlendMaterial mat, float3 albedo0, float3 normal0, float4 smoh0,float3 albedo1, float3 normal1, float4 smoh1, out float3 albedo, out float2 normal, out float3 smo)
+{
+    float blendWeight = saturate(mat.heightBlendScale * (smoh0.w - smoh1.w + mat.offset) * 0.5 + 0.5);
+    albedo = lerp(albedo0, albedo1, blendWeight);
+    normal = lerp(normal0, normal1, blendWeight).xy * 0.5 + 0.5;
+    smo = lerp(smoh0, smoh1, blendWeight).xyz;
+}
+
 #endif
