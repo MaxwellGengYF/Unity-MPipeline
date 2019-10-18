@@ -166,7 +166,7 @@ namespace MPipeline
             pool = new TexturePool(maximumSize);
             indexTex = new RenderTexture(new RenderTextureDescriptor
             {
-                colorFormat = RenderTextureFormat.ARGB64,
+                graphicsFormat = GraphicsFormat.R16G16B16A16_UNorm,
                 depthBufferBits = 0,
                 dimension = TextureDimension.Tex2D,
                 enableRandomWrite = true,
@@ -183,18 +183,17 @@ namespace MPipeline
                 ref VirtualTextureFormat format = ref formats[i];
                 textures[i] = new RenderTexture(new RenderTextureDescriptor
                 {
+                    graphicsFormat = format.format,
                     width = (int)format.perElementSize,
                     height = (int)format.perElementSize,
                     volumeDepth = maximumSize,
                     dimension = TextureDimension.Tex2DArray,
-                    sRGB = false,
                     mipCount = mipCount,
                     autoGenerateMips = false,
                     useMipMap = mipCount > 0,
-                    graphicsFormat = format.format,
                     enableRandomWrite = true,
                     msaaSamples = 1,
-                    depthBufferBits = 0
+                    depthBufferBits = 0,
                 });
                 textures[i].Create();
             }

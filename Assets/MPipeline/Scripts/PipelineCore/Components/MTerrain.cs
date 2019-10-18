@@ -63,6 +63,7 @@ namespace MPipeline
         private RenderTexture albedoTex;
         private RenderTexture normalTex;
         private RenderTexture smTex;
+        private RenderTexture heightTex;
         private VirtualTexture maskVT;
         private NativeList<TerrainChunkBuffer> loadedBufferList;
         private static Vector4[] planes = new Vector4[6];
@@ -400,7 +401,7 @@ namespace MPipeline
 
             albedoTex = new RenderTexture(new RenderTextureDescriptor
             {
-                colorFormat = RenderTextureFormat.ARGB32,
+                graphicsFormat = GraphicsFormat.R8G8B8A8_UNorm,
                 dimension = TextureDimension.Tex2DArray,
                 width = COLOR_RESOLUTION,
                 height = COLOR_RESOLUTION,
@@ -411,7 +412,7 @@ namespace MPipeline
             albedoTex.Create();
             normalTex = new RenderTexture(new RenderTextureDescriptor
             {
-                colorFormat = RenderTextureFormat.RGHalf,
+                graphicsFormat = GraphicsFormat.R16G16_SNorm,
                 dimension = TextureDimension.Tex2DArray,
                 width = COLOR_RESOLUTION,
                 height = COLOR_RESOLUTION,
@@ -422,15 +423,36 @@ namespace MPipeline
             normalTex.Create();
             smTex = new RenderTexture(new RenderTextureDescriptor
             {
-                colorFormat = RenderTextureFormat.RG16,
+                graphicsFormat = GraphicsFormat.R16G16_UNorm,
                 dimension = TextureDimension.Tex2DArray,
                 width = COLOR_RESOLUTION,
                 height = COLOR_RESOLUTION,
                 volumeDepth = Mathf.Max(1, terrainData.textures.Length),
                 enableRandomWrite = true,
-                msaaSamples = 1
+                msaaSamples = 1,
+                useMipMap = false,
+                autoGenerateMips = false,
+                mipCount = 0,
+                depthBufferBits = 0,
+                useDynamicScale = false
             });
             smTex.Create();
+            heightTex = new RenderTexture(new RenderTextureDescriptor
+            {
+                graphicsFormat = GraphicsFormat.R8_UNorm,
+                dimension = TextureDimension.Tex2DArray,
+                width = COLOR_RESOLUTION,
+                height = COLOR_RESOLUTION,
+                volumeDepth = Mathf.Max(1, terrainData.textures.Length),
+                enableRandomWrite = true,
+                msaaSamples = 1,
+                useMipMap = false,
+                autoGenerateMips = false,
+                mipCount = 0,
+                depthBufferBits = 0,
+                useDynamicScale = false
+            });
+            heightTex.Create();
             worldNormalRT = new RenderTexture(HEIGHT_RESOLUTION, HEIGHT_RESOLUTION, 0, RenderTextureFormat.RGFloat, 0);
             worldNormalRT.useMipMap = false;
             worldNormalRT.autoGenerateMips = false;
