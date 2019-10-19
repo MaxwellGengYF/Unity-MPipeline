@@ -10,11 +10,21 @@ using System.Threading;
 using UnityEngine.Rendering;
 namespace MPipeline
 {
+    public struct TerrainUnloadData
+    {
+        public enum Operator
+        {
+            Unload, Combine
+        }
+        public Operator ope;
+        public int size;
+        public int2 startIndex;
+    }
     public struct TerrainLoadData
     {
         public enum Operator
         {
-            Combine, Load, Unload, Separate
+            Load, Separate
         }
         public Operator ope;
         public int size;
@@ -40,7 +50,7 @@ namespace MPipeline
         public int lodLevel;
         public int2 localPosition;
         private double distOffset;
-        public int2 VirtualTextureIndex => localPosition * (int)(0.5 + pow(2.0, MTerrain.current.allLodLevles.Length - 1 - lodLevel));
+        public int2 VirtualTextureIndex => localPosition * (int)(0.1 + pow(2.0, MTerrain.current.allLodLevles.Length - 1 - lodLevel));
         public bool isRendering { get; private set; }
         private double worldSize;
         private int2 rootPos;
@@ -135,13 +145,19 @@ namespace MPipeline
                     pos = rootPos + (int2)maskScaleOffset.yz
                 });
             }
-            if (isRendering && MTerrain.current != null)
+            if (MTerrain.current != null)
             {
-                MTerrain.current.loadDataList.Add(new TerrainLoadData
+                int2 startIndex = VirtualTextureIndex;
+                if (isRendering)
                 {
-                    ope = TerrainLoadData.Operator.Unload,
-                    startIndex = VirtualTextureIndex
-                });
+                    
+                    MTerrain.current.unloadDataList.Add(new TerrainUnloadData
+                    {
+                        ope = TerrainUnloadData.Operator.Unload,
+                        startIndex = startIndex
+                    });
+                }
+                MTerrain.current.enabledChunk.Remove(int3(startIndex, VirtualTextureSize));
             }
             isRendering = false;
             if (leftDown != null)
@@ -161,11 +177,13 @@ namespace MPipeline
         {
             if (!isRendering)
             {
+                int3 pack = int3(VirtualTextureIndex, VirtualTextureSize);
+                MTerrain.current.enabledChunk[pack] = true;
                 MTerrain.current.loadDataList.Add(new TerrainLoadData
                 {
                     ope = TerrainLoadData.Operator.Load,
-                    startIndex = VirtualTextureIndex,
-                    size = VirtualTextureSize,
+                    startIndex = pack.xy,
+                    size = pack.z,
                     handler0 = MTerrain.current.loader.LoadChunk(localPosition, lodLevel),
                     rootPos = rootPos,
                     maskScaleOffset = (float3)maskScaleOffset,
@@ -182,11 +200,12 @@ namespace MPipeline
 
             if (isRendering)
             {
-                MTerrain.current.loadDataList.Add(new TerrainLoadData
+                int2 startIndex = VirtualTextureIndex;
+                MTerrain.current.enabledChunk.Remove(int3(startIndex, VirtualTextureSize));
+                MTerrain.current.unloadDataList.Add(new TerrainUnloadData
                 {
-                    ope = TerrainLoadData.Operator.Unload,
-                    size = VirtualTextureSize,
-                    startIndex = VirtualTextureIndex
+                    ope = TerrainUnloadData.Operator.Unload,
+                    startIndex = startIndex
                 });
             }
 
@@ -231,6 +250,14 @@ namespace MPipeline
                     *rightUp = new TerrainQuadTree(lodLevel, LocalPos.RightUp, localPosition, subSize, this.maskScaleOffset, rootPos);
                     float3 maskScaleOffset = (float3)this.maskScaleOffset;
                     maskScaleOffset.x *= 0.5f;
+                    leftDown->isRendering = true;
+                    leftUp->isRendering = true;
+                    rightDown->isRendering = true;
+                    rightUp->isRendering = true;
+                    MTerrain.current.enabledChunk[int3(leftDown->VirtualTextureIndex, leftDown->VirtualTextureSize)] = true;
+                    MTerrain.current.enabledChunk[int3(leftUp->VirtualTextureIndex, leftUp->VirtualTextureSize)] = true;
+                    MTerrain.current.enabledChunk[int3(rightDown->VirtualTextureIndex, rightDown->VirtualTextureSize)] = true;
+                    MTerrain.current.enabledChunk[int3(rightUp->VirtualTextureIndex, rightUp->VirtualTextureSize)] = true;
                     MTerrain.current.loadDataList.Add(new TerrainLoadData
                     {
                         ope = TerrainLoadData.Operator.Separate,
@@ -244,12 +271,7 @@ namespace MPipeline
                         handler3 = MTerrain.current.loader.LoadChunk(rightUp->localPosition, rightUp->lodLevel),
                         targetDecalLayer = leftDown->decalMask
                     });
-                    leftDown->isRendering = true;
-                    leftUp->isRendering = true;
-                    rightDown->isRendering = true;
-                    rightUp->isRendering = true;
                 }
-
             }
             distOffset = -MTerrain.current.terrainData.lodDeferredOffset;
         }
@@ -264,11 +286,12 @@ namespace MPipeline
                 rightUp->Dispose();
                 if (enableSelf)
                 {
-                    MTerrain.current.loadDataList.Add(new TerrainLoadData
+                    int3 pack = int3(VirtualTextureIndex, VirtualTextureSize);
+                    MTerrain.current.unloadDataList.Add(new TerrainUnloadData
                     {
-                        ope = TerrainLoadData.Operator.Combine,
-                        startIndex = VirtualTextureIndex,
-                        size = VirtualTextureSize
+                        ope = TerrainUnloadData.Operator.Combine,
+                        startIndex = pack.xy,
+                        size = pack.z
                     });
                     isRendering = true;
                 }
@@ -300,6 +323,7 @@ namespace MPipeline
                 rightDown->PushDrawRequest(loadedBufferList);
                 rightUp->PushDrawRequest(loadedBufferList);
             }
+
             if (isRendering)
             {
                 loadedBufferList.Add(new MTerrain.TerrainChunkBuffer
@@ -329,8 +353,6 @@ namespace MPipeline
                 Separate();
 
             }
-
-
             if (leftDown != null)
             {
                 leftDown->CheckUpdate(camXZPos);

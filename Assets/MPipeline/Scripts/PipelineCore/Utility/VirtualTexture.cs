@@ -221,6 +221,17 @@ namespace MPipeline
             return -1;
         }
 
+        public bool ContainsChunk(int2 startIndex, int size)
+        {
+            startIndex %= indexSize;
+            int2 result;
+            if (poolDict.Get(startIndex, out result))
+            {
+                if (result.x == size) return true;
+            }
+            return false;
+        }
+
         private bool GetChunk(ref int2 startIndex, int size, out int element)
         {
             startIndex %= indexSize;
@@ -229,7 +240,7 @@ namespace MPipeline
             {
                 if (result.x != size)
                 {
-                    result = int2(size, result.y);
+                    result.x = size;
                     poolDict[startIndex] = result;
                 }
                 element = result.y;

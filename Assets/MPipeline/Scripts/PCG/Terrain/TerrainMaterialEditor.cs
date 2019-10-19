@@ -73,6 +73,7 @@ namespace MPipeline
             Material mat = GetComponent<MeshRenderer>().sharedMaterial;
             if (!mat) return;
             CommandBuffer bf = RenderPipeline.BeforeFrameBuffer;
+            if (!drawAlbedoRT || !drawNormalRT || !drawSMORT) return;
             bf.SetRenderTarget(colors: colorBuffers, depth: drawAlbedoRT.depthBuffer);
             bf.ClearRenderTarget(false, true, Color.black);
             if (renderingMaterial < 0 || renderingMaterial >= allMaterials.Count) return;
@@ -98,10 +99,19 @@ namespace MPipeline
         }
         public int CheckResources()
         {
+            for(int i = 0; i < allTextures.Count; ++i)
+            {
+                var a = allTextures[i];
+                if (!a.albedo || !a.normal || !a.smo)
+                {
+                    Debug.LogError("Group " + i + " has NULL");
+                    return 1;
+                }
+            }
             foreach (var i in allTextures)
             {
-                if (!i.albedo || !i.normal || !i.smo)
-                    return 1;
+                
+                   
             }
             return 0;
         }
@@ -136,6 +146,7 @@ namespace MPipeline
         public override void OnInspectorGUI()
         {
             TerrainMaterialEditor target = serializedObject.targetObject as TerrainMaterialEditor;
+            Undo.RecordObject(target, target.GetInstanceID().ToString());
             target.targetData = EditorGUILayout.ObjectField("Terrian Data: ", target.targetData, typeof(MTerrainData), false) as MTerrainData;
             if (!target.targetData)
             {
@@ -243,6 +254,11 @@ namespace MPipeline
                 EditorGUI.indentLevel--;
             }
             target.DrawToMaterial();
+            if(GUILayout.Button("Save Data"))
+            {
+                if (target.CheckResources() == 0)
+                    target.SaveData();
+            }
         }
     }
 }

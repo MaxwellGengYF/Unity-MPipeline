@@ -23,7 +23,7 @@ namespace MPipeline
         public double2 screenOffset;
         public double lodDeferredOffset = 2;
         public AssetReference[] allMaskTextures;
-        public Texture2D warpNoiseTexture;
+        //public Texture2D warpNoiseTexture;
         public float[] lodDistances = new float[]
         {
             3000,

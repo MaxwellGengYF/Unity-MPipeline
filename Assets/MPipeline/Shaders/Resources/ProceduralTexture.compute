@@ -7,7 +7,7 @@
 #include "UnityCG.cginc"
 #include "../CGINC/VirtualTexture.cginc"
 #include "../CGINC/HeightBlendMaterial.cginc"
-Texture2D<float> _NoiseTexture; SamplerState sampler_NoiseTexture;
+//Texture2D<float> _NoiseTexture; SamplerState sampler_NoiseTexture;
 Texture2DArray<float> _VirtualMaskmap; SamplerState sampler_VirtualMaskmap;
 Texture2D<float4> _MaskIndexMap;
 RWTexture2DArray<float4> _VirtualMainTex;
@@ -60,8 +60,8 @@ void UpSample (uint2 id : SV_DispatchThreadID)
     float2 uv = absoluteUV * _TextureSize.w;
     float4 mask;
     float2 lerpValue = BilinearSampleMask(maskVirtualUV, mask);
-    float noiseValue = _NoiseTexture.SampleLevel(sampler_NoiseTexture, maskVirtualUV, 0);
-    lerpValue = pow(lerpValue, max(1e-4, 0.5 + 3 * noiseValue));
+    //float noiseValue = _NoiseTexture.SampleLevel(sampler_NoiseTexture, maskVirtualUV, 0);
+    //lerpValue = pow(lerpValue, max(1e-4, 0.5 + 3 * noiseValue));
     mask *= _IndexTextureSize.y;
     mask += 0.4;
     float4 albedo_occs[4];

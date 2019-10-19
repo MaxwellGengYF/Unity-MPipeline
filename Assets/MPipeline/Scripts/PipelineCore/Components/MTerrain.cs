@@ -35,7 +35,7 @@ namespace MPipeline
             public bool load;
             public int2 pos;
         }
-        public const int MASK_RESOLUTION = 512;
+        public const int MASK_RESOLUTION = 2048;
         public const int HEIGHT_RESOLUTION = 256;
         public const int COLOR_RESOLUTION = 1024;
         public const GraphicsFormat HEIGHT_FORMAT = GraphicsFormat.R16_UNorm;
@@ -49,7 +49,18 @@ namespace MPipeline
         [System.NonSerialized]
         public int decalLayerOffset;
         public NativeQueue<TerrainLoadData> loadDataList;
+        public NativeQueue<TerrainUnloadData> unloadDataList;
         public NativeQueue<MaskLoadCommand> maskLoadList;
+        public struct int3Equal : IFunction<int3, int3, bool>
+        {
+            public bool Run(ref int3 a, ref int3 b)
+            {
+                bool3 c = a == b;
+                return c.x && c.y && c.z;
+            }
+        }
+        //All Enabled Chunk: Key: XY: index Z: size
+        public NativeDictionary<int3, bool, int3Equal> enabledChunk;
         #endregion
 
         public Transform cam;
@@ -126,6 +137,16 @@ namespace MPipeline
             textureShader.Dispatch(4, disp, disp, 1);
         }
 
+        bool CheckChunkEnabled(int2 startIndex, int size)
+        {
+            bool v = false;
+            if (enabledChunk.Get(int3(startIndex, size), out v) && v)
+            {
+                return true;
+            }
+            return false;
+        }
+
         int LoadTexture(VirtualTextureLoader.LoadingHandler handler, int2 startIndex, int size, int2 rootPos, float3 maskScaleOffset)
         {
             int texElement;
@@ -143,7 +164,7 @@ namespace MPipeline
             }
             shader.SetInt(ShaderIDs._OffsetIndex, texElement);
             textureBuffer.SetDataPtr((uint*)(handler.allBytes), HEIGHT_RESOLUTION * HEIGHT_RESOLUTION / 2);
-            
+
 
             shader.Dispatch(3, HEIGHT_RESOLUTION / 8, HEIGHT_RESOLUTION / 8, 1);
 
@@ -223,12 +244,34 @@ namespace MPipeline
                 texs.SMTex.ReleaseAsset();
             }
             //textureShader.SetInt(ShaderIDs._Count, terrainData.textures.Length);
+
+            shader.SetTexture(3, ShaderIDs._VirtualHeightmap, vt.GetTexture(0));
+            shader.SetBuffer(3, ShaderIDs._TextureBuffer, textureBuffer);
+            textureShader.SetBuffer(0, ShaderIDs._MaterialBuffer, materialBuffer);
+            textureShader.SetTexture(0, ShaderIDs._VirtualMainTex, vt.GetTexture(1));
+            textureShader.SetTexture(0, ShaderIDs._VirtualBumpMap, vt.GetTexture(2));
+            textureShader.SetTexture(0, ShaderIDs._VirtualSMO, vt.GetTexture(3));
+            textureShader.SetTexture(0, ShaderIDs._HeightMap, heightTex);
+            textureShader.SetTexture(0, ShaderIDs._MainTex, albedoTex);
+            textureShader.SetTexture(0, ShaderIDs._BumpMap, normalTex);
+            textureShader.SetTexture(0, ShaderIDs._SMMap, smTex);
+            int rtID = maskVT.GetTextureFormat(0).rtPropertyID;
+            textureShader.SetTexture(0, rtID, maskVT.GetTexture(0));
+            textureShader.SetTexture(0, maskVT.indexTexID, maskVT.indexTex);
+            //      textureShader.SetTexture(0, ShaderIDs._NoiseTexture, terrainData.warpNoiseTexture);
+            textureShader.SetTexture(3, ShaderIDs._VirtualHeightmap, vt.GetTexture(0));
+            textureShader.SetTexture(3, ShaderIDs._IndexTexture, vt.indexTex);
+            textureShader.SetTexture(3, ShaderIDs._DestTex, worldNormalRT);
+            textureShader.SetTexture(4, ShaderIDs._VirtualBumpMap, vt.GetTexture(2));
+            textureShader.SetTexture(4, ShaderIDs._SourceTex, worldNormalRT);
+            shader.SetInt(ShaderIDs._HeightResolution, HEIGHT_RESOLUTION);
+            textureShader.SetInt(ShaderIDs._ColorResolution, COLOR_RESOLUTION);
+
             while (enabled)
             {
                 TerrainLoadData loadData;
                 MaskLoadCommand maskCommand;
-                shader.SetInt(ShaderIDs._HeightResolution, HEIGHT_RESOLUTION);
-                textureShader.SetInt(ShaderIDs._ColorResolution, COLOR_RESOLUTION);
+
                 while (maskLoadList.TryDequeue(out maskCommand))
                 {
                     if (maskCommand.load)
@@ -252,41 +295,39 @@ namespace MPipeline
                     }
 
                 }
+                TerrainUnloadData unloadData;
+                while (unloadDataList.TryDequeue(out unloadData))
+                {
+                    switch (unloadData.ope)
+                    {
+                        case TerrainUnloadData.Operator.Unload:
+                            vt.UnloadTexture(unloadData.startIndex);
+                            break;
+                        case TerrainUnloadData.Operator.Combine:
+                            vt.CombineTexture(unloadData.startIndex, unloadData.size, false);
+                            break;
+                    }
+                }
+
                 if (loadDataList.TryDequeue(out loadData))
                 {
-                    if (loadData.ope == TerrainLoadData.Operator.Load || loadData.ope == TerrainLoadData.Operator.Separate)
-                    {
-                        shader.SetTexture(3, ShaderIDs._VirtualHeightmap, vt.GetTexture(0));
-                        shader.SetBuffer(3, ShaderIDs._TextureBuffer, textureBuffer);
-                        textureShader.SetBuffer(0, ShaderIDs._MaterialBuffer, materialBuffer);
-                        textureShader.SetTexture(0, ShaderIDs._VirtualMainTex, vt.GetTexture(1));
-                        textureShader.SetTexture(0, ShaderIDs._VirtualBumpMap, vt.GetTexture(2));
-                        textureShader.SetTexture(0, ShaderIDs._VirtualSMO, vt.GetTexture(3));
-                        textureShader.SetTexture(0, ShaderIDs._HeightMap, heightTex);
-                        textureShader.SetTexture(0, ShaderIDs._MainTex, albedoTex);
-                        textureShader.SetTexture(0, ShaderIDs._BumpMap, normalTex);
-                        textureShader.SetTexture(0, ShaderIDs._SMMap, smTex);
-                        int rtID = maskVT.GetTextureFormat(0).rtPropertyID;
-                        textureShader.SetTexture(0, rtID, maskVT.GetTexture(0));
-                        textureShader.SetTexture(0, maskVT.indexTexID, maskVT.indexTex);
-                        textureShader.SetTexture(0, ShaderIDs._NoiseTexture, terrainData.warpNoiseTexture);
-                        textureShader.SetTexture(3, ShaderIDs._VirtualHeightmap, vt.GetTexture(0));
-                        textureShader.SetTexture(3, ShaderIDs._IndexTexture, vt.indexTex);
-                        textureShader.SetTexture(3, ShaderIDs._DestTex, worldNormalRT);
-                        textureShader.SetTexture(4, ShaderIDs._VirtualBumpMap, vt.GetTexture(2));
-                        textureShader.SetTexture(4, ShaderIDs._SourceTex, worldNormalRT);
-
-                    }
                     switch (loadData.ope)
                     {
                         case TerrainLoadData.Operator.Load:
                             while (!GetComplete(ref loadData.handler0))
-                                yield return null; int targetElement = LoadTexture(loadData.handler0, loadData.startIndex, loadData.size, loadData.rootPos, loadData.maskScaleOffset);
-                            ConvertNormalMap(loadData.startIndex, loadData.size, targetElement);
-                            if (loadData.targetDecalLayer != 0)
-                            {
-                                DrawDecal(loadData.startIndex, loadData.size, targetElement, loadData.targetDecalLayer);
                                 yield return null;
+                            if (CheckChunkEnabled(loadData.startIndex, loadData.size))
+                            {
+                                int targetElement = LoadTexture(loadData.handler0, loadData.startIndex, loadData.size, loadData.rootPos, loadData.maskScaleOffset);
+                                if (targetElement >= 0)
+                                {
+                                    ConvertNormalMap(loadData.startIndex, loadData.size, targetElement);
+                                    if (loadData.targetDecalLayer != 0)
+                                    {
+                                        DrawDecal(loadData.startIndex, loadData.size, targetElement, loadData.targetDecalLayer);
+                                        yield return null;
+                                    }
+                                }
                             }
                             loadData.handler0.Dispose();
                             break;
@@ -300,41 +341,61 @@ namespace MPipeline
                             while (!GetComplete(ref loadData.handler3))
                                 yield return null;
                             int subSize = loadData.size / 2;
+                            int2 leftDownIndex = loadData.startIndex;
+                            int2 leftUpIndex = loadData.startIndex + int2(0, subSize);
+                            int2 rightDownIndex = loadData.startIndex + int2(subSize, 0);
+                            int2 rightUpIndex = loadData.startIndex + subSize;
+
                             float subScale = loadData.maskScaleOffset.x;
                             float2 leftUpOffset = float2(loadData.maskScaleOffset.yz + float2(0, subScale));
                             float2 rightDownOffset = float2(loadData.maskScaleOffset.yz + float2(subScale, 0));
                             float2 rightUpOffset = float2(loadData.maskScaleOffset.yz + subScale);
-                            int ele0 = LoadTexture(loadData.handler0, loadData.startIndex, subSize, loadData.rootPos, loadData.maskScaleOffset);
-                            int ele1 = LoadTexture(loadData.handler1, loadData.startIndex + int2(0, subSize), subSize, loadData.rootPos, float3(subScale, leftUpOffset));
-                            int ele2 = LoadTexture(loadData.handler2, loadData.startIndex + int2(subSize, 0), subSize, loadData.rootPos, float3(subScale, rightDownOffset));
-                            int ele3 = LoadTexture(loadData.handler3, loadData.startIndex + subSize, subSize, loadData.rootPos, float3(subScale, rightUpOffset));
+                            int ele0 = -1;
+                            if (CheckChunkEnabled(leftDownIndex, subSize)) ele0 = LoadTexture(loadData.handler0, leftDownIndex, subSize, loadData.rootPos, loadData.maskScaleOffset);
+                            int ele1 = -1;
+                            if (CheckChunkEnabled(leftUpIndex, subSize)) ele1 = LoadTexture(loadData.handler1, leftUpIndex, subSize, loadData.rootPos, float3(subScale, leftUpOffset));
+                            int ele2 = -1;
+                            if (CheckChunkEnabled(rightDownIndex, subSize)) ele2 = LoadTexture(loadData.handler2, rightDownIndex, subSize, loadData.rootPos, float3(subScale, rightDownOffset));
+                            int ele3 = -1;
+                            if (CheckChunkEnabled(rightUpIndex, subSize)) ele3 = LoadTexture(loadData.handler3, rightUpIndex, subSize, loadData.rootPos, float3(subScale, rightUpOffset));
 
-                            ConvertNormalMap(loadData.startIndex, subSize, ele0);
-                            ConvertNormalMap(loadData.startIndex + int2(0, subSize), subSize, ele1);
-                            ConvertNormalMap(loadData.startIndex + int2(subSize, 0), subSize, ele2);
-                            ConvertNormalMap(loadData.startIndex + subSize, subSize, ele3);
+                            if (ele0 >= 0)
+                                ConvertNormalMap(leftDownIndex, subSize, ele0);
+                            if (ele1 >= 0)
+                                ConvertNormalMap(leftUpIndex, subSize, ele1);
+                            if (ele2 >= 0)
+                                ConvertNormalMap(rightDownIndex, subSize, ele2);
+                            if (ele3 >= 0)
+                                ConvertNormalMap(rightUpIndex, subSize, ele3);
 
                             if (loadData.targetDecalLayer != 0)
                             {
-                                DrawDecal(loadData.startIndex, subSize, ele0, loadData.targetDecalLayer);
-                                yield return null;
-                                DrawDecal(loadData.startIndex + int2(0, subSize), subSize, ele1, loadData.targetDecalLayer);
-                                yield return null;
-                                DrawDecal(loadData.startIndex + int2(subSize, 0), subSize, ele2, loadData.targetDecalLayer);
-                                yield return null;
-                                DrawDecal(loadData.startIndex + subSize, subSize, ele3, loadData.targetDecalLayer);
-                                yield return null;
+                                if (ele0 >= 0)
+                                {
+                                    DrawDecal(leftDownIndex, subSize, ele0, loadData.targetDecalLayer);
+                                    yield return null;
+                                }
+                                if (ele1 >= 0 && CheckChunkEnabled(leftUpIndex, subSize))
+                                {
+                                    DrawDecal(leftUpIndex, subSize, ele1, loadData.targetDecalLayer);
+                                    yield return null;
+                                }
+                                if (ele2 >= 0 && CheckChunkEnabled(rightDownIndex, subSize))
+                                {
+                                    DrawDecal(rightDownIndex, subSize, ele2, loadData.targetDecalLayer);
+                                    yield return null;
+                                }
+                                if (ele3 >= 0 && CheckChunkEnabled(rightUpIndex, subSize))
+                                {
+                                    DrawDecal(rightUpIndex, subSize, ele3, loadData.targetDecalLayer);
+                                    yield return null;
+                                }
                             }
+
                             loadData.handler0.Dispose();
                             loadData.handler1.Dispose();
                             loadData.handler2.Dispose();
                             loadData.handler3.Dispose();
-                            break;
-                        case TerrainLoadData.Operator.Unload:
-                            vt.UnloadTexture(loadData.startIndex);
-                            break;
-                        case TerrainLoadData.Operator.Combine:
-                            vt.CombineTexture(loadData.startIndex, loadData.size, false);
                             break;
                     }
                 }
@@ -374,6 +435,7 @@ namespace MPipeline
             {
                 indexMapSize *= 2;
             }
+            enabledChunk = new NativeDictionary<int3, bool, int3Equal>(500, Allocator.Persistent, new int3Equal());
             maskLoadList = new NativeQueue<MaskLoadCommand>(10, Allocator.Persistent);
             dispatchDrawBuffer = new ComputeBuffer(5, sizeof(int), ComputeBufferType.IndirectArguments);
             const int INIT_LENGTH = 500;
@@ -383,6 +445,7 @@ namespace MPipeline
 
             loader = new VirtualTextureLoader(lodOffset, terrainData.renderingLevelCount, terrainData.readWritePath, this);
             loadDataList = new NativeQueue<TerrainLoadData>(100, Allocator.Persistent);
+            unloadDataList = new NativeQueue<TerrainUnloadData>(100, Allocator.Persistent);
             NativeArray<uint> dispatchDraw = new NativeArray<uint>(5, Allocator.Temp, NativeArrayOptions.ClearMemory);
             dispatchDraw[0] = 96;
             dispatchDrawBuffer.SetData(dispatchDraw);
@@ -525,10 +588,12 @@ namespace MPipeline
             vt.Dispose();
             maskVT.Dispose();
             loadDataList.Dispose();
+            unloadDataList.Dispose();
             loader.Dispose();
             materialBuffer.Dispose();
             allLodLevles.Dispose();
             textureBuffer.Dispose();
+            enabledChunk.Dispose();
             maskLoadList.Dispose();
             DestroyImmediate(worldNormalRT);
             DestroyImmediate(albedoTex);
