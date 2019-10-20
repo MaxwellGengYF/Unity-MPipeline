@@ -150,7 +150,7 @@ namespace MPipeline
                 int2 startIndex = VirtualTextureIndex;
                 if (isRendering)
                 {
-
+                    MTerrain.current.textureCapacity++;
                     MTerrain.current.unloadDataList.Add(new TerrainUnloadData
                     {
                         ope = TerrainUnloadData.Operator.Unload,
@@ -177,6 +177,7 @@ namespace MPipeline
         {
             if (!isRendering)
             {
+                MTerrain.current.textureCapacity--;
                 int3 pack = int3(VirtualTextureIndex, VirtualTextureSize);
                 MTerrain.current.enabledChunk[pack] = true;
                 MTerrain.current.loadDataList.Add(new TerrainLoadData
@@ -197,9 +198,9 @@ namespace MPipeline
 
         private void DisableRendering()
         {
-
             if (isRendering)
             {
+                MTerrain.current.textureCapacity++;
                 int2 startIndex = VirtualTextureIndex;
                 MTerrain.current.enabledChunk.Remove(int3(startIndex, VirtualTextureSize));
                 MTerrain.current.unloadDataList.Add(new TerrainUnloadData
@@ -248,7 +249,7 @@ namespace MPipeline
             }
             else
             {
-                if (MTerrain.current.vt.LeftedTextureElement >= 3)
+                if (MTerrain.current.textureCapacity >= 3)
                 {
                     DisableRenderingWithoutUnload();
                     if (leftDown == null)
@@ -272,6 +273,7 @@ namespace MPipeline
                         MTerrain.current.enabledChunk[int3(leftUp->VirtualTextureIndex, leftUp->VirtualTextureSize)] = true;
                         MTerrain.current.enabledChunk[int3(rightDown->VirtualTextureIndex, rightDown->VirtualTextureSize)] = true;
                         MTerrain.current.enabledChunk[int3(rightUp->VirtualTextureIndex, rightUp->VirtualTextureSize)] = true;
+                        MTerrain.current.textureCapacity -= 3;
                         MTerrain.current.loadDataList.Add(new TerrainLoadData
                         {
                             ope = TerrainLoadData.Operator.Separate,
@@ -308,6 +310,7 @@ namespace MPipeline
                         startIndex = pack.xy,
                         size = pack.z
                     });
+                    MTerrain.current.textureCapacity += 3;
                     isRendering = true;
                 }
                 else

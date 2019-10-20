@@ -47,6 +47,8 @@ namespace MPipeline
         [System.NonSerialized]
         public int lodOffset;
         [System.NonSerialized]
+        public int textureCapacity;
+        [System.NonSerialized]
         public int decalLayerOffset;
         public NativeQueue<TerrainLoadData> loadDataList;
         public NativeQueue<TerrainUnloadData> unloadDataList;
@@ -460,6 +462,7 @@ namespace MPipeline
                 new VirtualTextureFormat((VirtualTextureSize)COLOR_RESOLUTION, GraphicsFormat.R8G8_UNorm, "_VirtualSMMap")
             };
             vt = new VirtualTexture(terrainData.virtualTexCapacity, min(MASK_RESOLUTION, (int)(pow(2.0, terrainData.lodDistances.Length) + 0.1)), formats, 4, "_TerrainVTIndexTex");
+            textureCapacity = terrainData.virtualTexCapacity;
             VirtualTextureFormat* maskFormats = stackalloc VirtualTextureFormat[]
             {
                 new VirtualTextureFormat((VirtualTextureSize)MASK_RESOLUTION, GraphicsFormat.R8_UNorm, "_VirtualMaskmap")
