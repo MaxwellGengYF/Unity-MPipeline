@@ -1,6 +1,6 @@
 #ifndef __STANDARDSURFACE_INCLUDE__
 #define __STANDARDSURFACE_INCLUDE__
-#define DEBUG_QUAD_TREE
+//#define DEBUG_QUAD_TREE
 sampler2D _PreIntDefault;
 Texture2DArray<float> _VirtualHeightmap; SamplerState sampler_VirtualHeightmap;
 Texture2DArray<float4> _VirtualMainTex; SamplerState sampler_VirtualMainTex;

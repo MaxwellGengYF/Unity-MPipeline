@@ -19,6 +19,9 @@ namespace MPipeline
         public float heightOffset = 0;
         public float heightScale = 10;
         public float materialTillingScale = 1;
+        public double terrainLocalYPositionToGround = -2;
+        [Range(0.1f, 1)]
+        public double backfaceCullingScale = 0.3;
         public double largestChunkSize = 1000;
         public double2 screenOffset;
         public double lodDeferredOffset = 2;

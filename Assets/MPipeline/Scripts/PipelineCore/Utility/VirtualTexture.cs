@@ -289,7 +289,31 @@ namespace MPipeline
             return res;
         }
 
-        public NativeArray<int> LoadNewTextureChunks(int2 startIndex, int size, Allocator alloc, int loadLod = 0, Texture sourceTex = null, Texture[] sourceTexs = null)
+        public void LoadQuadNewTextures(int2 startIndex, int size, out int4 element)
+        {
+            int2 leftDownIndex = startIndex;
+            int2 rightDownIndex = startIndex + int2(size, 0);
+            int2 leftUpIndex = startIndex + int2(0, size);
+            int2 rightUpIndex = startIndex + size;
+            GetChunk(ref leftDownIndex, size, out element.x);
+            GetChunk(ref rightDownIndex, size, out element.y);
+            GetChunk(ref leftUpIndex, size, out element.z);
+            GetChunk(ref rightUpIndex, size, out element.w);
+            vtVariables[0] = startIndex.x;
+            vtVariables[1] = startIndex.y;
+            vtVariables[2] = size;
+            vtVariables[3] = size * 2;
+            shader.SetInts(ShaderIDs._VTVariables, vtVariables);
+            shader.SetVector(ShaderIDs._TextureSize, (float4)((element + double4(0.4)) / 2048.0));
+            texSize[0] = indexSize.x;
+            texSize[1] = indexSize.y;
+            shader.SetInts(ShaderIDs._IndexTextureSize, texSize);
+            shader.SetTexture(4, ShaderIDs._IndexTexture, indexTex);
+            int dispatchCount = Mathf.CeilToInt(vtVariables[3] / 8f);
+            shader.Dispatch(4, dispatchCount, dispatchCount, 1);
+        }
+
+        public NativeArray<int> LoadNewTextureChunks(int2 startIndex, int size, Allocator alloc)
         {
             if (size * size > setIndexBuffer.count)
             {
@@ -318,32 +342,6 @@ namespace MPipeline
             setIndexBuffer.SetData(texs);
             int dispatchCount = Mathf.CeilToInt(size / 8f);
             shader.Dispatch(1, dispatchCount, dispatchCount, 1);
-            int powValue = (int)(0.1 + pow(2.0, loadLod));
-            if (sourceTex)
-            {
-
-                int width = sourceTex.width / powValue;
-                shader.SetVector(ShaderIDs._TextureSize, float4(width, size, (int)allFormats[0].perElementSize / powValue, 0));
-                shader.SetBuffer(2, ShaderIDs._ElementBuffer, setIndexBuffer);
-                shader.SetTexture(2, ShaderIDs._VirtualTexture, textures[0], loadLod);
-                shader.SetTexture(2, ShaderIDs._MainTex, sourceTex);
-                int disp = Mathf.CeilToInt(width / 8f);
-                shader.Dispatch(2, disp, disp, 1);
-            }
-            if (sourceTexs != null)
-            {
-                int ite = min(sourceTexs.Length, allFormats.Length);
-                shader.SetBuffer(2, ShaderIDs._ElementBuffer, setIndexBuffer);
-                for (int i = 0; i < ite; ++i)
-                {
-                    int width = sourceTexs[i].width / powValue;
-                    shader.SetVector(ShaderIDs._TextureSize, float4(width, size, (int)allFormats[0].perElementSize / powValue, 0));
-                    shader.SetTexture(2, ShaderIDs._VirtualTexture, textures[i], loadLod);
-                    shader.SetTexture(2, ShaderIDs._MainTex, sourceTexs[i]);
-                    int disp = Mathf.CeilToInt(width / 8f);
-                    shader.Dispatch(2, disp, disp, 1);
-                }
-            }
             return texs;
         }
         /// <summary>

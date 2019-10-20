@@ -15,10 +15,12 @@ MonoBehaviour:
   heightOffset: 0
   heightScale: 0
   materialTillingScale: 1
-  largestChunkSize: 4096
+  terrainLocalYPositionToGround: -11.37
+  backfaceCullingScale: 0.33333298563957214
+  largestChunkSize: 2048
   screenOffset:
-    x: -2048
-    y: -2048
+    x: -1024
+    y: -1024
   lodDeferredOffset: 1
   allMaskTextures:
   - m_AssetGUID: d5c7bc5754e171542891b97f454abc69
@@ -30,31 +32,55 @@ MonoBehaviour:
   - m_AssetGUID: 79ae856e4954e4848acda128292810e4
     m_SubObjectName: 
   lodDistances:
-  - 1800
-  - 1500
-  - 800
-  - 135
-  - 110
-  - 70
-  - 50
-  - 20
-  - 8
+  - 900
+  - 750
+  - 400
+  - 67.5
+  - 55
+  - 35
+  - 25
+  - 10
+  - 4
   renderingLevelCount: 8
   allDecalLayers: []
-  virtualTexCapacity: 164
+  virtualTexCapacity: 141
   allMaterials:
   - firstMaterialIndex: 0.2
-    secondMaterialIndex: 1.2
-    offset: 0.74
-    heightBlendScale: -3
-  - firstMaterialIndex: 1.2
     secondMaterialIndex: 0.2
-    offset: 0.05
-    heightBlendScale: 11.2
+    offset: 0
+    heightBlendScale: 0
   - firstMaterialIndex: 0.2
     secondMaterialIndex: 1.2
-    offset: 0.31
-    heightBlendScale: 3.7
+    offset: -0.4
+    heightBlendScale: 2
+  - firstMaterialIndex: 0.2
+    secondMaterialIndex: 1.2
+    offset: -0.2
+    heightBlendScale: 2
+  - firstMaterialIndex: 0.2
+    secondMaterialIndex: 1.2
+    offset: 0
+    heightBlendScale: 2
+  - firstMaterialIndex: 0.2
+    secondMaterialIndex: 1.2
+    offset: 0.2
+    heightBlendScale: 2
+  - firstMaterialIndex: 0.2
+    secondMaterialIndex: 1.2
+    offset: 0.4
+    heightBlendScale: 2
+  - firstMaterialIndex: 0.2
+    secondMaterialIndex: 1.2
+    offset: 0.5
+    heightBlendScale: 2
+  - firstMaterialIndex: 0.2
+    secondMaterialIndex: 1.2
+    offset: 0.8
+    heightBlendScale: 2
+  - firstMaterialIndex: 1.2
+    secondMaterialIndex: 1.2
+    offset: 0
+    heightBlendScale: 0
   readWritePath: Assets/BinaryData/Terrain.mquad
   drawTerrainMaterial: {fileID: 2100000, guid: 895d3f610aae4944b88c1b1fc7f46f4d, type: 2}
   textures:
