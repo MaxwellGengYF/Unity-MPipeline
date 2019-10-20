@@ -6,6 +6,7 @@ using Unity.Mathematics;
 using Unity.Collections;
 using UnityEngine.Rendering;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Experimental.Rendering;
 using UnityEngine.ResourceManagement.AsyncOperations;
 namespace MPipeline
 {
@@ -94,10 +95,10 @@ namespace MPipeline
                 cur.Init(i, msbForCluster, this);
             }
 
-            rgbaPool.Init(0, RenderTextureFormat.ARGB32, (int) fixedTextureSize, this, false);
-            normalPool.Init(1, RenderTextureFormat.RGHalf, (int)fixedTextureSize, this, true);
-            emissionPool.Init(2, RenderTextureFormat.ARGBHalf, (int)fixedTextureSize, this, false);
-            heightPool.Init(3, RenderTextureFormat.R8, (int)fixedTextureSize, this, true);
+            rgbaPool.Init(0, GraphicsFormat.R8G8B8A8_UNorm, (int) fixedTextureSize, this, false);
+            normalPool.Init(1, GraphicsFormat.R16G16_SNorm, (int)fixedTextureSize, this, true);
+            emissionPool.Init(2, GraphicsFormat.R16G16B16A16_SFloat, (int)fixedTextureSize, this, false);
+            heightPool.Init(3, GraphicsFormat.R8_UNorm, (int)fixedTextureSize, this, true);
             vmManager = new VirtualMaterialManager(materialPoolSize, maximumMaterialCount, res.shaders.streamingShader);
         }
 

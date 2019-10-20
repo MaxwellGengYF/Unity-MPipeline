@@ -6,15 +6,14 @@
 #pragma kernel NormalToWorld
 #include "UnityCG.cginc"
 #include "../CGINC/VirtualTexture.cginc"
-Texture2D<float> _NoiseTexture; SamplerState sampler_NoiseTexture;
-Texture2DArray<float4> _MainTex; SamplerState sampler_MainTex;
-Texture2DArray<float2> _BumpMap; SamplerState sampler_BumpMap;
-Texture2DArray<float4> _SMMap; SamplerState sampler_SMMap;
+#include "../CGINC/HeightBlendMaterial.cginc"
+//Texture2D<float> _NoiseTexture; SamplerState sampler_NoiseTexture;
 Texture2DArray<float> _VirtualMaskmap; SamplerState sampler_VirtualMaskmap;
 Texture2D<float4> _MaskIndexMap;
 RWTexture2DArray<float4> _VirtualMainTex;
 RWTexture2DArray<float2> _VirtualBumpMap;
 RWTexture2DArray<float4> _VirtualSMO;
+RWTexture2DArray<float> _MaskTex;
 
 Texture2D<float4> _SourceTex; SamplerState sampler_SourceTex;
 RWTexture2D<float4> _DestTex;
@@ -46,14 +45,10 @@ float2 BilinearSampleMask(float2 uv, out float4 result)
     return lerpValue;
 }
 
-#define BILINEAR_INTERPOLATION(Type, Tex, uv, mask, lerpValue, Result)\
-    Type Tex##_leftDown = Tex.SampleLevel(sampler##Tex, float3(uv, mask##.x), 0);\
-    Type Tex##_rightDown = Tex.SampleLevel(sampler##Tex, float3(uv,mask##.y), 0);\
-    Type Tex##_leftUp = Tex.SampleLevel(sampler##Tex, float3(uv, mask##.z), 0);\
-    Type Tex##_rightUp = Tex.SampleLevel(sampler##Tex, float3(uv, mask##.w), 0);\
-    Type Tex##_leftValue = lerp(Tex##_leftDown, Tex##_leftUp, lerpValue##.y);\
-    Type Tex##_rightValue = lerp(Tex##_rightDown, Tex##_rightUp, lerpValue##.y);\
-    Result = lerp(Tex##_leftValue, Tex##_rightValue, lerpValue##.x);
+#define BILINEAR_INTERPOLATION(Type, ValueArray, lerpValue, Result)\
+    Type Result##_leftValue = lerp(ValueArray##[0], ValueArray##[2], lerpValue##.y);\
+    Type Result##_rightValue = lerp(ValueArray##[1], ValueArray##[3], lerpValue##.y);\
+    Result = lerp(Result##_leftValue, Result##_rightValue, lerpValue##.x);
 
 [numthreads(8,8,1)]
 void UpSample (uint2 id : SV_DispatchThreadID)
@@ -65,14 +60,26 @@ void UpSample (uint2 id : SV_DispatchThreadID)
     float2 uv = absoluteUV * _TextureSize.w;
     float4 mask;
     float2 lerpValue = BilinearSampleMask(maskVirtualUV, mask);
-    float noiseValue = _NoiseTexture.SampleLevel(sampler_NoiseTexture, maskVirtualUV, 0);
-    lerpValue = pow(lerpValue, max(1e-4, 0.5 + 3 * noiseValue));
+    //float noiseValue = _NoiseTexture.SampleLevel(sampler_NoiseTexture, maskVirtualUV, 0);
+    //lerpValue = pow(lerpValue, max(1e-4, 0.5 + 3 * noiseValue));
     mask *= _IndexTextureSize.y;
-    BILINEAR_INTERPOLATION(float4, _MainTex, uv, mask, lerpValue, _VirtualMainTex[uint3(id, _OffsetIndex)])
-    BILINEAR_INTERPOLATION(float2, _BumpMap, uv, mask, lerpValue,  _VirtualBumpMap[uint3(id, _OffsetIndex)])
-    BILINEAR_INTERPOLATION(float4, _SMMap, uv, mask, lerpValue, _VirtualSMO[uint3(id, _OffsetIndex)])
-  
-
+    mask += 0.4;
+    float4 albedo_occs[4];
+    float2 normals[4];
+    float2 sms[4];
+    GetHeightBlendMaterial(mask.x, uv, albedo_occs[0], normals[0], sms[0]);
+    GetHeightBlendMaterial(mask.y, uv, albedo_occs[1], normals[1], sms[1]);
+    GetHeightBlendMaterial(mask.z, uv, albedo_occs[2], normals[2], sms[2]);
+    GetHeightBlendMaterial(mask.w, uv, albedo_occs[3], normals[3], sms[3]);
+    float4 albedo_occ;
+    float2 normal;
+    float2 sm;
+    BILINEAR_INTERPOLATION(float4, albedo_occs, lerpValue, albedo_occ)
+    BILINEAR_INTERPOLATION(float2, normals, lerpValue, normal)
+    BILINEAR_INTERPOLATION(float2, sms, lerpValue, sm)
+    _VirtualMainTex[uint3(id, _OffsetIndex)] = albedo_occ;
+    _VirtualBumpMap[uint3(id, _OffsetIndex)] = normal;
+    _VirtualSMO[uint3(id, _OffsetIndex)] = float4(sm, 1, 1);
 }
 Texture2D<float4> _TerrainMainTexArray;
 Texture2D<float4> _TerrainBumpMapArray;
@@ -82,10 +89,11 @@ void NormalToTex (uint2 id : SV_DISPATCHTHREADID)
 {
     uint3 idx = uint3(id, _OffsetIndex);
     _VirtualBumpMap[idx] = UnpackNormal(_TerrainBumpMapArray[id]).xy;
-    float3 smo = _TerrainSMTexArray[id].xyz;
+    float4 smo = _TerrainSMTexArray[id];
     float3 albedo = _TerrainMainTexArray[id].xyz;
     _VirtualMainTex[idx] = float4(albedo, smo.z);
     _VirtualSMO[idx] = float4(smo.xy, 0, 0);
+    _MaskTex[idx] = smo.w;
 }
 
 [numthreads(8,8,1)]
@@ -95,6 +103,7 @@ void ClearColorTex(uint2 id : SV_DISPATCHTHREADID)
     _VirtualBumpMap[idx] = 0;
     _VirtualMainTex[idx] = 1;
     _VirtualSMO[idx] = 1;
+    _MaskTex[idx] = 1;
 }
 Texture2DArray<float> _VirtualHeightmap; SamplerState sampler_VirtualHeightmap;
 Texture2D<float4> _IndexTexture;

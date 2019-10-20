@@ -12,70 +12,93 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 010ce77163682284691fda8b292bbe7b, type: 3}
   m_Name: TerrainData
   m_EditorClassIdentifier: 
-  heightOffset: -20
-  heightScale: 50
-  materialTillingScale: 3
+  heightOffset: 0
+  heightScale: 0
+  materialTillingScale: 1
+  terrainLocalYPositionToGround: -11.37
+  backfaceCullingScale: 0.33333298563957214
   largestChunkSize: 2048
   screenOffset:
-    x: 0
-    y: 0
-  lodDeferredOffset: 2
+    x: -1024
+    y: -1024
+  lodDeferredOffset: 1
   allMaskTextures:
-  - m_AssetGUID: 6f9c34edfdbf309459e912f8ad8137bf
+  - m_AssetGUID: d5c7bc5754e171542891b97f454abc69
     m_SubObjectName: 
-  - m_AssetGUID: 3a6e2d1a6e3ba1c4a973622a72149252
+  - m_AssetGUID: 4b2f3436b3251754989f615f717f38c2
     m_SubObjectName: 
-  - m_AssetGUID: 7800ce859ebf596418206993f7ffe7b9
+  - m_AssetGUID: 71380acf9681992458df78439551b8fa
     m_SubObjectName: 
-  - m_AssetGUID: f1fc44431ff931e40ab70c9a5acc7d4f
+  - m_AssetGUID: 79ae856e4954e4848acda128292810e4
     m_SubObjectName: 
-  warpNoiseTexture: {fileID: 2800000, guid: 3c89b5fa2b08f70419bf82268aa0e064, type: 3}
   lodDistances:
-  - 600
-  - 500
-  - 180
-  - 120
-  - 60
+  - 900
+  - 750
+  - 400
+  - 67.5
+  - 55
+  - 35
   - 25
-  renderingLevelCount: 5
+  - 10
+  - 4
+  renderingLevelCount: 8
   allDecalLayers: []
-  virtualTexCapacity: 128
+  virtualTexCapacity: 141
+  allMaterials:
+  - firstMaterialIndex: 0.2
+    secondMaterialIndex: 0.2
+    offset: 0
+    heightBlendScale: 0
+  - firstMaterialIndex: 0.2
+    secondMaterialIndex: 1.2
+    offset: -0.4
+    heightBlendScale: 2
+  - firstMaterialIndex: 0.2
+    secondMaterialIndex: 1.2
+    offset: -0.2
+    heightBlendScale: 2
+  - firstMaterialIndex: 0.2
+    secondMaterialIndex: 1.2
+    offset: 0
+    heightBlendScale: 2
+  - firstMaterialIndex: 0.2
+    secondMaterialIndex: 1.2
+    offset: 0.2
+    heightBlendScale: 2
+  - firstMaterialIndex: 0.2
+    secondMaterialIndex: 1.2
+    offset: 0.4
+    heightBlendScale: 2
+  - firstMaterialIndex: 0.2
+    secondMaterialIndex: 1.2
+    offset: 0.5
+    heightBlendScale: 2
+  - firstMaterialIndex: 0.2
+    secondMaterialIndex: 1.2
+    offset: 0.8
+    heightBlendScale: 2
+  - firstMaterialIndex: 1.2
+    secondMaterialIndex: 1.2
+    offset: 0
+    heightBlendScale: 0
   readWritePath: Assets/BinaryData/Terrain.mquad
   drawTerrainMaterial: {fileID: 2100000, guid: 895d3f610aae4944b88c1b1fc7f46f4d, type: 2}
   textures:
   - albedoOccTex:
-      m_AssetGUID: dcfe9a8fb0122de42996598dee2f7e63
+      m_AssetGUID: 6a64b33beaa48414183960482167c609
       m_SubObjectName: 
     normalTex:
-      m_AssetGUID: f9b118112ee229b4eae601dcea670900
+      m_AssetGUID: 368389984bba0204a8556ab05c56f0cd
       m_SubObjectName: 
     SMTex:
-      m_AssetGUID: 0e9ef0391720441418b962e92a5a2f2f
+      m_AssetGUID: 693221d22472a624789402d1cd8c9aee
       m_SubObjectName: 
   - albedoOccTex:
-      m_AssetGUID: 2eb1283d998576b40a61659cc7339f72
+      m_AssetGUID: a2621691916d76a449c3916dd8017a59
       m_SubObjectName: 
     normalTex:
-      m_AssetGUID: 260a191ad64df6d41ab6c6f751473ba9
+      m_AssetGUID: ec8e83a6c20d815449093bbc043388cc
       m_SubObjectName: 
     SMTex:
-      m_AssetGUID: 7f3d7289b34024c4bb7c61fd87f8032e
-      m_SubObjectName: 
-  - albedoOccTex:
-      m_AssetGUID: c836481579ce0a345a44045d39b91028
-      m_SubObjectName: 
-    normalTex:
-      m_AssetGUID: cf852c340336c9b46adbb879698cf6e0
-      m_SubObjectName: 
-    SMTex:
-      m_AssetGUID: ae062e0ee4414a34d9540de43057857b
-      m_SubObjectName: 
-  - albedoOccTex:
-      m_AssetGUID: d0e6d940adb057748b6ab77457f19440
-      m_SubObjectName: 
-    normalTex:
-      m_AssetGUID: a5392b47148fd5e4e9ce57f86d75a2cb
-      m_SubObjectName: 
-    SMTex:
-      m_AssetGUID: 9858954fb12a608449ef2af1a17ede66
+      m_AssetGUID: cc70c50286ba8844883d814336504f0b
       m_SubObjectName: 

@@ -5,17 +5,28 @@ using Unity.Mathematics;
 using UnityEngine.AddressableAssets;
 namespace MPipeline
 {
-    [CreateAssetMenu(fileName = "TerrainData", menuName ="PCG/Terrain")]
+    [CreateAssetMenu(fileName = "TerrainData", menuName = "PCG/Terrain")]
     public class MTerrainData : ScriptableObject
     {
+        [System.Serializable]
+        public struct HeightBlendMaterial
+        {
+            public float firstMaterialIndex;
+            public float secondMaterialIndex;
+            public float offset;
+            public float heightBlendScale;
+        };
         public float heightOffset = 0;
         public float heightScale = 10;
         public float materialTillingScale = 1;
+        public double terrainLocalYPositionToGround = -2;
+        [Range(0.1f, 1)]
+        public double backfaceCullingScale = 0.3;
         public double largestChunkSize = 1000;
         public double2 screenOffset;
         public double lodDeferredOffset = 2;
         public AssetReference[] allMaskTextures;
-        public Texture2D warpNoiseTexture;
+        //public Texture2D warpNoiseTexture;
         public float[] lodDistances = new float[]
         {
             3000,
@@ -27,6 +38,7 @@ namespace MPipeline
         public LayerMask[] allDecalLayers;
         [Range(1, 256)]
         public int virtualTexCapacity = 128;
+        public HeightBlendMaterial[] allMaterials;
         public string readWritePath = "Assets/BinaryData/Terrain.mquad";
         public Material drawTerrainMaterial;
         public MTerrain.PBRTexture[] textures;

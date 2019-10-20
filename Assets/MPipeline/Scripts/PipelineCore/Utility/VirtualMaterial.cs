@@ -6,7 +6,6 @@ using static Unity.Mathematics.math;
 using UnityEngine.AddressableAssets;
 #if UNITY_EDITOR
 using UnityEditor;
-using UnityEditor.AddressableAssets.Settings;
 using UnityEditor.AddressableAssets;
 #endif
 [System.Serializable]
@@ -39,17 +38,7 @@ public unsafe sealed class VirtualMaterial
 
     #region EDITOR_TOOLS
 #if UNITY_EDITOR
-    static void SetObjectAddressable(Object go, string guid)
-    {
-        AddressableAssetSettings aaSettings = AddressableAssetSettingsDefaultObject.Settings;
-        AddressableAssetGroup group = aaSettings.DefaultGroup;
-        AddressableAssetEntry entry = aaSettings.FindAssetEntry(guid);
-        if (entry == null)
-        {
-            entry = aaSettings.CreateOrMoveEntry(guid, group, readOnly: false, postEvent: false);
-        }
-        
-    }
+
     public Dictionary<Material, int> GetMaterialsData(MeshRenderer[] allRenderers)
     {
         float3 ColorToVector(Color c)
@@ -154,7 +143,7 @@ public unsafe sealed class VirtualMaterial
             for (int i = 0; i < texs.Count; ++i)
             {
                 string guid = AssetDatabase.AssetPathToGUID(AssetDatabase.GetAssetPath(texs[i]));
-                SetObjectAddressable(texs[i], guid);
+                MPipeline.MEditorLib.SetObjectAddressable(texs[i], guid);
                 strs[i] = new AssetReference(guid);
             }
         }

@@ -11,6 +11,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using System.Threading;
 using System.IO;
 using UnityEngine.AddressableAssets;
+using UnityEngine.Experimental.Rendering;
 namespace MPipeline
 {
     [Serializable]
@@ -24,7 +25,7 @@ namespace MPipeline
         private Dictionary<AssetReference, int> guidToIndex;
         private ClusterMatResources clusterRes;
         private bool isNormal;
-        public void Init(int streamingIndex, RenderTextureFormat format, int resolution, ClusterMatResources clusterRes, bool isNormal)
+        public void Init(int streamingIndex, GraphicsFormat format, int resolution, ClusterMatResources clusterRes, bool isNormal)
         {
             this.isNormal = isNormal;
             this.clusterRes = clusterRes;

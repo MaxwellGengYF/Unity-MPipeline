@@ -26,6 +26,8 @@ public static partial class ShaderIDs
     public static readonly int _DirLightPos = Shader.PropertyToID("_DirLightPos");
     public static readonly int _LightPos = Shader.PropertyToID("_LightPos");
     public static readonly int _MainTex = Shader.PropertyToID("_MainTex");
+    public static readonly int _MaskTex = Shader.PropertyToID("_MaskTex");
+    public static readonly int _HeightMap = Shader.PropertyToID("_HeightMap");
     public static readonly int _BumpMap = Shader.PropertyToID("_BumpMap");
     public static readonly int _SMMap = Shader.PropertyToID("_SMMap");
     public static readonly int _SoftParam = Shader.PropertyToID("_SoftParam");
@@ -168,7 +170,6 @@ public static partial class ShaderIDs
     public static readonly int _IndexTexture = Shader.PropertyToID("_IndexTexture");
     public static readonly int _IndexTextureSize = Shader.PropertyToID("_IndexTextureSize");
     public static readonly int _VirtualTexture = Shader.PropertyToID("_VirtualTexture");
-
     public static readonly int _VTVariables = Shader.PropertyToID("_VTVariables");
     public static readonly int _ElementBuffer = Shader.PropertyToID("_ElementBuffer");
 
