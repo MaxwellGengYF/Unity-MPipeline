@@ -150,7 +150,7 @@ namespace MPipeline
                 int2 startIndex = VirtualTextureIndex;
                 if (isRendering)
                 {
-                    
+
                     MTerrain.current.unloadDataList.Add(new TerrainUnloadData
                     {
                         ope = TerrainUnloadData.Operator.Unload,
@@ -212,6 +212,18 @@ namespace MPipeline
             isRendering = false;
         }
 
+        private void DisableRenderingWithoutUnload()
+        {
+
+            if (isRendering)
+            {
+                int2 startIndex = VirtualTextureIndex;
+                MTerrain.current.enabledChunk.Remove(int3(startIndex, VirtualTextureSize));
+            }
+
+            isRendering = false;
+        }
+
         private void LogicSeparate()
         {
             if (leftDown == null)
@@ -236,41 +248,44 @@ namespace MPipeline
             }
             else
             {
-                DisableRendering();
-                if (leftDown == null)
+                if (MTerrain.current.vt.LeftedTextureElement >= 3)
                 {
-                    leftDown = MUnsafeUtility.Malloc<TerrainQuadTree>(sizeof(TerrainQuadTree) * 4, Allocator.Persistent);
-                    leftUp = leftDown + 1;
-                    rightDown = leftDown + 2;
-                    rightUp = leftDown + 3;
-                    double subSize = worldSize * 0.5;
-                    *leftDown = new TerrainQuadTree(lodLevel, LocalPos.LeftDown, localPosition, subSize, this.maskScaleOffset, rootPos);
-                    *leftUp = new TerrainQuadTree(lodLevel, LocalPos.LeftUp, localPosition, subSize, this.maskScaleOffset, rootPos);
-                    *rightDown = new TerrainQuadTree(lodLevel, LocalPos.RightDown, localPosition, subSize, this.maskScaleOffset, rootPos);
-                    *rightUp = new TerrainQuadTree(lodLevel, LocalPos.RightUp, localPosition, subSize, this.maskScaleOffset, rootPos);
-                    float3 maskScaleOffset = (float3)this.maskScaleOffset;
-                    maskScaleOffset.x *= 0.5f;
-                    leftDown->isRendering = true;
-                    leftUp->isRendering = true;
-                    rightDown->isRendering = true;
-                    rightUp->isRendering = true;
-                    MTerrain.current.enabledChunk[int3(leftDown->VirtualTextureIndex, leftDown->VirtualTextureSize)] = true;
-                    MTerrain.current.enabledChunk[int3(leftUp->VirtualTextureIndex, leftUp->VirtualTextureSize)] = true;
-                    MTerrain.current.enabledChunk[int3(rightDown->VirtualTextureIndex, rightDown->VirtualTextureSize)] = true;
-                    MTerrain.current.enabledChunk[int3(rightUp->VirtualTextureIndex, rightUp->VirtualTextureSize)] = true;
-                    MTerrain.current.loadDataList.Add(new TerrainLoadData
+                    DisableRenderingWithoutUnload();
+                    if (leftDown == null)
                     {
-                        ope = TerrainLoadData.Operator.Separate,
-                        startIndex = VirtualTextureIndex,
-                        size = VirtualTextureSize,
-                        rootPos = rootPos,
-                        maskScaleOffset = maskScaleOffset,
-                        handler0 = MTerrain.current.loader.LoadChunk(leftDown->localPosition, leftDown->lodLevel),
-                        handler1 = MTerrain.current.loader.LoadChunk(leftUp->localPosition, leftUp->lodLevel),
-                        handler2 = MTerrain.current.loader.LoadChunk(rightDown->localPosition, rightDown->lodLevel),
-                        handler3 = MTerrain.current.loader.LoadChunk(rightUp->localPosition, rightUp->lodLevel),
-                        targetDecalLayer = leftDown->decalMask
-                    });
+                        leftDown = MUnsafeUtility.Malloc<TerrainQuadTree>(sizeof(TerrainQuadTree) * 4, Allocator.Persistent);
+                        leftUp = leftDown + 1;
+                        rightDown = leftDown + 2;
+                        rightUp = leftDown + 3;
+                        double subSize = worldSize * 0.5;
+                        *leftDown = new TerrainQuadTree(lodLevel, LocalPos.LeftDown, localPosition, subSize, this.maskScaleOffset, rootPos);
+                        *leftUp = new TerrainQuadTree(lodLevel, LocalPos.LeftUp, localPosition, subSize, this.maskScaleOffset, rootPos);
+                        *rightDown = new TerrainQuadTree(lodLevel, LocalPos.RightDown, localPosition, subSize, this.maskScaleOffset, rootPos);
+                        *rightUp = new TerrainQuadTree(lodLevel, LocalPos.RightUp, localPosition, subSize, this.maskScaleOffset, rootPos);
+                        float3 maskScaleOffset = (float3)this.maskScaleOffset;
+                        maskScaleOffset.x *= 0.5f;
+                        leftDown->isRendering = true;
+                        leftUp->isRendering = true;
+                        rightDown->isRendering = true;
+                        rightUp->isRendering = true;
+                        MTerrain.current.enabledChunk[int3(leftDown->VirtualTextureIndex, leftDown->VirtualTextureSize)] = true;
+                        MTerrain.current.enabledChunk[int3(leftUp->VirtualTextureIndex, leftUp->VirtualTextureSize)] = true;
+                        MTerrain.current.enabledChunk[int3(rightDown->VirtualTextureIndex, rightDown->VirtualTextureSize)] = true;
+                        MTerrain.current.enabledChunk[int3(rightUp->VirtualTextureIndex, rightUp->VirtualTextureSize)] = true;
+                        MTerrain.current.loadDataList.Add(new TerrainLoadData
+                        {
+                            ope = TerrainLoadData.Operator.Separate,
+                            startIndex = VirtualTextureIndex,
+                            size = VirtualTextureSize,
+                            rootPos = rootPos,
+                            maskScaleOffset = maskScaleOffset,
+                            handler0 = MTerrain.current.loader.LoadChunk(leftDown->localPosition, leftDown->lodLevel),
+                            handler1 = MTerrain.current.loader.LoadChunk(leftUp->localPosition, leftUp->lodLevel),
+                            handler2 = MTerrain.current.loader.LoadChunk(rightDown->localPosition, rightDown->lodLevel),
+                            handler3 = MTerrain.current.loader.LoadChunk(rightUp->localPosition, rightUp->lodLevel),
+                            targetDecalLayer = leftDown->decalMask
+                        });
+                    }
                 }
             }
             distOffset = -MTerrain.current.terrainData.lodDeferredOffset;
@@ -345,7 +360,7 @@ namespace MPipeline
             }
             else if (dist > MTerrain.current.allLodLevles[lodLevel + 1] - distOffset)
             {
-                Combine(lodLevel >=MTerrain.current.lodOffset);
+                Combine(lodLevel >= MTerrain.current.lodOffset);
 
             }
             else

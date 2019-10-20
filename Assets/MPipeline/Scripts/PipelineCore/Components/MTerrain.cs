@@ -81,7 +81,7 @@ namespace MPipeline
         private TerrainQuadTree tree;
         private JobHandle calculateHandle;
         private MStringBuilder msb;
-        private VirtualTexture vt;
+        public VirtualTexture vt { get; private set; }
         private double oneVTPixelWorldLength;
         private RenderTexture worldNormalRT;
         private ComputeBuffer textureBuffer;
@@ -147,27 +147,11 @@ namespace MPipeline
             return false;
         }
 
-        int LoadTexture(VirtualTextureLoader.LoadingHandler handler, int2 startIndex, int size, int2 rootPos, float3 maskScaleOffset)
+        void LoadTexture(VirtualTextureLoader.LoadingHandler handler, int2 startIndex, int size, int2 rootPos, float3 maskScaleOffset, int texElement)
         {
-            int texElement;
-            //Could Debug lefted pool
-            if (leastVirtualTextureLefted > vt.LeftedTextureElement)
-            {
-                leastVirtualTextureLefted = vt.LeftedTextureElement;
-                Debug.Log(vt.LeftedTextureElement);
-            }
-
-            if (!vt.LoadNewTexture(startIndex, size, out texElement))
-            {
-                Debug.LogError("Terrain Virtual Texture Pool Not Enough!");
-                return -1;
-            }
             shader.SetInt(ShaderIDs._OffsetIndex, texElement);
             textureBuffer.SetDataPtr((uint*)(handler.allBytes), HEIGHT_RESOLUTION * HEIGHT_RESOLUTION / 2);
-
-
             shader.Dispatch(3, HEIGHT_RESOLUTION / 8, HEIGHT_RESOLUTION / 8, 1);
-
             rootPos += (int2)maskScaleOffset.yz;
             maskScaleOffset.yz = frac(maskScaleOffset.yz);
             textureShader.SetInt(ShaderIDs._OffsetIndex, texElement);
@@ -176,7 +160,6 @@ namespace MPipeline
             textureShader.SetVector(ShaderIDs._TextureSize, float4(maskScaleOffset, size * terrainData.materialTillingScale));
             const int disp = COLOR_RESOLUTION / 8;
             textureShader.Dispatch(0, disp, disp, 1);
-            return texElement;
         }
         static bool GetComplete(ref VirtualTextureLoader.LoadingHandler handler)
         {
@@ -308,17 +291,25 @@ namespace MPipeline
                             break;
                     }
                 }
-
+            
+                if(vt.LeftedTextureElement < leastVirtualTextureLefted)
+                {
+                    leastVirtualTextureLefted = vt.LeftedTextureElement;
+                    Debug.Log(leastVirtualTextureLefted);
+                }
                 if (loadDataList.TryDequeue(out loadData))
                 {
                     switch (loadData.ope)
                     {
                         case TerrainLoadData.Operator.Load:
+                            int targetElement;
+                            bool elementAva = vt.LoadNewTexture(loadData.startIndex, loadData.size, out targetElement) && CheckChunkEnabled(loadData.startIndex, loadData.size);
                             while (!GetComplete(ref loadData.handler0))
                                 yield return null;
-                            if (CheckChunkEnabled(loadData.startIndex, loadData.size))
+                            if (elementAva)
                             {
-                                int targetElement = LoadTexture(loadData.handler0, loadData.startIndex, loadData.size, loadData.rootPos, loadData.maskScaleOffset);
+
+                                LoadTexture(loadData.handler0, loadData.startIndex, loadData.size, loadData.rootPos, loadData.maskScaleOffset, targetElement);
                                 if (targetElement >= 0)
                                 {
                                     ConvertNormalMap(loadData.startIndex, loadData.size, targetElement);
@@ -328,10 +319,23 @@ namespace MPipeline
                                         yield return null;
                                     }
                                 }
+
                             }
                             loadData.handler0.Dispose();
                             break;
                         case TerrainLoadData.Operator.Separate:
+                            int subSize = loadData.size / 2;
+                            int2 leftDownIndex = loadData.startIndex;
+                            int2 leftUpIndex = loadData.startIndex + int2(0, subSize);
+                            int2 rightDownIndex = loadData.startIndex + int2(subSize, 0);
+                            int2 rightUpIndex = loadData.startIndex + subSize;
+                            int ele0, ele1, ele2, ele3;
+                            bool4 elementAvaliable = bool4(
+     vt.LoadNewTexture(leftDownIndex, subSize, out ele0) && CheckChunkEnabled(leftDownIndex, subSize),
+     vt.LoadNewTexture(leftUpIndex, subSize, out ele1) && CheckChunkEnabled(leftUpIndex, subSize),
+     vt.LoadNewTexture(rightDownIndex, subSize, out ele2) && CheckChunkEnabled(rightDownIndex, subSize),
+     vt.LoadNewTexture(rightUpIndex, subSize, out ele3) && CheckChunkEnabled(rightUpIndex, subSize)
+    );
                             while (!GetComplete(ref loadData.handler0))
                                 yield return null;
                             while (!GetComplete(ref loadData.handler1))
@@ -340,52 +344,51 @@ namespace MPipeline
                                 yield return null;
                             while (!GetComplete(ref loadData.handler3))
                                 yield return null;
-                            int subSize = loadData.size / 2;
-                            int2 leftDownIndex = loadData.startIndex;
-                            int2 leftUpIndex = loadData.startIndex + int2(0, subSize);
-                            int2 rightDownIndex = loadData.startIndex + int2(subSize, 0);
-                            int2 rightUpIndex = loadData.startIndex + subSize;
+
 
                             float subScale = loadData.maskScaleOffset.x;
                             float2 leftUpOffset = float2(loadData.maskScaleOffset.yz + float2(0, subScale));
                             float2 rightDownOffset = float2(loadData.maskScaleOffset.yz + float2(subScale, 0));
                             float2 rightUpOffset = float2(loadData.maskScaleOffset.yz + subScale);
-                            int ele0 = -1;
-                            if (CheckChunkEnabled(leftDownIndex, subSize)) ele0 = LoadTexture(loadData.handler0, leftDownIndex, subSize, loadData.rootPos, loadData.maskScaleOffset);
-                            int ele1 = -1;
-                            if (CheckChunkEnabled(leftUpIndex, subSize)) ele1 = LoadTexture(loadData.handler1, leftUpIndex, subSize, loadData.rootPos, float3(subScale, leftUpOffset));
-                            int ele2 = -1;
-                            if (CheckChunkEnabled(rightDownIndex, subSize)) ele2 = LoadTexture(loadData.handler2, rightDownIndex, subSize, loadData.rootPos, float3(subScale, rightDownOffset));
-                            int ele3 = -1;
-                            if (CheckChunkEnabled(rightUpIndex, subSize)) ele3 = LoadTexture(loadData.handler3, rightUpIndex, subSize, loadData.rootPos, float3(subScale, rightUpOffset));
-
-                            if (ele0 >= 0)
+                            if (elementAvaliable.x)
+                            {
+                                LoadTexture(loadData.handler0, leftDownIndex, subSize, loadData.rootPos, loadData.maskScaleOffset, ele0);
                                 ConvertNormalMap(leftDownIndex, subSize, ele0);
-                            if (ele1 >= 0)
+                            }
+                            if (elementAvaliable.y)
+                            {
+                                LoadTexture(loadData.handler1, leftUpIndex, subSize, loadData.rootPos, float3(subScale, leftUpOffset), ele1);
                                 ConvertNormalMap(leftUpIndex, subSize, ele1);
-                            if (ele2 >= 0)
+                            }
+                            if (elementAvaliable.z)
+                            {
+                                LoadTexture(loadData.handler2, rightDownIndex, subSize, loadData.rootPos, float3(subScale, rightDownOffset), ele2);
                                 ConvertNormalMap(rightDownIndex, subSize, ele2);
-                            if (ele3 >= 0)
+                            }
+                            if (elementAvaliable.w)
+                            {
+                                LoadTexture(loadData.handler3, rightUpIndex, subSize, loadData.rootPos, float3(subScale, rightUpOffset), ele3);
                                 ConvertNormalMap(rightUpIndex, subSize, ele3);
+                            }
 
                             if (loadData.targetDecalLayer != 0)
                             {
-                                if (ele0 >= 0)
+                                if (elementAvaliable.x)
                                 {
                                     DrawDecal(leftDownIndex, subSize, ele0, loadData.targetDecalLayer);
                                     yield return null;
                                 }
-                                if (ele1 >= 0 && CheckChunkEnabled(leftUpIndex, subSize))
+                                if (elementAvaliable.y && CheckChunkEnabled(leftUpIndex, subSize))
                                 {
                                     DrawDecal(leftUpIndex, subSize, ele1, loadData.targetDecalLayer);
                                     yield return null;
                                 }
-                                if (ele2 >= 0 && CheckChunkEnabled(rightDownIndex, subSize))
+                                if (elementAvaliable.z && CheckChunkEnabled(rightDownIndex, subSize))
                                 {
                                     DrawDecal(rightDownIndex, subSize, ele2, loadData.targetDecalLayer);
                                     yield return null;
                                 }
-                                if (ele3 >= 0 && CheckChunkEnabled(rightUpIndex, subSize))
+                                if (elementAvaliable.w && CheckChunkEnabled(rightUpIndex, subSize))
                                 {
                                     DrawDecal(rightUpIndex, subSize, ele3, loadData.targetDecalLayer);
                                     yield return null;
