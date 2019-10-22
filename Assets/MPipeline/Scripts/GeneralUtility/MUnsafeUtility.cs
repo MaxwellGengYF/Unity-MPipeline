@@ -59,7 +59,7 @@ public unsafe static class MUnsafeUtility
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static ref T Get<T>(this NativeArray<T> arr, int index) where T : unmanaged
+    public static ref T Element<T>(this NativeArray<T> arr, int index) where T : unmanaged
     {
         return ref *((T*)arr.GetUnsafePtr() + index);
     }

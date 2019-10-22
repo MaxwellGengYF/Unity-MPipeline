@@ -72,9 +72,9 @@ void SetIndexTexs(uint2 id : SV_DISPATCHTHREADID)
     float2 offset = frac(((float2)id) / (float)_VTVariables.z);
     float2 localUV = (id + 0.5) / (float)_VTVariables.w;
     float element = 0;
-    if(localUV.y > 0.5)
+    if(localUV.x > 0.5)
     {
-        if(localUV.x < 0.5)
+        if(localUV.y < 0.5)
         {
             element = _TextureSize.z;
         }
@@ -85,7 +85,7 @@ void SetIndexTexs(uint2 id : SV_DISPATCHTHREADID)
     }
     else
     {
-        if(localUV.x < 0.5)
+        if(localUV.y < 0.5)
         {
             element = _TextureSize.x;
         }

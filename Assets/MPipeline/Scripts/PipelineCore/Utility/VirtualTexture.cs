@@ -5,8 +5,9 @@ using UnityEngine.Rendering;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using static Unity.Mathematics.math;
-using UnityEngine.Experimental.Rendering;
 using Unity.Mathematics;
+using UnityEngine.Experimental.Rendering;
+
 namespace MPipeline
 {
     public enum VirtualTextureSize
@@ -296,8 +297,8 @@ namespace MPipeline
             int2 leftUpIndex = startIndex + int2(0, size);
             int2 rightUpIndex = startIndex + size;
             GetChunk(ref leftDownIndex, size, out element.x);
-            GetChunk(ref rightDownIndex, size, out element.y);
-            GetChunk(ref leftUpIndex, size, out element.z);
+            GetChunk(ref leftUpIndex, size, out element.y);
+            GetChunk(ref rightDownIndex, size, out element.z);
             GetChunk(ref rightUpIndex, size, out element.w);
             vtVariables[0] = startIndex.x;
             vtVariables[1] = startIndex.y;

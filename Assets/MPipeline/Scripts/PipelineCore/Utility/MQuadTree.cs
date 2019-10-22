@@ -24,7 +24,7 @@ namespace MPipeline
     {
         public enum Operator
         {
-            Load, Separate
+            Load, Separate, Update
         }
         public Operator ope;
         public int size;
@@ -52,8 +52,8 @@ namespace MPipeline
         private double distOffset;
         public int2 VirtualTextureIndex => localPosition * (int)(0.1 + pow(2.0, MTerrain.current.allLodLevles.Length - 1 - lodLevel));
         public bool isRendering { get; private set; }
-        private double worldSize;
-        private int2 rootPos;
+        public double worldSize { get; private set; }
+        public int2 rootPos;
         public double3 maskScaleOffset;
         private LayerMask decalMask;
         public TerrainQuadTree(int parentLodLevel, LocalPos sonPos, int2 parentPos, double worldSize, double3 maskScaleOffset, int2 rootPos)
@@ -125,6 +125,15 @@ namespace MPipeline
                 return chunkPos;
             }
         }
+        public double4 BoundedWorldPos
+        {
+            get
+            {
+                double2 leftCorner = CornerWorldPos;
+                double2 rightCorner = MTerrain.current.terrainData.screenOffset + (MTerrain.current.terrainData.largestChunkSize / pow(2, lodLevel)) * ((double2)(localPosition + 1));
+                return double4(leftCorner, rightCorner);
+            }
+        }
         public double2 CenterWorldPos
         {
             get
@@ -135,6 +144,59 @@ namespace MPipeline
                 return chunkPos;
             }
         }
+        public void GetMaterialMaskRoot(double2 xzPosition, double radius, ref NativeList<ulong> allTreeNode)
+        {
+            if (lodLevel == MTerrain.current.lodOffset)
+            {
+                double4 bounded = BoundedWorldPos;
+                bool4 v = bool4(xzPosition + radius > bounded.xy, xzPosition - radius < bounded.zw);
+                if (v.x && v.y && v.z && v.w)
+                {
+                    allTreeNode.Add((ulong)this.Ptr());
+                }
+            }
+            else if (lodLevel < MTerrain.current.lodOffset)
+            {
+                if (leftDown != null)
+                {
+                    leftDown->GetMaterialMaskRoot(xzPosition, radius, ref allTreeNode);
+                    rightDown->GetMaterialMaskRoot(xzPosition, radius, ref allTreeNode);
+                    leftUp->GetMaterialMaskRoot(xzPosition, radius, ref allTreeNode);
+                    rightUp->GetMaterialMaskRoot(xzPosition, radius, ref allTreeNode);
+                }
+            }
+        }
+
+        public void UpdateChunks(double3 circleRange)
+        {
+            if (isRendering)
+            {
+                double4 boundedPos = BoundedWorldPos;
+                if (boundedPos.x - circleRange.x < circleRange.z &&
+                    boundedPos.y - circleRange.y < circleRange.z &&
+                    circleRange.x - boundedPos.z < circleRange.z &&
+                    circleRange.y - boundedPos.w < circleRange.z)
+                {
+                    MTerrain.current.loadDataList.Add(new TerrainLoadData
+                    {
+                        ope = TerrainLoadData.Operator.Update,
+                        startIndex = VirtualTextureIndex,
+                        size = VirtualTextureSize,
+                        rootPos = rootPos,
+                        maskScaleOffset = (float3)maskScaleOffset,
+                        targetDecalLayer = decalMask
+                    });
+                }
+            }
+            if (leftDown != null)
+            {
+                leftDown->UpdateChunks(circleRange);
+                leftUp->UpdateChunks(circleRange);
+                rightDown->UpdateChunks(circleRange);
+                rightUp->UpdateChunks(circleRange);
+            }
+        }
+
         public void Dispose()
         {
             if (lodLevel == MTerrain.current.lodOffset)
@@ -157,7 +219,7 @@ namespace MPipeline
                         startIndex = startIndex
                     });
                 }
-              
+
             }
             isRendering = false;
             if (leftDown != null)

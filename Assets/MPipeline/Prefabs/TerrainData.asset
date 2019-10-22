@@ -15,8 +15,8 @@ MonoBehaviour:
   heightOffset: 0
   heightScale: 0
   materialTillingScale: 1
-  terrainLocalYPositionToGround: -11.37
-  backfaceCullingScale: 0.33333298563957214
+  terrainLocalYPositionToGround: -2
+  backfaceCullingScale: 0.30000001192092896
   largestChunkSize: 2048
   screenOffset:
     x: -1024
@@ -32,8 +32,8 @@ MonoBehaviour:
   - m_AssetGUID: 79ae856e4954e4848acda128292810e4
     m_SubObjectName: 
   lodDistances:
-  - 900
-  - 750
+  - 5000
+  - 5000
   - 400
   - 67.5
   - 55

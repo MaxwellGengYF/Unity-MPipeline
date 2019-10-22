@@ -1,9 +1,6 @@
 ﻿using UnityEngine;
 
 public class FreeCamera : MonoBehaviour {
-
-	public bool holdRightMouseCapture = false;
-
 	public float lookSpeed = 5f;
 	public float moveSpeed = 5f;
 	public float sprintSpeed = 50f;
@@ -42,24 +39,14 @@ public class FreeCamera : MonoBehaviour {
 			ReleaseInput();
 	}
 
+    private void OnDisable()
+    {
+        ReleaseInput();
+    }
+
     void LateUpdate() {
-		if(!m_inputCaptured) {
-			if(!holdRightMouseCapture && Input.GetMouseButtonDown(0)) 
-				CaptureInput();
-			else if(holdRightMouseCapture && Input.GetMouseButtonDown(1))
-				CaptureInput();
-		}
-
-		if(!m_inputCaptured)
-			return;
-		if(m_inputCaptured) {
-			if(!holdRightMouseCapture && Input.GetKeyDown(KeyCode.Escape))
-				ReleaseInput();
-			else if(holdRightMouseCapture && Input.GetMouseButtonUp(1))
-				ReleaseInput();
-		}
-
-		var rotStrafe = Input.GetAxis("Mouse X");
+        CaptureInput();
+        var rotStrafe = Input.GetAxis("Mouse X");
 		var rotFwd = Input.GetAxis("Mouse Y");
 
 		m_yaw = (m_yaw + lookSpeed * rotStrafe) % 360f;

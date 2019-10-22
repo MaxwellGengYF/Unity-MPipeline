@@ -1,0 +1,36 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel GetDepth
+#pragma kernel DrawMask
+#include "UnityCG.cginc"
+
+RWStructuredBuffer<float> _DistanceBuffer;
+float2 _UV;
+Texture2D<float> _CameraDepthTexture; SamplerState sampler_CameraDepthTexture;
+[numthreads(1,1,1)]
+void GetDepth (uint3 id : SV_DispatchThreadID)
+{
+    _DistanceBuffer[id.x] = _CameraDepthTexture.SampleLevel(sampler_CameraDepthTexture, _UV, 0);
+}
+
+RWTexture2DArray<float> _DestTex;
+float4 _SrcDestCorner;
+uint _Count;
+uint _OffsetIndex;
+float4 _Circle;//XY: circle pos Z: circle radius W: mask length
+float _TargetValue;
+
+[numthreads(8,8,1)]
+void DrawMask(uint2 id : SV_DISPATCHTHREADID)
+{
+    float2 uv = (id + 0.5) / _Count;
+    float2 centerPos = lerp(_SrcDestCorner.xy, _SrcDestCorner.zw, uv);
+    float2 sideLength = (_Circle.w * 0.5) / _Count;
+    float upDist = _Circle.y - (centerPos.y + sideLength);
+    float downDist = (centerPos.y - sideLength) - _Circle.y;
+    float leftDist = (centerPos.x - sideLength) - _Circle.x;
+    float rightDist = _Circle.x - (centerPos.x + sideLength);
+    if(upDist < _Circle.z && downDist < _Circle.z && leftDist < _Circle.z && rightDist < _Circle.z)
+    {
+        _DestTex[uint3(id, _OffsetIndex)] = _TargetValue;
+    }
+}
