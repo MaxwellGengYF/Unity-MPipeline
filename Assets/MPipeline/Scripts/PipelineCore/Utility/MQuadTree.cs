@@ -172,10 +172,10 @@ namespace MPipeline
             if (isRendering)
             {
                 double4 boundedPos = BoundedWorldPos;
-                if (boundedPos.x - circleRange.x < circleRange.z &&
+                if ((boundedPos.x - circleRange.x < circleRange.z &&
                     boundedPos.y - circleRange.y < circleRange.z &&
                     circleRange.x - boundedPos.z < circleRange.z &&
-                    circleRange.y - boundedPos.w < circleRange.z)
+                    circleRange.y - boundedPos.w < circleRange.z))
                 {
                     MTerrain.current.loadDataList.Add(new TerrainLoadData
                     {

@@ -16,21 +16,26 @@ RWTexture2DArray<float> _DestTex;
 float4 _SrcDestCorner;
 uint _Count;
 uint _OffsetIndex;
-float4 _Circle;//XY: circle pos Z: circle radius W: mask length
+float3 _Circle0;
+float3 _Circle1;
+float4x4 _QuadMatrix;
 float _TargetValue;
+
+#define DETECT_PAINT(pos, result) \
+float pos##_ToFirstCircle = distance(pos, _Circle0.xy) < _Circle0.z;\
+float pos##_ToSecondCircle = distance(pos, _Circle1.xy) < _Circle1.z;\
+float2 pos##_localQuadPos = mul((float3x3)_QuadMatrix, float3(pos, 1)).xy + 0.5;\
+float pos##_inQuad = dot(abs(pos##_localQuadPos - saturate(pos##_localQuadPos)), 1) < 1e-4;\
+result = pos##_ToFirstCircle + pos##_ToSecondCircle + pos##_inQuad * _QuadMatrix[2][2];
 
 [numthreads(8,8,1)]
 void DrawMask(uint2 id : SV_DISPATCHTHREADID)
 {
     float2 uv = (id + 0.5) / _Count;
     float2 centerPos = lerp(_SrcDestCorner.xy, _SrcDestCorner.zw, uv);
-    float2 sideLength = (_Circle.w * 0.5) / _Count;
-    float upDist = _Circle.y - (centerPos.y + sideLength);
-    float downDist = (centerPos.y - sideLength) - _Circle.y;
-    float leftDist = (centerPos.x - sideLength) - _Circle.x;
-    float rightDist = _Circle.x - (centerPos.x + sideLength);
-    if(upDist < _Circle.z && downDist < _Circle.z && leftDist < _Circle.z && rightDist < _Circle.z)
-    {
+    float result;
+    DETECT_PAINT(centerPos, result)
+    if(result > 0.5)
         _DestTex[uint3(id, _OffsetIndex)] = _TargetValue;
-    }
+    
 }

@@ -39,11 +39,11 @@ MonoBehaviour:
   - 55
   - 35
   - 25
-  - 10
-  - 4
+  - 15
+  - 8
   renderingLevelCount: 8
   allDecalLayers: []
-  virtualTexCapacity: 141
+  virtualTexCapacity: 136
   allMaterials:
   - firstMaterialIndex: 0.2
     secondMaterialIndex: 0.2
