@@ -35,6 +35,24 @@ namespace MPipeline
 
         }
 
+        void PaintMask(MTerrain terrain, TerrainQuadTree* treeNodePtr, int texIndex, int disp)
+        {
+            terrainEditShader.SetTexture(1, ShaderIDs._DestTex, terrain.maskVT.GetTexture(0));
+            terrainEditShader.SetFloat("_TargetValue", saturate((float)((value + 0.1) / (terrain.terrainData.allMaterials.Length - 1))));
+            terrainEditShader.Dispatch(1, disp, disp, 1);
+        }
+
+        void BlurMask(MTerrain terrain, TerrainQuadTree* treeNodePtr, int texIndex, int disp)
+        {
+            var format = terrain.maskVT.GetTextureFormat(0);
+            RenderTexture tempRt = new RenderTexture(MTerrain.MASK_RESOLUTION, MTerrain.MASK_RESOLUTION, 0, format.format, 0);
+            tempRt.enableRandomWrite = true;
+            tempRt.Create();
+            terrainEditShader.SetTexture(1, ShaderIDs._SourceTex, terrain.maskVT.GetTexture(0));
+            terrainEditShader.SetTexture(1, "_TargetTex", tempRt);
+            
+        }
+
         void OnFinishRead(AsyncGPUReadbackRequest request)
         {
             bool useConnection = false;
@@ -73,7 +91,7 @@ namespace MPipeline
                 terrainEditShader.SetVector("_Circle1", float4(lastFrameWorldPos.xz, paintRange, 1));
                 terrainEditShader.SetMatrix("_QuadMatrix", float4x4(float4(worldToLocal.c0, 0), float4(worldToLocal.c1, 0), float4(worldToLocal.c2, 0), 0));
             }
-
+            const int disp = MTerrain.MASK_RESOLUTION / 8;
             foreach (var i in allMaskTree)
             {
                 var treeNodePtr = (TerrainQuadTree*)i;
@@ -81,13 +99,9 @@ namespace MPipeline
                 int2 maskPos = treeNodePtr->rootPos + (int2)treeNodePtr->maskScaleOffset.yz;
                 int texIndex = terrain.maskVT.GetChunkIndex(maskPos);
                 if (texIndex < 0) continue;
-                terrainEditShader.SetTexture(1, ShaderIDs._DestTex, terrain.maskVT.GetTexture(0));
                 terrainEditShader.SetVector("_SrcDestCorner", (float4)treeNodePtr->BoundedWorldPos);
-
                 terrainEditShader.SetInt(ShaderIDs._OffsetIndex, texIndex);
-                terrainEditShader.SetFloat("_TargetValue", saturate((float)((value + 0.1) / (terrain.terrainData.allMaterials.Length - 1))));
-                const int disp = MTerrain.MASK_RESOLUTION / 8;
-                terrainEditShader.Dispatch(1, disp, disp, 1);
+                PaintMask(terrain, treeNodePtr, texIndex, disp);
             }
             if (!useConnection)
                 terrain.treeRoot->UpdateChunks(double3(worldPos.xz, paintRange));

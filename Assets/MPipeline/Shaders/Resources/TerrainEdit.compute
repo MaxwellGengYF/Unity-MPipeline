@@ -1,6 +1,8 @@
 ﻿// Each #kernel tells which function to compile; you can have many kernels
 #pragma kernel GetDepth
 #pragma kernel DrawMask
+#pragma kernel DecodeToMask
+#pragma kernel EncodeR8
 #include "UnityCG.cginc"
 
 RWStructuredBuffer<float> _DistanceBuffer;
@@ -38,4 +40,37 @@ void DrawMask(uint2 id : SV_DISPATCHTHREADID)
     if(result > 0.5)
         _DestTex[uint3(id, _OffsetIndex)] = _TargetValue;
     
+}
+RWStructuredBuffer<uint> _ElementBuffer;
+
+[numthreads(8,8,1)]
+void DecodeToMask(uint2 id : SV_DISPATCHTHREADID)
+{
+    uint index = id.y * _Count + id.x;
+    uint value = _ElementBuffer[index / 4];
+    value >>= (index % 4) * 8;
+    value &= 255;
+    _DestTex[uint3(id, _OffsetIndex)] = value / 255.0;
+}
+
+[numthreads(64,1,1)]
+void EncodeR8(uint id : SV_DISPATCHTHREADID)
+{
+    id *= 4;
+    uint2 uv = uint2(id % _Count, id / _Count);
+    uint2 uv1 = uint2 ((id + 1) % _Count, (id + 1) / _Count);
+    uint2 uv2 = uint2 ((id + 2) % _Count, (id + 2) / _Count);
+    uint2 uv3 = uint2 ((id + 3) % _Count, (id + 3) / _Count);
+    uint value0 = ((uint)(_DestTex[uint3(uv, _OffsetIndex)] * 255 + 0.1)) & 255;
+    uint value1 = ((uint)(_DestTex[uint3(uv1, _OffsetIndex)] * 255 + 0.1)) & 255;
+    uint value2 = ((uint)(_DestTex[uint3(uv2, _OffsetIndex)] * 255 + 0.1)) & 255;
+    uint value3 = ((uint)(_DestTex[uint3(uv3, _OffsetIndex)] * 255 + 0.1)) & 255;
+    uint result = value0;
+    result <<= 8;
+    result |= value1;
+    result <<= 8;
+    result |= value2;
+    result << 8;
+    result |= value3;
+    _ElementBuffer[id] = result;
 }

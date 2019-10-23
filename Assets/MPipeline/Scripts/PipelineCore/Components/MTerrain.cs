@@ -44,6 +44,7 @@ namespace MPipeline
         #region QUADTREE
         public NativeList_Float allLodLevles;
         public VirtualTextureLoader loader;
+        public TerrainMaskLoader maskLoader;
         [System.NonSerialized]
         public int lodOffset;
         [System.NonSerialized]
@@ -281,21 +282,17 @@ namespace MPipeline
                 {
                     if (maskCommand.load)
                     {
-                        AssetReference arf = terrainData.allMaskTextures[maskCommand.pos.y * largestChunkCount + maskCommand.pos.x];
-                        var maskLoader = arf.LoadAssetAsync<Texture>();
-                        yield return maskLoader;
-                        Texture maskTex = maskLoader.Result;
                         int maskEle;
                         if (maskVT.LoadNewTexture(maskCommand.pos, 1, out maskEle))
                         {
-                            Graphics.Blit(maskTex, maskVT.GetTexture(0), 0, maskEle);
+                            Debug.Log("Start Working!");
+                            yield return maskLoader.ReadToTexture(maskVT.GetTexture(0), maskEle, maskCommand.pos);
+                            Debug.Log("Working Finish");
                         }
                         else
                         {
                             Debug.LogError("No Enough Mask Position!");
                         }
-                        maskTex = null;
-                        arf.ReleaseAsset();
                     }
                     else
                     {
@@ -458,12 +455,6 @@ namespace MPipeline
             }
             lodOffset = terrainData.lodDistances.Length - terrainData.renderingLevelCount;
             largestChunkCount = (int)(0.1 + pow(2.0, lodOffset));
-            if (terrainData.allMaskTextures.Length < largestChunkCount * largestChunkCount)
-            {
-                enabled = false;
-                Debug.LogError("Mask Texture Not Enough!");
-                return;
-            }
             msb = new MStringBuilder(32);
             oneVTPixelWorldLength = terrainData.largestChunkSize / pow(2.0, terrainData.lodDistances.Length - 1);
             textureShader = Resources.Load<ComputeShader>("ProceduralTexture");
@@ -481,8 +472,8 @@ namespace MPipeline
             culledResultsBuffer = new ComputeBuffer(INIT_LENGTH, sizeof(int));
             loadedBuffer = new ComputeBuffer(INIT_LENGTH, sizeof(TerrainChunkBuffer));
             loadedBufferList = new NativeList<TerrainChunkBuffer>(INIT_LENGTH, Allocator.Persistent);
-
-            loader = new VirtualTextureLoader(lodOffset, terrainData.renderingLevelCount, terrainData.readWritePath, this);
+            maskLoader = new TerrainMaskLoader(terrainData.maskmapPath, Resources.Load<ComputeShader>("TerrainEdit"), largestChunkCount);
+            loader = new VirtualTextureLoader(lodOffset, terrainData.renderingLevelCount, terrainData.heightmapPath, this);
             loadDataList = new NativeQueue<TerrainLoadData>(100, Allocator.Persistent);
             unloadDataList = new NativeQueue<TerrainUnloadData>(100, Allocator.Persistent);
             NativeArray<uint> dispatchDraw = new NativeArray<uint>(5, Allocator.Temp, NativeArrayOptions.ClearMemory);
@@ -632,6 +623,7 @@ namespace MPipeline
             loader.Dispose();
             materialBuffer.Dispose();
             allLodLevles.Dispose();
+            maskLoader.Dispose();
             textureBuffer.Dispose();
             enabledChunk.Dispose();
             maskLoadList.Dispose();

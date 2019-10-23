@@ -25,7 +25,6 @@ namespace MPipeline
         public double largestChunkSize = 1000;
         public double2 screenOffset;
         public double lodDeferredOffset = 2;
-        public AssetReference[] allMaskTextures;
         //public Texture2D warpNoiseTexture;
         public float[] lodDistances = new float[]
         {
@@ -39,7 +38,8 @@ namespace MPipeline
         [Range(1, 256)]
         public int virtualTexCapacity = 128;
         public HeightBlendMaterial[] allMaterials;
-        public string readWritePath = "Assets/BinaryData/Terrain.mquad";
+        public string heightmapPath = "Assets/BinaryData/TerrainHeight.mquad";
+        public string maskmapPath = "Assets/BinaryData/TerrainMask.mquad";
         public Material drawTerrainMaterial;
         public MTerrain.PBRTexture[] textures;
         [EasyButtons.Button]

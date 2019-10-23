@@ -31,7 +31,7 @@ namespace MPipeline
                 return;
             if (GUILayout.Button("Update Height Mask Texture"))
             {
-                TerrainFactory factory = new TerrainFactory(terrainData.lodDistances.Length - terrainData.renderingLevelCount, terrainData.lodDistances.Length, terrainData.readWritePath);
+                TerrainFactory factory = new TerrainFactory(terrainData.lodDistances.Length - terrainData.renderingLevelCount, terrainData.lodDistances.Length, terrainData.heightmapPath);
                 try
                 {
                     int resolution = (int)(0.1 + pow(2.0, terrainData.renderingLevelCount));
@@ -51,7 +51,7 @@ namespace MPipeline
             }
             if (GUILayout.Button("Generate Mipmap"))
             {
-                TerrainFactory factory = new TerrainFactory(terrainData.lodDistances.Length - terrainData.renderingLevelCount, terrainData.lodDistances.Length, terrainData.readWritePath);
+                TerrainFactory factory = new TerrainFactory(terrainData.lodDistances.Length - terrainData.renderingLevelCount, terrainData.lodDistances.Length, terrainData.heightmapPath);
                 try
                 {
                     for (int i = terrainData.lodDistances.Length - 2; i >= terrainData.lodDistances.Length - terrainData.renderingLevelCount; --i)
