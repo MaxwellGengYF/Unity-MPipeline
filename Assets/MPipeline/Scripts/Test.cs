@@ -17,7 +17,6 @@ namespace MPipeline
 {
     public unsafe sealed class Test : MonoBehaviour
     {
-        public Transform[] targetTransform;
         [EasyButtons.Button]
         void EnableWhiteModel()
         {

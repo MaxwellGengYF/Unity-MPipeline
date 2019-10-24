@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 010ce77163682284691fda8b292bbe7b, type: 3}
   m_Name: TerrainData
   m_EditorClassIdentifier: 
-  heightOffset: 0
-  heightScale: 8.19
+  heightOffset: -8
+  heightScale: 15.05
   materialTillingScale: 1
   terrainLocalYPositionToGround: -2
   backfaceCullingScale: 0.30000001192092896
@@ -25,7 +25,7 @@ MonoBehaviour:
   lodDistances:
   - 5000
   - 5000
-  - 400
+  - 300
   - 67.5
   - 55
   - 35
@@ -34,7 +34,7 @@ MonoBehaviour:
   - 8
   renderingLevelCount: 8
   allDecalLayers: []
-  virtualTexCapacity: 133
+  virtualTexCapacity: 136
   allMaterials:
   - firstMaterialIndex: 0.2
     secondMaterialIndex: 0.2

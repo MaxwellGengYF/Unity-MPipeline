@@ -1,5 +1,7 @@
 ﻿using Unity.Collections.LowLevel.Unsafe;
 using Unity.Collections;
+using System.Collections;
+using System.Collections.Generic;
 namespace MPipeline
 {
     public unsafe struct NativeQueueData
@@ -9,9 +11,9 @@ namespace MPipeline
         public int length;
         public Allocator alloc;
     }
-    public unsafe struct NativeQueue<T> where T : unmanaged
+    public unsafe struct NativeQueue<T>where T : unmanaged
     {
-        private struct Node
+        public struct Node
         {
             T value;
             void* next;
@@ -54,10 +56,10 @@ namespace MPipeline
                     nodes.Add((ulong)ptr);
                 }
             }
-            void* nodePtr = (void*) nodes[nodes.Length - 1];
+            void* nodePtr = (void*)nodes[nodes.Length - 1];
             *(T*)nodePtr = value;
             nodes.RemoveLast();
-            if(queueData->length <= 0)
+            if (queueData->length <= 0)
             {
                 queueData->startNode = nodePtr;
                 queueData->endNode = nodePtr;
@@ -73,7 +75,7 @@ namespace MPipeline
 
         public T Dequeue()
         {
-            if(!isCreated || queueData->length <= 0 || queueData->startNode == null)
+            if (!isCreated || queueData->length <= 0 || queueData->startNode == null)
             {
                 return default;
             }
