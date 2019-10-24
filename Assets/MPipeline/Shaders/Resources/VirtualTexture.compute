@@ -2,7 +2,6 @@
 #pragma kernel SetIndexIndependentTex
 #pragma kernel BlitTex
 #pragma kernel CopyTex
-#pragma kernel SetIndexTexs
 #include "UnityCG.cginc"
 RWTexture2D<half4> _IndexTexture;
 float4 _TextureSize; // X: virtual texture element's size Y: index texture size ZW: Start Index
@@ -33,9 +32,11 @@ void SetIndexTex(uint2 id : SV_DISPATCHTHREADID)
 [numthreads(8,8,1)]
 void SetIndexIndependentTex(uint2 id : SV_DISPATCHTHREADID)
 {
-    if(id.x >= _VTVariables.z || id.y >= _VTVariables.z) return;
-    uint2 indx = id + _VTVariables.xy;
-    _IndexTexture[RepeatUV(indx)] = float4(1, 0, 0, (_ElementBuffer[id.y * _VTVariables.z + id.x] + 0.4) / 2048.0);
+    uint fullSize = _VTVariables.w * _VTVariables.z;
+    if(id.x >= fullSize || id.y >= fullSize) return;
+    float2 uv = (float2)id / _VTVariables.z;
+    uint2 idx = id / _VTVariables.z;
+    _IndexTexture[RepeatUV(id + _VTVariables.xy)] = float4(1.0 / _VTVariables.z, frac(uv), (_ElementBuffer[idx.y * _VTVariables.w  + idx.x] + 0.4) / 2048.0);
 }
 
 [numthreads(8,8,1)]
@@ -62,37 +63,4 @@ void CopyTex(uint2 id : SV_DISPATCHTHREADID)
     scaleOffset.w *= 2048.0;
     float3 uvw =  float3(frac(uv) * scaleOffset.x + scaleOffset.yz, scaleOffset.w);
     _BlendTex[id] = _TextureBuffer.SampleLevel(sampler_TextureBuffer, uvw, 0);
-}
-[numthreads(8, 8, 1)]
-void SetIndexTexs(uint2 id : SV_DISPATCHTHREADID)
-{
-    if(id.x >= _VTVariables.w || id.y >= _VTVariables.w) return;
-    uint2 indx = id + _VTVariables.xy;
-    float size = 1.0 / _VTVariables.z;
-    float2 offset = frac(((float2)id) / (float)_VTVariables.z);
-    float2 localUV = (id + 0.5) / (float)_VTVariables.w;
-    float element = 0;
-    if(localUV.x > 0.5)
-    {
-        if(localUV.y < 0.5)
-        {
-            element = _TextureSize.z;
-        }
-        else
-        {
-            element = _TextureSize.w;
-        }
-    }
-    else
-    {
-        if(localUV.y < 0.5)
-        {
-            element = _TextureSize.x;
-        }
-        else
-        {
-            element = _TextureSize.y;
-        }
-    }
-    _IndexTexture[RepeatUV(indx)] = float4(size, offset, element);
 }

@@ -96,6 +96,7 @@ namespace MPipeline
         private RenderTexture worldNormalRT;
         private ComputeBuffer textureBuffer;
         private ComputeBuffer materialBuffer;
+        private NativeArray<int> vtContainer;
         private int leastVirtualTextureLefted = int.MaxValue;
 
         public override void PrepareJob()
@@ -361,7 +362,6 @@ namespace MPipeline
                             int2 leftUpIndex = loadData.startIndex + int2(0, subSize);
                             int2 rightDownIndex = loadData.startIndex + int2(subSize, 0);
                             int2 rightUpIndex = loadData.startIndex + subSize;
-                            int4 elements;
                             bool4 elementAvaliable;
                             yield return null;
                             while (!GetComplete(ref loadData.handler0))
@@ -374,7 +374,9 @@ namespace MPipeline
                                 yield return null;
                             if (vt.LeftedTextureElement >= 3)
                             {
-                                vt.LoadQuadNewTextures(loadData.startIndex, subSize, out elements);
+                                vt.LoadNewTextureChunks(loadData.startIndex, subSize, 2, vtContainer);
+                                
+                              //  vt.LoadQuadNewTextures(loadData.startIndex, subSize, out elements);
                                 elementAvaliable.x = CheckChunkEnabled(leftDownIndex, subSize);
                                 elementAvaliable.y = CheckChunkEnabled(leftUpIndex, subSize);
                                 elementAvaliable.z = CheckChunkEnabled(rightDownIndex, subSize);
@@ -385,45 +387,45 @@ namespace MPipeline
                                 float2 rightUpOffset = float2(loadData.maskScaleOffset.yz + subScale);
                                 if (elementAvaliable.x)
                                 {
-                                    LoadTexture(loadData.handler0, leftDownIndex, subSize, loadData.rootPos, loadData.maskScaleOffset, elements.x);
-                                    ConvertNormalMap(leftDownIndex, subSize, elements.x);
+                                    LoadTexture(loadData.handler0, leftDownIndex, subSize, loadData.rootPos, loadData.maskScaleOffset, vtContainer[0]);
+                                    ConvertNormalMap(leftDownIndex, subSize, vtContainer[0]);
                                 }
                                 if (elementAvaliable.y)
                                 {
-                                    LoadTexture(loadData.handler1, leftUpIndex, subSize, loadData.rootPos, float3(subScale, leftUpOffset), elements.y);
-                                    ConvertNormalMap(leftUpIndex, subSize, elements.y);
+                                    LoadTexture(loadData.handler1, leftUpIndex, subSize, loadData.rootPos, float3(subScale, leftUpOffset), vtContainer[2]);
+                                    ConvertNormalMap(leftUpIndex, subSize, vtContainer[2]);
                                 }
                                 if (elementAvaliable.z)
                                 {
-                                    LoadTexture(loadData.handler2, rightDownIndex, subSize, loadData.rootPos, float3(subScale, rightDownOffset), elements.z);
-                                    ConvertNormalMap(rightDownIndex, subSize, elements.z);
+                                    LoadTexture(loadData.handler2, rightDownIndex, subSize, loadData.rootPos, float3(subScale, rightDownOffset), vtContainer[1]);
+                                    ConvertNormalMap(rightDownIndex, subSize, vtContainer[1]);
                                 }
                                 if (elementAvaliable.w)
                                 {
-                                    LoadTexture(loadData.handler3, rightUpIndex, subSize, loadData.rootPos, float3(subScale, rightUpOffset), elements.w);
-                                    ConvertNormalMap(rightUpIndex, subSize, elements.w);
+                                    LoadTexture(loadData.handler3, rightUpIndex, subSize, loadData.rootPos, float3(subScale, rightUpOffset), vtContainer[3]);
+                                    ConvertNormalMap(rightUpIndex, subSize, vtContainer[3]);
                                 }
 
                                 if (loadData.targetDecalLayer != 0)
                                 {
                                     if (elementAvaliable.x)
                                     {
-                                        DrawDecal(leftDownIndex, subSize, elements.x, loadData.targetDecalLayer);
+                                        DrawDecal(leftDownIndex, subSize, vtContainer[0], loadData.targetDecalLayer);
                                         yield return null;
                                     }
                                     if (elementAvaliable.y && CheckChunkEnabled(leftUpIndex, subSize))
                                     {
-                                        DrawDecal(leftUpIndex, subSize, elements.y, loadData.targetDecalLayer);
+                                        DrawDecal(leftUpIndex, subSize, vtContainer[2], loadData.targetDecalLayer);
                                         yield return null;
                                     }
                                     if (elementAvaliable.z && CheckChunkEnabled(rightDownIndex, subSize))
                                     {
-                                        DrawDecal(rightDownIndex, subSize, elements.z, loadData.targetDecalLayer);
+                                        DrawDecal(rightDownIndex, subSize, vtContainer[1], loadData.targetDecalLayer);
                                         yield return null;
                                     }
                                     if (elementAvaliable.w && CheckChunkEnabled(rightUpIndex, subSize))
                                     {
-                                        DrawDecal(rightUpIndex, subSize, elements.w, loadData.targetDecalLayer);
+                                        DrawDecal(rightUpIndex, subSize, vtContainer[3], loadData.targetDecalLayer);
                                         yield return null;
                                     }
                                 }
@@ -439,6 +441,13 @@ namespace MPipeline
             }
         }
 
+        public void SaveMask()
+        {
+            foreach(var i in maskVT.PoolDict)
+            {
+                maskLoader.WriteToDisk(maskVT.GetTexture(0), i.value.y, i.key);
+            }
+        }
         protected override void OnEnableFunc()
         {
             if (current && current != this)
@@ -465,6 +474,7 @@ namespace MPipeline
             {
                 indexMapSize *= 2;
             }
+            vtContainer = new NativeArray<int>(4, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
             enabledChunk = new NativeDictionary<int3, bool, int3Equal>(500, Allocator.Persistent, new int3Equal());
             maskLoadList = new NativeQueue<MaskLoadCommand>(10, Allocator.Persistent);
             dispatchDrawBuffer = new ComputeBuffer(5, sizeof(int), ComputeBufferType.IndirectArguments);
@@ -627,6 +637,7 @@ namespace MPipeline
             textureBuffer.Dispose();
             enabledChunk.Dispose();
             maskLoadList.Dispose();
+            vtContainer.Dispose();
             DestroyImmediate(worldNormalRT);
             DestroyImmediate(albedoTex);
             DestroyImmediate(normalTex);

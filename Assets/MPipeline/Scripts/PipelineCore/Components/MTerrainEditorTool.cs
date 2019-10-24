@@ -42,17 +42,6 @@ namespace MPipeline
             terrainEditShader.Dispatch(1, disp, disp, 1);
         }
 
-        void BlurMask(MTerrain terrain, TerrainQuadTree* treeNodePtr, int texIndex, int disp)
-        {
-            var format = terrain.maskVT.GetTextureFormat(0);
-            RenderTexture tempRt = new RenderTexture(MTerrain.MASK_RESOLUTION, MTerrain.MASK_RESOLUTION, 0, format.format, 0);
-            tempRt.enableRandomWrite = true;
-            tempRt.Create();
-            terrainEditShader.SetTexture(1, ShaderIDs._SourceTex, terrain.maskVT.GetTexture(0));
-            terrainEditShader.SetTexture(1, "_TargetTex", tempRt);
-            
-        }
-
         void OnFinishRead(AsyncGPUReadbackRequest request)
         {
             bool useConnection = false;
@@ -130,7 +119,10 @@ namespace MPipeline
             }
             else
                 lastFrameWorking = false;
-            
+            if(Input.GetKeyDown(KeyCode.P))
+            {
+                MTerrain.current.SaveMask();
+            }
         }
         private void OnDisable()
         {

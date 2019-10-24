@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: TerrainData
   m_EditorClassIdentifier: 
   heightOffset: 0
-  heightScale: 0
+  heightScale: 8.19
   materialTillingScale: 1
   terrainLocalYPositionToGround: -2
   backfaceCullingScale: 0.30000001192092896
@@ -22,15 +22,6 @@ MonoBehaviour:
     x: -1024
     y: -1024
   lodDeferredOffset: 1
-  allMaskTextures:
-  - m_AssetGUID: d5c7bc5754e171542891b97f454abc69
-    m_SubObjectName: 
-  - m_AssetGUID: 4b2f3436b3251754989f615f717f38c2
-    m_SubObjectName: 
-  - m_AssetGUID: 71380acf9681992458df78439551b8fa
-    m_SubObjectName: 
-  - m_AssetGUID: 79ae856e4954e4848acda128292810e4
-    m_SubObjectName: 
   lodDistances:
   - 5000
   - 5000
@@ -43,7 +34,7 @@ MonoBehaviour:
   - 8
   renderingLevelCount: 8
   allDecalLayers: []
-  virtualTexCapacity: 136
+  virtualTexCapacity: 133
   allMaterials:
   - firstMaterialIndex: 0.2
     secondMaterialIndex: 0.2
@@ -81,7 +72,8 @@ MonoBehaviour:
     secondMaterialIndex: 1.2
     offset: 0
     heightBlendScale: 0
-  readWritePath: Assets/BinaryData/Terrain.mquad
+  heightmapPath: Assets/BinaryData/TerrainHeight.mquad
+  maskmapPath: Assets/BinaryData/TerrainMask.mquad
   drawTerrainMaterial: {fileID: 2100000, guid: 895d3f610aae4944b88c1b1fc7f46f4d, type: 2}
   textures:
   - albedoOccTex:

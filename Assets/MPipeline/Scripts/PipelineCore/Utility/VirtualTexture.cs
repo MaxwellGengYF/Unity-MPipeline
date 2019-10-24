@@ -99,7 +99,7 @@ namespace MPipeline
         private const int START_CHUNKSIZE = 8;
         public int2 indexSize { get; private set; }
         public RenderTexture indexTex { get; private set; }
-        private struct VTChunkHandleEqual : IFunction<int2, int2, bool>
+        public struct VTChunkHandleEqual : IFunction<int2, int2, bool>
         {
             [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             public bool Run(ref int2 a, ref int2 b)
@@ -108,6 +108,7 @@ namespace MPipeline
             }
         }
         private NativeDictionary<int2, int2, VTChunkHandleEqual> poolDict;
+        public NativeDictionary<int2, int2, VTChunkHandleEqual> PoolDict => poolDict;
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public RenderTexture GetTexture(int index)
         {
@@ -290,60 +291,35 @@ namespace MPipeline
             return res;
         }
 
-        public void LoadQuadNewTextures(int2 startIndex, int size, out int4 element)
+        public void LoadNewTextureChunks(int2 startIndex, int chunkSize, int chunkCount, NativeArray<int> texsContainner)
         {
-            int2 leftDownIndex = startIndex;
-            int2 rightDownIndex = startIndex + int2(size, 0);
-            int2 leftUpIndex = startIndex + int2(0, size);
-            int2 rightUpIndex = startIndex + size;
-            GetChunk(ref leftDownIndex, size, out element.x);
-            GetChunk(ref leftUpIndex, size, out element.y);
-            GetChunk(ref rightDownIndex, size, out element.z);
-            GetChunk(ref rightUpIndex, size, out element.w);
-            vtVariables[0] = startIndex.x;
-            vtVariables[1] = startIndex.y;
-            vtVariables[2] = size;
-            vtVariables[3] = size * 2;
-            shader.SetInts(ShaderIDs._VTVariables, vtVariables);
-            shader.SetVector(ShaderIDs._TextureSize, (float4)((element + double4(0.4)) / 2048.0));
-            texSize[0] = indexSize.x;
-            texSize[1] = indexSize.y;
-            shader.SetInts(ShaderIDs._IndexTextureSize, texSize);
-            shader.SetTexture(4, ShaderIDs._IndexTexture, indexTex);
-            int dispatchCount = Mathf.CeilToInt(vtVariables[3] / 8f);
-            shader.Dispatch(4, dispatchCount, dispatchCount, 1);
-        }
-
-        public NativeArray<int> LoadNewTextureChunks(int2 startIndex, int size, Allocator alloc)
-        {
-            if (size * size > setIndexBuffer.count)
+            if (chunkCount * chunkCount > setIndexBuffer.count)
             {
                 setIndexBuffer.Dispose();
-                setIndexBuffer = new ComputeBuffer(size * size, sizeof(uint));
+                setIndexBuffer = new ComputeBuffer(chunkCount * chunkCount, sizeof(uint));
             }
-            NativeArray<int> texs = new NativeArray<int>(size * size, alloc, NativeArrayOptions.UninitializedMemory);
-
-            int* ptr = texs.Ptr();
-            for (int y = 0; y < size; ++y)
-                for (int x = 0; x < size; ++x)
+            int fullSize = chunkCount * chunkSize;
+            int* ptr = texsContainner.Ptr();
+            for (int y = 0; y < chunkCount; ++y)
+                for (int x = 0; x < chunkCount; ++x)
                 {
-                    int2 idx = startIndex + int2(x, y);
-                    bool res = GetChunk(ref idx, 1, out ptr[x + y * size]);
+                    int2 idx = startIndex + int2(x * chunkSize, y * chunkSize);
+                    bool res = GetChunk(ref idx, chunkSize, out ptr[x + y * chunkCount]);
                 }
             startIndex %= indexSize;
             vtVariables[0] = startIndex.x;
             vtVariables[1] = startIndex.y;
-            vtVariables[2] = size;
+            vtVariables[2] = chunkSize;
+            vtVariables[3] = chunkCount;
             shader.SetInts(ShaderIDs._VTVariables, vtVariables);
             texSize[0] = indexSize.x;
             texSize[1] = indexSize.y;
             shader.SetInts(ShaderIDs._IndexTextureSize, texSize);
             shader.SetTexture(1, ShaderIDs._IndexTexture, indexTex);
             shader.SetBuffer(1, ShaderIDs._ElementBuffer, setIndexBuffer);
-            setIndexBuffer.SetData(texs);
-            int dispatchCount = Mathf.CeilToInt(size / 8f);
+            setIndexBuffer.SetData(texsContainner);
+            int dispatchCount = Mathf.CeilToInt(fullSize / 8f);
             shader.Dispatch(1, dispatchCount, dispatchCount, 1);
-            return texs;
         }
         /// <summary>
         /// Unload space

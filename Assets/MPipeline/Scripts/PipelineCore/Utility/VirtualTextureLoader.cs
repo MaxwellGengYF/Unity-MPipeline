@@ -223,7 +223,7 @@ namespace MPipeline
             terrainEditShader.SetBuffer(3, ShaderIDs._ElementBuffer, readWriteBuffer);
             const int disp = (int)(MASK_SIZE / 64 / 4);
             terrainEditShader.Dispatch(3, disp, 1, 1);
-            readWriteBuffer.GetData(fileReadBuffer);
+            readWriteBuffer.GetData(fileReadBuffer, 0, 0, readWriteBuffer.count * 4);
             maskLoader.Position = (long)GetByteOffset(chunkCoord, terrainMaskCount);
             maskLoader.Write(fileReadBuffer, 0, (int)MASK_SIZE);
         }
