@@ -207,6 +207,7 @@ v2f_surf vert_surf (appdata v)
 		#endif
 		  #ifdef USE_MOTIONVECTOR
   float4 lastWorldPos = float4(mul(_LastFrameModel[_OffsetIndex], v.vertex), 1);
+  lastWorldPos.xyz += _SceneOffset;
   o.lastScreenPos = ComputeScreenPos(mul(_LastVp, lastWorldPos)).xyw;
   #endif
   	return o;

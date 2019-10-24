@@ -33,9 +33,7 @@ namespace MPipeline
         public Material overrideOpaqueMaterial;
         private System.Func<PipelineCamera, LastVPData> getLastVP = (c) =>
         {
-            float4x4 p = GraphicsUtility.GetGPUProjectionMatrix(c.cam.projectionMatrix, false);
-            float4x4 vp = mul(p, c.cam.worldToCameraMatrix);
-            return new LastVPData(vp);
+            return new LastVPData(c.cam);
         };
         LastVPData lastData;
         public override void PreRenderFrame(PipelineCamera cam, ref PipelineCommandData data)
@@ -60,7 +58,11 @@ namespace MPipeline
             calculateJob.isD3D = GraphicsUtility.platformIsD3D;
             calculateJob.nonJitterP = cam.cam.nonJitteredProjectionMatrix;
             calculateJob.worldToView = cam.cam.worldToCameraMatrix;
-            calculateJob.lastVP = lastData.lastVP;
+            //TODO
+            //Set Camera
+            calculateJob.lastCameraLocalToWorld = lastData.camlocalToWorld;
+            calculateJob.lastP = lastData.lastP;
+            calculateJob.sceneOffset = RenderPipeline.sceneOffset;
             calculateJob.rand = (Random*)UnsafeUtility.AddressOf(ref rand);
             calculateJob.p = cam.cam.projectionMatrix;
             calculateJob.VP = (float4x4*)UnsafeUtility.AddressOf(ref VP);
@@ -100,6 +102,8 @@ namespace MPipeline
             buffer.SetGlobalMatrix(ShaderIDs._InvVP, inverseVP);
             buffer.SetGlobalVector(ShaderIDs._RandomSeed, calculateJob.randNumber);
             lastData.lastVP = calculateJob.nonJitterVP;
+            lastData.lastP = calculateJob.lastP;
+            lastData.camlocalToWorld = cam.cam.transform.localToWorldMatrix;
         }
         protected override void Init(PipelineResources resources)
         {
@@ -121,25 +125,42 @@ namespace MPipeline
             public float4x4 nonJitterP;
             public float4x4 p;
             public float4x4 worldToView;
-            public float4x4 lastVP;
+            public float4x4 lastP;
+            public float4x4 lastCameraLocalToWorld;
             public bool isD3D;
             public Random* rand;
-
+            public float3 sceneOffset;
 
             public float4x4* VP;
             public float4x4* inverseVP;
             public float4x4 nonJitterVP;
+            public float4x4 lastVP;
+            
             public float4x4 nonJitterInverseVP;
             public float4x4 nonJitterTextureVP;
             public float4x4 lastInverseVP;
             public float4 randNumber;
-            
+            public static float4x4 GetWorldToCamera(ref float4x4 localToWorldMatrix)
+            {
+                float4x4 worldToCameraMatrix = MathLib.GetWorldToLocal(ref localToWorldMatrix);
+                float4 row2 = -float4(worldToCameraMatrix.c0.z, worldToCameraMatrix.c1.z, worldToCameraMatrix.c2.z, worldToCameraMatrix.c3.z);
+                worldToCameraMatrix.c0.z = row2.x;
+                worldToCameraMatrix.c1.z = row2.y;
+                worldToCameraMatrix.c2.z = row2.z;
+                worldToCameraMatrix.c3.z = row2.w;
+                return worldToCameraMatrix;
+            }
             public void Execute()
             {
                 randNumber = (float4)(rand->NextDouble4());
-                nonJitterVP = mul(GraphicsUtility.GetGPUProjectionMatrix(nonJitterP, false, isD3D), worldToView);
+                float4x4 nonJitterPNoTex = GraphicsUtility.GetGPUProjectionMatrix(nonJitterP, false, isD3D);
+                nonJitterVP = mul(nonJitterPNoTex, worldToView);
                 nonJitterInverseVP = inverse(nonJitterVP);
                 nonJitterTextureVP = mul(GraphicsUtility.GetGPUProjectionMatrix(nonJitterP, true, isD3D), worldToView);
+                lastCameraLocalToWorld.c3.xyz += sceneOffset;
+                float4x4 lastV = GetWorldToCamera(ref lastCameraLocalToWorld);
+                lastVP = mul(lastP, lastV);
+                lastP = nonJitterPNoTex;
                 lastInverseVP = inverse(lastVP);
                 *VP = mul(GraphicsUtility.GetGPUProjectionMatrix(p, false, isD3D), worldToView);
                 *inverseVP = inverse(*VP);
@@ -149,10 +170,16 @@ namespace MPipeline
 
     public class LastVPData : IPerCameraData
     {
-        public Matrix4x4 lastVP = Matrix4x4.identity;
-        public LastVPData(Matrix4x4 lastVP)
+        public float4x4 lastVP = Matrix4x4.identity;
+        public float4x4 lastP;
+        public float4x4 camlocalToWorld;
+       
+
+        public LastVPData(Camera c)
         {
-            this.lastVP = lastVP;
+            lastP = GraphicsUtility.GetGPUProjectionMatrix(c.projectionMatrix, false);
+            camlocalToWorld = c.transform.localToWorldMatrix;
+            lastVP = mul(lastP, c.worldToCameraMatrix);
         }
         public override void DisposeProperty()
         {

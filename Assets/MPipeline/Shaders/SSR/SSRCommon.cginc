@@ -338,7 +338,6 @@ inline half3 GetViewDir(half3 worldPos, half3 ViewPos)
 {
     return normalize(worldPos - ViewPos);
 }
-
 inline half2 GetRayMotionVector(half rayDepth, half2 inUV, half4x4 _InverseViewProjectionMatrix, half4x4 _PrevViewProjectionMatrix, half4x4 _ViewProjectionMatrix)
 {
     half3 screenPos = GetScreenPos(inUV, rayDepth);
