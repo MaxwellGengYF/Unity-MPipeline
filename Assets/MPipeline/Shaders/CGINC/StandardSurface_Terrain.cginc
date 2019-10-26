@@ -32,6 +32,7 @@ float3 ProcessNormal(float2 value)
 			o.Albedo *= lerp(1 - 0.04, 0, metallic);
 			o.Smoothness = spec.r;
 			#endif
+
 			o.Alpha = 1;
 			o.Emission = 0;
 		}

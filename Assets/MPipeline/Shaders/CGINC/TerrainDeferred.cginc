@@ -2,7 +2,7 @@
 // Upgrade NOTE: excluded shader from OpenGL ES 2.0 because it uses non-square matrices
 #pragma exclude_renderers gles
 #define __MPIPEDEFERRED_INCLUDE__
-
+#define TESS_COUNT 1
 #define UNITY_PASS_DEFERRED
 #include "UnityStandardUtils.cginc"
 #include "Lighting.cginc"
@@ -39,6 +39,7 @@ float2 _HeightScaleOffset;
 struct InternalTessInterp_appdata_full {
   float4 pos : INTERNALTESSPOS;
   float2 pack0 : TEXCOORD0; 
+  float2 normalizePos : TEXCOORD2;
 	float3 screenUV : TEXCOORD1;
 	nointerpolation uint2 vtUV : TEXCOORD3;
 	#ifdef DEBUG_QUAD_TREE
@@ -61,13 +62,14 @@ struct UnityTessellationFactors {
     float inside : SV_InsideTessFactor;
 };
 
-InternalTessInterp_appdata_full tessvert_surf (uint instanceID : SV_INSTANCEID, uint vertexID : SV_VERTEXID) 
+InternalTessInterp_appdata_full tessvert_surf (uint vertexID : SV_VERTEXID) 
 {
-	Terrain_Appdata v = GetTerrain(instanceID, vertexID);
+	Terrain_Appdata v = GetTerrain(vertexID);
   	InternalTessInterp_appdata_full o;
   	o.pack0 = v.uv;
 		o.vtUV = v.vtUV;
-  	o.pos = float4(v.position, 1);
+    o.normalizePos = v.normalizePos;
+  		o.pos = float4(v.position.x, 0, v.position.y, 1);
 /*		#if UNITY_UV_STARTS_AT_TOP
 		o.pos.y = -o.pos.y;
 		#endif*/
@@ -81,11 +83,13 @@ InternalTessInterp_appdata_full tessvert_surf (uint instanceID : SV_INSTANCEID, 
 
 inline UnityTessellationFactors hsconst_surf (InputPatch<InternalTessInterp_appdata_full,3> v) {
   UnityTessellationFactors o;
-
-  o.edge[0] = 63;
-  o.edge[1] = 63;
-  o.edge[2] = 63;
-  o.inside = 63;
+  float2 pos = v[0].normalizePos + v[1].normalizePos + v[2].normalizePos;
+  pos *= 0.333333333;
+  float tess = TESS_COUNT * _CullingTexture.SampleLevel(sampler_CullingTexture, pos, 0);
+  o.edge[0] = tess;
+  o.edge[1] = tess;
+  o.edge[2] = tess;
+  o.inside = tess;
 
   return o;
 }
@@ -187,31 +191,36 @@ float4x4 _ShadowMapVP;
 struct InternalTessInterp_appdata_shadow {
   float4 pos : INTERNALTESSPOS;
   float2 pack0 : TEXCOORD0; 
-	nointerpolation uint2 vtUV : TEXCOORD3;
+  float2 normalizePos : TEXCOORD1;
+	nointerpolation uint2 vtUV : TEXCOORD2;
 };
 
 struct v2f_shadow {
   UNITY_POSITION(pos);
 };
 
-InternalTessInterp_appdata_shadow tessvert_shadow (uint instanceID : SV_INSTANCEID, uint vertexID : SV_VERTEXID) 
+InternalTessInterp_appdata_shadow tessvert_shadow (uint vertexID : SV_VERTEXID) 
 {
-	Terrain_Appdata v = GetTerrain(instanceID, vertexID);
+	Terrain_Appdata v = GetTerrain(vertexID);
   	InternalTessInterp_appdata_shadow o;
   	o.pack0 = v.uv;
 		o.vtUV = v.vtUV;
-  	o.pos = float4(v.position, 1);
+    o.normalizePos = v.normalizePos;
+  	o.pos = float4(v.position.x, 0, v.position.y, 1);
   	return o;
 }
 
 
 inline UnityTessellationFactors hsconst_shadow (InputPatch<InternalTessInterp_appdata_shadow,3> v) {
   UnityTessellationFactors o;
+  float2 pos = v[0].normalizePos + v[1].normalizePos + v[2].normalizePos;
+  pos *= 0.333333333;
+  float tess = TESS_COUNT * _CullingTexture.SampleLevel(sampler_CullingTexture, pos, 0);
+  o.edge[0] = tess;
+  o.edge[1] = tess;
+  o.edge[2] = tess;
+  o.inside = tess;
 
-  o.edge[0] = 63;
-  o.edge[1] = 63;
-  o.edge[2] = 63;
-  o.inside = 63;
 
   return o;
 }

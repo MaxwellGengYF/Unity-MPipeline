@@ -204,7 +204,7 @@ namespace MPipeline
             SceneController.RenderScene(ref data, ref opaqueFilter, ref drawSettings, ref proper.cullResults);
             if (MTerrain.current)
             {
-                MTerrain.current.DrawTerrain(buffer, 0, proper.frustumPlanes);
+                MTerrain.current.DrawTerrain(buffer, 0, proper.frustumPlanes, proper.frustumMinPoint, proper.frustumMaxPoint);
             }
 
             //Draw AlphaTest

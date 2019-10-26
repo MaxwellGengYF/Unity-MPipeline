@@ -10,6 +10,11 @@ using System.Threading;
 using UnityEngine.Rendering;
 namespace MPipeline
 {
+    public struct TerrainDrawCommand
+    {
+        public float2 startPos;
+        public int2 startVTIndex;
+    }
     public struct TerrainUnloadData
     {
         public enum Operator
@@ -420,8 +425,22 @@ namespace MPipeline
             }
             distOffset = MTerrain.current.terrainData.lodDeferredOffset;
         }
-        public void PushDrawRequest(NativeList<MTerrain.TerrainChunkBuffer> loadedBufferList)
+        public void PushDrawRequest(NativeList<TerrainDrawCommand> loadedBufferList)
         {
+            if (lodLevel == MTerrain.current.lodOffset)
+            {
+                loadedBufferList.Add(new TerrainDrawCommand
+                {
+                    startPos = (float2)CornerWorldPos,
+                    startVTIndex = VirtualTextureIndex
+                });
+            }
+            if (isRendering)
+            {
+                MTerrain.current.enabledChunk[int3(VirtualTextureIndex, VirtualTextureSize)] = true;
+            }
+            else
+                MTerrain.current.enabledChunk.Remove(int3(VirtualTextureIndex, VirtualTextureSize));
             if (leftDown != null)
             {
                 leftDown->PushDrawRequest(loadedBufferList);
@@ -429,19 +448,6 @@ namespace MPipeline
                 rightDown->PushDrawRequest(loadedBufferList);
                 rightUp->PushDrawRequest(loadedBufferList);
             }
-
-            if (isRendering)
-            {
-                MTerrain.current.enabledChunk[int3(VirtualTextureIndex, VirtualTextureSize)] = true;
-                loadedBufferList.Add(new MTerrain.TerrainChunkBuffer
-                {
-                    scale = float2((float)(MTerrain.current.terrainData.largestChunkSize / pow(2, lodLevel)), (float)pow(2.0, MTerrain.current.allLodLevles.Length - 1 - lodLevel)),
-                    worldPos = (float2)CornerWorldPos,
-                    uvStartIndex = (uint2)VirtualTextureIndex
-                });
-            }
-            else
-                MTerrain.current.enabledChunk.Remove(int3(VirtualTextureIndex, VirtualTextureSize));
         }
         public void CheckUpdate(double3 camPos, double3 camDir)
         {
