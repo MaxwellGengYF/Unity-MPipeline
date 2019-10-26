@@ -211,5 +211,6 @@ public static partial class ShaderIDs
     public static readonly int _HeightScaleOffset = Shader.PropertyToID("_HeightScaleOffset");
     public static readonly int _StartPos = Shader.PropertyToID("_StartPos");
     public static readonly int _CullingTexture = Shader.PropertyToID("_CullingTexture");
+    public static readonly int _TessellationFactors = Shader.PropertyToID("_TessellationFactors");
 
 }

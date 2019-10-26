@@ -73,6 +73,7 @@ namespace MPipeline
         private RenderTexture cullingFlags;
         private int meshResolution;
         private ComputeBuffer meshBuffer;
+
         #endregion
         public Transform cam;
         private ComputeShader shader;
@@ -520,19 +521,14 @@ namespace MPipeline
                     tp.coord = float2(x, y);
                     tp.localCoord = 0;
                     allPoints[count] = tp;
-                    tp.coord = float2(x, y + 1);
                     tp.localCoord = float2(0, 1);
                     allPoints[count + 1] = tp;
-                    tp.coord = float2(x + 1, y);
                     tp.localCoord = float2(1, 0);
                     allPoints[count + 2] = tp;
-                    tp.coord = float2(x, y + 1);
                     tp.localCoord = float2(0, 1);
                     allPoints[count + 3] = tp;
-                    tp.coord = float2(x, y) + 1;
                     tp.localCoord = 1;
                     allPoints[count + 4] = tp;
-                    tp.coord = float2(x + 1, y);
                     tp.localCoord = float2(1, 0);
                     allPoints[count + 5] = tp;
                     count += 6;
@@ -592,6 +588,7 @@ namespace MPipeline
             };
             maskVT = new VirtualTexture(6, largestChunkCount, maskFormats, 1, "_MaskIndexMap");
             maskVT.GetTexture(0).filterMode = FilterMode.Point;
+            vt.GetTexture(0).filterMode = FilterMode.Bilinear;
             allLodLevles = new NativeList_Float(terrainData.lodDistances.Length, Allocator.Persistent);
             for (int i = 0; i < terrainData.lodDistances.Length; ++i)
             {
@@ -700,8 +697,9 @@ namespace MPipeline
                 buffer.SetComputeTextureParam(shader, 0, ShaderIDs._CullingTexture, cullingFlags);
                 int dispCount = meshResolution / 8;
                 buffer.DispatchCompute(shader, 0, dispCount, dispCount, 1);
-                //TODO
-                //Draw
+                int lastElement = clamp(terrainData.lodDistances.Length - 7, 0, terrainData.lodDistances.Length - 1);
+                buffer.SetGlobalVector(ShaderIDs._HeightScaleOffset, float4(terrainData.heightScale, terrainData.heightOffset, 1, 1));
+                buffer.SetGlobalVector(ShaderIDs._TessellationFactors, float4(allLodLevles[terrainData.lodDistances.Length - 1], allLodLevles[lastElement], 1, 1));
                 buffer.SetGlobalBuffer(ShaderIDs.verticesBuffer, meshBuffer);
                 buffer.SetGlobalVector(ShaderIDs._StartPos, float4(i.startPos, (float)oneVTPixelWorldLength, meshResolution));
                 buffer.SetGlobalVector(ShaderIDs._TextureSize, float4(i.startVTIndex, 1, 1));

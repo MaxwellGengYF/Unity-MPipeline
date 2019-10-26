@@ -86,6 +86,7 @@ namespace MPipeline
         public void GenerateHeightMip(int2 targetPosition, int mipLevel)
         {
             RenderTexture tempHeight = RenderTexture.GetTemporary(MTerrain.HEIGHT_RESOLUTION * 2, MTerrain.HEIGHT_RESOLUTION * 2, 0, RenderTextureFormat.R16, RenderTextureReadWrite.Linear, 1, RenderTextureMemoryless.None, VRTextureUsage.None, false);
+            tempHeight.filterMode = FilterMode.Bilinear;
             tempHeight.enableRandomWrite = true;
             tempHeight.Create();
             ReadHeight(targetPosition * 2, 0, mipLevel + 1, tempHeight);
@@ -96,9 +97,10 @@ namespace MPipeline
             mipHeight.enableRandomWrite = true;
             mipHeight.filterMode = FilterMode.Bilinear;
             mipHeight.Create();
-            generatorShader.SetTexture(1, ShaderIDs._SourceTex, tempHeight);
+            /*generatorShader.SetTexture(1, ShaderIDs._SourceTex, tempHeight);
             generatorShader.SetTexture(1, ShaderIDs._DestTex, mipHeight);
-            generatorShader.Dispatch(1, MTerrain.HEIGHT_RESOLUTION / 4, MTerrain.HEIGHT_RESOLUTION / 4, 1);
+            generatorShader.Dispatch(1, MTerrain.HEIGHT_RESOLUTION / 4, MTerrain.HEIGHT_RESOLUTION / 4, 1);*/
+            Graphics.Blit(tempHeight, mipHeight);
             BlitHeight(targetPosition, mipLevel, mipHeight, 1, 0);
             RenderTexture.ReleaseTemporary(tempHeight);
             RenderTexture.ReleaseTemporary(mipHeight);

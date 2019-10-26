@@ -11,7 +11,7 @@ struct Terrain_Appdata
 struct TerrainPoint
 {
     float2 localCoord;
-    float2 coord;
+    float2 indexCoord;
 };
 
 StructuredBuffer<TerrainPoint> verticesBuffer;
@@ -23,10 +23,11 @@ Terrain_Appdata GetTerrain(uint vertexID)
 {
     TerrainPoint v = verticesBuffer[vertexID];
     Terrain_Appdata o;
-    o.position = _StartPos.xy + v.coord * _StartPos.z;
+    float2 coord = v.indexCoord + v.localCoord;
+    o.position = _StartPos.xy + coord * _StartPos.z;
     o.uv = v.localCoord;
-    o.normalizePos = v.coord / _StartPos.w;
-    o.vtUV = (uint2)(v.coord + 0.3 + _TextureSize);
+    o.normalizePos = coord / _StartPos.w;
+    o.vtUV = (uint2)(v.indexCoord + _TextureSize + 0.3);
     return o;
 }
 #endif

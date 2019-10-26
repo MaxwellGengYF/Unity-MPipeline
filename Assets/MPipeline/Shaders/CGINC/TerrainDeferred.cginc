@@ -2,14 +2,13 @@
 // Upgrade NOTE: excluded shader from OpenGL ES 2.0 because it uses non-square matrices
 #pragma exclude_renderers gles
 #define __MPIPEDEFERRED_INCLUDE__
-#define TESS_COUNT 1
+#define TESS_COUNT 62
 #define UNITY_PASS_DEFERRED
 #include "UnityStandardUtils.cginc"
 #include "Lighting.cginc"
 #include "DecalShading.cginc"
 #include "Shader_Include/ImageBasedLighting.hlsl"
 #include "Terrain.cginc"
-#include "Tessellation.cginc"
 #define GetScreenPos(pos) ((float2(pos.x, pos.y) * 0.5) / pos.w + 0.5)
 
 float4 ProceduralStandardSpecular_Deferred (inout SurfaceOutputStandardSpecular s, out float4 outGBuffer0, out float4 outGBuffer1, out float4 outGBuffer2)
@@ -35,6 +34,7 @@ float4x4 _LastVp;
 float4x4 _NonJitterVP;
 float3 _SceneOffset;
 float2 _HeightScaleOffset;
+float2 _TessellationFactors;
 
 struct InternalTessInterp_appdata_full {
   float4 pos : INTERNALTESSPOS;
@@ -52,7 +52,7 @@ struct v2f_surf {
   float2 pack0 : TEXCOORD0; 
 	float3 screenUV : TEXCOORD1;
 	float3 worldPos : TEXCOORD2;
-	nointerpolation uint2 vtUV : TEXCOORD3;
+		nointerpolation uint2 vtUV : TEXCOORD3;
 	#ifdef DEBUG_QUAD_TREE
 	nointerpolation float scale : TEXCOORD4;
 	#endif
@@ -61,6 +61,33 @@ struct UnityTessellationFactors {
     float edge[3] : SV_TessFactor;
     float inside : SV_InsideTessFactor;
 };
+
+inline float3 UnityCalcTriEdgeTessFactors (float3 triVertexFactors)
+{
+    float3 tess;
+    tess.x = 0.5 * (triVertexFactors.y + triVertexFactors.z);
+    tess.y = 0.5 * (triVertexFactors.x + triVertexFactors.z);
+    tess.z = 0.5 * (triVertexFactors.x + triVertexFactors.y);
+    return tess;
+}
+
+
+inline float UnityCalcDistanceTessFactor (float2 wpos, float minDist, float maxDist, float tess)
+{
+    float dist = distance (wpos, _WorldSpaceCameraPos.xz);
+    float f = clamp(1.0 - (dist - minDist) / (maxDist - minDist), 0.01, 1.0) * tess;
+    return f;
+}
+
+inline float3 tessDist (float2 v0, float2 v1, float2 v2, float minDist, float maxDist, float tess)
+{
+    float3 f;
+    f.x = UnityCalcDistanceTessFactor (v0,minDist, maxDist, tess);
+    f.y = UnityCalcDistanceTessFactor (v1,minDist, maxDist, tess);
+    f.z = UnityCalcDistanceTessFactor (v2,minDist, maxDist, tess);
+   	return UnityCalcTriEdgeTessFactors (f);
+
+}
 
 InternalTessInterp_appdata_full tessvert_surf (uint vertexID : SV_VERTEXID) 
 {
@@ -85,11 +112,12 @@ inline UnityTessellationFactors hsconst_surf (InputPatch<InternalTessInterp_appd
   UnityTessellationFactors o;
   float2 pos = v[0].normalizePos + v[1].normalizePos + v[2].normalizePos;
   pos *= 0.333333333;
-  float tess = TESS_COUNT * _CullingTexture.SampleLevel(sampler_CullingTexture, pos, 0);
-  o.edge[0] = tess;
-  o.edge[1] = tess;
-  o.edge[2] = tess;
-  o.inside = tess;
+  float3 tess = tessDist(v[0].pos.xz, v[1].pos.xz, v[2].pos.xz, _TessellationFactors.x, _TessellationFactors.y, TESS_COUNT);
+  tess *= _CullingTexture.SampleLevel(sampler_CullingTexture, pos, 0);
+  o.edge[0] = tess.x;
+  o.edge[1] = tess.y;
+  o.edge[2] = tess.z;
+  o.inside = dot(tess, 0.333333333);
 
   return o;
 }
@@ -109,8 +137,9 @@ inline v2f_surf ds_surf (UnityTessellationFactors tessFactors, const OutputPatch
   worldPos.y += _HeightScaleOffset.y;
 o.screenUV = vi[0].screenUV*bary.x + vi[1].screenUV*bary.y + vi[2].screenUV*bary.z;
 o.pack0 = vi[0].pack0*bary.x + vi[1].pack0*bary.y + vi[2].pack0*bary.z;
-o.vtUV = vi[0].vtUV;
-  float3 vtUV = GetVirtualTextureUV(_TerrainVTIndexTex, _TerrainVTIndexTex_TexelSize, o.vtUV + floor(o.pack0), frac(o.pack0));
+o.vtUV =  vi[0].vtUV;
+float2 uvToNext = o.pack0 > 0.999;
+float3 vtUV = GetVirtualTextureUV(_TerrainVTIndexTex, _TerrainVTIndexTex_TexelSize, lerp(o.vtUV, o.vtUV + 1, uvToNext), lerp(o.pack0, 0, uvToNext));
   worldPos.y +=_VirtualHeightmap.SampleLevel(sampler_VirtualHeightmap, vtUV, 0) * _HeightScaleOffset.x;
 o.pos= mul(UNITY_MATRIX_VP, worldPos);
 o.worldPos = worldPos.xyz;
@@ -215,12 +244,12 @@ inline UnityTessellationFactors hsconst_shadow (InputPatch<InternalTessInterp_ap
   UnityTessellationFactors o;
   float2 pos = v[0].normalizePos + v[1].normalizePos + v[2].normalizePos;
   pos *= 0.333333333;
-  float tess = TESS_COUNT * _CullingTexture.SampleLevel(sampler_CullingTexture, pos, 0);
-  o.edge[0] = tess;
-  o.edge[1] = tess;
-  o.edge[2] = tess;
-  o.inside = tess;
-
+  float3 tess = tessDist(v[0].pos.xz, v[1].pos.xz, v[2].pos.xz, _TessellationFactors.x, _TessellationFactors.y, TESS_COUNT);
+  tess *= _CullingTexture.SampleLevel(sampler_CullingTexture, pos, 0);
+  o.edge[0] = tess.x;
+  o.edge[1] = tess.y;
+  o.edge[2] = tess.z;
+  o.inside = dot(tess, 0.333333333);
 
   return o;
 }
@@ -240,7 +269,8 @@ inline v2f_shadow ds_shadow (UnityTessellationFactors tessFactors, const OutputP
   float4 worldPos =  vi[0].pos*bary.x + vi[1].pos*bary.y + vi[2].pos*bary.z;
   worldPos.y += _HeightScaleOffset.y;
  float2 pack0 = vi[0].pack0*bary.x + vi[1].pack0*bary.y + vi[2].pack0*bary.z;
-  float3 vtUV = GetVirtualTextureUV(_TerrainVTIndexTex, _TerrainVTIndexTex_TexelSize, vi[0].vtUV + floor(pack0), frac(pack0));
+ float2 uvToNext = pack0 > 0.999;
+ float3 vtUV = GetVirtualTextureUV(_TerrainVTIndexTex, _TerrainVTIndexTex_TexelSize, lerp(vi[0].vtUV, vi[0].vtUV + 1, uvToNext), lerp(pack0, 0, uvToNext));
   worldPos.y +=_VirtualHeightmap.SampleLevel(sampler_VirtualHeightmap, vtUV, 0) * _HeightScaleOffset.x;
 o.pos= mul(_ShadowMapVP, worldPos);
 return o;
