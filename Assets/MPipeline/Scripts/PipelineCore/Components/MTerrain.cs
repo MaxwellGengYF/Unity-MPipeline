@@ -36,7 +36,7 @@ namespace MPipeline
             public int2 pos;
         }
         public const int MASK_RESOLUTION = 2048;
-        public const int HEIGHT_RESOLUTION = 256;
+        public const int HEIGHT_RESOLUTION = 64;
         public const int COLOR_RESOLUTION = 1024;
         public const GraphicsFormat HEIGHT_FORMAT = GraphicsFormat.R16_UNorm;
         public MTerrainData terrainData;
@@ -468,29 +468,27 @@ namespace MPipeline
                                 {
                                     ConvertNormalMap(rightUpIndex, subSize, vtContainer[3]);
                                 }
-
+                                yield return null;
                                 if (loadData.targetDecalLayer != 0)
                                 {
                                     if (elementAvaliable.x)
                                     {
                                         DrawDecal(leftDownIndex, subSize, vtContainer[0], loadData.targetDecalLayer);
-                                        yield return null;
                                     }
                                     if (elementAvaliable.y && CheckChunkEnabled(leftUpIndex, subSize))
                                     {
-                                        DrawDecal(leftUpIndex, subSize, vtContainer[2], loadData.targetDecalLayer);
-                                        yield return null;
+                                        DrawDecal(leftUpIndex, subSize, vtContainer[2], loadData.targetDecalLayer);   
                                     }
                                     if (elementAvaliable.z && CheckChunkEnabled(rightDownIndex, subSize))
                                     {
                                         DrawDecal(rightDownIndex, subSize, vtContainer[1], loadData.targetDecalLayer);
-                                        yield return null;
+                                        
                                     }
                                     if (elementAvaliable.w && CheckChunkEnabled(rightUpIndex, subSize))
                                     {
                                         DrawDecal(rightUpIndex, subSize, vtContainer[3], loadData.targetDecalLayer);
-                                        yield return null;
                                     }
+                                    
                                 }
                             }
                             loadData.handler0.Dispose();
@@ -552,7 +550,7 @@ namespace MPipeline
             initializeLoadList = new NativeQueue<TerrainLoadData>(100, Allocator.Persistent);
             unloadDataList = new NativeQueue<TerrainUnloadData>(100, Allocator.Persistent);
             NativeArray<uint> dispatchDraw = new NativeArray<uint>(5, Allocator.Temp, NativeArrayOptions.ClearMemory);
-            dispatchDraw[0] = 96;
+            dispatchDraw[0] = 6;
             dispatchDrawBuffer.SetData(dispatchDraw);
             VirtualTextureFormat* formats = stackalloc VirtualTextureFormat[]
             {

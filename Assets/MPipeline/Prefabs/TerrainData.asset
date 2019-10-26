@@ -12,8 +12,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 010ce77163682284691fda8b292bbe7b, type: 3}
   m_Name: TerrainData
   m_EditorClassIdentifier: 
-  heightOffset: -8
-  heightScale: 15.05
+  heightOffset: -5
+  heightScale: 10
   materialTillingScale: 1
   terrainLocalYPositionToGround: -2
   backfaceCullingScale: 0.30000001192092896

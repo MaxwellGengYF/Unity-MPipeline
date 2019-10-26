@@ -13,6 +13,7 @@ namespace MPipeline
         public MTerrainData terrainData;
         public Vector2Int chunkPosition;
         public int chunkSize = 1;
+        public float tillingScale = 1;
         public Texture heightTexture;
         [MenuItem("MPipeline/Terrain/Generate Tool")]
         private static void CreateInstance()
@@ -25,6 +26,7 @@ namespace MPipeline
             terrainData = (MTerrainData)EditorGUILayout.ObjectField("Terrain Data", terrainData, typeof(MTerrainData), false);
             chunkPosition = EditorGUILayout.Vector2IntField("Chunk Position", new Vector2Int(chunkPosition.x, chunkPosition.y));
             chunkSize = EditorGUILayout.IntField("Chunk Size", chunkSize);
+            tillingScale = EditorGUILayout.FloatField("Tilling Scale", tillingScale);
             chunkSize = max(1, chunkSize);
             heightTexture = EditorGUILayout.ObjectField("Height Texture", heightTexture, typeof(Texture), false) as Texture;
             if (!terrainData)
@@ -41,7 +43,7 @@ namespace MPipeline
                             int2 currentPos = int2(x + chunkPosition.x, y + chunkPosition.y);
                             if (currentPos.x > resolution || currentPos.y > resolution) continue;
                          
-                            factory.BlitHeight(currentPos, terrainData.lodDistances.Length - 1, heightTexture, 1f / chunkSize, float2(x, y) / chunkSize);
+                            factory.BlitHeight(currentPos, terrainData.lodDistances.Length - 1, heightTexture, (float)((double)tillingScale / chunkSize), (float2)frac(double2(x, y) * tillingScale / chunkSize));
                         }
                 }
                 finally
