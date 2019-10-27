@@ -312,7 +312,12 @@ namespace MPipeline
                             vt.UnloadTexture(unloadData.startIndex);
                             break;
                         case TerrainUnloadData.Operator.Combine:
-                            vt.CombineTexture(unloadData.startIndex, unloadData.size, false);
+                            int subSize = unloadData.size / 2;
+                            int2 leftDownIndex = unloadData.startIndex;
+                            int2 leftUpIndex = unloadData.startIndex + int2(0, subSize);
+                            int2 rightDownIndex = unloadData.startIndex + int2(subSize, 0);
+                            int2 rightUpIndex = unloadData.startIndex + subSize;
+                            vt.CombineQuadTextures(leftDownIndex, rightDownIndex, leftUpIndex, rightUpIndex, leftDownIndex, unloadData.size);
                             break;
                     }
                 }

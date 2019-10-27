@@ -242,6 +242,7 @@ namespace MPipeline
         }
         private void EnableRendering()
         {
+            if (MTerrain.current.textureCapacity < 1) return;
             if (!isRendering)
             {
                 MTerrain.current.textureCapacity--;
@@ -305,17 +306,6 @@ namespace MPipeline
             isRendering = false;
         }
 
-        private void DisableRenderingWithoutUnload()
-        {
-
-            if (isRendering)
-            {
-                int2 startIndex = VirtualTextureIndex;
-            }
-
-            isRendering = false;
-        }
-
         private void LogicSeparate()
         {
             if (leftDown == null)
@@ -340,56 +330,70 @@ namespace MPipeline
             }
             else
             {
-                if (MTerrain.current.textureCapacity >= 3)
+                if (leftDown == null && MTerrain.current.textureCapacity >= 3)
                 {
-                    DisableRenderingWithoutUnload();
-                    if (leftDown == null)
+                    MTerrain.current.textureCapacity -= 3;
+                    isRendering = false;
+                    leftDown = MUnsafeUtility.Malloc<TerrainQuadTree>(sizeof(TerrainQuadTree) * 4, Allocator.Persistent);
+                    leftUp = leftDown + 1;
+                    rightDown = leftDown + 2;
+                    rightUp = leftDown + 3;
+                    double subSize = worldSize * 0.5;
+                    *leftDown = new TerrainQuadTree(lodLevel, LocalPos.LeftDown, localPosition, subSize, this.maskScaleOffset, rootPos);
+                    *leftUp = new TerrainQuadTree(lodLevel, LocalPos.LeftUp, localPosition, subSize, this.maskScaleOffset, rootPos);
+                    *rightDown = new TerrainQuadTree(lodLevel, LocalPos.RightDown, localPosition, subSize, this.maskScaleOffset, rootPos);
+                    *rightUp = new TerrainQuadTree(lodLevel, LocalPos.RightUp, localPosition, subSize, this.maskScaleOffset, rootPos);
+                    float3 maskScaleOffset = (float3)this.maskScaleOffset;
+                    maskScaleOffset.x *= 0.5f;
+                    leftDown->isRendering = true;
+                    leftUp->isRendering = true;
+                    rightDown->isRendering = true;
+                    rightUp->isRendering = true;
+                    if (!MTerrain.current.initializing)
                     {
-                        leftDown = MUnsafeUtility.Malloc<TerrainQuadTree>(sizeof(TerrainQuadTree) * 4, Allocator.Persistent);
-                        leftUp = leftDown + 1;
-                        rightDown = leftDown + 2;
-                        rightUp = leftDown + 3;
-                        double subSize = worldSize * 0.5;
-                        *leftDown = new TerrainQuadTree(lodLevel, LocalPos.LeftDown, localPosition, subSize, this.maskScaleOffset, rootPos);
-                        *leftUp = new TerrainQuadTree(lodLevel, LocalPos.LeftUp, localPosition, subSize, this.maskScaleOffset, rootPos);
-                        *rightDown = new TerrainQuadTree(lodLevel, LocalPos.RightDown, localPosition, subSize, this.maskScaleOffset, rootPos);
-                        *rightUp = new TerrainQuadTree(lodLevel, LocalPos.RightUp, localPosition, subSize, this.maskScaleOffset, rootPos);
-                        float3 maskScaleOffset = (float3)this.maskScaleOffset;
-                        maskScaleOffset.x *= 0.5f;
-                        MTerrain.current.textureCapacity -= 3;
-
-                        leftDown->isRendering = true;
-                        leftUp->isRendering = true;
-                        rightDown->isRendering = true;
-                        rightUp->isRendering = true;
-                        if (!MTerrain.current.initializing)
+                        MTerrain.current.loadDataList.Add(new TerrainLoadData
                         {
-                            MTerrain.current.loadDataList.Add(new TerrainLoadData
-                            {
-                                ope = TerrainLoadData.Operator.Separate,
-                                startIndex = VirtualTextureIndex,
-                                size = VirtualTextureSize,
-                                rootPos = rootPos,
-                                maskScaleOffset = maskScaleOffset,
-                                handler0 = MTerrain.current.loader.LoadChunk(leftDown->localPosition, leftDown->lodLevel),
-                                handler1 = MTerrain.current.loader.LoadChunk(leftUp->localPosition, leftUp->lodLevel),
-                                handler2 = MTerrain.current.loader.LoadChunk(rightDown->localPosition, rightDown->lodLevel),
-                                handler3 = MTerrain.current.loader.LoadChunk(rightUp->localPosition, rightUp->lodLevel),
-                                targetDecalLayer = leftDown->decalMask
-                            });
-                        }
-
+                            ope = TerrainLoadData.Operator.Separate,
+                            startIndex = VirtualTextureIndex,
+                            size = VirtualTextureSize,
+                            rootPos = rootPos,
+                            maskScaleOffset = maskScaleOffset,
+                            handler0 = MTerrain.current.loader.LoadChunk(leftDown->localPosition, leftDown->lodLevel),
+                            handler1 = MTerrain.current.loader.LoadChunk(leftUp->localPosition, leftUp->lodLevel),
+                            handler2 = MTerrain.current.loader.LoadChunk(rightDown->localPosition, rightDown->lodLevel),
+                            handler3 = MTerrain.current.loader.LoadChunk(rightUp->localPosition, rightUp->lodLevel),
+                            targetDecalLayer = leftDown->decalMask
+                        });
                     }
+
+
                 }
 
             }
             distOffset = -MTerrain.current.terrainData.lodDeferredOffset;
         }
+        private void DisableRenderingWithoutCommand()
+        {
+            if (isRendering)
+            {
+                MTerrain.current.textureCapacity++;
+            }
 
+            isRendering = false;
+        }
         private void Combine(bool enableSelf)
         {
+            distOffset = MTerrain.current.terrainData.lodDeferredOffset;
             if (leftDown != null)
             {
+                if (!leftDown->isRendering || !leftUp->isRendering || !rightDown->isRendering || !rightUp->isRendering)
+                {
+                    return;
+                }
+                leftDown->DisableRenderingWithoutCommand();
+                leftUp->DisableRenderingWithoutCommand();
+                rightDown->DisableRenderingWithoutCommand();
+                rightUp->DisableRenderingWithoutCommand();
                 leftDown->Dispose();
                 leftUp->Dispose();
                 rightDown->Dispose();
@@ -403,7 +407,7 @@ namespace MPipeline
                         startIndex = pack.xy,
                         size = pack.z
                     });
-                    MTerrain.current.textureCapacity += 3;
+                    MTerrain.current.textureCapacity--;
                     isRendering = true;
                 }
                 else
@@ -423,7 +427,6 @@ namespace MPipeline
                 else
                     DisableRendering();
             }
-            distOffset = MTerrain.current.terrainData.lodDeferredOffset;
         }
         public void PushDrawRequest(NativeList<TerrainDrawCommand> loadedBufferList)
         {

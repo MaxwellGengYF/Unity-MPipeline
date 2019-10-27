@@ -2,6 +2,7 @@
 #pragma kernel SetIndexIndependentTex
 #pragma kernel BlitTex
 #pragma kernel CopyTex
+#pragma kernel CombineTex
 #include "UnityCG.cginc"
 RWTexture2D<half4> _IndexTexture;
 float4 _TextureSize; // X: virtual texture element's size Y: index texture size ZW: Start Index
@@ -63,4 +64,12 @@ void CopyTex(uint2 id : SV_DISPATCHTHREADID)
     scaleOffset.w *= 2048.0;
     float3 uvw =  float3(frac(uv) * scaleOffset.x + scaleOffset.yz, scaleOffset.w);
     _BlendTex[id] = _TextureBuffer.SampleLevel(sampler_TextureBuffer, uvw, 0);
+}
+
+[numthreads(8,8,1)]
+void CombineTex(uint2 id : SV_DISPATCHTHREADID)
+{
+    float2 uv = (id + 0.5) / _Count;
+
+    _VirtualTexture[uint3(id, _TargetElement)] = _MainTex.SampleLevel(sampler_MainTex, uv, 0);
 }
