@@ -4,6 +4,7 @@
 #pragma kernel ClearColorTex
 #pragma kernel HeightToNormal
 #pragma kernel NormalToWorld
+#pragma kernel GenerateMipmap
 #include "UnityCG.cginc"
 #include "../CGINC/VirtualTexture.cginc"
 #include "../CGINC/HeightBlendMaterial.cginc"
@@ -161,4 +162,49 @@ void NormalToWorld(uint2 id : SV_DISPATCHTHREADID)
     tangent = normalize(cross(worldNormal, binormal));
     float3x3 TBN = float3x3(tangent, binormal, worldNormal);
     _VirtualBumpMap[uint3(id, _OffsetIndex)] = normalize(mul(tangentNormal, TBN)).xz;
+}
+
+
+inline uint2 GetDispatchID(uint2 groupID, uint2 threadID, uint2 threadCount)
+{
+    return groupID * threadCount + threadID;
+}
+
+#define CALCULATE_MIP(LastMip, NextMip, groupLength) \
+if(threadID.x < groupLength.x && threadID.y < groupLength.y){ \
+id = GetDispatchID(groupID, threadID, groupLength);\
+idx = id * 2;\
+NextMip[uint3(id, _OffsetIndex)] = 0.25 * (LastMip[uint3(idx, _OffsetIndex)] + LastMip[uint3(idx + uint2(0, 1), _OffsetIndex)] + LastMip[uint3(idx + uint2(1, 1), _OffsetIndex)] + LastMip[uint3(idx + uint2(1, 0), _OffsetIndex)]); \
+} 
+
+#define GROUP_SYNC(groupLength) \
+groupLength /= 2;\
+AllMemoryBarrierWithGroupSync();\
+
+RWTexture2DArray<float4> _Mip0;
+RWTexture2DArray<float4> _Mip1;
+RWTexture2DArray<float4> _Mip2;
+RWTexture2DArray<float4> _Mip3;
+RWTexture2DArray<float4> _Mip4;
+RWTexture2DArray<float4> _Mip5;
+
+[numthreads(16, 16, 1)]
+void GenerateMipmap(uint2 groupID : SV_GROUPID, uint2 threadID : SV_GROUPTHREADID)
+{
+    uint2 idx;
+    uint2 id;
+    uint2 current_Group_Length = uint2(16,16);
+    CALCULATE_MIP(_Mip0, _Mip1, current_Group_Length)
+    GROUP_SYNC(current_Group_Length)
+    //len = 8
+    CALCULATE_MIP(_Mip1, _Mip2, current_Group_Length)
+    GROUP_SYNC(current_Group_Length)
+    //len = 4
+    CALCULATE_MIP(_Mip2, _Mip3, current_Group_Length)
+    GROUP_SYNC(current_Group_Length)
+    //len = 2
+    CALCULATE_MIP(_Mip3, _Mip4, current_Group_Length)
+    GROUP_SYNC(current_Group_Length)
+    //len = 1
+    CALCULATE_MIP(_Mip4, _Mip5, current_Group_Length)
 }

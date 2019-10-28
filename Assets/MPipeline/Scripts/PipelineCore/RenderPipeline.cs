@@ -275,14 +275,6 @@ namespace MPipeline
                 needSubmit = false;
             }
             preFrameRenderCamera.Clear();
-            if (iRunnableObjects.isCreated)
-            {
-                foreach (var i in iRunnableObjects)
-                {
-                    IPipelineRunnable func = MUnsafeUtility.GetObject<IPipelineRunnable>((void*)i.value);
-                    func.PipelineUpdate(ref data);
-                }
-            }
             if (CustomDrawRequest.allEvents.Count > 0 || JobProcessEvent.allEvents.Count > 0)
             {
                 foreach (var i in CustomDrawRequest.allEvents)
@@ -315,7 +307,15 @@ namespace MPipeline
                 needSubmit = true;
                 useBeforeFrameBuffer = false;
             }
-            if(cameras.Length > 0)
+            if (iRunnableObjects.isCreated)
+            {
+                foreach (var i in iRunnableObjects)
+                {
+                    IPipelineRunnable func = MUnsafeUtility.GetObject<IPipelineRunnable>((void*)i.value);
+                    func.PipelineUpdate(ref data);
+                }
+            }
+            if (cameras.Length > 0)
             {
                 data.buffer.SetGlobalVector(ShaderIDs._SceneOffset, new float4(sceneOffset, 1));
             }

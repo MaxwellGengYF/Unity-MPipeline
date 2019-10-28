@@ -13,6 +13,7 @@ CGINCLUDE
 #define DEFAULT_LIT
 Texture2D<float4> _TerrainVTIndexTex;
 float4 _TerrainVTIndexTex_TexelSize;
+float3 _TessellationFactors;
 #include "UnityCG.cginc"
 #include "UnityDeferredLibrary.cginc"
 #include "UnityPBSLighting.cginc"

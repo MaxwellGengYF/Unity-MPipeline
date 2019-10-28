@@ -34,7 +34,6 @@ float4x4 _LastVp;
 float4x4 _NonJitterVP;
 float3 _SceneOffset;
 float2 _HeightScaleOffset;
-float2 _TessellationFactors;
 
 struct InternalTessInterp_appdata_full {
   float4 pos : INTERNALTESSPOS;
@@ -139,7 +138,7 @@ o.screenUV = vi[0].screenUV*bary.x + vi[1].screenUV*bary.y + vi[2].screenUV*bary
 o.pack0 = vi[0].pack0*bary.x + vi[1].pack0*bary.y + vi[2].pack0*bary.z;
 o.vtUV =  vi[0].vtUV;
 float2 uvToNext = o.pack0 > 0.999;
-float3 vtUV = GetVirtualTextureUV(_TerrainVTIndexTex, _TerrainVTIndexTex_TexelSize, lerp(o.vtUV, o.vtUV + 1, uvToNext), lerp(o.pack0, 0, uvToNext));
+float3 vtUV = GetVirtualTextureUV(_TerrainVTIndexTex, _TerrainVTIndexTex_TexelSize, clamp(lerp(o.vtUV, o.vtUV + 1, uvToNext), _TextureSize.z, _TextureSize.w), lerp(o.pack0, 0, uvToNext));
   worldPos.y +=_VirtualHeightmap.SampleLevel(sampler_VirtualHeightmap, vtUV, 0) * _HeightScaleOffset.x;
 o.pos= mul(UNITY_MATRIX_VP, worldPos);
 o.worldPos = worldPos.xyz;
@@ -178,6 +177,7 @@ void frag_surf (v2f_surf IN,
   #ifdef DEBUG_QUAD_TREE
   IN.pack0 /= IN.scale; 
   #endif
+  
   surf (IN.pack0.xy, IN.vtUV, o);
   //TODO
   //Get TBN From height
@@ -270,7 +270,7 @@ inline v2f_shadow ds_shadow (UnityTessellationFactors tessFactors, const OutputP
   worldPos.y += _HeightScaleOffset.y;
  float2 pack0 = vi[0].pack0*bary.x + vi[1].pack0*bary.y + vi[2].pack0*bary.z;
  float2 uvToNext = pack0 > 0.999;
- float3 vtUV = GetVirtualTextureUV(_TerrainVTIndexTex, _TerrainVTIndexTex_TexelSize, lerp(vi[0].vtUV, vi[0].vtUV + 1, uvToNext), lerp(pack0, 0, uvToNext));
+ float3 vtUV = GetVirtualTextureUV(_TerrainVTIndexTex, _TerrainVTIndexTex_TexelSize, clamp(lerp(vi[0].vtUV, vi[0].vtUV + 1, uvToNext), _TextureSize.z, _TextureSize.w), lerp(pack0, 0, uvToNext));
   worldPos.y +=_VirtualHeightmap.SampleLevel(sampler_VirtualHeightmap, vtUV, 0) * _HeightScaleOffset.x;
 o.pos= mul(_ShadowMapVP, worldPos);
 return o;

@@ -15,8 +15,9 @@ struct TerrainPoint
 };
 
 StructuredBuffer<TerrainPoint> verticesBuffer;
+
 float4 _StartPos;//XY: worldpos start  Z: one chunk size W: chunk count
-float2 _TextureSize;
+float4 _TextureSize;
 Texture2D<float> _CullingTexture; SamplerState sampler_CullingTexture;
 
 Terrain_Appdata GetTerrain(uint vertexID)
@@ -27,7 +28,7 @@ Terrain_Appdata GetTerrain(uint vertexID)
     o.position = _StartPos.xy + coord * _StartPos.z;
     o.uv = v.localCoord;
     o.normalizePos = coord / _StartPos.w;
-    o.vtUV = (uint2)(v.indexCoord + _TextureSize + 0.3);
+    o.vtUV = (uint2)(v.indexCoord + _TextureSize.xy + 0.3);
     return o;
 }
 #endif

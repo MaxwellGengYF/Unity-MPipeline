@@ -329,10 +329,10 @@ namespace MPipeline
             }
             else
             {
-                if (leftDown == null && MTerrain.current.textureCapacity >= 3)
+                int len = isRendering ? 3 : 4;
+                if (leftDown == null && MTerrain.current.textureCapacity >= len)
                 {
-                    if (isRendering) MTerrain.current.textureCapacity++;
-                    MTerrain.current.textureCapacity -= 4;
+                    MTerrain.current.textureCapacity -= len;
                     isRendering = false;
                     leftDown = MUnsafeUtility.Malloc<TerrainQuadTree>(sizeof(TerrainQuadTree) * 4, Allocator.Persistent);
                     leftUp = leftDown + 1;
