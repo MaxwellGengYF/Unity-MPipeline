@@ -52,9 +52,11 @@ namespace MPipeline
         public int2 rootPos;
         public double3 maskScaleOffset;
         private LayerMask decalMask;
+        private bool initializing;
         public TerrainQuadTree(int parentLodLevel, LocalPos sonPos, int2 parentPos, double worldSize, double3 maskScaleOffset, int2 rootPos)
         {
             toPoint = 0;
+            initializing = true;
             toPoint3D = 0;
             dotValue = 0;
             separate = false;
@@ -479,6 +481,7 @@ namespace MPipeline
                 rightDown->CombineUpdate();
                 rightUp->CombineUpdate();
             }
+
             if (dist > MTerrain.current.allLodLevles[lodLevel] * scale - distOffset)
             {
                 separate = false;
@@ -491,10 +494,18 @@ namespace MPipeline
             }
             else
                 separate = true;
+
         }
 
         public void SeparateUpdate()
         {
+            if (!MTerrain.current.initializing && initializing)
+            {
+                initializing = false;
+                return;
+            }
+            else
+                initializing = false;
             if (separate)
             {
                 Separate();
