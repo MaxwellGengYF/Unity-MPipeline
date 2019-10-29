@@ -37,7 +37,7 @@ namespace MPipeline
 
         void PaintMask(MTerrain terrain, TerrainQuadTree* treeNodePtr, int texIndex, int disp)
         {
-            terrainEditShader.SetTexture(1, ShaderIDs._DestTex, terrain.maskVT.GetTexture(0));
+            terrainEditShader.SetTexture(1, ShaderIDs._DestTex, terrain.maskVT.GetTexture(1));
             terrainEditShader.SetFloat("_TargetValue", saturate((float)((value + 0.1) / (terrain.terrainData.allMaterials.Length - 1))));
             terrainEditShader.Dispatch(1, disp, disp, 1);
         }

@@ -3,6 +3,8 @@
 #pragma kernel DrawMask
 #pragma kernel DecodeToMask
 #pragma kernel EncodeR8
+#pragma kernel DecodeR16
+#pragma kernel EncodeR16
 #include "UnityCG.cginc"
 
 RWStructuredBuffer<float> _DistanceBuffer;
@@ -72,5 +74,30 @@ void EncodeR8(uint id : SV_DISPATCHTHREADID)
     result |= value2;
     result <<= 8;
     result |= value3;
+    _ElementBuffer[id] = result;
+}
+
+[numthreads(8,8,1)]
+void DecodeR16(uint2 id : SV_DISPATCHTHREADID)
+{
+    uint index = id.y * _Count + id.x;
+    uint value = _ElementBuffer[index / 2];
+    value >>= (1 - index % 2) * 16;
+    value &= 65535;
+    _DestTex[uint3(id, _OffsetIndex)] = value / 65535.0;
+}
+
+
+[numthreads(64,1,1)]
+void EncodeR16(uint id : SV_DISPATCHTHREADID)
+{
+    uint idx = id * 2;
+    uint2 uv = uint2(idx % _Count, idx / _Count);
+    uint2 uv1 = uint2 ((idx + 1) % _Count, (idx + 1) / _Count);
+    uint value0 = ((uint)(_DestTex[uint3(uv, _OffsetIndex)] * 65535)) & 65535;
+    uint value1 = ((uint)(_DestTex[uint3(uv1, _OffsetIndex)] * 65535)) & 65535;
+    uint result = value0;
+    result <<= 16;
+    result |= value1;
     _ElementBuffer[id] = result;
 }

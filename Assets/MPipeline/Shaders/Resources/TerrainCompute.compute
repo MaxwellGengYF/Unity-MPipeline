@@ -1,7 +1,6 @@
 ﻿#pragma kernel Cull
 #pragma kernel Clear
 #pragma kernel DecodeR8
-#pragma kernel DecodeR16
 #include "../CGINC/Plane.cginc"
 uint _Count;
 float3 _StartPos;
@@ -54,12 +53,3 @@ void DecodeR8(uint2 id : SV_DISPATCHTHREADID)
     _MainTex[id] = value / 255.0;
 }
 
-[numthreads(8,8,1)]
-void DecodeR16(uint2 id : SV_DISPATCHTHREADID)
-{
-    uint index = id.y * _HeightResolution + id.x;
-    uint value = _TextureBuffer[index / 2];
-    value >>= (index % 2) * 16;
-    value &= 65535;
-    _VirtualHeightmap[uint3(id, _OffsetIndex)] = value / 65535.0;
-}

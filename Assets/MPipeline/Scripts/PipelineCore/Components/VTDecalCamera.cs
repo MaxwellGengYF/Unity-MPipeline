@@ -22,7 +22,6 @@ namespace MPipeline
             public RenderTargetIdentifier albedoRT;
             public RenderTargetIdentifier normalRT;
             public RenderTargetIdentifier smoRT;
-            public RenderTargetIdentifier heightRT;
             public int depthSlice;
         }
         [EasyButtons.Button]
@@ -83,14 +82,9 @@ namespace MPipeline
                 {
                     perObjectData = UnityEngine.Rendering.PerObjectData.None
                 };
-                DrawingSettings drawH = new DrawingSettings(new ShaderTagId("TerrainDisplacement"), sort)
-                {
-                    perObjectData = UnityEngine.Rendering.PerObjectData.None
-                };
+
                 ComputeShader copyShader = data.resources.shaders.texCopyShader;
-                buffer.GetTemporaryRT(ShaderIDs._GPURPHeightMap, MTerrain.HEIGHT_RESOLUTION, MTerrain.HEIGHT_RESOLUTION, 16, FilterMode.Bilinear, MTerrain.HEIGHT_FORMAT);
-                buffer.CopyTexture(orthoCam.heightRT, orthoCam.depthSlice, ShaderIDs._GPURPHeightMap, 0);
-                buffer.SetGlobalTexture(ShaderIDs._VirtualHeightmap, orthoCam.heightRT);
+
                 buffer.SetGlobalInt(ShaderIDs._OffsetIndex, orthoCam.depthSlice);
                 var terrainData = MTerrain.current.terrainData;
                 buffer.SetGlobalVector(ShaderIDs._HeightScaleOffset, float4(terrainData.heightScale, terrainData.heightOffset, 1, 1));
@@ -113,10 +107,7 @@ namespace MPipeline
                 buffer.ClearRenderTarget(true, false, new Color(0,0,0,0));
                 data.ExecuteCommandBuffer();
                 data.context.DrawRenderers(result, ref drawS, ref filter);
-                buffer.SetRenderTarget(color: ShaderIDs._GPURPHeightMap, depth:ShaderIDs._GPURPHeightMap);
-                buffer.ClearRenderTarget(true, false, Color.black);
-                data.ExecuteCommandBuffer();
-                data.context.DrawRenderers(result, ref drawH, ref filter);
+          
                 buffer.SetComputeTextureParam(copyShader, 6, ShaderIDs._VirtualMainTex, orthoCam.albedoRT);
                 buffer.SetComputeTextureParam(copyShader, 6, ShaderIDs._VirtualBumpMap, orthoCam.normalRT);
                 buffer.SetComputeTextureParam(copyShader, 6, ShaderIDs._VirtualSMO, orthoCam.smoRT);
@@ -127,8 +118,7 @@ namespace MPipeline
                 buffer.ReleaseTemporaryRT(RenderTargets.gbufferIndex[0]);
                 buffer.ReleaseTemporaryRT(RenderTargets.gbufferIndex[1]);
                 buffer.ReleaseTemporaryRT(RenderTargets.gbufferIndex[2]);
-                buffer.CopyTexture(ShaderIDs._GPURPHeightMap, 0, orthoCam.heightRT, orthoCam.depthSlice);
-                buffer.ReleaseTemporaryRT(ShaderIDs._GPURPHeightMap);
+              
                 data.ExecuteCommandBuffer();
                 #endregion
             }

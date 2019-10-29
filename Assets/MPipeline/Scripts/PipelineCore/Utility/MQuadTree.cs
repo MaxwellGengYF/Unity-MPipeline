@@ -14,6 +14,7 @@ namespace MPipeline
     {
         public float2 startPos;
         public int2 startVTIndex;
+        public int2 rootPos;
     }
 
     public struct TerrainLoadData
@@ -28,10 +29,6 @@ namespace MPipeline
         public int2 startIndex;
         public int2 rootPos;
         public float3 maskScaleOffset;
-        public VirtualTextureLoader.LoadingHandler handler0;
-        public VirtualTextureLoader.LoadingHandler handler1;
-        public VirtualTextureLoader.LoadingHandler handler2;
-        public VirtualTextureLoader.LoadingHandler handler3;
     }
     public unsafe struct TerrainQuadTree
     {
@@ -253,7 +250,6 @@ namespace MPipeline
                         ope = TerrainLoadData.Operator.Load,
                         startIndex = pack.xy,
                         size = pack.z,
-                        handler0 = MTerrain.current.loader.LoadChunk(localPosition, lodLevel),
                         rootPos = rootPos,
                         maskScaleOffset = (float3)maskScaleOffset,
                         targetDecalLayer = decalMask
@@ -274,7 +270,6 @@ namespace MPipeline
                     ope = TerrainLoadData.Operator.Load,
                     startIndex = pack.xy,
                     size = pack.z,
-                    handler0 = MTerrain.current.loader.LoadChunk(localPosition, lodLevel),
                     rootPos = rootPos,
                     maskScaleOffset = (float3)maskScaleOffset,
                     targetDecalLayer = decalMask
@@ -358,10 +353,6 @@ namespace MPipeline
                             size = VirtualTextureSize,
                             rootPos = rootPos,
                             maskScaleOffset = maskScaleOffset,
-                            handler0 = MTerrain.current.loader.LoadChunk(leftDown->localPosition, leftDown->lodLevel),
-                            handler1 = MTerrain.current.loader.LoadChunk(leftUp->localPosition, leftUp->lodLevel),
-                            handler2 = MTerrain.current.loader.LoadChunk(rightDown->localPosition, rightDown->lodLevel),
-                            handler3 = MTerrain.current.loader.LoadChunk(rightUp->localPosition, rightUp->lodLevel),
                             targetDecalLayer = leftDown->decalMask
                         });
                     }
@@ -435,7 +426,8 @@ namespace MPipeline
                 loadedBufferList.Add(new TerrainDrawCommand
                 {
                     startPos = (float2)CornerWorldPos,
-                    startVTIndex = VirtualTextureIndex
+                    startVTIndex = VirtualTextureIndex,
+                    rootPos = rootPos + (int2)maskScaleOffset.yz
                 });
             }
             else if (lodLevel < MTerrain.current.lodOffset)

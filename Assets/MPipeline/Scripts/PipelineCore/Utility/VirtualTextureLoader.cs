@@ -12,130 +12,16 @@ namespace MPipeline
 {
     public unsafe sealed class VirtualTextureLoader
     {
-        public struct LoadingHandler
-        {
-            public int2 position;
-            public int mipLevel;
-            public byte* allBytes;
-            public bool* isComplete;
-            public LoadingHandler(int2 position, int mipLevel)
-            {
-                this.position = position;
-                this.mipLevel = mipLevel;
-                allBytes = MUnsafeUtility.Malloc<byte>(CHUNK_SIZE + 1, Allocator.Persistent);
-                isComplete = (bool*)(allBytes + CHUNK_SIZE);
-                *isComplete = false;
-            }
-
-            public void Dispose()
-            {
-                MUnsafeUtility.SafeFree(ref allBytes, Allocator.Persistent);
-            }
-        }
-        public int mipLevel { get; private set; }
-        private NativeQueue<LoadingHandler> handlerQueue;
-        private NativeArray<long> streamPositionOffset;
-        private FileStream streamer;
-        private object lockerObj;
-        private AutoResetEvent resetEvent;
-        private Thread loadingThread;
-        private bool enabled;
-        private int initialMipCount;
-        private byte[] bufferBytes;
-        private const long CHUNK_SIZE = MTerrain.HEIGHT_RESOLUTION * MTerrain.HEIGHT_RESOLUTION * 2;
-        public static NativeArray<long> GetStreamingPositionOffset(int initialMipCount, int mipLevel, Allocator alloc = Allocator.Persistent)
-        {
-            var streamPositionOffset = new NativeArray<long>(mipLevel, alloc, NativeArrayOptions.UninitializedMemory);
-            long offset = 0;
-            for (int i = 0; i < mipLevel; ++i)
-            {
-                streamPositionOffset[i] = offset;
-                long curOffset = (long)(0.1 + pow(2, i + initialMipCount));
-                offset += curOffset * curOffset;
-            }
-            return streamPositionOffset;
-        }
-
-        public VirtualTextureLoader(int initialMipCount, int mipLevel, string path, object lockerObj)
-        {
-            enabled = true;
-            this.initialMipCount = initialMipCount;
-            handlerQueue = new NativeQueue<LoadingHandler>(100, Allocator.Persistent);
-            this.lockerObj = lockerObj;
-            this.mipLevel = mipLevel;
-            resetEvent = new AutoResetEvent(true);
-            bufferBytes = new byte[CHUNK_SIZE];
-            streamPositionOffset = GetStreamingPositionOffset(initialMipCount, mipLevel);
-            streamer = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Read, FileShare.Read, (int)CHUNK_SIZE);
-            loadingThread = new Thread(() =>
-            {
-                while (enabled)
-                {
-                    while (true)
-                    {
-                        LoadingHandler handler;
-                        lock (lockerObj)
-                        {
-                            if (!handlerQueue.TryDequeue(out handler))
-                                break;
-                        }
-                        try
-                        {
-                            streamer.Position = CHUNK_SIZE * ((long)(0.1 + pow(2.0, handler.mipLevel)) * handler.position.y + handler.position.x + streamPositionOffset[handler.mipLevel - initialMipCount]);
-                            streamer.Read(bufferBytes, 0, (int)CHUNK_SIZE);
-                            UnsafeUtility.MemCpy(handler.allBytes, bufferBytes.Ptr(), CHUNK_SIZE);
-                        }
-                        finally
-                        {
-                            *handler.isComplete = true;
-                        }
-                    }
-                    resetEvent.WaitOne();
-                }
-            });
-            loadingThread.Start();
-        }
-
-        public LoadingHandler LoadChunk(int2 position, int targetMipLevel)
-        {
-            LoadingHandler lh = new LoadingHandler(position, targetMipLevel);
-            lock (lockerObj)
-            {
-                handlerQueue.Add(lh);
-            }
-            return lh;
-        }
-
-        public void StartLoading()
-        {
-            resetEvent.Set();
-        }
-
-        public void Dispose()
-        {
-            loadingThread = null;
-            bufferBytes = null;
-            streamer.Dispose();
-            streamPositionOffset.Dispose();
-            resetEvent.Set();
-            enabled = false;
-            resetEvent.Dispose();
-            lockerObj = null;
-            handlerQueue.Dispose();
-        }
-    }
-    public unsafe sealed class TerrainMaskLoader
-    {
         private struct MaskBuffer
         {
-            public ulong offset;
+            public long offset;
             public byte* bytesData;
             public bool* isFinished;
-            public MaskBuffer(ulong offset)
+            public MaskBuffer(long offset, long size)
             {
                 this.offset = offset;
-                bytesData = MUnsafeUtility.Malloc<byte>((long)MASK_SIZE + 1, Allocator.Persistent);
-                isFinished = (bool*)(bytesData + MASK_SIZE);
+                bytesData = MUnsafeUtility.Malloc<byte>((long)size + 1, Allocator.Persistent);
+                isFinished = (bool*)(bytesData + size);
                 *isFinished = false;
             }
             public void Dispose()
@@ -149,25 +35,41 @@ namespace MPipeline
         private AutoResetEvent resetEvent;
         private Thread loadingThread;
         private bool enabled;
-        private const ulong MASK_SIZE = MTerrain.MASK_RESOLUTION * MTerrain.MASK_RESOLUTION;
+        private long size;
+        private long resolution;
+
         private NativeQueue<MaskBuffer> loadingCommandQueue;
         private int terrainMaskCount;
         private byte[] fileReadBuffer;
-        public static ulong GetByteOffset(int2 chunkCoord, int terrainMaskCount)
+        private int readPass;
+        private int writePass;
+        public long GetByteOffset(int2 chunkCoord, int terrainMaskCount)
         {
-            ulong chunkPos = (ulong)(chunkCoord.y * terrainMaskCount + chunkCoord.x);
-            return chunkPos * MASK_SIZE;
+            long chunkPos = (long)(chunkCoord.y * terrainMaskCount + chunkCoord.x);
+            return chunkPos * size;
         }
 
-        public TerrainMaskLoader(string pathName, ComputeShader terrainEditShader, int terrainMaskCount)
+        public VirtualTextureLoader(string pathName, ComputeShader terrainEditShader, int terrainMaskCount, long resolution, bool is16Bit)
         {
+            if(is16Bit)
+            {
+                readPass = 4;
+                writePass = 5;
+            }
+            else
+            {
+                readPass = 2;
+                writePass = 3;
+            }
+            this.resolution = resolution;
+            size = resolution * resolution;
             this.terrainMaskCount = terrainMaskCount;
-            fileReadBuffer = new byte[MASK_SIZE];
+            fileReadBuffer = new byte[size];
             maskLoader = new FileStream(pathName, FileMode.OpenOrCreate, FileAccess.ReadWrite);
             enabled = true;
             loadingCommandQueue = new NativeQueue<MaskBuffer>(100, Allocator.Persistent);
             this.terrainEditShader = terrainEditShader;
-            readWriteBuffer = new ComputeBuffer((int)(MASK_SIZE / sizeof(uint)), sizeof(uint));
+            readWriteBuffer = new ComputeBuffer((int)(size / sizeof(uint)), sizeof(uint));
             resetEvent = new AutoResetEvent(true);
             loadingThread = new Thread(() =>
             {
@@ -178,8 +80,8 @@ namespace MPipeline
                     while (loadingCommandQueue.TryDequeue(out mb))
                     {
                         maskLoader.Position = (long)mb.offset;
-                        maskLoader.Read(fileReadBuffer, 0, (int)MASK_SIZE);
-                        UnsafeUtility.MemCpy(mb.bytesData, fileReadBuffer.Ptr(), (long)MASK_SIZE);
+                        maskLoader.Read(fileReadBuffer, 0, (int)size);
+                        UnsafeUtility.MemCpy(mb.bytesData, fileReadBuffer.Ptr(), (long)size);
                         *mb.isFinished = true;
                     }
                 }
@@ -191,41 +93,45 @@ namespace MPipeline
             return *mb.isFinished;
         }
 
-        private void SetBufferData(ref MaskBuffer mb)
+        private void SetBufferData(ref MaskBuffer mb, int size, int offset)
         {
-            readWriteBuffer.SetDataPtr(mb.bytesData, (int)MASK_SIZE);
+            readWriteBuffer.SetDataPtr(mb.bytesData + offset * size, size);
         }
 
-        public IEnumerator ReadToTexture(RenderTexture rt, int texElement, int2 chunkCoord)
+        public IEnumerator ReadToTexture(RenderTexture rt, int texElement, int2 chunkCoord, int separateFrame)
         {
-            MaskBuffer mb = new MaskBuffer(GetByteOffset(chunkCoord, terrainMaskCount));
+            MaskBuffer mb = new MaskBuffer(GetByteOffset(chunkCoord, terrainMaskCount), size);
             loadingCommandQueue.Add(mb);
             resetEvent.Set();
             while (!MaskBufferIsFinished(ref mb))
             {
                 yield return null;
             }
-            SetBufferData(ref mb);
+            int separateSize = (int)size / separateFrame;
+            for (int i = 0; i < separateFrame; ++i)
+            {
+                SetBufferData(ref mb, separateSize, i);
+            }
             mb.Dispose();
             terrainEditShader.SetInt(ShaderIDs._OffsetIndex, texElement);
-            terrainEditShader.SetInt(ShaderIDs._Count, MTerrain.MASK_RESOLUTION);
-            terrainEditShader.SetTexture(2, ShaderIDs._DestTex, rt);
-            terrainEditShader.SetBuffer(2, ShaderIDs._ElementBuffer, readWriteBuffer);
-            const int disp = MTerrain.MASK_RESOLUTION / 8;
-            terrainEditShader.Dispatch(2, disp, disp, 1);
+            terrainEditShader.SetInt(ShaderIDs._Count, (int)resolution);
+            terrainEditShader.SetTexture(readPass, ShaderIDs._DestTex, rt);
+            terrainEditShader.SetBuffer(readPass, ShaderIDs._ElementBuffer, readWriteBuffer);
+            int disp = (int)resolution / 8;
+            terrainEditShader.Dispatch(readPass, disp, disp, 1);
         }
 
         public void WriteToDisk(RenderTexture rt, int texElement, int2 chunkCoord)
         {
             terrainEditShader.SetInt(ShaderIDs._OffsetIndex, texElement);
-            terrainEditShader.SetInt(ShaderIDs._Count, MTerrain.MASK_RESOLUTION);
-            terrainEditShader.SetTexture(3, ShaderIDs._DestTex, rt);
-            terrainEditShader.SetBuffer(3, ShaderIDs._ElementBuffer, readWriteBuffer);
-            const int disp = (int)(MASK_SIZE / 64 / 4);
-            terrainEditShader.Dispatch(3, disp, 1, 1);
+            terrainEditShader.SetInt(ShaderIDs._Count, (int)resolution);
+            terrainEditShader.SetTexture(writePass, ShaderIDs._DestTex, rt);
+            terrainEditShader.SetBuffer(writePass, ShaderIDs._ElementBuffer, readWriteBuffer);
+            int disp = (int)(size / 64 / 4);
+            terrainEditShader.Dispatch(writePass, disp, 1, 1);
             readWriteBuffer.GetData(fileReadBuffer, 0, 0, readWriteBuffer.count * 4);
             maskLoader.Position = (long)GetByteOffset(chunkCoord, terrainMaskCount);
-            maskLoader.Write(fileReadBuffer, 0, (int)MASK_SIZE);
+            maskLoader.Write(fileReadBuffer, 0, (int)size);
         }
 
         public void Dispose()

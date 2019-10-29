@@ -37,6 +37,8 @@ namespace MPipeline
         public LayerMask[] allDecalLayers;
         [Range(1, 256)]
         public int virtualTexCapacity = 128;
+        [Range(1, 16)]
+        public int heightmapTexCapacity = 6;
         public HeightBlendMaterial[] allMaterials;
         public string heightmapPath = "Assets/BinaryData/TerrainHeight.mquad";
         public string maskmapPath = "Assets/BinaryData/TerrainMask.mquad";
@@ -45,7 +47,7 @@ namespace MPipeline
         [EasyButtons.Button]
         void GetVirtualTextureSize()
         {
-            Debug.Log((MTerrain.COLOR_RESOLUTION * MTerrain.COLOR_RESOLUTION * (4.0 + 4.0 + 2.0) + MTerrain.HEIGHT_RESOLUTION * MTerrain.HEIGHT_RESOLUTION * 2.0) * virtualTexCapacity / 1024.0 / 1024.0);
+            Debug.Log((MTerrain.COLOR_RESOLUTION * MTerrain.COLOR_RESOLUTION * (4.0 + 4.0 + 2.0)) * virtualTexCapacity / 1024.0 / 1024.0);
         }
     }
 }

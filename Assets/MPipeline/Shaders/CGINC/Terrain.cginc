@@ -7,6 +7,7 @@ struct Terrain_Appdata
     float2 uv;
     float2 normalizePos;
     uint2 vtUV;
+    uint2 indexCoord;
 };
 struct TerrainPoint
 {
@@ -29,6 +30,7 @@ Terrain_Appdata GetTerrain(uint vertexID)
     o.uv = v.localCoord;
     o.normalizePos = coord / _StartPos.w;
     o.vtUV = (uint2)(v.indexCoord + _TextureSize.xy + 0.3);
+    o.indexCoord = v.indexCoord;
     return o;
 }
 #endif
