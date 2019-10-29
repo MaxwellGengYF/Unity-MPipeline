@@ -27,7 +27,7 @@ uint _ColorResolution;
 
 inline float SampleMask(float2 uv)
 {
-    float3 realUV = GetVirtualTextureUV(_MaskIndexMap, _IndexTextureSize, _IndexBuffer.xy + floor(uv), frac(uv));
+    float3 realUV = GetVirtualTextureUV(_MaskIndexMap, _IndexTextureSize, floor(_IndexBuffer.xy + uv), frac(uv));
     return _VirtualMaskmap.SampleLevel(sampler_VirtualMaskmap, realUV, 0);
 }
 float2 BilinearSampleMask(float2 uv, out float4 result)

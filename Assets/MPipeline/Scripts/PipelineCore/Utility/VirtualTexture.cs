@@ -402,7 +402,7 @@ namespace MPipeline
             int targetElement;
             if (!GetChunk(ref targetIndex, targetSize, out targetElement)) return -1;
             if (leftDown < 0 || leftUp < 0 || rightDown < 0 || rightUp < 0) return -1;
-            foreach(var i in textures)
+            foreach (var i in textures)
             {
                 RenderTexture tempRT = RenderTexture.GetTemporary(new RenderTextureDescriptor
                 {
@@ -476,7 +476,7 @@ namespace MPipeline
                 buffer.CopyTexture(i, rightDown, 0, 0, 0, i.width, i.height, ShaderIDs._TempPropBuffer, 0, 0, i.width, 0);
                 buffer.CopyTexture(i, leftUp, 0, 0, 0, i.width, i.height, ShaderIDs._TempPropBuffer, 0, 0, 0, i.height);
                 buffer.CopyTexture(i, rightUp, 0, 0, 0, i.width, i.height, ShaderIDs._TempPropBuffer, 0, 0, i.width, i.height);
-                buffer.SetComputeIntParam(shader,ShaderIDs._TargetElement, targetElement);
+                buffer.SetComputeIntParam(shader, ShaderIDs._TargetElement, targetElement);
                 buffer.SetComputeIntParam(shader, ShaderIDs._Count, i.width);
                 buffer.SetComputeTextureParam(shader, 4, ShaderIDs._VirtualTexture, i);
                 buffer.SetComputeTextureParam(shader, 4, ShaderIDs._MainTex, ShaderIDs._TempPropBuffer);
@@ -488,13 +488,13 @@ namespace MPipeline
             vtVariables[1] = targetIndex.y;
             vtVariables[2] = targetSize;
             vtVariables[3] = targetElement;
-            buffer.SetComputeIntParams(shader, ShaderIDs._VTVariables, vtVariables);
+            shader.SetInts(ShaderIDs._VTVariables, vtVariables);
             texSize[0] = indexSize.x;
             texSize[1] = indexSize.y;
-            buffer.SetComputeIntParams(shader, ShaderIDs._IndexTextureSize, texSize);
-            buffer.SetComputeTextureParam(shader, 0, ShaderIDs._IndexTexture, indexTex);
+            shader.SetInts(ShaderIDs._IndexTextureSize, texSize);
+            shader.SetTexture(0, ShaderIDs._IndexTexture, indexTex);
             int dispatchCount = Mathf.CeilToInt(targetSize / 8f);
-            buffer.DispatchCompute(shader, 0, dispatchCount, dispatchCount, 1);
+            shader.Dispatch(0, dispatchCount, dispatchCount, 1);
             return targetElement;
         }
     }

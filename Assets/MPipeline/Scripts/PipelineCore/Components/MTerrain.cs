@@ -251,25 +251,26 @@ namespace MPipeline
 
             shader.SetTexture(3, ShaderIDs._VirtualHeightmap, vt.GetTexture(0));
             shader.SetBuffer(3, ShaderIDs._TextureBuffer, textureBuffer);
-            RenderPipeline.BeforeFrameBuffer.SetComputeBufferParam(textureShader, 0, ShaderIDs._MaterialBuffer, materialBuffer);
-            RenderPipeline.BeforeFrameBuffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._VirtualMainTex, vt.GetTexture(1));
-            RenderPipeline.BeforeFrameBuffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._VirtualBumpMap, vt.GetTexture(2));
-            RenderPipeline.BeforeFrameBuffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._VirtualSMO, vt.GetTexture(3));
-            RenderPipeline.BeforeFrameBuffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._HeightMap, heightTex);
-            RenderPipeline.BeforeFrameBuffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._MainTex, albedoTex);
-            RenderPipeline.BeforeFrameBuffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._BumpMap, normalTex);
-            RenderPipeline.BeforeFrameBuffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._SMMap, smTex);
+            CommandBuffer buffer = RenderPipeline.BeforeFrameBuffer;
+            buffer.SetComputeBufferParam(textureShader, 0, ShaderIDs._MaterialBuffer, materialBuffer);
+            buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._VirtualMainTex, vt.GetTexture(1));
+            buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._VirtualBumpMap, vt.GetTexture(2));
+            buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._VirtualSMO, vt.GetTexture(3));
+            buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._HeightMap, heightTex);
+            buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._MainTex, albedoTex);
+            buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._BumpMap, normalTex);
+            buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._SMMap, smTex);
             int rtID = maskVT.GetTextureFormat(0).rtPropertyID;
-            RenderPipeline.BeforeFrameBuffer.SetComputeTextureParam(textureShader, 0, rtID, maskVT.GetTexture(0));
-            RenderPipeline.BeforeFrameBuffer.SetComputeTextureParam(textureShader, 0, maskVT.indexTexID, maskVT.indexTex);
-            //      RenderPipeline.BeforeFrameBuffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._NoiseTexture, terrainData.warpNoiseTexture);
-            RenderPipeline.BeforeFrameBuffer.SetComputeTextureParam(textureShader, 3, ShaderIDs._VirtualHeightmap, vt.GetTexture(0));
-            RenderPipeline.BeforeFrameBuffer.SetComputeTextureParam(textureShader, 3, ShaderIDs._IndexTexture, vt.indexTex);
-            RenderPipeline.BeforeFrameBuffer.SetComputeTextureParam(textureShader, 3, ShaderIDs._DestTex, worldNormalRT);
-            RenderPipeline.BeforeFrameBuffer.SetComputeTextureParam(textureShader, 4, ShaderIDs._VirtualBumpMap, vt.GetTexture(2));
-            RenderPipeline.BeforeFrameBuffer.SetComputeTextureParam(textureShader, 4, ShaderIDs._SourceTex, worldNormalRT);
+            buffer.SetComputeTextureParam(textureShader, 0, rtID, maskVT.GetTexture(0));
+            buffer.SetComputeTextureParam(textureShader, 0, maskVT.indexTexID, maskVT.indexTex);
+            //      buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._NoiseTexture, terrainData.warpNoiseTexture);
+            buffer.SetComputeTextureParam(textureShader, 3, ShaderIDs._VirtualHeightmap, vt.GetTexture(0));
+            buffer.SetComputeTextureParam(textureShader, 3, ShaderIDs._IndexTexture, vt.indexTex);
+            buffer.SetComputeTextureParam(textureShader, 3, ShaderIDs._DestTex, worldNormalRT);
+            buffer.SetComputeTextureParam(textureShader, 4, ShaderIDs._VirtualBumpMap, vt.GetTexture(2));
+            buffer.SetComputeTextureParam(textureShader, 4, ShaderIDs._SourceTex, worldNormalRT);
             shader.SetInt(ShaderIDs._HeightResolution, HEIGHT_RESOLUTION);
-            RenderPipeline.BeforeFrameBuffer.SetComputeIntParam(textureShader, ShaderIDs._ColorResolution, COLOR_RESOLUTION);
+            buffer.SetComputeIntParam(textureShader, ShaderIDs._ColorResolution, COLOR_RESOLUTION);
 
             while (enabled)
             {
