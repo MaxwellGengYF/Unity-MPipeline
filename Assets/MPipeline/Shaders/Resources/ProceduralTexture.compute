@@ -32,10 +32,9 @@ inline float SampleMask(float2 uv)
 }
 float2 BilinearSampleMask(float2 uv, out float4 result)
 {
-    float2 absoluteUV = uv.xy * _IndexTextureSize.x;
+    float2 absoluteUV = frac(uv.xy * _IndexTextureSize.x);
     float pixelLength = 1.0 / _IndexTextureSize.x;
-    uv.xy -= frac(absoluteUV) > 0.5 ? 0 : pixelLength;
-    float2 lastUV = absoluteUV - 0.5;
+    uv.xy -= absoluteUV > 0.5 ? 0 : pixelLength;
     float2 lerpValue = frac(absoluteUV + 0.5);
     result = float4(
        SampleMask(uv),

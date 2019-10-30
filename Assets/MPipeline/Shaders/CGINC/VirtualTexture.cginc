@@ -35,19 +35,19 @@ inline void GetBilinearVirtualTextureUV(Texture2D<float4> indexTex, float4 index
 {
     float2 absoluteUV = localUV * textureSize.zw;
     float2 absoluteUVFrac = frac(absoluteUV);
-    weight = absoluteUVFrac - 0.5;
-    float signValue = weight < 0 ? -1 : 1;
+    weight = frac(absoluteUVFrac + 0.5);
+    absoluteUV -= absoluteUVFrac > 0.5 ? 0 : 1;
     float2 uv[4];
     uv[0] = absoluteUV;
-    uv[1] = uv[0] + float2(signValue, 0);
-    uv[2] = uv[0] + float2(0, signValue);
-    uv[3] = uv[0] + signValue;
+    uv[1] = uv[0] + float2(1, 0);
+    uv[2] = uv[0] + float2(0, 1);
+    uv[3] = uv[0] + 1;
     uv[0] *= textureSize.xy;
     uv[1] *= textureSize.xy;
     uv[2] *= textureSize.xy;
     uv[3] *= textureSize.xy;
     
-    weight = abs(weight);
+    
     uvs[0] = GetVirtualTextureUV(indexTex, indexTexelSize, floor(startChunkPos + uv[0]), frac(1 + uv[0]));
     uvs[1] = GetVirtualTextureUV(indexTex, indexTexelSize, floor(startChunkPos + uv[1]), frac(1 +uv[1]%1));
     uvs[2] = GetVirtualTextureUV(indexTex, indexTexelSize, floor(startChunkPos + uv[2]), frac(1 +uv[2]%1));

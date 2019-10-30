@@ -527,7 +527,7 @@ namespace MPipeline
             };
             maskVT = new VirtualTexture(terrainData.heightmapTexCapacity, largestChunkCount, maskFormats, 2, "_MaskIndexMap");
             maskVT.GetTexture(0).filterMode = FilterMode.Point;
-            maskVT.GetTexture(1).filterMode = FilterMode.Bilinear;
+            maskVT.GetTexture(1).filterMode = FilterMode.Point;
             vt.GetTexture(0).filterMode = FilterMode.Trilinear;
             vt.GetTexture(1).filterMode = FilterMode.Trilinear;
             vt.GetTexture(2).filterMode = FilterMode.Trilinear;
