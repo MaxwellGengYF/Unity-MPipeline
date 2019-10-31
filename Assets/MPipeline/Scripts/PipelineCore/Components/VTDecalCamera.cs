@@ -35,8 +35,15 @@ namespace MPipeline
         private Camera cam;
         private RenderTargetIdentifier[] idfs;
         public NativeList<CameraState> renderingCommand { get; private set; }
-        private void Awake()
+        private RenderTexture heightTempTex;
+        private void OnEnable()
         {
+            heightTempTex = new RenderTexture(MTerrain.HEIGHT_RESOLUTION * 4, MTerrain.HEIGHT_RESOLUTION * 4, 16, MTerrain.HEIGHT_FORMAT, 3);
+            heightTempTex.useMipMap = true;
+            heightTempTex.autoGenerateMips = false;
+            heightTempTex.filterMode = FilterMode.Point;
+            heightTempTex.antiAliasing = 1;
+            heightTempTex.Create();
             cam = GetComponent<Camera>();
             cam.enabled = false;
             cam.orthographic = true;
@@ -46,8 +53,9 @@ namespace MPipeline
             RenderPipeline.AddRunnableObject(GetInstanceID(), this);
         }
 
-        private void OnDestroy()
+        private void OnDisable()
         {
+            DestroyImmediate(heightTempTex);
             cam = null;
             renderingCommand.Dispose();
         }
@@ -127,13 +135,13 @@ namespace MPipeline
                     buffer.ReleaseTemporaryRT(RenderTargets.gbufferIndex[1]);
                     buffer.ReleaseTemporaryRT(RenderTargets.gbufferIndex[2]);
                     buffer.ReleaseTemporaryRT(RenderTargets.gbufferIndex[0]);
-                    buffer.GetTemporaryRT(ShaderIDs._VirtualDisplacementTemp, MTerrain.HEIGHT_RESOLUTION, MTerrain.HEIGHT_RESOLUTION, 16, FilterMode.Point, MTerrain.HEIGHT_FORMAT);
-                    buffer.SetRenderTarget(color: ShaderIDs._VirtualDisplacementTemp, depth: ShaderIDs._VirtualDisplacementTemp);
+                 
+                    buffer.SetRenderTarget(color: heightTempTex.colorBuffer, depth: heightTempTex.depthBuffer);
                     buffer.ClearRenderTarget(true, true, Color.black);
                     data.ExecuteCommandBuffer();
                     data.context.DrawRenderers(result, ref drawH, ref filter);
-                    buffer.CopyTexture(ShaderIDs._VirtualDisplacementTemp, 0, 0, orthoCam.heightRT, orthoCam.depthSlice, 0);
-                    buffer.ReleaseTemporaryRT(ShaderIDs._VirtualDisplacementTemp);
+                    buffer.GenerateMips(heightTempTex);
+                    buffer.CopyTexture(heightTempTex, 0, 2, orthoCam.heightRT, orthoCam.depthSlice, 0);
                     
                 }
                 else

@@ -13,8 +13,8 @@ float3 ProcessNormal(float2 value)
 	float z = sqrt(1 - dot(value, value));
 	return float3(value, z);
 }
-		void surf (float2 uv, uint2 vtIndex, inout SurfaceOutputStandardSpecular o) {
-			float3 vtUV = GetVirtualTextureUV(_TerrainVTIndexTex, _TerrainVTIndexTex_TexelSize, vtIndex, uv);
+		void surf (float2 uv, uint vtIndex, inout SurfaceOutputStandardSpecular o) {
+			float3 vtUV = float3(uv, vtIndex + 0.2);
 			float2 spec = _VirtualSMMap.Sample(sampler_VirtualSMMap, vtUV);
 			float4 c =  _VirtualMainTex.Sample(sampler_VirtualMainTex, vtUV);
 			o.Normal = ProcessNormal(_VirtualBumpMap.Sample(sampler_VirtualBumpMap, vtUV));
