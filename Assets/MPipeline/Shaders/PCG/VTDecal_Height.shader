@@ -33,6 +33,7 @@ cbuffer UnityPerMaterial
             float2 _HeightScaleOffset;
             Texture2DArray<float> _VirtualHeightmap; SamplerState sampler_VirtualHeightmap;
             uint _OffsetIndex;
+            float4 _MaskScaleOffset;
 ENDCG
         Pass
         {
@@ -82,7 +83,7 @@ ENDCG
 
             float GetBlendWeight(float worldHeight, float2 screenUV)
             {
-                float vtHeight = _VirtualHeightmap.SampleLevel(sampler_VirtualHeightmap, float3(screenUV, _OffsetIndex + 0.2), 0);
+                float vtHeight = _VirtualHeightmap.SampleLevel(sampler_VirtualHeightmap, float3(screenUV * _MaskScaleOffset.x + _MaskScaleOffset.yz, _OffsetIndex + 0.2), 0);
                 float vtWorldHeight = vtHeight * _HeightScaleOffset.x + _HeightScaleOffset.y;
                 float blendWeight = (worldHeight - vtWorldHeight) * _HeightBlendScale;
                 return saturate(blendWeight);
@@ -111,7 +112,9 @@ ENDCG
         Pass
         {
             Tags {"LightMode" = "TerrainDisplacement" "Name" = "TerrainDisplacement"}
-            Blend srcAlpha OneMinusSrcAlpha
+            Cull back
+            ZWrite on
+            ZTest Less
             CGPROGRAM
             #pragma vertex vert
             #pragma fragment frag
@@ -142,26 +145,14 @@ ENDCG
                 o.screenUV = ComputeScreenPos(o.vertex).xyw;
                 return o;
             }
-
-            float GetBlendWeight(float worldHeight, float2 screenUV)
-            {
-                float vtHeight = _VirtualHeightmap.SampleLevel(sampler_VirtualHeightmap, float3(screenUV, _OffsetIndex + 0.2), 0);
-                float vtWorldHeight = vtHeight * _HeightScaleOffset.x + _HeightScaleOffset.y;
-                float blendWeight = (worldHeight - vtWorldHeight) * _HeightBlendScale;
-                return saturate(blendWeight);
-            }
-
-            float WorldHeightToTexHeight(float worldHeight)
-            {
-                worldHeight -= _HeightScaleOffset.y;
-                return worldHeight / max(1e-4, _HeightScaleOffset.x);
-            }
             
-            float4 frag (v2f i) : SV_Target
+            float frag (v2f i) : SV_Target
             {
                 float2 screenUV = i.screenUV.xy / i.screenUV.z;
-                float weight = GetBlendWeight(i.worldPos.y, screenUV);
-                return float4(WorldHeightToTexHeight(i.worldPos.y), 0, 0, weight);
+                float vtHeight = _VirtualHeightmap.SampleLevel(sampler_VirtualHeightmap, float3(screenUV * _MaskScaleOffset.x + _MaskScaleOffset.yz, _OffsetIndex + 0.2), 0);
+                 float vtWorldHeight = vtHeight * _HeightScaleOffset.x + _HeightScaleOffset.y;
+                float heightDiff = i.worldPos.y - vtWorldHeight;
+                return clamp(heightDiff * _MaskScaleOffset.w, -1, 1);
             }
             ENDCG
         }

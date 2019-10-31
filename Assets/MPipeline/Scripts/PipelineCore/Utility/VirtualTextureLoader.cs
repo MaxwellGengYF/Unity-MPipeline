@@ -43,6 +43,7 @@ namespace MPipeline
         private byte[] fileReadBuffer;
         private int readPass;
         private int writePass;
+        private int bitLength;
         public long GetByteOffset(int2 chunkCoord, int terrainMaskCount)
         {
             long chunkPos = (long)(chunkCoord.y * terrainMaskCount + chunkCoord.x);
@@ -51,18 +52,20 @@ namespace MPipeline
 
         public VirtualTextureLoader(string pathName, ComputeShader terrainEditShader, int terrainMaskCount, long resolution, bool is16Bit)
         {
-            if(is16Bit)
+            if (is16Bit)
             {
                 readPass = 4;
                 writePass = 5;
+                bitLength = 2;
             }
             else
             {
+                bitLength = 1;
                 readPass = 2;
                 writePass = 3;
             }
             this.resolution = resolution;
-            size = resolution * resolution;
+            size = resolution * resolution * bitLength;
             this.terrainMaskCount = terrainMaskCount;
             fileReadBuffer = new byte[size];
             maskLoader = new FileStream(pathName, FileMode.OpenOrCreate, FileAccess.ReadWrite);
@@ -79,9 +82,9 @@ namespace MPipeline
                     MaskBuffer mb;
                     while (loadingCommandQueue.TryDequeue(out mb))
                     {
-                        maskLoader.Position = (long)mb.offset;
+                        maskLoader.Position = mb.offset;
                         maskLoader.Read(fileReadBuffer, 0, (int)size);
-                        UnsafeUtility.MemCpy(mb.bytesData, fileReadBuffer.Ptr(), (long)size);
+                        UnsafeUtility.MemCpy(mb.bytesData, fileReadBuffer.Ptr(), size);
                         *mb.isFinished = true;
                     }
                 }
@@ -93,9 +96,9 @@ namespace MPipeline
             return *mb.isFinished;
         }
 
-        private void SetBufferData(ref MaskBuffer mb, int size, int offset)
+        private void SetBufferData(ref MaskBuffer mb, int localsize, int offset)
         {
-            readWriteBuffer.SetDataPtr(mb.bytesData + offset * size, size);
+            readWriteBuffer.SetDataPtr((mb.bytesData + offset * localsize), localsize * offset, localsize);
         }
 
         public IEnumerator ReadToTexture(RenderTexture rt, int texElement, int2 chunkCoord, int separateFrame)
@@ -103,6 +106,7 @@ namespace MPipeline
             MaskBuffer mb = new MaskBuffer(GetByteOffset(chunkCoord, terrainMaskCount), size);
             loadingCommandQueue.Add(mb);
             resetEvent.Set();
+
             while (!MaskBufferIsFinished(ref mb))
             {
                 yield return null;
@@ -111,8 +115,10 @@ namespace MPipeline
             for (int i = 0; i < separateFrame; ++i)
             {
                 SetBufferData(ref mb, separateSize, i);
+                yield return null;
             }
             mb.Dispose();
+
             terrainEditShader.SetInt(ShaderIDs._OffsetIndex, texElement);
             terrainEditShader.SetInt(ShaderIDs._Count, (int)resolution);
             terrainEditShader.SetTexture(readPass, ShaderIDs._DestTex, rt);
@@ -130,7 +136,7 @@ namespace MPipeline
             int disp = (int)(size / 64 / 4);
             terrainEditShader.Dispatch(writePass, disp, 1, 1);
             readWriteBuffer.GetData(fileReadBuffer, 0, 0, readWriteBuffer.count * 4);
-            maskLoader.Position = (long)GetByteOffset(chunkCoord, terrainMaskCount);
+            maskLoader.Position = GetByteOffset(chunkCoord, terrainMaskCount);
             maskLoader.Write(fileReadBuffer, 0, (int)size);
         }
 

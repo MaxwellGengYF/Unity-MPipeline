@@ -24,6 +24,7 @@ float4 _IndexBuffer;
 uint _OffsetIndex;
 uint _HeightResolution;
 uint _ColorResolution;
+uint _Count;
 
 inline float SampleMask(float2 uv)
 {
@@ -33,13 +34,15 @@ inline float SampleMask(float2 uv)
 float2 BilinearSampleMask(float2 uv, out float4 result)
 {
     float2 absoluteUV = frac(uv.xy * _IndexTextureSize.x);
-    float pixelLength = 1.0 / _IndexTextureSize.x;
-    uv.xy -= absoluteUV > 0.5 ? 0 : pixelLength;
-    float2 lerpValue = frac(absoluteUV + 0.5);
+    float2 pixelLength = 1.0 / _IndexTextureSize.x;
+    //uv.xy -= absoluteUV > 0.5 ? 0 : pixelLength;
+    float2 lerpValue = absoluteUV - 0.5;
+    pixelLength *= (lerpValue < 0) ? -1 : 1;
+    lerpValue = abs(lerpValue);
     result = float4(
        SampleMask(uv),
-       SampleMask(uv + float2(pixelLength, 0)),
-        SampleMask(uv + float2(0, pixelLength)),
+       SampleMask(uv + float2(pixelLength.x, 0)),
+        SampleMask(uv + float2(0, pixelLength.y)),
        SampleMask(uv + pixelLength)
     );
     return lerpValue;
@@ -107,34 +110,52 @@ void ClearColorTex(uint2 id : SV_DISPATCHTHREADID)
 }
 Texture2DArray<float> _VirtualHeightmap; SamplerState sampler_VirtualHeightmap;
 Texture2D<float4> _IndexTexture;
-
+#include "../CGINC/VirtualTexture.cginc"
 //_IndexTextureSize:  XY: 1/Texture size   ZW: Index Texture size
-//_IndexBuffer:   XY: chunk virtual index    Z: height rate
+//_TextureSize   Same as kernel 0
+//_IndexBuffer Same as kernel 0
+//_IndexTexture Heightmap indextex
 [numthreads(8,8,1)]
 void HeightToNormal(uint2 id : SV_DISPATCHTHREADID)
 {
-    float2 uv = (id + 0.5) * _IndexTextureSize.xy;
-    //float3 virtualUV = GetVirtualTextureUV(_MaskIndexMap, _IndexTextureSize, _IndexBuffer.xy, uv);
-    float2 uvOffset[9] = 
+    if(id.x >= _Count || id.y >= _Count) return;
+    float2 absoluteUV = (id - 0.5) / _ColorResolution;
+    float2 maskVirtualUV = absoluteUV * _TextureSize.x + _TextureSize.yz;
+    float3 bilinearUVs[4]; float2 bilinearWeight;
+    GetBilinearVirtualTextureUV(_IndexTexture, _IndexTextureSize, _IndexBuffer.xy, maskVirtualUV, float2(1.0/_HeightResolution, _HeightResolution).xxyy, bilinearUVs, bilinearWeight);
+    float4 heights =float4(_VirtualHeightmap.SampleLevel(sampler_VirtualHeightmap, bilinearUVs[0], 0),
+                            _VirtualHeightmap.SampleLevel(sampler_VirtualHeightmap, bilinearUVs[1], 0),
+                            _VirtualHeightmap.SampleLevel(sampler_VirtualHeightmap, bilinearUVs[2], 0),
+                            _VirtualHeightmap.SampleLevel(sampler_VirtualHeightmap, bilinearUVs[3], 0));
+    heights.xy = lerp(heights.xy, heights.zw, bilinearWeight.y);
+    heights.x = lerp(heights.x, heights.y, bilinearWeight.x);
+    _DestTex[id] = heights.x;
+}
+
+[numthreads(8,8,1)]
+void NormalToWorld(uint2 id : SV_DISPATCHTHREADID)
+{
+    //_IndexBuffer : zw:  height scale
+    const int2 uvOffset[9] = 
     {
-        float2(0, 0),
-        float2(1, 1),
-        float2(1, 0),
-        float2(1, -1),
-        float2(0, 1),
-        float2(0, -1),
-        float2(-1, 1),
-        float2(-1, 0),
-        float2(-1, -1)
+        int2(0, 0),
+        int2(1, 1),
+        int2(1, 0),
+        int2(1, -1),
+        int2(0, 1),
+        int2(0, -1),
+        int2(-1, 1),
+        int2(-1, 0),
+        int2(-1, -1)
     };
     float heights[9];
     [unroll]
     for(uint i = 0; i < 9; ++i)
     {
-        float2 currentUV = uv + uvOffset[i] * _IndexTextureSize.xy;
-        heights[i] =_VirtualHeightmap.SampleLevel(sampler_VirtualHeightmap, GetVirtualTextureUV(_IndexTexture, _IndexTextureSize, _IndexBuffer.xy + floor(currentUV), frac(currentUV)), 0);
+        heights[i] = _SourceTex[id + uvOffset[i] + 1].x;
     }
     float3 normalSum = 0;
+   
     [unroll]
     for(i = 1; i < 9; ++i)
     {
@@ -144,22 +165,14 @@ void HeightToNormal(uint2 id : SV_DISPATCHTHREADID)
         normalSum += normal;
     }
     normalSum = normalize(normalSum);
-    _DestTex[id] = float4(normalSum.xz, 1, 1);
-}
-
-[numthreads(8,8,1)]
-void NormalToWorld(uint2 id : SV_DISPATCHTHREADID)
-{
     float2 absoluteUV = (id + 0.5) / _ColorResolution;
     float2 tangentNormalXY = _VirtualBumpMap[uint3(id, _OffsetIndex)].xy;
     float3 tangentNormal = float3(tangentNormalXY, sqrt(1 - dot(tangentNormalXY, tangentNormalXY)));
-    float3 worldNormal;
-    worldNormal.xz = _SourceTex.SampleLevel(sampler_SourceTex, absoluteUV, 0).xy;
-    worldNormal.y = sqrt(1 - dot(worldNormal.xz, worldNormal.xz));
     float3 tangent = float3(1,0,0);
-    float3 binormal = normalize(cross(tangent, worldNormal));
-    tangent = normalize(cross(worldNormal, binormal));
-    float3x3 TBN = float3x3(tangent, binormal, worldNormal);
+    float3 binormal = normalize(cross(tangent, normalSum));
+    tangent = normalize(cross(normalSum, binormal));
+    float3x3 TBN = float3x3(tangent, binormal, normalSum);
+    
     _VirtualBumpMap[uint3(id, _OffsetIndex)] = normalize(mul(tangentNormal, TBN)).xz;
 }
 

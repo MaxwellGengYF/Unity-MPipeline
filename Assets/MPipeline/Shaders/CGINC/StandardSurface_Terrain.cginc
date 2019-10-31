@@ -6,6 +6,7 @@ Texture2DArray<float> _VirtualHeightmap; SamplerState sampler_VirtualHeightmap;
 Texture2DArray<float4> _VirtualMainTex; SamplerState sampler_VirtualMainTex;
 Texture2DArray<float2> _VirtualBumpMap; SamplerState sampler_VirtualBumpMap;
 Texture2DArray<float2> _VirtualSMMap; SamplerState sampler_VirtualSMMap;
+Texture2DArray<float> _VirtualDisplacement; SamplerState sampler_VirtualDisplacement;
 #include "VirtualTexture.cginc"
 float3 ProcessNormal(float2 value)
 {

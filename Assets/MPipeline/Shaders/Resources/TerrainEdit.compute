@@ -5,6 +5,7 @@
 #pragma kernel EncodeR8
 #pragma kernel DecodeR16
 #pragma kernel EncodeR16
+#pragma kernel Copy
 #include "UnityCG.cginc"
 
 RWStructuredBuffer<float> _DistanceBuffer;
@@ -17,6 +18,7 @@ void GetDepth (uint3 id : SV_DispatchThreadID)
 }
 
 RWTexture2DArray<float> _DestTex;
+Texture2D<float> _SourceTex; SamplerState sampler_SourceTex;
 float4 _SrcDestCorner;
 uint _Count;
 uint _OffsetIndex;
@@ -24,6 +26,7 @@ float3 _Circle0;
 float3 _Circle1;
 float4x4 _QuadMatrix;
 float _TargetValue;
+float4 _ScaleOffset;
 
 #define DETECT_PAINT(pos, result) \
 float pos##_ToFirstCircle = distance(pos, _Circle0.xy) < _Circle0.z;\
@@ -100,4 +103,11 @@ void EncodeR16(uint id : SV_DISPATCHTHREADID)
     result <<= 16;
     result |= value1;
     _ElementBuffer[id] = result;
+}
+
+[numthreads(8,8,1)]
+void Copy(uint2 id : SV_DISPATCHTHREADID)
+{
+    float2 uv = (id + 0.5) / _Count;
+    _DestTex[uint3(id, _OffsetIndex)] = _SourceTex.SampleLevel(sampler_SourceTex, uv * _ScaleOffset.xy + _ScaleOffset.zw, 0);
 }
