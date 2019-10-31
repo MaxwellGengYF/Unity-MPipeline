@@ -5,8 +5,9 @@ using UnityEngine.Rendering;
 using Unity.Collections;
 using Unity.Collections.LowLevel.Unsafe;
 using static Unity.Mathematics.math;
-using UnityEngine.Experimental.Rendering;
 using Unity.Mathematics;
+using UnityEngine.Experimental.Rendering;
+
 namespace MPipeline
 {
     public enum VirtualTextureSize
@@ -27,9 +28,11 @@ namespace MPipeline
         public VirtualTextureSize perElementSize { get; private set; }
         public GraphicsFormat format { get; private set; }
         public int rtPropertyID { get; private set; }
-        public VirtualTextureFormat(VirtualTextureSize size, GraphicsFormat format, string rtName)
+        public int mipCount { get; private set; }
+        public VirtualTextureFormat(VirtualTextureSize size, GraphicsFormat format, string rtName, int mipCount = 0)
         {
             perElementSize = size;
+            this.mipCount = mipCount;
             this.format = format;
             rtPropertyID = Shader.PropertyToID(rtName);
         }
@@ -98,7 +101,7 @@ namespace MPipeline
         private const int START_CHUNKSIZE = 8;
         public int2 indexSize { get; private set; }
         public RenderTexture indexTex { get; private set; }
-        private struct VTChunkHandleEqual : IFunction<int2, int2, bool>
+        public struct VTChunkHandleEqual : IFunction<int2, int2, bool>
         {
             [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             public bool Run(ref int2 a, ref int2 b)
@@ -107,6 +110,7 @@ namespace MPipeline
             }
         }
         private NativeDictionary<int2, int2, VTChunkHandleEqual> poolDict;
+        public NativeDictionary<int2, int2, VTChunkHandleEqual> PoolDict => poolDict;
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
         public RenderTexture GetTexture(int index)
         {
@@ -150,7 +154,7 @@ namespace MPipeline
         /// <param name="maximumSize">Virtual texture's array size</param>
         /// <param name="indexSize">Index Texture's size</param>
         /// <param name="formats">Each VT's format</param>
-        public VirtualTexture(int maximumSize, int2 indexSize, VirtualTextureFormat* formats, int formatLen, string indexTexName, int mipCount = 0)
+        public VirtualTexture(int maximumSize, int2 indexSize, VirtualTextureFormat* formats, int formatLen, string indexTexName)
         {
             if (maximumSize > 2048)
             {
@@ -188,9 +192,9 @@ namespace MPipeline
                     height = (int)format.perElementSize,
                     volumeDepth = maximumSize,
                     dimension = TextureDimension.Tex2DArray,
-                    mipCount = mipCount,
+                    mipCount = format.mipCount,
                     autoGenerateMips = false,
-                    useMipMap = mipCount > 0,
+                    useMipMap = format.mipCount > 0,
                     enableRandomWrite = true,
                     msaaSamples = 1,
                     depthBufferBits = 0,
@@ -213,6 +217,7 @@ namespace MPipeline
 
         public int GetChunkIndex(int2 startIndex)
         {
+            startIndex %= indexSize;
             int2 result;
             if (poolDict.Get(startIndex, out result))
             {
@@ -289,60 +294,35 @@ namespace MPipeline
             return res;
         }
 
-        public void LoadQuadNewTextures(int2 startIndex, int size, out int4 element)
+        public void LoadNewTextureChunks(int2 startIndex, int chunkSize, int chunkCount, NativeArray<int> texsContainner)
         {
-            int2 leftDownIndex = startIndex;
-            int2 rightDownIndex = startIndex + int2(size, 0);
-            int2 leftUpIndex = startIndex + int2(0, size);
-            int2 rightUpIndex = startIndex + size;
-            GetChunk(ref leftDownIndex, size, out element.x);
-            GetChunk(ref rightDownIndex, size, out element.y);
-            GetChunk(ref leftUpIndex, size, out element.z);
-            GetChunk(ref rightUpIndex, size, out element.w);
-            vtVariables[0] = startIndex.x;
-            vtVariables[1] = startIndex.y;
-            vtVariables[2] = size;
-            vtVariables[3] = size * 2;
-            shader.SetInts(ShaderIDs._VTVariables, vtVariables);
-            shader.SetVector(ShaderIDs._TextureSize, (float4)((element + double4(0.4)) / 2048.0));
-            texSize[0] = indexSize.x;
-            texSize[1] = indexSize.y;
-            shader.SetInts(ShaderIDs._IndexTextureSize, texSize);
-            shader.SetTexture(4, ShaderIDs._IndexTexture, indexTex);
-            int dispatchCount = Mathf.CeilToInt(vtVariables[3] / 8f);
-            shader.Dispatch(4, dispatchCount, dispatchCount, 1);
-        }
-
-        public NativeArray<int> LoadNewTextureChunks(int2 startIndex, int size, Allocator alloc)
-        {
-            if (size * size > setIndexBuffer.count)
+            if (chunkCount * chunkCount > setIndexBuffer.count)
             {
                 setIndexBuffer.Dispose();
-                setIndexBuffer = new ComputeBuffer(size * size, sizeof(uint));
+                setIndexBuffer = new ComputeBuffer(chunkCount * chunkCount, sizeof(uint));
             }
-            NativeArray<int> texs = new NativeArray<int>(size * size, alloc, NativeArrayOptions.UninitializedMemory);
-
-            int* ptr = texs.Ptr();
-            for (int y = 0; y < size; ++y)
-                for (int x = 0; x < size; ++x)
+            int fullSize = chunkCount * chunkSize;
+            int* ptr = texsContainner.Ptr();
+            for (int y = 0; y < chunkCount; ++y)
+                for (int x = 0; x < chunkCount; ++x)
                 {
-                    int2 idx = startIndex + int2(x, y);
-                    bool res = GetChunk(ref idx, 1, out ptr[x + y * size]);
+                    int2 idx = startIndex + int2(x * chunkSize, y * chunkSize);
+                    bool res = GetChunk(ref idx, chunkSize, out ptr[x + y * chunkCount]);
                 }
             startIndex %= indexSize;
             vtVariables[0] = startIndex.x;
             vtVariables[1] = startIndex.y;
-            vtVariables[2] = size;
+            vtVariables[2] = chunkSize;
+            vtVariables[3] = chunkCount;
             shader.SetInts(ShaderIDs._VTVariables, vtVariables);
             texSize[0] = indexSize.x;
             texSize[1] = indexSize.y;
             shader.SetInts(ShaderIDs._IndexTextureSize, texSize);
             shader.SetTexture(1, ShaderIDs._IndexTexture, indexTex);
             shader.SetBuffer(1, ShaderIDs._ElementBuffer, setIndexBuffer);
-            setIndexBuffer.SetData(texs);
-            int dispatchCount = Mathf.CeilToInt(size / 8f);
+            setIndexBuffer.SetData(texsContainner);
+            int dispatchCount = Mathf.CeilToInt(fullSize / 8f);
             shader.Dispatch(1, dispatchCount, dispatchCount, 1);
-            return texs;
         }
         /// <summary>
         /// Unload space
@@ -407,6 +387,115 @@ namespace MPipeline
             shader.SetTexture(0, ShaderIDs._IndexTexture, indexTex);
             int dispatchCount = Mathf.CeilToInt(targetSize / 8f);
             shader.Dispatch(0, dispatchCount, dispatchCount, 1);
+        }
+
+        public int CombineQuadTextureImmiedietely(int2 leftDownIndex, int2 rightDownIndex, int2 leftUpIndex, int2 rightUpIndex, int2 targetIndex, int targetSize)
+        {
+            int leftDown = GetChunkIndex(leftDownIndex);
+            int leftUp = GetChunkIndex(leftUpIndex);
+            int rightDown = GetChunkIndex(rightDownIndex);
+            int rightUp = GetChunkIndex(rightUpIndex);
+            UnloadChunk(ref leftDownIndex);
+            UnloadChunk(ref rightDownIndex);
+            UnloadChunk(ref leftUpIndex);
+            UnloadChunk(ref rightUpIndex);
+            int targetElement;
+            if (!GetChunk(ref targetIndex, targetSize, out targetElement)) return -1;
+            if (leftDown < 0 || leftUp < 0 || rightDown < 0 || rightUp < 0) return -1;
+            foreach (var i in textures)
+            {
+                RenderTexture tempRT = RenderTexture.GetTemporary(new RenderTextureDescriptor
+                {
+                    autoGenerateMips = false,
+                    bindMS = false,
+                    graphicsFormat = i.graphicsFormat,
+                    depthBufferBits = 0,
+                    msaaSamples = 1,
+                    dimension = TextureDimension.Tex2D,
+                    volumeDepth = 1,
+                    width = i.width * 2,
+                    height = i.height * 2,
+                    useMipMap = false
+                });
+                tempRT.filterMode = FilterMode.Bilinear;
+                Graphics.CopyTexture(i, leftDown, 0, 0, 0, i.width, i.height, tempRT, 0, 0, 0, 0);
+                Graphics.CopyTexture(i, rightDown, 0, 0, 0, i.width, i.height, tempRT, 0, 0, i.width, 0);
+                Graphics.CopyTexture(i, leftUp, 0, 0, 0, i.width, i.height, tempRT, 0, 0, 0, i.height);
+                Graphics.CopyTexture(i, rightUp, 0, 0, 0, i.width, i.height, tempRT, 0, 0, i.width, i.height);
+                shader.SetInt(ShaderIDs._TargetElement, targetElement);
+                shader.SetInt(ShaderIDs._Count, i.width);
+                shader.SetTexture(4, ShaderIDs._VirtualTexture, i);
+                shader.SetTexture(4, ShaderIDs._MainTex, tempRT);
+                int disp = i.width / 8;
+                shader.Dispatch(4, disp, disp, 1);
+                RenderTexture.ReleaseTemporary(tempRT);
+            }
+            vtVariables[0] = targetIndex.x;
+            vtVariables[1] = targetIndex.y;
+            vtVariables[2] = targetSize;
+            vtVariables[3] = targetElement;
+            shader.SetInts(ShaderIDs._VTVariables, vtVariables);
+            texSize[0] = indexSize.x;
+            texSize[1] = indexSize.y;
+            shader.SetInts(ShaderIDs._IndexTextureSize, texSize);
+            shader.SetTexture(0, ShaderIDs._IndexTexture, indexTex);
+            int dispatchCount = Mathf.CeilToInt(targetSize / 8f);
+            shader.Dispatch(0, dispatchCount, dispatchCount, 1);
+            return targetElement;
+        }
+
+        public int CombineQuadTextures(int2 leftDownIndex, int2 rightDownIndex, int2 leftUpIndex, int2 rightUpIndex, int2 targetIndex, int targetSize, CommandBuffer buffer)
+        {
+            int leftDown = GetChunkIndex(leftDownIndex);
+            int leftUp = GetChunkIndex(leftUpIndex);
+            int rightDown = GetChunkIndex(rightDownIndex);
+            int rightUp = GetChunkIndex(rightUpIndex);
+            UnloadChunk(ref leftDownIndex);
+            UnloadChunk(ref rightDownIndex);
+            UnloadChunk(ref leftUpIndex);
+            UnloadChunk(ref rightUpIndex);
+            int targetElement;
+            if (!GetChunk(ref targetIndex, targetSize, out targetElement)) return -1;
+            if (leftDown < 0 || leftUp < 0 || rightDown < 0 || rightUp < 0) return -1;
+            foreach (var i in textures)
+            {
+                buffer.GetTemporaryRT(ShaderIDs._TempPropBuffer, new RenderTextureDescriptor
+                {
+                    autoGenerateMips = false,
+                    bindMS = false,
+                    graphicsFormat = i.graphicsFormat,
+                    depthBufferBits = 0,
+                    msaaSamples = 1,
+                    dimension = TextureDimension.Tex2D,
+                    volumeDepth = 1,
+                    width = i.width * 2,
+                    height = i.height * 2,
+                    useMipMap = false
+                }, FilterMode.Bilinear);
+                buffer.CopyTexture(i, leftDown, 0, 0, 0, i.width, i.height, ShaderIDs._TempPropBuffer, 0, 0, 0, 0);
+                buffer.CopyTexture(i, rightDown, 0, 0, 0, i.width, i.height, ShaderIDs._TempPropBuffer, 0, 0, i.width, 0);
+                buffer.CopyTexture(i, leftUp, 0, 0, 0, i.width, i.height, ShaderIDs._TempPropBuffer, 0, 0, 0, i.height);
+                buffer.CopyTexture(i, rightUp, 0, 0, 0, i.width, i.height, ShaderIDs._TempPropBuffer, 0, 0, i.width, i.height);
+                buffer.SetComputeIntParam(shader, ShaderIDs._TargetElement, targetElement);
+                buffer.SetComputeIntParam(shader, ShaderIDs._Count, i.width);
+                buffer.SetComputeTextureParam(shader, 4, ShaderIDs._VirtualTexture, i);
+                buffer.SetComputeTextureParam(shader, 4, ShaderIDs._MainTex, ShaderIDs._TempPropBuffer);
+                int disp = i.width / 8;
+                buffer.DispatchCompute(shader, 4, disp, disp, 1);
+                buffer.ReleaseTemporaryRT(ShaderIDs._TempPropBuffer);
+            }
+            vtVariables[0] = targetIndex.x;
+            vtVariables[1] = targetIndex.y;
+            vtVariables[2] = targetSize;
+            vtVariables[3] = targetElement;
+            shader.SetInts(ShaderIDs._VTVariables, vtVariables);
+            texSize[0] = indexSize.x;
+            texSize[1] = indexSize.y;
+            shader.SetInts(ShaderIDs._IndexTextureSize, texSize);
+            shader.SetTexture(0, ShaderIDs._IndexTexture, indexTex);
+            int dispatchCount = Mathf.CeilToInt(targetSize / 8f);
+            shader.Dispatch(0, dispatchCount, dispatchCount, 1);
+            return targetElement;
         }
     }
 }

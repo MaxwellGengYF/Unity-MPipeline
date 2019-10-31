@@ -4,6 +4,7 @@
 #pragma kernel GenerateMip NOT_COMBINE
 #pragma kernel DecodeR8
 #pragma kernel DecodeR16
+
 RWStructuredBuffer<float> _TextureBuffer;
 Texture2D<float> _MainTex; SamplerState sampler_MainTex;
 
@@ -56,3 +57,4 @@ void DecodeR16(uint2 id : SV_DISPATCHTHREADID)
     value &= 65535;
     _DestTex[id+_OffsetIndex] = value / 65535.0;
 }
+

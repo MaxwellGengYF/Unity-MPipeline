@@ -1,32 +1,36 @@
 #ifndef TERRAIN_INCLUDE
 #define TERRAIN_INCLUDE
-struct TerrainChunkBuffer
-{
-    float2 worldPos;
-    float2 scale;
-    uint2 vtUV;
-};
+
 struct Terrain_Appdata
 {
-    float3 position;
+    float2 position;
     float2 uv;
+    float2 normalizePos;
     uint2 vtUV;
-    float scale;
+    uint2 indexCoord;
 };
-static const float2 TerrainMesh[96] = {float2(0.0,0.0), float2(0.0,0.25), float2(0.25,0.0), float2(0.0,0.25), float2(0.25,0.25), float2(0.25,0.0),float2(0.0,0.25), float2(0.0,0.5), float2(0.25,0.25), float2(0.0,0.5), float2(0.25,0.5), float2(0.25,0.25),float2(0.0,0.5), float2(0.0,0.75), float2(0.25,0.5), float2(0.0,0.75), float2(0.25,0.75), float2(0.25,0.5),float2(0.0,0.75), float2(0.0,1.0), float2(0.25,0.75), float2(0.0,1.0), float2(0.25,1.0), float2(0.25,0.75),float2(0.25,0.0), float2(0.25,0.25), float2(0.5,0.0), float2(0.25,0.25), float2(0.5,0.25), float2(0.5,0.0),float2(0.25,0.25), float2(0.25,0.5), float2(0.5,0.25), float2(0.25,0.5), float2(0.5,0.5), float2(0.5,0.25),float2(0.25,0.5), float2(0.25,0.75), float2(0.5,0.5), float2(0.25,0.75), float2(0.5,0.75), float2(0.5,0.5),float2(0.25,0.75), float2(0.25,1.0), float2(0.5,0.75), float2(0.25,1.0), float2(0.5,1.0), float2(0.5,0.75),float2(0.5,0.0), float2(0.5,0.25), float2(0.75,0.0), float2(0.5,0.25), float2(0.75,0.25), float2(0.75,0.0),float2(0.5,0.25), float2(0.5,0.5), float2(0.75,0.25), float2(0.5,0.5), float2(0.75,0.5), float2(0.75,0.25),float2(0.5,0.5), float2(0.5,0.75), float2(0.75,0.5), float2(0.5,0.75), float2(0.75,0.75), float2(0.75,0.5),float2(0.5,0.75), float2(0.5,1.0), float2(0.75,0.75), float2(0.5,1.0), float2(0.75,1.0), float2(0.75,0.75),float2(0.75,0.0), float2(0.75,0.25), float2(1.0,0.0), float2(0.75,0.25), float2(1.0,0.25), float2(1.0,0.0),float2(0.75,0.25), float2(0.75,0.5), float2(1.0,0.25), float2(0.75,0.5), float2(1.0,0.5), float2(1.0,0.25),float2(0.75,0.5), float2(0.75,0.75), float2(1.0,0.5), float2(0.75,0.75), float2(1.0,0.75), float2(1.0,0.5),float2(0.75,0.75), float2(0.75,1.0), float2(1.0,0.75), float2(0.75,1.0), float2(1.0,1.0), float2(1.0,0.75)};
-StructuredBuffer<TerrainChunkBuffer> _TerrainChunks;
-StructuredBuffer<uint> _CullResultBuffer;
-Terrain_Appdata GetTerrain(uint instanceID, uint vertexID)
+struct TerrainPoint
 {
-    TerrainChunkBuffer data = _TerrainChunks[_CullResultBuffer[instanceID]];
+    float2 localCoord;
+    float2 indexCoord;
+};
+
+StructuredBuffer<TerrainPoint> verticesBuffer;
+
+float4 _StartPos;//XY: worldpos start  Z: one chunk size W: chunk count
+float4 _TextureSize;
+Texture2D<float> _CullingTexture; SamplerState sampler_CullingTexture;
+
+Terrain_Appdata GetTerrain(uint vertexID)
+{
+    TerrainPoint v = verticesBuffer[vertexID];
     Terrain_Appdata o;
-    float2 uv = TerrainMesh[vertexID];
-    o.uv = uv * data.scale.y;
-    uv *= data.scale.x;
-    float3 worldPos = float3(data.worldPos + uv, 0);
-    o.scale = data.scale.y;
-    o.position = worldPos.xzy;
-    o.vtUV = data.vtUV;
+    float2 coord = v.indexCoord + v.localCoord;
+    o.position = _StartPos.xy + coord * _StartPos.z;
+    o.uv = v.localCoord;
+    o.normalizePos = coord / _StartPos.w;
+    o.vtUV = (uint2)(v.indexCoord + _TextureSize.xy + 0.3);
+    o.indexCoord = v.indexCoord;
     return o;
 }
 #endif

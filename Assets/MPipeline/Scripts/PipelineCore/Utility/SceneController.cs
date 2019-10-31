@@ -271,7 +271,7 @@ namespace MPipeline
                 }
                 if (MTerrain.current)
                 {
-                    MTerrain.current.DrawTerrain(opts.command, 1, vec);
+                    MTerrain.current.DrawTerrain(opts.command, 1, vec, frustumMinValue, frustumMaxValue);
                 }
                 data.ExecuteCommandBuffer();
                 FilteringSettings renderSettings = new FilteringSettings()

@@ -371,7 +371,7 @@ namespace MPipeline
             localToWorldMatrix.c1 = float4(up, 0);
             localToWorldMatrix.c2 = float4(forward, 0);
             localToWorldMatrix.c3 = float4(position, 1);
-            worldToCameraMatrix = MathLib.GetWorldToLocal(localToWorldMatrix);
+            worldToCameraMatrix = MathLib.GetWorldToLocal(ref localToWorldMatrix);
             float4 row2 = -float4(worldToCameraMatrix.c0.z, worldToCameraMatrix.c1.z, worldToCameraMatrix.c2.z, worldToCameraMatrix.c3.z);
             worldToCameraMatrix.c0.z = row2.x;
             worldToCameraMatrix.c1.z = row2.y;
@@ -380,7 +380,7 @@ namespace MPipeline
         }
         public void UpdateViewMatrix(float4x4 localToWorld)
         {
-            worldToCameraMatrix = MathLib.GetWorldToLocal(localToWorld);
+            worldToCameraMatrix = MathLib.GetWorldToLocal(ref localToWorld);
             right = localToWorld.c0.xyz;
             up = localToWorld.c1.xyz;
             forward = localToWorld.c2.xyz;
@@ -415,7 +415,7 @@ namespace MPipeline
             localToWorldMatrix.c1 = new float4(up, 0);
             localToWorldMatrix.c2 = new float4(forward, 0);
             localToWorldMatrix.c3 = new float4(position, 1);
-            worldToCameraMatrix = MathLib.GetWorldToLocal(localToWorldMatrix);
+            worldToCameraMatrix = MathLib.GetWorldToLocal(ref localToWorldMatrix);
             worldToCameraMatrix.c0.z = -worldToCameraMatrix.c0.z;
             worldToCameraMatrix.c1.z = -worldToCameraMatrix.c1.z;
             worldToCameraMatrix.c2.z = -worldToCameraMatrix.c2.z;

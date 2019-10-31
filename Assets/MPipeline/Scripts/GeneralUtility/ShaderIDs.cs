@@ -181,6 +181,7 @@ public static partial class ShaderIDs
 
     public static readonly int _BlendTex = Shader.PropertyToID("_BlendTex");
     public static readonly int _OffsetScale = Shader.PropertyToID("_OffsetScale");
+    public static readonly int _MaskScaleOffset = Shader.PropertyToID("_MaskScaleOffset");
     public static readonly int _BlendTex_TexelSize = Shader.PropertyToID("_BlendTex_TexelSize");
     public static readonly int _BlendAlpha = Shader.PropertyToID("_BlendAlpha");
 
@@ -208,6 +209,10 @@ public static partial class ShaderIDs
     public static readonly int _VirtualBumpMap = Shader.PropertyToID("_VirtualBumpMap");
     public static readonly int _VirtualSMO = Shader.PropertyToID("_VirtualSMO");
     public static readonly int _VirtualHeightmap = Shader.PropertyToID("_VirtualHeightmap");
+    public static readonly int _VirtualDisplacementTemp = Shader.PropertyToID("_VirtualDisplacementTemp");
     public static readonly int _HeightScaleOffset = Shader.PropertyToID("_HeightScaleOffset");
+    public static readonly int _StartPos = Shader.PropertyToID("_StartPos");
+    public static readonly int _CullingTexture = Shader.PropertyToID("_CullingTexture");
+    public static readonly int _TessellationFactors = Shader.PropertyToID("_TessellationFactors");
 
 }

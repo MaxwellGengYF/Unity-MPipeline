@@ -1,39 +1,42 @@
 ﻿#pragma kernel Cull
 #pragma kernel Clear
 #pragma kernel DecodeR8
-#pragma kernel DecodeR16
 #include "../CGINC/Plane.cginc"
 uint _Count;
-struct TerrainChunkBuffer
-{
-    float2 worldPos;
-    float2 scale;
-    uint2 vtUV;
-};
-RWStructuredBuffer<TerrainChunkBuffer> _TerrainChunks;
-RWStructuredBuffer<uint> _CullResultBuffer;
-RWStructuredBuffer<uint> _DispatchBuffer;
+float3 _StartPos;
 float4 planes[6];
-float2 _HeightScaleOffset;
-[numthreads(64, 1, 1)]
-void Cull(uint id : SV_DISPATCHTHREADID)
+float2 _HeightScaleOffset;//X: scale Y: offset
+float3 _FrustumMaxPoint;
+float3 _FrustumMinPoint;
+RWTexture2D<float> _CullingTexture;
+[numthreads(8, 8, 1)]
+void Cull(uint2 id : SV_DISPATCHTHREADID)
 {
-    if(id >= _Count) return;
-    uint len;
-    TerrainChunkBuffer buffer = _TerrainChunks[id];
-    float3 startPos = float3(buffer.worldPos.x, _HeightScaleOffset.y, buffer.worldPos.y);
-    float3 extents = float3(buffer.scale.x, _HeightScaleOffset.x, buffer.scale.x) * 0.5;
-    if(BoxIntersect(extents, startPos + extents, planes))
+    float2 uv = (id + 0.5) / _Count;
+    float heightScale = 0.5 * _HeightScaleOffset.x;
+    float3 pos = float3(_StartPos.xy + _StartPos.z * id, _HeightScaleOffset.y + heightScale);
+    pos.xyz = pos.xzy;
+    float3 extent = float3(_StartPos.z, heightScale, _StartPos.z);
+    extent.xz *= 0.5;
+    pos.xz += extent.xz;
+    float3 chunkMinPos = pos - extent;
+    float3 chunkMaxPos = pos + extent;
+    float result = dot(chunkMinPos > _FrustumMaxPoint, 1) + dot(chunkMaxPos < _FrustumMinPoint, 1);
+    //TODO
+    if(/*result < 0.5 &&*/ BoxIntersect(extent, pos, planes) > 0.5)
     {
-        InterlockedAdd(_DispatchBuffer[1], 1, len);
-        _CullResultBuffer[len] = id;
+       _CullingTexture[id] = 1;
     }
+    else
+    {
+        _CullingTexture[id] = 0;
+    }
+    
 }
 
 [numthreads(1, 1, 1)]
 void Clear(uint id : SV_DISPATCHTHREADID)
 {
-    _DispatchBuffer[1] = 0;
 }
 RWTexture2D<float> _MainTex;
 StructuredBuffer<uint> _TextureBuffer; 
@@ -50,12 +53,3 @@ void DecodeR8(uint2 id : SV_DISPATCHTHREADID)
     _MainTex[id] = value / 255.0;
 }
 
-[numthreads(8,8,1)]
-void DecodeR16(uint2 id : SV_DISPATCHTHREADID)
-{
-    uint index = id.y * _HeightResolution + id.x;
-    uint value = _TextureBuffer[index / 2];
-    value >>= (index % 2) * 16;
-    value &= 65535;
-    _VirtualHeightmap[uint3(id, _OffsetIndex)] = value / 65535.0;
-}

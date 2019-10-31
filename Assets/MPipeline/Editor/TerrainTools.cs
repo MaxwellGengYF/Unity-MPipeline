@@ -7,67 +7,73 @@ using Unity.Mathematics;
 using static Unity.Mathematics.math;
 namespace MPipeline
 {
-   
+
     public class TerrainTools : EditorWindow
     {
         public MTerrainData terrainData;
-        public Vector2Int chunkPosition;
-        public int chunkSize = 1;
+        public Vector2Int chunkPosition = Vector2Int.zero;
+        public int targetChunkCount = 1;
         public Texture heightTexture;
+        public ComputeShader terrainEdit;
         [MenuItem("MPipeline/Terrain/Generate Tool")]
         private static void CreateInstance()
         {
             TerrainTools mip = GetWindow(typeof(TerrainTools)) as TerrainTools;
+            mip.terrainEdit = Resources.Load<ComputeShader>("TerrainEdit");
             mip.Show();
         }
         private void OnGUI()
         {
+            if(!terrainEdit)
+            {
+                terrainEdit = Resources.Load<ComputeShader>("TerrainEdit");
+            }
             terrainData = (MTerrainData)EditorGUILayout.ObjectField("Terrain Data", terrainData, typeof(MTerrainData), false);
             chunkPosition = EditorGUILayout.Vector2IntField("Chunk Position", new Vector2Int(chunkPosition.x, chunkPosition.y));
-            chunkSize = EditorGUILayout.IntField("Chunk Size", chunkSize);
-            chunkSize = max(1, chunkSize);
             heightTexture = EditorGUILayout.ObjectField("Height Texture", heightTexture, typeof(Texture), false) as Texture;
+            targetChunkCount = EditorGUILayout.IntField("Chunk Count", targetChunkCount);
+            targetChunkCount = max(0, targetChunkCount);
             if (!terrainData)
                 return;
-            if (GUILayout.Button("Update Height Mask Texture"))
+            if (GUILayout.Button("Update Height Texture"))
             {
-                TerrainFactory factory = new TerrainFactory(terrainData.lodDistances.Length - terrainData.renderingLevelCount, terrainData.lodDistances.Length, terrainData.readWritePath);
-                try
+                int chunkCount = (int)(0.1 + pow(2.0, terrainData.lodDistances.Length - terrainData.renderingLevelCount));
+                Debug.Log(chunkCount);
+                VirtualTextureLoader loader = new VirtualTextureLoader(
+                    terrainData.heightmapPath,
+                   terrainEdit,
+                    chunkCount,
+                    MTerrain.MASK_RESOLUTION, true);
+                RenderTexture cacheRt = new RenderTexture(new RenderTextureDescriptor
                 {
-                    int resolution = (int)(0.1 + pow(2.0, terrainData.renderingLevelCount));
-                    for (int x = 0; x < chunkSize; ++x)
-                        for (int y = 0; y < chunkSize; ++y)
-                        {
-                            int2 currentPos = int2(x + chunkPosition.x, y + chunkPosition.y);
-                            if (currentPos.x > resolution || currentPos.y > resolution) continue;
-                         
-                            factory.BlitHeight(currentPos, terrainData.lodDistances.Length - 1, heightTexture, 1f / chunkSize, float2(x, y) / chunkSize);
-                        }
-                }
-                finally
+                    width = MTerrain.MASK_RESOLUTION,
+                    height = MTerrain.MASK_RESOLUTION,
+                    volumeDepth = 1,
+                    dimension = UnityEngine.Rendering.TextureDimension.Tex2DArray,
+                    msaaSamples = 1,
+                    graphicsFormat = UnityEngine.Experimental.Rendering.GraphicsFormat.R32_SFloat,
+                    enableRandomWrite = true
+                });
+                cacheRt.Create();
+                for (int x = 0; x < targetChunkCount; ++x)
                 {
-                    factory.Dispose();
-                }
-            }
-            if (GUILayout.Button("Generate Mipmap"))
-            {
-                TerrainFactory factory = new TerrainFactory(terrainData.lodDistances.Length - terrainData.renderingLevelCount, terrainData.lodDistances.Length, terrainData.readWritePath);
-                try
-                {
-                    for (int i = terrainData.lodDistances.Length - 2; i >= terrainData.lodDistances.Length - terrainData.renderingLevelCount; --i)
+                    for(int y = 0; y < targetChunkCount; ++y)
                     {
-                        int resolution = (int)(0.1 + pow(2.0, i));
-                        for(int x = 0; x < resolution; ++x)
-                            for(int y = 0; y < resolution; ++y)
-                            {
-                                factory.GenerateHeightMip(int2(x, y), i);
-                            }
+                        int2 pos = int2(x, y) + int2(chunkPosition.x, chunkPosition.y);
+                        if (pos.x >= chunkCount || pos.y >= chunkCount) continue;
+                        terrainEdit.SetTexture(6, ShaderIDs._SourceTex, heightTexture);
+                        terrainEdit.SetTexture(6, ShaderIDs._DestTex, cacheRt);
+                        terrainEdit.SetInt(ShaderIDs._Count, MTerrain.MASK_RESOLUTION);
+                        terrainEdit.SetInt(ShaderIDs._OffsetIndex, 0);
+                        terrainEdit.SetVector("_ScaleOffset", float4(float2(1.0 / targetChunkCount), float2(x, y) / targetChunkCount));
+                        const int disp = MTerrain.MASK_RESOLUTION / 8;
+                        terrainEdit.Dispatch(6, disp, disp, 1);
+                        loader.WriteToDisk(cacheRt, 0, pos);
                     }
                 }
-                finally
-                {
-                    factory.Dispose();
-                }
+                
+                cacheRt.Release();
+                loader.Dispose();
             }
         }
     }

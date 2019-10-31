@@ -19,7 +19,7 @@ namespace MPipeline
             return new double4x4((float4)db.GetColumn(0), (float4)db.GetColumn(1), (float4)db.GetColumn(2), (float4)db.GetColumn(3));
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
-        public static float4x4 GetWorldToLocal(float4x4 localToWorld)
+        public static float4x4 GetWorldToLocal(ref float4x4 localToWorld)
         {
             float4x4 rotation = float4x4(float4(localToWorld.c0.xyz, 0), float4(localToWorld.c1.xyz, 0), float4(localToWorld.c2.xyz, 0), float4(0, 0, 0, 1));
             rotation = transpose(rotation);

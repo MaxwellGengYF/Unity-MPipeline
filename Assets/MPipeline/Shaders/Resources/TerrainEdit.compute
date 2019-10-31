@@ -1,0 +1,113 @@
+﻿// Each #kernel tells which function to compile; you can have many kernels
+#pragma kernel GetDepth
+#pragma kernel DrawMask
+#pragma kernel DecodeToMask
+#pragma kernel EncodeR8
+#pragma kernel DecodeR16
+#pragma kernel EncodeR16
+#pragma kernel Copy
+#include "UnityCG.cginc"
+
+RWStructuredBuffer<float> _DistanceBuffer;
+float2 _UV;
+Texture2D<float> _CameraDepthTexture; SamplerState sampler_CameraDepthTexture;
+[numthreads(1,1,1)]
+void GetDepth (uint3 id : SV_DispatchThreadID)
+{
+    _DistanceBuffer[id.x] = _CameraDepthTexture.SampleLevel(sampler_CameraDepthTexture, _UV, 0);
+}
+
+RWTexture2DArray<float> _DestTex;
+Texture2D<float> _SourceTex; SamplerState sampler_SourceTex;
+float4 _SrcDestCorner;
+uint _Count;
+uint _OffsetIndex;
+float3 _Circle0;
+float3 _Circle1;
+float4x4 _QuadMatrix;
+float _TargetValue;
+float4 _ScaleOffset;
+
+#define DETECT_PAINT(pos, result) \
+float pos##_ToFirstCircle = distance(pos, _Circle0.xy) < _Circle0.z;\
+float pos##_ToSecondCircle = distance(pos, _Circle1.xy) < _Circle1.z;\
+float2 pos##_localQuadPos = mul((float3x3)_QuadMatrix, float3(pos, 1)).xy + 0.5;\
+float pos##_inQuad = dot(abs(pos##_localQuadPos - saturate(pos##_localQuadPos)), 1) < 1e-4;\
+result = pos##_ToFirstCircle + pos##_ToSecondCircle + pos##_inQuad * _QuadMatrix[2][2];
+
+[numthreads(8,8,1)]
+void DrawMask(uint2 id : SV_DISPATCHTHREADID)
+{
+    float2 uv = (id + 0.5) / _Count;
+    float2 centerPos = lerp(_SrcDestCorner.xy, _SrcDestCorner.zw, uv);
+    float result;
+    DETECT_PAINT(centerPos, result)
+    if(result > 0.5)
+        _DestTex[uint3(id, _OffsetIndex)] = _TargetValue;
+    
+}
+RWStructuredBuffer<uint> _ElementBuffer;
+
+[numthreads(8,8,1)]
+void DecodeToMask(uint2 id : SV_DISPATCHTHREADID)
+{
+    uint index = id.y * _Count + id.x;
+    uint value = _ElementBuffer[index / 4];
+    value >>= (3 - index % 4) * 8;
+    value &= 255;
+    _DestTex[uint3(id, _OffsetIndex)] = value / 255.0;
+}
+
+[numthreads(64,1,1)]
+void EncodeR8(uint id : SV_DISPATCHTHREADID)
+{
+    uint idx = id * 4;
+    uint2 uv = uint2(idx % _Count, idx / _Count);
+    uint2 uv1 = uint2 ((idx + 1) % _Count, (idx + 1) / _Count);
+    uint2 uv2 = uint2 ((idx + 2) % _Count, (idx + 2) / _Count);
+    uint2 uv3 = uint2 ((idx + 3) % _Count, (idx + 3) / _Count);
+    uint value0 = ((uint)(_DestTex[uint3(uv, _OffsetIndex)] * 255)) & 255;
+    uint value1 = ((uint)(_DestTex[uint3(uv1, _OffsetIndex)] * 255)) & 255;
+    uint value2 = ((uint)(_DestTex[uint3(uv2, _OffsetIndex)] * 255)) & 255;
+    uint value3 = ((uint)(_DestTex[uint3(uv3, _OffsetIndex)] * 255)) & 255;
+    uint result = value0;
+    result <<= 8;
+    result |= value1;
+    result <<= 8;
+    result |= value2;
+    result <<= 8;
+    result |= value3;
+    _ElementBuffer[id] = result;
+}
+
+[numthreads(8,8,1)]
+void DecodeR16(uint2 id : SV_DISPATCHTHREADID)
+{
+    uint index = id.y * _Count + id.x;
+    uint value = _ElementBuffer[index / 2];
+    value >>= (1 - index % 2) * 16;
+    value &= 65535;
+    _DestTex[uint3(id, _OffsetIndex)] = value / 65535.0;
+}
+
+
+[numthreads(64,1,1)]
+void EncodeR16(uint id : SV_DISPATCHTHREADID)
+{
+    uint idx = id * 2;
+    uint2 uv = uint2(idx % _Count, idx / _Count);
+    uint2 uv1 = uint2 ((idx + 1) % _Count, (idx + 1) / _Count);
+    uint value0 = ((uint)(_DestTex[uint3(uv, _OffsetIndex)] * 65535)) & 65535;
+    uint value1 = ((uint)(_DestTex[uint3(uv1, _OffsetIndex)] * 65535)) & 65535;
+    uint result = value0;
+    result <<= 16;
+    result |= value1;
+    _ElementBuffer[id] = result;
+}
+
+[numthreads(8,8,1)]
+void Copy(uint2 id : SV_DISPATCHTHREADID)
+{
+    float2 uv = (id + 0.5) / _Count;
+    _DestTex[uint3(id, _OffsetIndex)] = _SourceTex.SampleLevel(sampler_SourceTex, uv * _ScaleOffset.xy + _ScaleOffset.zw, 0);
+}

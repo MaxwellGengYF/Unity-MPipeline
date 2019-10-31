@@ -25,6 +25,7 @@ namespace MPipeline
             }
         }
         public PipelineResources resources;
+        public static float3 sceneOffset { get; private set; }
         private static CommandBuffer m_afterFrameBuffer;
         private static CommandBuffer m_beforeFrameBuffer;
         private static bool useAfterFrameBuffer = false;
@@ -61,6 +62,10 @@ namespace MPipeline
             }
         }
         private static NativeDictionary<int, ulong, IntEqual> iRunnableObjects;
+        public static void MoveSceneCamera(float3 offset)
+        {
+            sceneOffset += offset;
+        }
         public static void AddPreRenderCamera(PipelineCamera tar)
         {
             preFrameRenderCamera.Add(tar);
@@ -270,14 +275,6 @@ namespace MPipeline
                 needSubmit = false;
             }
             preFrameRenderCamera.Clear();
-            if (iRunnableObjects.isCreated)
-            {
-                foreach (var i in iRunnableObjects)
-                {
-                    IPipelineRunnable func = MUnsafeUtility.GetObject<IPipelineRunnable>((void*)i.value);
-                    func.PipelineUpdate(ref data);
-                }
-            }
             if (CustomDrawRequest.allEvents.Count > 0 || JobProcessEvent.allEvents.Count > 0)
             {
                 foreach (var i in CustomDrawRequest.allEvents)
@@ -309,6 +306,18 @@ namespace MPipeline
                 m_beforeFrameBuffer.Clear();
                 needSubmit = true;
                 useBeforeFrameBuffer = false;
+            }
+            if (iRunnableObjects.isCreated)
+            {
+                foreach (var i in iRunnableObjects)
+                {
+                    IPipelineRunnable func = MUnsafeUtility.GetObject<IPipelineRunnable>((void*)i.value);
+                    func.PipelineUpdate(ref data);
+                }
+            }
+            if (cameras.Length > 0)
+            {
+                data.buffer.SetGlobalVector(ShaderIDs._SceneOffset, new float4(sceneOffset, 1));
             }
             foreach (var cam in cameras)
             {
@@ -365,6 +374,7 @@ namespace MPipeline
                 renderContext.Submit();
             }
             MotionVectorDrawer.ExecuteAfterFrame();
+            sceneOffset = 0;
         }
 
         private void Render(PipelineCamera pipelineCam, ref ScriptableRenderContext context, Camera cam, bool* pipelineChecked)

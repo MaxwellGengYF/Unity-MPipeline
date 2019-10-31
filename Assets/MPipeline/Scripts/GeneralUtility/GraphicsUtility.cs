@@ -40,7 +40,7 @@ public static class GraphicsUtility
                 new Vector2(1, -1)
             };
 
-            m_mesh.SetIndices(new int[] { 0, 1, 2}, MeshTopology.Triangles, 0);
+            m_mesh.SetIndices(new int[] { 0, 1, 2 }, MeshTopology.Triangles, 0);
             return m_mesh;
         }
     }
@@ -266,5 +266,11 @@ new Vector3(1f, 0f, 0f)
             return projection;
         }
         return projection;
+    }
+
+    public static void CopyToTexture2D(RenderTexture source, Texture2D dest)
+    {
+        RenderTexture.active = source;
+        dest.ReadPixels(new Rect(0, 0, source.width, source.height), 0, 0);
     }
 }

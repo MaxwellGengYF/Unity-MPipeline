@@ -12,38 +12,51 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 010ce77163682284691fda8b292bbe7b, type: 3}
   m_Name: TerrainData
   m_EditorClassIdentifier: 
-  heightOffset: 0
-  heightScale: 0
+  heightOffset: -100
+  heightScale: 200
+  displacementScale: 10
   materialTillingScale: 1
-  terrainLocalYPositionToGround: -11.37
-  backfaceCullingScale: 0.33333298563957214
+  terrainLocalYPositionToGround: -2
+  backfaceCullingScale: 0.20000000298023224
   largestChunkSize: 2048
   screenOffset:
     x: -1024
     y: -1024
   lodDeferredOffset: 1
-  allMaskTextures:
-  - m_AssetGUID: d5c7bc5754e171542891b97f454abc69
-    m_SubObjectName: 
-  - m_AssetGUID: 4b2f3436b3251754989f615f717f38c2
-    m_SubObjectName: 
-  - m_AssetGUID: 71380acf9681992458df78439551b8fa
-    m_SubObjectName: 
-  - m_AssetGUID: 79ae856e4954e4848acda128292810e4
-    m_SubObjectName: 
   lodDistances:
-  - 900
-  - 750
-  - 400
-  - 67.5
+  - 1500
+  - 1200
+  - 300
+  - 70
   - 55
   - 35
   - 25
-  - 10
-  - 4
+  - 15
+  - 8
   renderingLevelCount: 8
-  allDecalLayers: []
-  virtualTexCapacity: 141
+  allDecalLayers:
+  - serializedVersion: 2
+    m_Bits: 4294967295
+  - serializedVersion: 2
+    m_Bits: 4294967295
+  - serializedVersion: 2
+    m_Bits: 4294967295
+  - serializedVersion: 2
+    m_Bits: 4294967295
+  - serializedVersion: 2
+    m_Bits: 4294967295
+  - serializedVersion: 2
+    m_Bits: 4294967295
+  - serializedVersion: 2
+    m_Bits: 4294967295
+  - serializedVersion: 2
+    m_Bits: 4294967295
+  - serializedVersion: 2
+    m_Bits: 4294967295
+  - serializedVersion: 2
+    m_Bits: 4294967295
+  virtualTexCapacity: 127
+  heightmapTexCapacity: 4
   allMaterials:
   - firstMaterialIndex: 0.2
     secondMaterialIndex: 0.2
@@ -81,7 +94,8 @@ MonoBehaviour:
     secondMaterialIndex: 1.2
     offset: 0
     heightBlendScale: 0
-  readWritePath: Assets/BinaryData/Terrain.mquad
+  heightmapPath: Assets/BinaryData/TerrainHeight.mquad
+  maskmapPath: Assets/BinaryData/TerrainMask.mquad
   drawTerrainMaterial: {fileID: 2100000, guid: 895d3f610aae4944b88c1b1fc7f46f4d, type: 2}
   textures:
   - albedoOccTex:
