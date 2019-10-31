@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   heightOffset: -100
   heightScale: 200
-  displacementScale: 10
+  displacementScale: 5
   materialTillingScale: 1
   terrainLocalYPositionToGround: -2
   backfaceCullingScale: 0.20000000298023224

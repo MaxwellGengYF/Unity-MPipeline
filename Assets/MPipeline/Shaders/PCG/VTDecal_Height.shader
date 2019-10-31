@@ -152,7 +152,7 @@ ENDCG
                 float vtHeight = _VirtualHeightmap.SampleLevel(sampler_VirtualHeightmap, float3(screenUV * _MaskScaleOffset.x + _MaskScaleOffset.yz, _OffsetIndex + 0.2), 0);
                  float vtWorldHeight = vtHeight * _HeightScaleOffset.x + _HeightScaleOffset.y;
                 float heightDiff = i.worldPos.y - vtWorldHeight;
-                return clamp(heightDiff * _MaskScaleOffset.w, -1, 1);
+                return clamp(heightDiff * _MaskScaleOffset.w, 0, 1);
             }
             ENDCG
         }

@@ -31,7 +31,7 @@ namespace MPipeline
         }
         public const int MASK_RESOLUTION = 2048;
         public const int COLOR_RESOLUTION = 1024;
-        public const int HEIGHT_RESOLUTION = 256;
+        public const int HEIGHT_RESOLUTION = 128;
         public const GraphicsFormat HEIGHT_FORMAT = GraphicsFormat.R16_SNorm;
         public MTerrainData terrainData;
         public VTDecalCamera decalCamera;

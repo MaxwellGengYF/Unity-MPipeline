@@ -168,37 +168,22 @@ namespace MPipeline
             UnsafeUtility.MemCpy(allFormats.GetUnsafePtr(), formats, sizeof(VirtualTextureFormat) * formatLen);
             shader = Resources.Load<ComputeShader>("VirtualTexture");
             pool = new TexturePool(maximumSize);
-            indexTex = new RenderTexture(new RenderTextureDescriptor
-            {
-                graphicsFormat = GraphicsFormat.R16G16B16A16_UNorm,
-                depthBufferBits = 0,
-                dimension = TextureDimension.Tex2D,
-                enableRandomWrite = true,
-                width = indexSize.x,
-                height = indexSize.y,
-                volumeDepth = 1,
-                msaaSamples = 1
-            });
+            indexTex = new RenderTexture(indexSize.x, indexSize.y, 0, GraphicsFormat.R16G16B16A16_UNorm, 0);
+            indexTex.enableRandomWrite = true;
+            indexTex.useMipMap = false;
             indexTex.filterMode = FilterMode.Point;
             indexTex.Create();
             textures = new RenderTexture[formatLen];
             for (int i = 0; i < formatLen; ++i)
             {
                 ref VirtualTextureFormat format = ref formats[i];
-                textures[i] = new RenderTexture(new RenderTextureDescriptor
-                {
-                    graphicsFormat = format.format,
-                    width = (int)format.perElementSize,
-                    height = (int)format.perElementSize,
-                    volumeDepth = maximumSize,
-                    dimension = TextureDimension.Tex2DArray,
-                    mipCount = format.mipCount,
-                    autoGenerateMips = false,
-                    useMipMap = format.mipCount > 0,
-                    enableRandomWrite = true,
-                    msaaSamples = 1,
-                    depthBufferBits = 0,
-                });
+                textures[i] = new RenderTexture((int)format.perElementSize, (int)format.perElementSize, 0, format.format, format.mipCount);
+                textures[i].autoGenerateMips = false;
+                textures[i].useMipMap = format.mipCount > 0;
+                textures[i].enableRandomWrite = true;
+                textures[i].volumeDepth = maximumSize;
+                textures[i].dimension = TextureDimension.Tex2DArray;
+                textures[i].antiAliasing = 1;
                 textures[i].Create();
             }
         }
@@ -335,60 +320,6 @@ namespace MPipeline
             UnloadChunk(ref startIndex);
         }
 
-        public void CombineTexture(int2 startIndex, int targetSize, bool unloadCheck)
-        {
-            if (unloadCheck)
-            {
-                for (int y = 0; y < targetSize; ++y)
-                {
-                    for (int x = 0; x < targetSize; ++x)
-                    {
-                        int2 curIdx = startIndex + int2(x, y);
-                        UnloadChunk(ref curIdx);
-                    }
-                }
-            }
-            int targetElement;
-            if (!GetChunk(ref startIndex, targetSize, out targetElement)) return;
-            int3* vtPtr = (int3*)vtVariables.Ptr();
-            *vtPtr = int3(startIndex, targetSize);
-            shader.SetInts(ShaderIDs._VTVariables, vtVariables);
-            texSize[0] = indexSize.x;
-            texSize[1] = indexSize.y;
-            shader.SetInts(ShaderIDs._IndexTextureSize, texSize);
-            shader.SetTexture(3, ShaderIDs._IndexTexture, indexTex);
-            for (int i = 0; i < allFormats.Length; ++i)
-            {
-                VirtualTextureFormat fmt = allFormats[i];
-                RenderTexture blendRT = RenderTexture.GetTemporary(new RenderTextureDescriptor
-                {
-                    width = (int)fmt.perElementSize,
-                    height = (int)fmt.perElementSize,
-                    volumeDepth = 1,
-                    graphicsFormat = fmt.format,
-                    dimension = TextureDimension.Tex2D,
-                    enableRandomWrite = true,
-                    msaaSamples = 1
-                });
-                blendRT.Create();
-                shader.SetInt(ShaderIDs._Count, (int)fmt.perElementSize);
-                shader.SetTexture(3, ShaderIDs._TextureBuffer, textures[i]);
-                shader.SetTexture(3, ShaderIDs._BlendTex, blendRT);
-                int disp = Mathf.CeilToInt((int)fmt.perElementSize / 8f);
-                shader.Dispatch(3, disp, disp, 1);
-                Graphics.CopyTexture(blendRT, 0, 0, textures[i], targetElement, 0);
-                RenderTexture.ReleaseTemporary(blendRT);
-            }
-            vtVariables[0] = startIndex.x;
-            vtVariables[1] = startIndex.y;
-            vtVariables[2] = targetSize;
-            vtVariables[3] = targetElement;
-            shader.SetInts(ShaderIDs._VTVariables, vtVariables);
-            shader.SetTexture(0, ShaderIDs._IndexTexture, indexTex);
-            int dispatchCount = Mathf.CeilToInt(targetSize / 8f);
-            shader.Dispatch(0, dispatchCount, dispatchCount, 1);
-        }
-
         public int CombineQuadTextureImmiedietely(int2 leftDownIndex, int2 rightDownIndex, int2 leftUpIndex, int2 rightUpIndex, int2 targetIndex, int targetSize)
         {
             int leftDown = GetChunkIndex(leftDownIndex);
@@ -404,19 +335,7 @@ namespace MPipeline
             if (leftDown < 0 || leftUp < 0 || rightDown < 0 || rightUp < 0) return -1;
             foreach (var i in textures)
             {
-                RenderTexture tempRT = RenderTexture.GetTemporary(new RenderTextureDescriptor
-                {
-                    autoGenerateMips = false,
-                    bindMS = false,
-                    graphicsFormat = i.graphicsFormat,
-                    depthBufferBits = 0,
-                    msaaSamples = 1,
-                    dimension = TextureDimension.Tex2D,
-                    volumeDepth = 1,
-                    width = i.width * 2,
-                    height = i.height * 2,
-                    useMipMap = false
-                });
+                RenderTexture tempRT = RenderTexture.GetTemporary(i.width * 2, i.height * 2, 0, i.graphicsFormat, 1);
                 tempRT.filterMode = FilterMode.Bilinear;
                 Graphics.CopyTexture(i, leftDown, 0, 0, 0, i.width, i.height, tempRT, 0, 0, 0, 0);
                 Graphics.CopyTexture(i, rightDown, 0, 0, 0, i.width, i.height, tempRT, 0, 0, i.width, 0);
@@ -459,19 +378,7 @@ namespace MPipeline
             if (leftDown < 0 || leftUp < 0 || rightDown < 0 || rightUp < 0) return -1;
             foreach (var i in textures)
             {
-                buffer.GetTemporaryRT(ShaderIDs._TempPropBuffer, new RenderTextureDescriptor
-                {
-                    autoGenerateMips = false,
-                    bindMS = false,
-                    graphicsFormat = i.graphicsFormat,
-                    depthBufferBits = 0,
-                    msaaSamples = 1,
-                    dimension = TextureDimension.Tex2D,
-                    volumeDepth = 1,
-                    width = i.width * 2,
-                    height = i.height * 2,
-                    useMipMap = false
-                }, FilterMode.Bilinear);
+                buffer.GetTemporaryRT(ShaderIDs._TempPropBuffer, i.width * 2, i.height * 2, 0, FilterMode.Bilinear, i.graphicsFormat, 1, false);
                 buffer.CopyTexture(i, leftDown, 0, 0, 0, i.width, i.height, ShaderIDs._TempPropBuffer, 0, 0, 0, 0);
                 buffer.CopyTexture(i, rightDown, 0, 0, 0, i.width, i.height, ShaderIDs._TempPropBuffer, 0, 0, i.width, 0);
                 buffer.CopyTexture(i, leftUp, 0, 0, 0, i.width, i.height, ShaderIDs._TempPropBuffer, 0, 0, 0, i.height);
