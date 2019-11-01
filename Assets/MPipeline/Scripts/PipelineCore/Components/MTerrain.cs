@@ -132,9 +132,9 @@ namespace MPipeline
         void LoadTexture(int2 startIndex, int size, int2 rootPos, float3 maskScaleOffset, int texElement, CommandBuffer buffer)
         {
             double oneHeightPixelSize = size * oneVTPixelWorldLength / COLOR_RESOLUTION;
-            
+
             buffer.SetComputeIntParam(textureShader, ShaderIDs._OffsetIndex, texElement);
-            buffer.SetComputeVectorParam(textureShader, ShaderIDs._IndexBuffer,(float4) double4(rootPos, terrainData.heightScale, (1.0 / oneHeightPixelSize)));
+            buffer.SetComputeVectorParam(textureShader, ShaderIDs._IndexBuffer, (float4)double4(rootPos, terrainData.heightScale, (1.0 / oneHeightPixelSize)));
             buffer.SetComputeVectorParam(textureShader, ShaderIDs._IndexTextureSize, float4(MASK_RESOLUTION, min(255, terrainData.allMaterials.Length - 1), vt.indexSize));
             buffer.SetComputeVectorParam(textureShader, ShaderIDs._TextureSize, (float4)double4(maskScaleOffset, size * terrainData.materialTillingScale));
             const int disp = COLOR_RESOLUTION / 8;
@@ -186,22 +186,21 @@ namespace MPipeline
                 heightIndex = heightIndex
             });
         }
-        void CalculateRootPos(ref int2 rootPos,ref float3 maskScaleOffset)
+        void CalculateRootPos(ref int2 rootPos, ref float3 maskScaleOffset)
         {
             rootPos += (int2)maskScaleOffset.yz;
             maskScaleOffset.yz = frac(maskScaleOffset.yz);
         }
         IEnumerator AsyncLoader()
         {
-            CommandBuffer buffer = RenderPipeline.BeforeFrameBuffer;
-            buffer.SetComputeTextureParam(textureShader, 1, ShaderIDs._VirtualMainTex, albedoTex);
-            buffer.SetComputeTextureParam(textureShader, 1, ShaderIDs._VirtualBumpMap, normalTex);
-            buffer.SetComputeTextureParam(textureShader, 1, ShaderIDs._VirtualSMO, smTex);
-            buffer.SetComputeTextureParam(textureShader, 1, ShaderIDs._MaskTex, heightTex);
-            buffer.SetComputeTextureParam(textureShader, 2, ShaderIDs._VirtualMainTex, albedoTex);
-            buffer.SetComputeTextureParam(textureShader, 2, ShaderIDs._VirtualBumpMap, normalTex);
-            buffer.SetComputeTextureParam(textureShader, 2, ShaderIDs._VirtualSMO, smTex);
-            buffer.SetComputeTextureParam(textureShader, 2, ShaderIDs._MaskTex, heightTex);
+            textureShader.SetTexture(1, ShaderIDs._VirtualMainTex, albedoTex);
+            textureShader.SetTexture(1, ShaderIDs._VirtualBumpMap, normalTex);
+            textureShader.SetTexture(1, ShaderIDs._VirtualSMO, smTex);
+            textureShader.SetTexture(1, ShaderIDs._MaskTex, heightTex);
+            textureShader.SetTexture(2, ShaderIDs._VirtualMainTex, albedoTex);
+            textureShader.SetTexture(2, ShaderIDs._VirtualBumpMap, normalTex);
+            textureShader.SetTexture(2, ShaderIDs._VirtualSMO, smTex);
+            textureShader.SetTexture(2, ShaderIDs._MaskTex, heightTex);
             for (int i = 0; i < terrainData.textures.Length; ++i)
             {
                 PBRTexture texs = terrainData.textures[i];
@@ -212,24 +211,23 @@ namespace MPipeline
                 yield return normalLoader;
                 yield return smLoader;
                 const int disp = COLOR_RESOLUTION / 8;
-                RenderPipeline.BeforeFrameBuffer.SetComputeIntParam(textureShader, ShaderIDs._OffsetIndex, i);
+                textureShader.SetInt(ShaderIDs._OffsetIndex, i);
                 if (albedoLoader.Result && normalLoader.Result && smLoader.Result)
                 {
-                    RenderPipeline.BeforeFrameBuffer.SetComputeTextureParam(textureShader, 1, ShaderIDs._TerrainMainTexArray, albedoLoader.Result);
-                    RenderPipeline.BeforeFrameBuffer.SetComputeTextureParam(textureShader, 1, ShaderIDs._TerrainBumpMapArray, normalLoader.Result);
-                    RenderPipeline.BeforeFrameBuffer.SetComputeTextureParam(textureShader, 1, ShaderIDs._TerrainSMTexArray, smLoader.Result);
-                    RenderPipeline.BeforeFrameBuffer.DispatchCompute(textureShader, 1, disp, disp, 1);
+                    textureShader.SetTexture(1, ShaderIDs._TerrainMainTexArray, albedoLoader.Result);
+                    textureShader.SetTexture(1, ShaderIDs._TerrainBumpMapArray, normalLoader.Result);
+                    textureShader.SetTexture(1, ShaderIDs._TerrainSMTexArray, smLoader.Result);
+                    textureShader.Dispatch(1, disp, disp, 1);
                 }
                 else
                 {
-                    RenderPipeline.BeforeFrameBuffer.DispatchCompute(textureShader, 2, disp, disp, 1);
+                    textureShader.Dispatch(2, disp, disp, 1);
                 }
                 texs.albedoOccTex.ReleaseAsset();
                 texs.normalTex.ReleaseAsset();
                 texs.SMTex.ReleaseAsset();
             }
-            //buffer.SetComputeIntParam(textureShader, ShaderIDs._Count, terrainData.textures.Length);
-            buffer = RenderPipeline.BeforeFrameBuffer;
+            CommandBuffer buffer = RenderPipeline.BeforeFrameBuffer;
             buffer.SetComputeBufferParam(textureShader, 0, ShaderIDs._MaterialBuffer, materialBuffer);
             buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._VirtualMainTex, vt.GetTexture(0));
             buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._VirtualBumpMap, vt.GetTexture(1));
@@ -282,7 +280,7 @@ namespace MPipeline
                 if (initializedListLength > 0)
                 {
                     NativeArray<int> allTextureElements = new NativeArray<int>(initializedListLength, Allocator.Persistent);
-                   
+
                     for (int i = 0; i < initializedListLength; ++i)
                     {
                         if (initializeLoadList.TryDequeue(out loadData))
@@ -296,7 +294,7 @@ namespace MPipeline
                                     {
                                         CalculateRootPos(ref loadData.rootPos, ref loadData.maskScaleOffset);
                                         LoadTexture(loadData.startIndex, loadData.size, loadData.rootPos, loadData.maskScaleOffset, targetElement, RenderPipeline.BeforeFrameBuffer);
-                                         
+
                                     }
 
                                     break;
@@ -356,7 +354,7 @@ namespace MPipeline
                             if (elementAva)
                             {
                                 CalculateRootPos(ref loadData.rootPos, ref loadData.maskScaleOffset);
-                                LoadTexture(loadData.startIndex, loadData.size, loadData.rootPos,loadData.maskScaleOffset, targetElement, RenderPipeline.BeforeFrameBuffer);
+                                LoadTexture(loadData.startIndex, loadData.size, loadData.rootPos, loadData.maskScaleOffset, targetElement, RenderPipeline.BeforeFrameBuffer);
                                 DrawDecal(loadData.startIndex, loadData.size, targetElement, loadData.targetDecalLayer, loadData.maskScaleOffset, maskVT.GetChunkIndex(loadData.rootPos));
                             }
                             yield return null;

@@ -1,5 +1,4 @@
-﻿#if UNITY_EDITOR
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Mathematics;
@@ -12,7 +11,6 @@ using System.IO;
 using Unity.Collections.LowLevel.Unsafe;
 using Random = UnityEngine.Random;
 using UnityEngine.AddressableAssets;
-using MPipeline.PCG;
 namespace MPipeline
 {
     public unsafe sealed class Test : MonoBehaviour
@@ -49,4 +47,3 @@ namespace MPipeline
 
     }
 }
-#endif
