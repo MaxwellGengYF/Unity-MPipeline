@@ -456,15 +456,32 @@ public unsafe class Generate3DLut : ScriptableWizard
 
 public unsafe class TransformTextureSettings : ScriptableWizard
 {
+    public int resolution = 2048;
     public Texture2D[] allTextures;
     public bool useTrilinear = true;
     [MenuItem("MPipeline/PBR Texture")]
     private static void CreateWizard()
     {
         DisplayWizard<TransformTextureSettings>("PBR Texture", "Transform");
+        
     }
     private void OnWizardCreate()
     {
+        TextureImporterPlatformSettings albedoSettings = new TextureImporterPlatformSettings();
+        albedoSettings.overridden = true;
+        albedoSettings.crunchedCompression = false;
+        albedoSettings.name = "Standalone";
+        albedoSettings.maxTextureSize = resolution;
+        albedoSettings.resizeAlgorithm = TextureResizeAlgorithm.Bilinear;
+        albedoSettings.format = TextureImporterFormat.DXT5;
+       
+        TextureImporterPlatformSettings heightSettings = new TextureImporterPlatformSettings();
+        heightSettings.overridden = true;
+        heightSettings.crunchedCompression = false;
+        heightSettings.name = "Standalone";
+        heightSettings.maxTextureSize = resolution;
+        heightSettings.resizeAlgorithm = TextureResizeAlgorithm.Bilinear;
+        heightSettings.format = TextureImporterFormat.R8;
         foreach (var i in allTextures)
         {
             TextureImporter imp = AssetImporter.GetAtPath(AssetDatabase.GetAssetPath(i)) as TextureImporter;
@@ -472,29 +489,33 @@ public unsafe class TransformTextureSettings : ScriptableWizard
             {
                 imp.mipmapEnabled = true;
                 imp.filterMode = FilterMode.Trilinear;
+
             }
             else
             {
                 imp.mipmapEnabled = false;
                 imp.filterMode = FilterMode.Bilinear;
             }
- 
+
             if (i.name.ToLower().Contains("_smo"))
             {
                 imp.sRGBTexture = false;
-                
+                imp.SetPlatformTextureSettings(albedoSettings);
             }
             else if (i.name.ToLower().Contains("_normal"))
             {
                 imp.textureType = TextureImporterType.NormalMap;
+                imp.SetPlatformTextureSettings(albedoSettings);
             }
-            else if(i.name.ToLower().Contains("_height"))
+            else if (i.name.ToLower().Contains("_height"))
             {
                 imp.sRGBTexture = false;
+                imp.SetPlatformTextureSettings(heightSettings);
             }
             else
             {
                 imp.sRGBTexture = true;
+                imp.SetPlatformTextureSettings(albedoSettings);
             }
             imp.SaveAndReimport();
         }

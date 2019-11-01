@@ -19,7 +19,7 @@ float3 ProcessNormal(float2 value)
 			float4 c =  _VirtualMainTex.Sample(sampler_VirtualMainTex, vtUV);
 			o.Normal = ProcessNormal(_VirtualBumpMap.Sample(sampler_VirtualBumpMap, vtUV));
 			#ifdef DEBUG_QUAD_TREE
-			o.Albedo = float3(uv, 0);
+			o.Albedo = float3(vtUV.xy, 0);
 			o.Occlusion = 1;
 			o.Smoothness = 0;
 			o.Specular = 0.04;

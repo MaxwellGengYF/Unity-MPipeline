@@ -71,7 +71,8 @@ namespace MPipeline
             {
                 if (indexPool.Length <= 0)
                 {
-                    throw new Exception("Texture Pool out of Range!!");
+                    Debug.Log("Texture Pool out of Range!!");
+                    return 0;
                 }
                 index = indexPool[indexPool.Length - 1];
                 indexPool.RemoveLast();

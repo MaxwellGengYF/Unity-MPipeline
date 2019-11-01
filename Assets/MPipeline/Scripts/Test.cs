@@ -28,23 +28,23 @@ namespace MPipeline
         {
             Shader.DisableKeyword("USE_WHITE");
         }
-
+        public Texture tex;
         [EasyButtons.Button]
         void TestCross()
         {
-            Debug.Log(cross(float3(0, 0, 1), float3(1, 0, 0)));
+            Debug.Log(tex.graphicsFormat);
         }
 
         private void Update()
         {
-            /*
+            
             int value;
             if (int.TryParse(Input.inputString, out value))
             {
                 var clusterResources = RenderPipeline.current.resources.clusterResources;
                 clusterResources.TransformScene((uint)value, this);
             }
-            */
+            
         }
 
     }
