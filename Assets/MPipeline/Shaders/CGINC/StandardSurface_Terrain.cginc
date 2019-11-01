@@ -15,9 +15,9 @@ float3 ProcessNormal(float2 value)
 }
 		void surf (float2 uv, uint vtIndex, inout SurfaceOutputStandardSpecular o) {
 			float3 vtUV = float3(uv, vtIndex + 0.2);
-			float2 spec = _VirtualSMMap.Sample(sampler_VirtualSMMap, vtUV);
-			float4 c =  _VirtualMainTex.Sample(sampler_VirtualMainTex, vtUV);
-			o.Normal = ProcessNormal(_VirtualBumpMap.Sample(sampler_VirtualBumpMap, vtUV));
+			float2 spec = _VirtualSMMap.SampleLevel(sampler_VirtualSMMap, vtUV, 1);
+			float4 c =  _VirtualMainTex.SampleLevel(sampler_VirtualMainTex, vtUV, 1);
+			o.Normal = ProcessNormal(_VirtualBumpMap.SampleLevel(sampler_VirtualBumpMap, vtUV, 1));
 			#ifdef DEBUG_QUAD_TREE
 			o.Albedo = float3(vtUV.xy, 0);
 			o.Occlusion = 1;

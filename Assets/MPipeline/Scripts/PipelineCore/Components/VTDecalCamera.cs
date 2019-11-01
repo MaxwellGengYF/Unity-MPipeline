@@ -64,20 +64,21 @@ namespace MPipeline
         {
             if (renderingCommand.Length <= 0) return;
             CommandBuffer buffer = data.buffer;
+
             for (int i = 0; i < renderingCommand.Length; ++i)
             {
                 ref CameraState orthoCam = ref renderingCommand[i];
-                if (orthoCam.cullingMask != 0)
+                ScriptableCullingParameters cullParam;
+                if (orthoCam.cullingMask != 0 && cam.TryGetCullingParameters(out cullParam))
                 {
                     transform.position = orthoCam.position;
                     transform.rotation = orthoCam.rotation;
                     cam.orthographicSize = orthoCam.size;
                     cam.nearClipPlane = orthoCam.nearClipPlane;
                     cam.farClipPlane = orthoCam.farClipPlane;
-                    #region CAMERA_RENDERING
-                    ScriptableCullingParameters cullParam;
+
+                    
                     data.context.SetupCameraProperties(cam);
-                    if (!cam.TryGetCullingParameters(out cullParam)) continue;
                     cullParam.cullingMask = (uint)orthoCam.cullingMask;
                     cullParam.cullingOptions = CullingOptions.ForceEvenIfCameraIsNotActive;
                     CullingResults result = data.context.Cull(ref cullParam);
@@ -104,7 +105,7 @@ namespace MPipeline
                     buffer.SetGlobalVector(ShaderIDs._MaskScaleOffset, float4(orthoCam.maskScaleOffset, (float)(1.0 / MTerrain.current.terrainData.displacementScale)));
                     buffer.SetGlobalInt(ShaderIDs._OffsetIndex, orthoCam.heightIndex);
                     var terrainData = MTerrain.current.terrainData;
-                    buffer.SetGlobalVector(ShaderIDs._HeightScaleOffset,  (float4)double4(terrainData.heightScale, terrainData.heightOffset, 1, 1));
+                    buffer.SetGlobalVector(ShaderIDs._HeightScaleOffset, (float4)double4(terrainData.heightScale, terrainData.heightOffset, 1, 1));
                     buffer.GetTemporaryRT(RenderTargets.gbufferIndex[0], MTerrain.COLOR_RESOLUTION, MTerrain.COLOR_RESOLUTION, 16, FilterMode.Point, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear, 1, true);
                     buffer.GetTemporaryRT(RenderTargets.gbufferIndex[2], MTerrain.COLOR_RESOLUTION, MTerrain.COLOR_RESOLUTION, 0, FilterMode.Point, RenderTextureFormat.RGHalf, RenderTextureReadWrite.Linear, 1, true);
                     buffer.GetTemporaryRT(RenderTargets.gbufferIndex[1], MTerrain.COLOR_RESOLUTION, MTerrain.COLOR_RESOLUTION, 0, FilterMode.Point, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear, 1, true);
@@ -135,14 +136,14 @@ namespace MPipeline
                     buffer.ReleaseTemporaryRT(RenderTargets.gbufferIndex[1]);
                     buffer.ReleaseTemporaryRT(RenderTargets.gbufferIndex[2]);
                     buffer.ReleaseTemporaryRT(RenderTargets.gbufferIndex[0]);
-                 
+
                     buffer.SetRenderTarget(color: heightTempTex.colorBuffer, depth: heightTempTex.depthBuffer);
                     buffer.ClearRenderTarget(true, true, Color.black);
                     data.ExecuteCommandBuffer();
                     data.context.DrawRenderers(result, ref drawH, ref filter);
                     buffer.GenerateMips(heightTempTex);
                     buffer.CopyTexture(heightTempTex, 0, 2, orthoCam.heightRT, orthoCam.depthSlice, 0);
-                    
+
                 }
                 else
                 {
@@ -150,7 +151,7 @@ namespace MPipeline
                     buffer.ClearRenderTarget(false, true, Color.black);
                 }
                 MTerrain.current.GenerateMips(orthoCam.depthSlice, buffer);
-                #endregion
+
                 data.ExecuteCommandBuffer();
                 data.context.Submit();
             }

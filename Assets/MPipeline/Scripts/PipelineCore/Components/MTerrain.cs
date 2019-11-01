@@ -154,7 +154,7 @@ namespace MPipeline
                 {
                     buffer.SetComputeTextureParam(textureShader, 5, mipIDs[j], vt.GetTexture(i), j);
                 }
-                int disp = vt.GetTexture(i).width / 32;
+                const int disp = COLOR_RESOLUTION / 32;
                 buffer.DispatchCompute(textureShader, 5, disp, disp, 1);
             }
         }

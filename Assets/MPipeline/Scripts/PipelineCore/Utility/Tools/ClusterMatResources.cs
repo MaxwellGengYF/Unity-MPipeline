@@ -59,7 +59,6 @@ namespace MPipeline
         public VirtualMaterialManager vmManager;
         private MStringBuilder msbForCluster;
         private List<AsyncTextureLoader> asyncLoader = new List<AsyncTextureLoader>(100);
-        private NativeArray<int> mipIDs;
         public void AddLoadCommand(AssetReference aref, Texture2DArray targetTexArray, int targetIndex, bool isNormal)
         {
             asyncLoader.Add(new AsyncTextureLoader
@@ -72,13 +71,6 @@ namespace MPipeline
         }
         public void Init(PipelineResources res)
         {
-            mipIDs = new NativeArray<int>(6, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-            mipIDs[0] = Shader.PropertyToID("_Mip0");
-            mipIDs[1] = Shader.PropertyToID("_Mip1");
-            mipIDs[2] = Shader.PropertyToID("_Mip2");
-            mipIDs[3] = Shader.PropertyToID("_Mip3");
-            mipIDs[4] = Shader.PropertyToID("_Mip4");
-            mipIDs[5] = Shader.PropertyToID("_Mip5");
             msbForCluster = new MStringBuilder(100);
             for (int i = 0; i < clusterProperties.Count; ++i)
             {
@@ -128,7 +120,6 @@ namespace MPipeline
             r8Pool.Dispose();
             hdrPool.Dispose();
             vmManager.Dispose();
-            mipIDs.Dispose();
         }
         public void TransformScene(uint value, MonoBehaviour behavior)
         {
