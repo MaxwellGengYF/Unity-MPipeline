@@ -18,7 +18,7 @@ namespace MPipeline
     public sealed unsafe class TexturePool
     {
         public int maximumPoolCapacity = 50;
-        public RenderTexture rt { get; private set; }
+        public Texture2DArray texArray { get; private set; }
         private int streamingIndex;
         private NativeArray<int> usageCount;
         private NativeList<int> indexPool;
@@ -31,15 +31,7 @@ namespace MPipeline
             this.clusterRes = clusterRes;
             this.streamingIndex = streamingIndex;
             const int targetLevel = 6;
-            rt = new RenderTexture(resolution, resolution, 0, format, targetLevel);
-            rt.useMipMap = targetLevel > 1;
-            rt.autoGenerateMips = false;
-            rt.dimension = TextureDimension.Tex2DArray;
-            rt.volumeDepth = maximumPoolCapacity;
-            rt.enableRandomWrite = true;
-            rt.filterMode = FilterMode.Trilinear;
-            rt.wrapMode = TextureWrapMode.Repeat;
-            rt.Create();
+            texArray = new Texture2DArray(resolution, resolution, maximumPoolCapacity, format, TextureCreationFlags.MipChain, targetLevel);
             indexPool = new NativeList<int>(maximumPoolCapacity, maximumPoolCapacity, Allocator.Persistent);
             for (int i = 0; i < maximumPoolCapacity; ++i)
             {
@@ -51,7 +43,7 @@ namespace MPipeline
 
         public void Dispose()
         {
-            UnityEngine.Object.DestroyImmediate(rt);
+            UnityEngine.Object.DestroyImmediate(texArray);
             usageCount.Dispose();
             indexPool.Dispose();
             guidToIndex = null;
@@ -78,7 +70,7 @@ namespace MPipeline
                 indexPool.RemoveLast();
                 usageCount[index] = 1;
                 guidToIndex.Add(guid, index);
-                clusterRes.AddLoadCommand(guid, rt, index, isNormal);
+                clusterRes.AddLoadCommand(guid, texArray, index, isNormal);
                 //TODO
                 //Streaming Load Texture
             }

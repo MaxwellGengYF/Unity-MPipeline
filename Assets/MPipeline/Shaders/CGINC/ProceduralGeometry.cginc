@@ -17,7 +17,6 @@
 
 StructuredBuffer<MaterialProperties> _MaterialBuffer;
 Texture2DArray<float4> _GPURPMainTex; SamplerState sampler_GPURPMainTex;
-Texture2DArray<float4> _GPURPBumpMap; SamplerState sampler_GPURPBumpMap;
 Texture2DArray<float4> _GPURPEmissionMap; SamplerState sampler_GPURPEmissionMap;
 Texture2DArray<float4> _GPURPHeightMap; SamplerState sampler_GPURPHeightMap;
 
@@ -131,12 +130,14 @@ void frag (v2f IN,
 
 			float4 spec = SampleTex(_GPURPMainTex, sampler_GPURPMainTex,uv, matProp._SpecularMap, 1);
 			float4 c =  SampleTex (_GPURPMainTex, sampler_GPURPMainTex, uv, matProp._MainTex, 1);
-			o.Normal = ProcessNormal(SampleTex(_GPURPBumpMap, sampler_GPURPBumpMap, uv, matProp._BumpMap, 0).xy);
+			c.xyz = pow(c.xyz, 2.2);
+			o.Normal = UnpackNormal(SampleTex(_GPURPMainTex, sampler_GPURPMainTex, uv, matProp._BumpMap, 0));
 			if(matProp._SecondaryMainTex >= 0){
 				float2 secUV = originUv * matProp._SecondaryTileOffset.xy + matProp._SecondaryTileOffset.zw;
 				float4 secondCol = SampleTexNoCheck(_GPURPMainTex,sampler_GPURPMainTex, secUV, matProp._SecondaryMainTex);
+				secondCol.xyz = pow(secondCol.xyz, 2.2);
 				c.xyz = lerp(c.xyz, secondCol.xyz, secondCol.w);
-				o.Normal = lerp(o.Normal, ProcessNormal(SampleTex(_GPURPBumpMap,sampler_GPURPBumpMap, secUV, matProp._SecondaryBumpMap, float4(0,0,1,1))), secondCol.w);
+				o.Normal = lerp(o.Normal, UnpackNormal(SampleTex(_GPURPMainTex,sampler_GPURPMainTex, secUV, matProp._SecondaryBumpMap, float4(0,0,1,1))), secondCol.w);
 				spec.xyz = lerp(spec.xyz, SampleTex(_GPURPMainTex,sampler_GPURPMainTex, secUV, matProp._SecondarySpecularMap, 1).xyz, secondCol.w);
 				o.Emission = matProp._EmissionColor;
 			}

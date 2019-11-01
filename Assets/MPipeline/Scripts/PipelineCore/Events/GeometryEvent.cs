@@ -192,10 +192,9 @@ namespace MPipeline
 #endif
                     buffer.SetGlobalBuffer(ShaderIDs._MaterialBuffer, data.resources.clusterResources.vmManager.materialBuffer);
                     buffer.SetGlobalBuffer(ShaderIDs._TriangleMaterialBuffer, SceneController.baseBuffer.triangleMaterialBuffer);
-                    buffer.SetGlobalTexture(ShaderIDs._GPURPMainTex, data.resources.clusterResources.rgbaPool.rt);
-                    buffer.SetGlobalTexture(ShaderIDs._GPURPEmissionMap, data.resources.clusterResources.emissionPool.rt);
-                    buffer.SetGlobalTexture(ShaderIDs._GPURPBumpMap, data.resources.clusterResources.normalPool.rt);
-                    buffer.SetGlobalTexture(ShaderIDs._GPURPHeightMap, data.resources.clusterResources.heightPool.rt);
+                    buffer.SetGlobalTexture(ShaderIDs._GPURPMainTex, data.resources.clusterResources.dxtPool.texArray);
+                    buffer.SetGlobalTexture(ShaderIDs._GPURPEmissionMap, data.resources.clusterResources.hdrPool.texArray);
+                    buffer.SetGlobalTexture(ShaderIDs._GPURPHeightMap, data.resources.clusterResources.r8Pool.texArray);
                     buffer.DrawProceduralIndirect(Matrix4x4.identity, clusterMat, 0, MeshTopology.Triangles, SceneController.baseBuffer.instanceCountBuffer, 0);
 #if UNITY_EDITOR
                 }
