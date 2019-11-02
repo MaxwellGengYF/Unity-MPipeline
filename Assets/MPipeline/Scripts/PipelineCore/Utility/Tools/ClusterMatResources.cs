@@ -40,9 +40,9 @@ namespace MPipeline
         public int materialPoolSize = 500;
 
         public List<SceneStreaming> clusterProperties;
-        public TexturePool dxtPool;
-        public TexturePool hdrPool;
-        public TexturePool r8Pool;
+        public TexturePool rgbaPool;
+        public TexturePool emissionPool;
+        public TexturePool heightPool;
         public const string infosPath = "Assets/BinaryData/MapDatas/";
         #endregion
 
@@ -51,7 +51,8 @@ namespace MPipeline
         {
             public AssetReference aref;
             public AsyncOperationHandle<Texture> loader;
-            public Texture2DArray targetTexArray;
+            public RenderTexture targetTexArray;
+            public int targetMipLevel;
             public int targetIndex;
             public bool startLoading;
             public bool isNormal;
@@ -59,7 +60,8 @@ namespace MPipeline
         public VirtualMaterialManager vmManager;
         private MStringBuilder msbForCluster;
         private List<AsyncTextureLoader> asyncLoader = new List<AsyncTextureLoader>(100);
-        public void AddLoadCommand(AssetReference aref, Texture2DArray targetTexArray, int targetIndex, bool isNormal)
+        private NativeArray<int> mipIDs;
+        public void AddLoadCommand(AssetReference aref, RenderTexture targetTexArray, int targetIndex, bool isNormal)
         {
             asyncLoader.Add(new AsyncTextureLoader
             {
@@ -71,6 +73,13 @@ namespace MPipeline
         }
         public void Init(PipelineResources res)
         {
+            mipIDs = new NativeArray<int>(6, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            mipIDs[0] = Shader.PropertyToID("_Mip0");
+            mipIDs[1] = Shader.PropertyToID("_Mip1");
+            mipIDs[2] = Shader.PropertyToID("_Mip2");
+            mipIDs[3] = Shader.PropertyToID("_Mip3");
+            mipIDs[4] = Shader.PropertyToID("_Mip4");
+            mipIDs[5] = Shader.PropertyToID("_Mip5");
             msbForCluster = new MStringBuilder(100);
             for (int i = 0; i < clusterProperties.Count; ++i)
             {
@@ -78,13 +87,13 @@ namespace MPipeline
                 cur.Init(i, msbForCluster, this);
             }
 
-            dxtPool.Init(0, GraphicsFormat.RGBA_DXT5_UNorm, (int)fixedTextureSize, this, false);
-            hdrPool.Init(2, GraphicsFormat.R16G16B16A16_SFloat, (int)fixedTextureSize, this, false);
-            r8Pool.Init(3, GraphicsFormat.R8_UNorm, (int)fixedTextureSize, this, true);
+            rgbaPool.Init(0, GraphicsFormat.R8G8B8A8_UNorm, (int)fixedTextureSize, this);
+            emissionPool.Init(2, GraphicsFormat.R16G16B16A16_SFloat, (int)fixedTextureSize, this);
+            heightPool.Init(3, GraphicsFormat.R8_UNorm, (int)fixedTextureSize, this);
             vmManager = new VirtualMaterialManager(materialPoolSize, maximumMaterialCount, res.shaders.streamingShader);
         }
 
-        public void UpdateData(PipelineResources res)
+        public void UpdateData(CommandBuffer buffer, PipelineResources res)
         {
             for (int i = 0; i < asyncLoader.Count; ++i)
             {
@@ -98,14 +107,28 @@ namespace MPipeline
                 bool value = loader.loader.IsDone;
                 if (value)
                 {
-                    int2 resolution = int2(loader.loader.Result.width, loader.loader.Result.height);
-                    int targetLevel = min(6, loader.loader.Result.mipmapCount);
-                    for(int x = 0; x < targetLevel; ++x)
+                    ComputeShader loadShader = res.shaders.streamingShader;
+                    int2 resolution = int2(loader.targetTexArray.width, loader.targetTexArray.height);
+                    int blitPass;
+                    if (loader.isNormal)
+                        blitPass = 6;
+                    //Graphics.Blit(loader.loader.Result, loader.targetTexArray, blitNormalMat, 0, loader.targetIndex);
+                    else
+                        blitPass = 5;
+                    //Graphics.Blit(loader.loader.Result, loader.targetTexArray, 0, loader.targetIndex);
+                    loadShader.SetTexture(blitPass, ShaderIDs._SourceTex, loader.loader.Result);
+                    loadShader.SetTexture(blitPass, ShaderIDs._DestTex, loader.targetTexArray);
+                    loadShader.SetInt(ShaderIDs._Count, loader.targetIndex);
+                    int2 disp = resolution.xy / 8;
+                    loadShader.Dispatch(blitPass, disp.x, disp.y, 1);
+                    const int targetLevel = 6;
+                    buffer.SetComputeIntParam(loadShader, ShaderIDs._Count, loader.targetIndex);
+                    for (int mip = 0; mip < targetLevel; ++mip)
                     {
-                        Graphics.CopyTexture(loader.loader.Result, 0, x, 0, 0, resolution.x, resolution.y, loader.targetTexArray, loader.targetIndex, x, 0, 0);
-                        resolution /= 2;
+                        buffer.SetComputeTextureParam(loadShader, 4, mipIDs[mip], loader.targetTexArray, mip);
                     }
-                    
+                    resolution /= 32;
+                    buffer.DispatchCompute(loadShader, 4, resolution.x, resolution.y, 1);
                     loader.aref.ReleaseAsset();
                     asyncLoader[i] = asyncLoader[asyncLoader.Count - 1];
                     asyncLoader.RemoveAt(asyncLoader.Count - 1);
@@ -116,10 +139,11 @@ namespace MPipeline
 
         public void Dispose()
         {
-            dxtPool.Dispose();
-            r8Pool.Dispose();
-            hdrPool.Dispose();
+            rgbaPool.Dispose();
+            emissionPool.Dispose();
+            heightPool.Dispose();
             vmManager.Dispose();
+            mipIDs.Dispose();
         }
         public void TransformScene(uint value, MonoBehaviour behavior)
         {

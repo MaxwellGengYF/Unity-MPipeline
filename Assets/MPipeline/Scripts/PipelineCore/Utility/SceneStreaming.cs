@@ -68,36 +68,36 @@ namespace MPipeline
                 currProp = allProperties[i];
                 if (currProp._MainTex >= 0)
                 {
-                    currProp._MainTex = resources.dxtPool.GetTex(vm.albedoGUIDs[currProp._MainTex]);
+                    currProp._MainTex = resources.rgbaPool.GetTex(vm.albedoGUIDs[currProp._MainTex]);
                 }
                 if (currProp._SecondaryMainTex >= 0)
                 {
-                    currProp._SecondaryMainTex = resources.dxtPool.GetTex(vm.secondAlbedoGUIDs[currProp._SecondaryMainTex]);
+                    currProp._SecondaryMainTex = resources.rgbaPool.GetTex(vm.secondAlbedoGUIDs[currProp._SecondaryMainTex]);
                 }
                 if (currProp._BumpMap >= 0)
                 {
-                    currProp._BumpMap = resources.dxtPool.GetTex(vm.normalGUIDs[currProp._BumpMap]);
+                    currProp._BumpMap = resources.rgbaPool.GetTex(vm.normalGUIDs[currProp._BumpMap], true);
                 }
                 if (currProp._SecondaryBumpMap >= 0)
                 {
-                    currProp._SecondaryBumpMap = resources.dxtPool.GetTex(vm.secondNormalGUIDs[currProp._SecondaryBumpMap]);
+                    currProp._SecondaryBumpMap = resources.rgbaPool.GetTex(vm.secondNormalGUIDs[currProp._SecondaryBumpMap], true);
                 }
 
                 if (currProp._SpecularMap >= 0)
                 {
-                    currProp._SpecularMap = resources.dxtPool.GetTex(vm.smoGUIDs[currProp._SpecularMap]);
+                    currProp._SpecularMap = resources.rgbaPool.GetTex(vm.smoGUIDs[currProp._SpecularMap]);
                 }
                 if (currProp._SecondarySpecularMap >= 0)
                 {
-                    currProp._SecondarySpecularMap = resources.dxtPool.GetTex(vm.secondSpecGUIDs[currProp._SecondarySpecularMap]);
+                    currProp._SecondarySpecularMap = resources.rgbaPool.GetTex(vm.secondSpecGUIDs[currProp._SecondarySpecularMap]);
                 }
                 if (currProp._EmissionMap >= 0)
                 {
-                    currProp._EmissionMap = resources.hdrPool.GetTex(vm.emissionGUIDs[currProp._EmissionMap]);
+                    currProp._EmissionMap = resources.emissionPool.GetTex(vm.emissionGUIDs[currProp._EmissionMap]);
                 }
                 if (currProp._HeightMap >= 0)
                 {
-                    currProp._HeightMap = resources.r8Pool.GetTex(vm.heightGUIDs[currProp._HeightMap]);
+                    currProp._HeightMap = resources.heightPool.GetTex(vm.heightGUIDs[currProp._HeightMap]);
                 }
             }
             //Update Cluster
@@ -220,15 +220,35 @@ namespace MPipeline
             this.resources.vmManager.UnloadMaterials(materialIndexBuffer);
             foreach (var i in vm.albedoGUIDs)
             {
-                this.resources.dxtPool.RemoveTex(i);
+                this.resources.rgbaPool.RemoveTex(i);
             }
             foreach (var i in vm.normalGUIDs)
             {
-                this.resources.dxtPool.RemoveTex(i);
+                this.resources.rgbaPool.RemoveTex(i);
             }
             foreach (var i in vm.emissionGUIDs)
             {
-                this.resources.hdrPool.RemoveTex(i);
+                this.resources.emissionPool.RemoveTex(i);
+            }
+            foreach(var i in vm.smoGUIDs)
+            {
+                this.resources.rgbaPool.RemoveTex(i);
+            }
+            foreach (var i in vm.heightGUIDs)
+            {
+                this.resources.heightPool.RemoveTex(i);
+            }
+            foreach(var i in vm.secondAlbedoGUIDs)
+            {
+                this.resources.rgbaPool.RemoveTex(i);
+            }
+            foreach (var i in vm.secondNormalGUIDs)
+            {
+                this.resources.rgbaPool.RemoveTex(i);
+            }
+            foreach (var i in vm.secondSpecGUIDs)
+            {
+                this.resources.rgbaPool.RemoveTex(i);
             }
             baseBuffer.clusterCount = result;
             loading = false;

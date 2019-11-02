@@ -76,7 +76,7 @@ namespace MPipeline
             {
                 DestroyImmediate(clusterMat);
             }
-            if(m_afterGeometryBuffer != null)
+            if (m_afterGeometryBuffer != null)
             {
                 m_afterGeometryBuffer.Dispose();
                 m_afterGeometryBuffer = null;
@@ -162,7 +162,7 @@ namespace MPipeline
                     hizOccData.UpdateWidth(cam.cam.pixelWidth);
                     SceneController.CullCluster_LastFrameDepthHiZ(ref options, hizOccData, cam);
                     buffer.DrawProceduralIndirect(Matrix4x4.identity, clusterMat, 2, MeshTopology.Triangles, SceneController.baseBuffer.instanceCountBuffer, 0);
-                   
+
 #if UNITY_EDITOR
                 }
 #endif
@@ -192,9 +192,9 @@ namespace MPipeline
 #endif
                     buffer.SetGlobalBuffer(ShaderIDs._MaterialBuffer, data.resources.clusterResources.vmManager.materialBuffer);
                     buffer.SetGlobalBuffer(ShaderIDs._TriangleMaterialBuffer, SceneController.baseBuffer.triangleMaterialBuffer);
-                    buffer.SetGlobalTexture(ShaderIDs._GPURPMainTex, data.resources.clusterResources.dxtPool.texArray);
-                    buffer.SetGlobalTexture(ShaderIDs._GPURPEmissionMap, data.resources.clusterResources.hdrPool.texArray);
-                    buffer.SetGlobalTexture(ShaderIDs._GPURPHeightMap, data.resources.clusterResources.r8Pool.texArray);
+                    buffer.SetGlobalTexture(ShaderIDs._GPURPMainTex, data.resources.clusterResources.rgbaPool.rt);
+                    buffer.SetGlobalTexture(ShaderIDs._GPURPEmissionMap, data.resources.clusterResources.emissionPool.rt);
+                    buffer.SetGlobalTexture(ShaderIDs._GPURPHeightMap, data.resources.clusterResources.heightPool.rt);
                     buffer.DrawProceduralIndirect(Matrix4x4.identity, clusterMat, 0, MeshTopology.Triangles, SceneController.baseBuffer.instanceCountBuffer, 0);
 #if UNITY_EDITOR
                 }
@@ -221,7 +221,7 @@ namespace MPipeline
             }
             //Draw Depth
             data.buffer.Blit(ShaderIDs._DepthBufferTexture, ShaderIDs._CameraDepthTexture);
-            if(needUpdateGeometryBuffer)
+            if (needUpdateGeometryBuffer)
             {
                 needUpdateGeometryBuffer = false;
                 data.ExecuteCommandBuffer();

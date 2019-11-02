@@ -107,11 +107,21 @@ void MipGroupSync(uint2 groupID : SV_GROUPID, uint2 threadID : SV_GROUPTHREADID)
 }
 Texture2D<float4> _SourceTex;
 RWTexture2DArray<float4> _DestTex;
+inline float4 EncodeFloatRGCustom(float2 v)
+{
+    float2 kEncodeMul = float2(1, 255);
+    float kEncodeBit = 1/255.0;
+    float4 enc = kEncodeMul.xyxy * v.xxyy;
+    enc = frac(enc);
+    enc.xz -= enc.yw * kEncodeBit;
+    return enc;
+}
+
 [numthreads(8,8,1)]
 void BlitTo(uint2 id : SV_DISPATCHTHREADID)
 {
     #ifdef BLIT_NORMAL
-    _DestTex[uint3(id, _Count)] = float4(UnpackNormal(_SourceTex[id]), 1);
+    _DestTex[uint3(id, _Count)] = EncodeFloatRGCustom(clamp(UnpackNormal(_SourceTex[id]).xy * 0.5 + 0.5, 0, 0.9999));
     #else
     _DestTex[uint3(id, _Count)] = _SourceTex[id];
     #endif

@@ -26,11 +26,13 @@ namespace MPipeline
         {
             Shader.DisableKeyword("USE_WHITE");
         }
-        public Texture tex;
+        public ClusterMatResources tex;
         [EasyButtons.Button]
         void TestCross()
         {
-            Debug.Log(tex.graphicsFormat);
+            Debug.Log(tex.rgbaPool.LeftedTexs);
+            Debug.Log(tex.heightPool.LeftedTexs);
+            Debug.Log(tex.emissionPool.LeftedTexs);
         }
 
         private void Update()
