@@ -17,7 +17,7 @@ MonoBehaviour:
   displacementScale: 50
   materialTillingScale: 1
   terrainLocalYPositionToGround: -2
-  backfaceCullingScale: 0.20000000298023224
+  backfaceCullingScale: 0.10000000149011612
   largestChunkSize: 2048
   screenOffset:
     x: -1024
@@ -32,8 +32,9 @@ MonoBehaviour:
   - 35
   - 25
   - 15
-  - 8
-  renderingLevelCount: 8
+  - 10
+  - 2.5
+  renderingLevelCount: 9
   allDecalLayers:
   - serializedVersion: 2
     m_Bits: 4294967295
@@ -55,7 +56,7 @@ MonoBehaviour:
     m_Bits: 4294967295
   - serializedVersion: 2
     m_Bits: 4294967295
-  virtualTexCapacity: 127
+  virtualTexCapacity: 136
   heightmapTexCapacity: 4
   allMaterials:
   - firstMaterialIndex: 0.2

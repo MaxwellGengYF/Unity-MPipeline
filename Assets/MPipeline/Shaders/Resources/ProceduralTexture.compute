@@ -70,10 +70,11 @@ void UpSample (uint2 id : SV_DispatchThreadID)
     float4 albedo_occs[4];
     float2 normals[4];
     float2 sms[4];
-    GetHeightBlendMaterial(mask.x, uv, albedo_occs[0], normals[0], sms[0]);
-    GetHeightBlendMaterial(mask.y, uv, albedo_occs[1], normals[1], sms[1]);
-    GetHeightBlendMaterial(mask.z, uv, albedo_occs[2], normals[2], sms[2]);
-    GetHeightBlendMaterial(mask.w, uv, albedo_occs[3], normals[3], sms[3]);
+    float lod = log2(_TextureSize.w);
+    GetHeightBlendMaterial(mask.x, uv, lod, albedo_occs[0], normals[0], sms[0]);
+    GetHeightBlendMaterial(mask.y, uv, lod, albedo_occs[1], normals[1], sms[1]);
+    GetHeightBlendMaterial(mask.z, uv, lod, albedo_occs[2], normals[2], sms[2]);
+    GetHeightBlendMaterial(mask.w, uv, lod, albedo_occs[3], normals[3], sms[3]);
     float4 albedo_occ;
     float2 normal;
     float2 sm;
@@ -195,28 +196,10 @@ AllMemoryBarrierWithGroupSync();\
 
 RWTexture2DArray<float4> _Mip0;
 RWTexture2DArray<float4> _Mip1;
-RWTexture2DArray<float4> _Mip2;
-RWTexture2DArray<float4> _Mip3;
-RWTexture2DArray<float4> _Mip4;
-RWTexture2DArray<float4> _Mip5;
-
-[numthreads(16, 16, 1)]
-void GenerateMipmap(uint2 groupID : SV_GROUPID, uint2 threadID : SV_GROUPTHREADID)
+[numthreads(8, 8, 1)]
+void GenerateMipmap(uint2 id : SV_DISPATCHTHREADID)
 {
-    uint2 idx;
-    uint2 id;
-    uint2 current_Group_Length = uint2(16,16);
-    CALCULATE_MIP(_Mip0, _Mip1, current_Group_Length)
-    GROUP_SYNC(current_Group_Length)
-    //len = 8
-    CALCULATE_MIP(_Mip1, _Mip2, current_Group_Length)
-    GROUP_SYNC(current_Group_Length)
-    //len = 4
-    CALCULATE_MIP(_Mip2, _Mip3, current_Group_Length)
-    GROUP_SYNC(current_Group_Length)
-    //len = 2
-    CALCULATE_MIP(_Mip3, _Mip4, current_Group_Length)
-    GROUP_SYNC(current_Group_Length)
-    //len = 1
-    CALCULATE_MIP(_Mip4, _Mip5, current_Group_Length)
+    uint2 idx = id * 2;
+    _Mip1[uint3(id, _OffsetIndex)] = 
+    (_Mip0[uint3(idx, _OffsetIndex)] + _Mip0[uint3(idx + uint2(0,1), _OffsetIndex)] + _Mip0[uint3(idx + uint2(1,0), _OffsetIndex)] + _Mip0[uint3(idx + 1, _OffsetIndex)]) * 0.25;
 }

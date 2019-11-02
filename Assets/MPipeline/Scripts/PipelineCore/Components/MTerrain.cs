@@ -150,11 +150,9 @@ namespace MPipeline
             buffer.SetComputeIntParam(textureShader, ShaderIDs._OffsetIndex, targetElement);
             for (int i = 0; i < 3; ++i)
             {
-                for (int j = 0; j < mipIDs.Length; ++j)
-                {
-                    buffer.SetComputeTextureParam(textureShader, 5, mipIDs[j], vt.GetTexture(i), j);
-                }
-                const int disp = COLOR_RESOLUTION / 32;
+                buffer.SetComputeTextureParam(textureShader, 5, mipIDs[0], vt.GetTexture(i), 0);
+                buffer.SetComputeTextureParam(textureShader, 5, mipIDs[1], vt.GetTexture(i), 1);
+                const int disp = COLOR_RESOLUTION / 16;
                 buffer.DispatchCompute(textureShader, 5, disp, disp, 1);
             }
         }
@@ -227,6 +225,9 @@ namespace MPipeline
                 texs.normalTex.ReleaseAsset();
                 texs.SMTex.ReleaseAsset();
             }
+            albedoTex.GenerateMips();
+            smTex.GenerateMips();
+            normalTex.GenerateMips();
             CommandBuffer buffer = RenderPipeline.BeforeFrameBuffer;
             buffer.SetComputeBufferParam(textureShader, 0, ShaderIDs._MaterialBuffer, materialBuffer);
             buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._VirtualMainTex, vt.GetTexture(0));
@@ -484,18 +485,14 @@ namespace MPipeline
             dispatchDraw[0] = 6;
             VirtualTextureFormat* formats = stackalloc VirtualTextureFormat[]
             {
-                new VirtualTextureFormat((VirtualTextureSize)COLOR_RESOLUTION, GraphicsFormat.R8G8B8A8_UNorm, "_VirtualMainTex", 6),
-                new VirtualTextureFormat((VirtualTextureSize)COLOR_RESOLUTION, GraphicsFormat.R16G16_SNorm, "_VirtualBumpMap", 6),
-                new VirtualTextureFormat((VirtualTextureSize)COLOR_RESOLUTION, GraphicsFormat.R8G8_UNorm, "_VirtualSMMap", 6),
+                new VirtualTextureFormat((VirtualTextureSize)COLOR_RESOLUTION, GraphicsFormat.R8G8B8A8_UNorm, "_VirtualMainTex", 2),
+                new VirtualTextureFormat((VirtualTextureSize)COLOR_RESOLUTION, GraphicsFormat.R16G16_SNorm, "_VirtualBumpMap", 2),
+                new VirtualTextureFormat((VirtualTextureSize)COLOR_RESOLUTION, GraphicsFormat.R8G8_UNorm, "_VirtualSMMap", 2),
                 new VirtualTextureFormat((VirtualTextureSize)HEIGHT_RESOLUTION, HEIGHT_FORMAT, "_VirtualDisplacement", 0)
             };
-            mipIDs = new NativeArray<int>(6, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            mipIDs = new NativeArray<int>(2, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
             mipIDs[0] = Shader.PropertyToID("_Mip0");
             mipIDs[1] = Shader.PropertyToID("_Mip1");
-            mipIDs[2] = Shader.PropertyToID("_Mip2");
-            mipIDs[3] = Shader.PropertyToID("_Mip3");
-            mipIDs[4] = Shader.PropertyToID("_Mip4");
-            mipIDs[5] = Shader.PropertyToID("_Mip5");
             chunkCount = (int)(pow(2.0, terrainData.lodDistances.Length - 1) + 0.1);
             vt = new VirtualTexture(terrainData.virtualTexCapacity, min(2048, chunkCount), formats, 4, "_TerrainVTIndexTex");
             textureCapacity = terrainData.virtualTexCapacity;
@@ -539,7 +536,10 @@ namespace MPipeline
                 height = COLOR_RESOLUTION,
                 volumeDepth = Mathf.Max(1, terrainData.textures.Length),
                 enableRandomWrite = true,
-                msaaSamples = 1
+                msaaSamples = 1,
+                autoGenerateMips = false,
+                useMipMap = true,
+                mipCount = 6,
             });
             albedoTex.Create();
             normalTex = new RenderTexture(new RenderTextureDescriptor
@@ -548,9 +548,12 @@ namespace MPipeline
                 dimension = TextureDimension.Tex2DArray,
                 width = COLOR_RESOLUTION,
                 height = COLOR_RESOLUTION,
+                autoGenerateMips = false,
+                useMipMap = true,
                 volumeDepth = Mathf.Max(1, terrainData.textures.Length),
                 enableRandomWrite = true,
-                msaaSamples = 1
+                msaaSamples = 1,
+                mipCount = 6,
             });
             normalTex.Create();
             smTex = new RenderTexture(new RenderTextureDescriptor
@@ -562,9 +565,9 @@ namespace MPipeline
                 volumeDepth = Mathf.Max(1, terrainData.textures.Length),
                 enableRandomWrite = true,
                 msaaSamples = 1,
-                useMipMap = false,
+                useMipMap = true,
                 autoGenerateMips = false,
-                mipCount = 0,
+                mipCount = 6,
                 depthBufferBits = 0,
                 useDynamicScale = false
             });
@@ -578,9 +581,9 @@ namespace MPipeline
                 volumeDepth = Mathf.Max(1, terrainData.textures.Length),
                 enableRandomWrite = true,
                 msaaSamples = 1,
-                useMipMap = false,
+                useMipMap = true,
                 autoGenerateMips = false,
-                mipCount = 0,
+                mipCount = 6,
                 depthBufferBits = 0,
                 useDynamicScale = false
             });
