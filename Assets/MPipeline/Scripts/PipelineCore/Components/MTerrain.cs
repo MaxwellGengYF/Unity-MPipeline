@@ -101,7 +101,10 @@ namespace MPipeline
                 allDrawCommand = allDrawCommand,
                 tree = tree.Ptr(),
                 cameraXZPos = (float3)cam.transform.position,
-                cameraDir = (float3)cam.transform.forward
+                cameraDir = (float3)cam.transform.forward,
+                camFrustumMax = cam.frustumMaxPoint,
+                camFrustumMin = cam.frustumMinPoint,
+                frustumPlanes = cam.frustumArray.unsafePtr
             }.Schedule();
         }
 
@@ -687,11 +690,17 @@ namespace MPipeline
             public TerrainQuadTree* tree;
             public double3 cameraXZPos;
             public double3 cameraDir;
+            [NativeDisableUnsafePtrRestriction]
+            public float4* frustumPlanes;
+            public float3 camFrustumMin;
+            public float3 camFrustumMax;
             public NativeList<TerrainDrawCommand> allDrawCommand;
 
             public void Execute()
             {
-                tree->UpdateData(cameraXZPos, cameraDir);
+                double2 heightMinMax = double2(-current.terrainData.heightOffset - current.terrainData.displacementScale, -current.terrainData.heightOffset + current.terrainData.heightScale + -current.terrainData.displacementScale);
+                double2 heightCenterExtent = double2((heightMinMax.x + heightMinMax.y) , heightMinMax.y - heightMinMax.x) * 0.5;
+                tree->UpdateData(cameraXZPos, cameraDir, double4(heightMinMax, heightCenterExtent), camFrustumMin, camFrustumMax, frustumPlanes);
                 tree->CombineUpdate();
                 tree->SeparateUpdate();
                 if (current.initializing)

@@ -56,7 +56,7 @@ MonoBehaviour:
     m_Bits: 4294967295
   - serializedVersion: 2
     m_Bits: 4294967295
-  virtualTexCapacity: 136
+  virtualTexCapacity: 127
   heightmapTexCapacity: 4
   allMaterials:
   - firstMaterialIndex: 0.2

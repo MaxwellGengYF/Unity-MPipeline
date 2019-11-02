@@ -54,8 +54,6 @@ namespace MPipeline
         {
             toPoint = 0;
             initializing = true;
-            toPoint3D = 0;
-            dotValue = 0;
             separate = false;
             dist = 0;
             scale = 0;
@@ -133,6 +131,13 @@ namespace MPipeline
                 double2 leftCorner = CornerWorldPos;
                 double2 rightCorner = MTerrain.current.terrainData.screenOffset + (MTerrain.current.terrainData.largestChunkSize / pow(2, lodLevel)) * ((double2)(localPosition + 1));
                 return double4(leftCorner, rightCorner);
+            }
+        }
+        public double2 BoundingExtent
+        {
+            get
+            {
+                return MTerrain.current.terrainData.largestChunkSize / pow(2, lodLevel) * 0.5;
             }
         }
         public double2 CenterWorldPos
@@ -442,25 +447,32 @@ namespace MPipeline
             }
         }
         double2 toPoint;
-        double3 toPoint3D;
-        double dotValue;
+       // double3 toPoint3D;
         double dist;
         double scale;
         bool separate;
-        public void UpdateData(double3 camPos, double3 camDir)
+        public void UpdateData(double3 camPos, double3 camDir, double4 heightMinMaxCenterExtent, double3 camFrustumMin, double3 camFrustumMax, float4* planes)
         {
-            double2 centerworldPosXZ = CenterWorldPos;
+            double2 centerworldPosXZ = CornerWorldPos;
+            double2 extent = BoundingExtent;
+            double4 xzBounding = double4(centerworldPosXZ, centerworldPosXZ + extent * 2);
+            centerworldPosXZ += extent;
+ 
+            bool isInRange = true;
+            isInRange = MathLib.BoxContactWithBox(camFrustumMin, camFrustumMax, double3(xzBounding.x, heightMinMaxCenterExtent.x, xzBounding.y), double3(xzBounding.z, heightMinMaxCenterExtent.y, xzBounding.w));
+            if (isInRange)
+            {
+                isInRange = MathLib.BoxIntersect(double3(centerworldPosXZ.x, heightMinMaxCenterExtent.z, centerworldPosXZ.y), double3(extent.x, heightMinMaxCenterExtent.w, extent.y), planes, 6);
+            }
             toPoint = camPos.xz - centerworldPosXZ;
-            toPoint3D = normalize(double3(centerworldPosXZ.x, camPos.y + MTerrain.current.terrainData.terrainLocalYPositionToGround, centerworldPosXZ.y) - camPos);
-            dotValue = dot(toPoint3D, camDir);
             dist = MathLib.DistanceToQuad(worldSize, toPoint);
-            scale = dotValue > 0 ? 1 : MTerrain.current.terrainData.backfaceCullingScale;
+            scale = isInRange ? 1 : MTerrain.current.terrainData.backfaceCullingScale;
             if (leftDown != null)
             {
-                leftDown->UpdateData(camPos, camDir);
-                leftUp->UpdateData(camPos, camDir);
-                rightDown->UpdateData(camPos, camDir);
-                rightUp->UpdateData(camPos, camDir);
+                leftDown->UpdateData(camPos, camDir, heightMinMaxCenterExtent, camFrustumMin,camFrustumMax, planes);
+                leftUp->UpdateData(camPos, camDir, heightMinMaxCenterExtent, camFrustumMin, camFrustumMax, planes);
+                rightDown->UpdateData(camPos, camDir, heightMinMaxCenterExtent, camFrustumMin, camFrustumMax, planes);
+                rightUp->UpdateData(camPos, camDir, heightMinMaxCenterExtent, camFrustumMin, camFrustumMax, planes);
             }
         }
 

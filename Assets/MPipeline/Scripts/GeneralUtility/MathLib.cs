@@ -119,6 +119,15 @@ namespace MPipeline
             return true;
         }
 
+        public static bool BoxContactWithBox(double3 min0, double3 max0, double3 min1, double3 max1)
+        {
+            bool3 v = min0 > max1;
+            if (v.x || v.y || v.z) return false;
+            v = min1 > max0;
+            if (v.x || v.y || v.z) return false;
+            return true;
+        }
+
         public static bool BoxIntersect(ref float4x4 localToWorld, float3 position, float3 extent, float4* planes, int len)
         {
             position = mul(localToWorld, float4(position, 1)).xyz;
