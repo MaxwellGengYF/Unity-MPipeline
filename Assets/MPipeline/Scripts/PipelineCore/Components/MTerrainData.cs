@@ -43,6 +43,7 @@ namespace MPipeline
         public HeightBlendMaterial[] allMaterials;
         public string heightmapPath = "Assets/BinaryData/TerrainHeight.mquad";
         public string maskmapPath = "Assets/BinaryData/TerrainMask.mquad";
+        
         public Material drawTerrainMaterial;
         public MTerrain.PBRTexture[] textures;
         [EasyButtons.Button]

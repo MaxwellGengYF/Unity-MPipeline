@@ -151,7 +151,7 @@ namespace MPipeline
                 lst[i].DrawDepthPrepass(buffer);
             }
             HizOcclusionData hizOccData = null;
-            PipelineFunctions.UpdateFrustumMinMaxPoint(buffer, proper.frustumMinPoint, proper.frustumMaxPoint);
+            PipelineFunctions.UpdateFrustumMinMaxPoint(buffer, cam.frustumMinPoint, cam.frustumMaxPoint);
             if (useHiZ && SceneController.gpurpEnabled)
             {
 #if UNITY_EDITOR
@@ -203,7 +203,7 @@ namespace MPipeline
             SceneController.RenderScene(ref data, ref opaqueFilter, ref drawSettings, ref proper.cullResults);
             if (MTerrain.current)
             {
-                MTerrain.current.DrawTerrain(buffer, 0, proper.frustumPlanes, proper.frustumMinPoint, proper.frustumMaxPoint);
+                MTerrain.current.DrawTerrain(buffer, 0, proper.frustumPlanes, cam.frustumMinPoint, cam.frustumMaxPoint);
             }
 
             //Draw AlphaTest

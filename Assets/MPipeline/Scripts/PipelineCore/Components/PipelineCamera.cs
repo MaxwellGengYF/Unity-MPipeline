@@ -5,6 +5,8 @@ using System;
 using Unity.Collections;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
+using Unity.Mathematics;
+using static Unity.Mathematics.math;
 using Unity.Collections.LowLevel.Unsafe;
 namespace MPipeline
 {
@@ -48,8 +50,10 @@ namespace MPipeline
         public Dictionary<Type, IPerCameraData> allDatas = new Dictionary<Type, IPerCameraData>(17);
         public bool inverseRender = false;
         public RenderTargetIdentifier cameraTarget = BuiltinRenderTextureType.CameraTarget;
-        public static List<PipelineCamera> allCameras = new List<PipelineCamera>(10);
-        private int index = -1;
+        private static NativeDictionary<int, ulong, IntEqual> cameraSearchDict;
+        public static NativeDictionary<int, ulong, IntEqual> CameraSearchDict => cameraSearchDict;
+        public float3 frustumMinPoint { get; private set; }
+        public float3 frustumMaxPoint { get; private set; }
         [HideInInspector]
         public float[] layerCullDistance = new float[32];
 
@@ -61,32 +65,23 @@ namespace MPipeline
                 ResetMatrix();
             }
         }
-
-      /*  public CommandBuffer GetCommand<T>() where T : PipelineEvent
+        public void AddToDict()
         {
-            CommandBuffer bf;
-            if (!commandBuffers.TryGetValue(typeof(T), out bf))
-            {
-                bf = new CommandBuffer();
-                commandBuffers.Add(typeof(T), bf);
-            }
-            return bf;
-        }*/
+            if (!cameraSearchDict.isCreated) cameraSearchDict = new NativeDictionary<int, ulong, IntEqual>(20, Allocator.Persistent, new IntEqual());
+            cameraSearchDict[gameObject.GetInstanceID()] = (ulong)MUnsafeUtility.GetManagedPtr(this);
+            if (!frustumArray.isCreated) frustumArray = new NativeList<float4>(6, 6, Allocator.Persistent);
+        }
         private void OnEnable()
         {
-            index = allCameras.Count;
-            allCameras.Add(this);
+            AddToDict();
             GetComponent<Camera>().layerCullDistances = layerCullDistance;
         }
 
         private void OnDisable()
         {
-            if(index >= 0)
-            {
-                allCameras[index] = allCameras[allCameras.Count - 1];
-                allCameras[index].index = index;
-                allCameras.RemoveAt(allCameras.Count - 1);
-            }
+            if (cameraSearchDict.isCreated)
+                cameraSearchDict.Remove(gameObject.GetInstanceID());
+            frustumArray.Dispose();
         }
         private void OnDestroy()
         {
@@ -94,11 +89,56 @@ namespace MPipeline
                 i.DisposeProperty();
             allDatas.Clear();
             cam = null;
-           /* foreach (var i in commandBuffers.Values)
+            /* foreach (var i in commandBuffers.Values)
+             {
+                 i.Dispose();
+             }
+             commandBuffers = null;
+         */
+        }
+        #region EVENTS
+        //TODO
+        //Can add events here
+
+        private PerspCam perspCam = new PerspCam();
+        public NativeList<float4> frustumArray;
+        public void BeforeFrameRendering()
+        {
+            Transform camTrans = cam.transform;
+            perspCam.forward = camTrans.forward;
+            perspCam.up = camTrans.up;
+            perspCam.right = camTrans.right;
+            perspCam.position = camTrans.position;
+            perspCam.nearClipPlane = cam.nearClipPlane;
+            perspCam.farClipPlane = cam.farClipPlane;
+            perspCam.aspect = cam.aspect;
+            perspCam.fov = cam.fieldOfView;
+            float3* corners = stackalloc float3[8];
+            PipelineFunctions.GetFrustumCorner(ref perspCam, corners);
+            frustumMinPoint = corners[0];
+            frustumMaxPoint = corners[0];
+            for (int i = 1; i < 8; ++i)
             {
-                i.Dispose();
+                frustumMinPoint = min(frustumMinPoint, corners[i]);
+                frustumMaxPoint = max(frustumMaxPoint, corners[i]);
             }
-            commandBuffers = null;
-        */}
+            PipelineFunctions.GetPerspFrustumPlanesWithCorner(ref perspCam, frustumArray.unsafePtr, corners + 4);
+        }
+
+        public void AfterFrameRendering()
+        {
+
+        }
+
+        public void BeforeCameraRendering()
+        {
+
+        }
+
+        public void AfterCameraRendering()
+        {
+
+        }
+        #endregion
     }
 }

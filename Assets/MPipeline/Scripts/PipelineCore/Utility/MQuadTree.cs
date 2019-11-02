@@ -508,6 +508,7 @@ namespace MPipeline
                     rightDown->SeparateUpdate();
                     rightUp->SeparateUpdate();
                 }
+                
             }
         }
     }

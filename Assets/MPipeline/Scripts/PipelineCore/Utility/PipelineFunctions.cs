@@ -89,6 +89,16 @@ public unsafe static class PipelineFunctions
         GetCorner(ref orthoCam, orthoCam.farClipPlane);
     }
 
+    public static void GetPerspFrustumPlanesWithCorner(ref PerspCam perspCam, float4* planes, float3* corners)
+    {
+        planes[0] = MathLib.GetPlane(corners[1], corners[0], perspCam.position);
+        planes[1] = MathLib.GetPlane(corners[2], corners[3], perspCam.position);
+        planes[2] = MathLib.GetPlane(corners[0], corners[2], perspCam.position);
+        planes[3] = MathLib.GetPlane(corners[3], corners[1], perspCam.position);
+        planes[4] = MathLib.GetPlane(perspCam.forward, perspCam.position + perspCam.forward * perspCam.farClipPlane);
+        planes[5] = MathLib.GetPlane(-perspCam.forward, perspCam.position + perspCam.forward * perspCam.nearClipPlane);
+    }
+
     public static void GetFrustumPlanes(ref PerspCam perspCam, float4* planes)
     {
         float3* corners = stackalloc float3[4];

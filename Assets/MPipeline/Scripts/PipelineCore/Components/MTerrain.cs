@@ -64,7 +64,7 @@ namespace MPipeline
         private ComputeBuffer meshBuffer;
 
         #endregion
-        public Transform cam;
+        public PipelineCamera cam;
         private ComputeShader shader;
         private ComputeShader textureShader;
         private int largestChunkCount;
@@ -100,8 +100,8 @@ namespace MPipeline
             {
                 allDrawCommand = allDrawCommand,
                 tree = tree.Ptr(),
-                cameraXZPos = (float3)cam.position,
-                cameraDir = (float3)cam.forward
+                cameraXZPos = (float3)cam.transform.position,
+                cameraDir = (float3)cam.transform.forward
             }.Schedule();
         }
 
@@ -458,6 +458,12 @@ namespace MPipeline
             {
                 enabled = false;
                 Debug.LogError("No Data!");
+                return;
+            }
+            if(!cam || !decalCamera)
+            {
+                enabled = false;
+                Debug.LogError("No Decal Camera!");
                 return;
             }
             initializing = true;

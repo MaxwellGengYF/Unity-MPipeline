@@ -24,6 +24,12 @@ namespace MPipeline
                 return a == b;
             }
         }
+        private struct CameraSetting
+        {
+            public Camera cam;
+            public PipelineCamera pipeCam;
+            public bool isRenderingEditor;
+        }
         public PipelineResources resources;
         public static float3 sceneOffset { get; private set; }
         private static CommandBuffer m_afterFrameBuffer;
@@ -53,6 +59,7 @@ namespace MPipeline
         private static NativeDictionary<UIntPtr, int, PtrEqual> eventsGuideBook;
         private static NativeList<int> waitReleaseRT;
         private static List<PipelineCamera> preFrameRenderCamera = new List<PipelineCamera>(10);
+        private static List<CameraSetting> currentFrameCamera = new List<CameraSetting>(20);
         private struct IntEqual : IFunction<int, int, bool>
         {
             [MethodImpl(MethodImplOptions.AggressiveInlining)]
@@ -208,8 +215,9 @@ namespace MPipeline
                 resources.availiableEvents[i].DisposeDependEventsList();
             }
 
-            foreach (var cam in PipelineCamera.allCameras)
+            foreach (var camPtr in PipelineCamera.CameraSearchDict)
             {
+                PipelineCamera cam = MUnsafeUtility.GetObject<PipelineCamera>((void*)camPtr.value);
                 var values = cam.allDatas.Values;
                 foreach (var j in values)
                 {
@@ -217,12 +225,60 @@ namespace MPipeline
                 }
                 cam.allDatas.Clear();
             }
-
             if (motionVectorMatricesBuffer != null) motionVectorMatricesBuffer.Dispose();
             MotionVectorDrawer.Dispose();
         }
         protected override void Render(ScriptableRenderContext renderContext, Camera[] cameras)
         {
+            currentFrameCamera.Clear();
+            foreach(var cam in cameras)
+            {
+                CameraSetting csg;
+                ulong pipelineCamPtr;
+                if (!PipelineCamera.CameraSearchDict.Get(cam.gameObject.GetInstanceID(), out pipelineCamPtr))
+                {
+                    if (!cam.TryGetComponent(out csg.pipeCam))
+                    {
+#if UNITY_EDITOR
+                        if (cam.cameraType == CameraType.SceneView)
+                        {
+                            csg.isRenderingEditor = true;
+                            var pos = cam.transform.eulerAngles;
+                            pos.z = 0;
+                            cam.transform.eulerAngles = pos;
+                            if (!Camera.main || !(csg.pipeCam = Camera.main.GetComponent<PipelineCamera>()))
+                                continue;
+                        }
+                        else if (cam.cameraType == CameraType.Game)
+                        {
+                            csg.isRenderingEditor = false;
+                            csg.pipeCam = cam.gameObject.AddComponent<PipelineCamera>();
+                        }
+                        else
+                        {
+                            continue;
+                        }
+#else
+                    csg.isRenderingEditor = false;
+                    csg.pipeCam = cam.gameObject.AddComponent<PipelineCamera>();
+#endif
+                    }
+                    else
+                    {
+                        csg.isRenderingEditor = false;
+                        csg.pipeCam.AddToDict();
+                    }
+                }
+                else
+                {
+                    csg.isRenderingEditor = false;
+                    csg.pipeCam = MUnsafeUtility.GetObject<PipelineCamera>((void*)pipelineCamPtr);
+                }
+                csg.cam = cam;
+                csg.pipeCam.cam = cam;
+                csg.pipeCam.BeforeFrameRendering();
+                currentFrameCamera.Add(csg);
+            }
             bool* propertyCheckedFlags = stackalloc bool[resources.allEvents.Length];
             bool needSubmit = false;
             CustomDrawRequest.Initialize();
@@ -319,44 +375,14 @@ namespace MPipeline
             {
                 data.buffer.SetGlobalVector(ShaderIDs._SceneOffset, new float4(sceneOffset, 1));
             }
-            foreach (var cam in cameras)
+            foreach (var cam in currentFrameCamera)
             {
-                PipelineCamera pipelineCam = cam.GetComponent<PipelineCamera>();
-                if (!pipelineCam)
-                {
-#if UNITY_EDITOR
-                    if (cam.cameraType == CameraType.SceneView)
-                    {
-                        renderingEditor = true;
-                        var pos = cam.transform.eulerAngles;
-                        pos.z = 0;
-                        cam.transform.eulerAngles = pos;
-                        if (!Camera.main || !(pipelineCam = Camera.main.GetComponent<PipelineCamera>()))
-                            continue;
-                    }
-                    else if (cam.cameraType == CameraType.Game)
-                    {
-                        renderingEditor = false;
-                        pipelineCam = cam.gameObject.AddComponent<PipelineCamera>();
-                    }
-                    else
-                    {
-                        continue;
-                    }
-#else
-                    renderingEditor = false;
-                    pipelineCam = cam.gameObject.AddComponent<PipelineCamera>();
-#endif
-                }
-                else
-                {
-                    renderingEditor = false;
-                }
-                Render(pipelineCam, ref renderContext, cam, propertyCheckedFlags);
+                renderingEditor = cam.isRenderingEditor;
+                Render(cam.pipeCam, ref renderContext, cam.cam, propertyCheckedFlags);
                 data.ExecuteCommandBuffer();
 #if UNITY_EDITOR
                 if (renderingEditor)
-                    renderContext.DrawGizmos(cam, GizmoSubset.PostImageEffects);
+                    renderContext.DrawGizmos(cam.cam, GizmoSubset.PostImageEffects);
 #endif
                 renderContext.Submit();
                 needSubmit = false;
@@ -375,13 +401,19 @@ namespace MPipeline
             }
             MotionVectorDrawer.ExecuteAfterFrame();
             sceneOffset = 0;
+            foreach (var cam in currentFrameCamera)
+            {
+                cam.pipeCam.cam = cam.cam;
+                cam.pipeCam.AfterFrameRendering();
+            }
         }
 
         private void Render(PipelineCamera pipelineCam, ref ScriptableRenderContext context, Camera cam, bool* pipelineChecked)
         {
+            pipelineCam.cam = cam;
+            pipelineCam.BeforeCameraRendering();
             PipelineResources.CameraRenderingPath path = pipelineCam.renderingPath;
             currentPath = path;
-            pipelineCam.cam = cam;
             pipelineCam.EnableThis(resources);
             context.SetupCameraProperties(cam);
             //Set Global Data
@@ -421,6 +453,8 @@ namespace MPipeline
                 data.buffer.ReleaseTemporaryRT(i);
             }
             waitReleaseRT.Clear();
+            pipelineCam.AfterCameraRendering();
         }
+        
     }
 }

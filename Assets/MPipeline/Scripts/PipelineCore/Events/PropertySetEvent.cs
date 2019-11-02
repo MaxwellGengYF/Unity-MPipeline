@@ -26,9 +26,8 @@ namespace MPipeline
         private Random rand;
         private CalculateMatrixJob calculateJob;
         private JobHandle handle;
-        private PerspCam perspCam;
-        public float3 frustumMinPoint { get; private set; }
-        public float3 frustumMaxPoint { get; private set; }
+
+
         [System.NonSerialized]
         public Material overrideOpaqueMaterial;
         private System.Func<PipelineCamera, LastVPData> getLastVP = (c) =>
@@ -49,9 +48,7 @@ namespace MPipeline
             cullResults = data.context.Cull(ref cullParams);
             for (int i = 0; i < frustumPlanes.Length; ++i)
             {
-                Plane p = cullParams.GetCullingPlane(i);
-                //GPU Driven RP's frustum plane is inverse from SRP's frustum plane
-                frustumPlanes[i] = new Vector4(-p.normal.x, -p.normal.y, -p.normal.z, -p.distance);
+                frustumPlanes[i] = cam.frustumArray[i];
             }
             PipelineFunctions.InitRenderTarget(ref cam.targets, cam.cam, data.buffer);
             lastData = IPerCameraData.GetProperty(cam, getLastVP);
@@ -67,24 +64,6 @@ namespace MPipeline
             calculateJob.p = cam.cam.projectionMatrix;
             calculateJob.VP = (float4x4*)UnsafeUtility.AddressOf(ref VP);
             calculateJob.inverseVP = (float4x4*)UnsafeUtility.AddressOf(ref inverseVP);
-            Transform camTrans = cam.cam.transform;
-            perspCam.forward = camTrans.forward;
-            perspCam.up = camTrans.up;
-            perspCam.right = camTrans.right;
-            perspCam.position = camTrans.position;
-            perspCam.nearClipPlane = cam.cam.nearClipPlane;
-            perspCam.farClipPlane = cam.cam.farClipPlane;
-            perspCam.aspect = cam.cam.aspect;
-            perspCam.fov = cam.cam.fieldOfView;
-            float3* corners = stackalloc float3[8];
-            PipelineFunctions.GetFrustumCorner(ref perspCam, corners);
-            frustumMinPoint = corners[0];
-            frustumMaxPoint = corners[0];
-            for (int i = 1; i < 8; ++i)
-            {
-                frustumMinPoint = min(frustumMinPoint, corners[i]);
-                frustumMaxPoint = max(frustumMaxPoint, corners[i]);
-            }
             handle = calculateJob.ScheduleRefBurst();
         }
 
@@ -135,7 +114,7 @@ namespace MPipeline
             public float4x4* inverseVP;
             public float4x4 nonJitterVP;
             public float4x4 lastVP;
-            
+
             public float4x4 nonJitterInverseVP;
             public float4x4 nonJitterTextureVP;
             public float4x4 lastInverseVP;
@@ -173,7 +152,7 @@ namespace MPipeline
         public float4x4 lastVP = Matrix4x4.identity;
         public float4x4 lastP;
         public float4x4 camlocalToWorld;
-       
+
 
         public LastVPData(Camera c)
         {
@@ -185,7 +164,7 @@ namespace MPipeline
         {
         }
     }
-  //  [Unity.Burst.BurstCompile]
+    //  [Unity.Burst.BurstCompile]
     public unsafe struct CustomRendererCullJob : IJobParallelFor
     {
         public NativeList_Int cullResult;

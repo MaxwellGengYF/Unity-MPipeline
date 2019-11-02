@@ -118,8 +118,8 @@ namespace MPipeline
                 voxelVolumeCullHandle = new VoxelFogVolumeCull
                 {
                     allDatas = VoxelFogBase.allVoxelData,
-                    maxPoint = proper.frustumMaxPoint,
-                    minPoint = proper.frustumMinPoint,
+                    maxPoint = cam.frustumMaxPoint,
+                    minPoint = cam.frustumMinPoint,
                     planes = (float4*)proper.frustumPlanes.Ptr(),
                     resultIndices = resultIndices
                 }.Schedule(VoxelFogBase.allVoxelData.Length, max(1, VoxelFogBase.allVoxelData.Length / 4));
