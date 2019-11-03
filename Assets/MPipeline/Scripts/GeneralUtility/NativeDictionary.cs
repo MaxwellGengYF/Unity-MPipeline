@@ -226,23 +226,34 @@ namespace MPipeline
             return false;
         }
 
-        public V this[K key]
+        public ref V this[K key]
         {
             get
             {
                 int ind = GetIndex(ref key);
-                if (ind < 0) return default;
-                return *(V*)(data->keyValueList[ind] + sizeof(K));
-            }
-            set
-            {
-                int ind = GetIndex(ref key);
                 if (ind < 0)
                 {
-                    Add(key, value);
+                    return ref AddDefault(key);
                 }
-                else *(V*)(data->keyValueList[ind] + sizeof(K)) = value;
+                return ref *(V*)(data->keyValueList[ind] + sizeof(K));
             }
+        }
+
+        private ref V AddDefault(K key)
+        {
+            Resize(Length + 1);
+            uint hash = (uint)key.GetHashCode() % (uint)Capacity;
+            ref PtrList lst = ref data->hashArray[hash];
+            if (!lst.isCreated) lst = new PtrList(5, stride, alloc);
+            K* newKeyPtr = (K*)lst[lst.Add()];
+            *newKeyPtr = key;
+            int* indPtr = (int*)(newKeyPtr + 1);
+            *indPtr = data->keyValueList.length;
+            K* keyValuePtr = (K*)data->keyValueList[data->keyValueList.Add()];
+            *keyValuePtr = key;
+            V* valuePtr = (V*)(keyValuePtr + 1);
+            *valuePtr = default;
+            return ref *valuePtr;
         }
 
         public void Add(K key, V value)

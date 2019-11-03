@@ -6,6 +6,9 @@
 #pragma kernel DecodeR16
 #pragma kernel EncodeR16
 #pragma kernel Copy
+#pragma kernel MipBound
+#pragma kernel MipBound GENERATE_MIP
+#pragma kernel MipBound TO_BUFFER GENERATE_MIP
 #include "UnityCG.cginc"
 
 RWStructuredBuffer<float> _DistanceBuffer;
@@ -110,4 +113,24 @@ void Copy(uint2 id : SV_DISPATCHTHREADID)
 {
     float2 uv = (id + 0.5) / _Count;
     _DestTex[uint3(id, _OffsetIndex)] = _SourceTex.SampleLevel(sampler_SourceTex, uv * _ScaleOffset.xy + _ScaleOffset.zw, 0);
+}
+Texture2DArray<float> _SourceArray; SamplerState sampler_SourceArray;
+RWTexture2D<float2> _Mip0;
+RWTexture2D<float2> _Mip1;
+RWStructuredBuffer<float2> _DataBuffer;
+[numthreads(8,8,1)]
+void MipBound(uint2 id : SV_DISPATCHTHREADID)
+{
+    if(id.x >= _Count || id.y >= _Count) return;
+    uint2 idx = id * 2;
+    #ifdef GENERATE_MIP
+     _Mip1[id] = float2(min(min(_Mip0[idx].x, _Mip0[idx + uint2(0,1)].x), min(_Mip0[idx + uint2(1, 0)].x,  _Mip0[idx + 1].x)),
+                    max(max(_Mip0[idx].y, _Mip0[idx + uint2(0,1)].y), max(_Mip0[idx + uint2(1, 0)].y,  _Mip0[idx + 1].y)));
+    #else
+     float2 uv = (id + 0.5) / _Count;
+    _Mip1[id] =  _SourceArray.SampleLevel(sampler_SourceArray, float3(uv * _ScaleOffset.xy + _ScaleOffset.zw, 0), 0);
+    #endif
+    #ifdef TO_BUFFER
+    _DataBuffer[id.x + id.y * _Count] = _Mip1[id];
+    #endif
 }

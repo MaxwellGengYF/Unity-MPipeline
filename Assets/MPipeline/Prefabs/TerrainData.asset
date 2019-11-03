@@ -12,9 +12,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 010ce77163682284691fda8b292bbe7b, type: 3}
   m_Name: TerrainData
   m_EditorClassIdentifier: 
-  heightOffset: -100
-  heightScale: 200
-  displacementScale: 50
+  heightOffset: 0
+  heightScale: 0
+  displacementScale: 0
   materialTillingScale: 1
   terrainLocalYPositionToGround: -2
   backfaceCullingScale: 0.10000000149011612
@@ -22,7 +22,7 @@ MonoBehaviour:
   screenOffset:
     x: -1024
     y: -1024
-  lodDeferredOffset: 1
+  lodDeferredOffset: 0
   lodDistances:
   - 1500
   - 1200
@@ -32,9 +32,8 @@ MonoBehaviour:
   - 35
   - 25
   - 15
-  - 10
-  - 2.5
-  renderingLevelCount: 9
+  - 8
+  renderingLevelCount: 8
   allDecalLayers:
   - serializedVersion: 2
     m_Bits: 4294967295
@@ -56,7 +55,7 @@ MonoBehaviour:
     m_Bits: 4294967295
   - serializedVersion: 2
     m_Bits: 4294967295
-  virtualTexCapacity: 127
+  virtualTexCapacity: 115
   heightmapTexCapacity: 4
   allMaterials:
   - firstMaterialIndex: 0.2

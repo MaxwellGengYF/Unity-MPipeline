@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using Unity.Mathematics;
 using UnityEngine.AddressableAssets;
+using static Unity.Mathematics.math;
 namespace MPipeline
 {
     [CreateAssetMenu(fileName = "TerrainData", menuName = "PCG/Terrain")]
@@ -43,6 +44,7 @@ namespace MPipeline
         public HeightBlendMaterial[] allMaterials;
         public string heightmapPath = "Assets/BinaryData/TerrainHeight.mquad";
         public string maskmapPath = "Assets/BinaryData/TerrainMask.mquad";
+        public string boundPath = "Assets/BinaryData/TerrainBound.mquad";
         
         public Material drawTerrainMaterial;
         public MTerrain.PBRTexture[] textures;
@@ -51,6 +53,21 @@ namespace MPipeline
         {
             Debug.Log(((MTerrain.COLOR_RESOLUTION * MTerrain.COLOR_RESOLUTION * ((4.0 + 4.0 + 2.0) * 5.0 / 4.0 + 2) + MTerrain.HEIGHT_RESOLUTION * MTerrain.HEIGHT_RESOLUTION * 2) * virtualTexCapacity 
                       + heightmapTexCapacity * MTerrain.MASK_RESOLUTION * MTerrain.MASK_RESOLUTION * (1 + 2)) / 1024.0 / 1024.0);
+        }
+
+        public int GetMeshResolution()
+        {
+            return (int)(0.1 + pow(2.0, renderingLevelCount - 1));
+        }
+
+        public int GetLodOffset()
+        {
+            return lodDistances.Length - renderingLevelCount;
+        }
+
+        public double VTTexelLength()
+        {
+            return largestChunkSize / pow(2.0, lodDistances.Length - 1);
         }
     }
 }

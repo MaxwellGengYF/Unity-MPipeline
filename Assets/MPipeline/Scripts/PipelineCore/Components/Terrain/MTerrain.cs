@@ -39,6 +39,7 @@ namespace MPipeline
         [System.NonSerialized]
         public bool initializing;
         public NativeList_Float allLodLevles;
+        private MTerrainLoadingThread loadingThread;
         public VirtualTextureLoader maskLoader;
         public VirtualTextureLoader heightLoader;
         [System.NonSerialized]
@@ -62,7 +63,7 @@ namespace MPipeline
         private RenderTexture cullingFlags;
         private int meshResolution;
         private ComputeBuffer meshBuffer;
-
+        
         #endregion
         public PipelineCamera cam;
         private ComputeShader shader;
@@ -264,8 +265,11 @@ namespace MPipeline
                         int maskEle;
                         if (maskVT.LoadNewTexture(maskCommand.pos, 1, out maskEle))
                         {
-                            yield return maskLoader.ReadToTexture(maskVT.GetTexture(0), maskEle, maskCommand.pos, 1);
-                            yield return heightLoader.ReadToTexture(maskVT.GetTexture(1), maskEle, maskCommand.pos, 2);
+                            VirtualTextureLoader.MaskBuffer maskLoadBuffer = maskLoader.ScheduleLoadingJob(maskCommand.pos);
+                            VirtualTextureLoader.MaskBuffer heightLoadBuffer = heightLoader.ScheduleLoadingJob(maskCommand.pos);
+                            loadingThread.Schedule();
+                            yield return maskLoader.ReadToTexture(maskVT.GetTexture(0), maskEle, maskLoadBuffer, 1);
+                            yield return heightLoader.ReadToTexture(maskVT.GetTexture(1), maskEle, heightLoadBuffer, 2);
                         }
                         else
                         {
@@ -449,6 +453,8 @@ namespace MPipeline
             meshBuffer.SetData(allPoints);
             allPoints.Dispose();
         }
+
+
         protected override void OnEnableFunc()
         {
             if (current && current != this)
@@ -463,17 +469,17 @@ namespace MPipeline
                 Debug.LogError("No Data!");
                 return;
             }
-            if(!cam || !decalCamera)
+            if (!cam || !decalCamera)
             {
                 enabled = false;
                 Debug.LogError("No Decal Camera!");
                 return;
             }
             initializing = true;
-            lodOffset = terrainData.lodDistances.Length - terrainData.renderingLevelCount;
+            lodOffset = terrainData.GetLodOffset();
             largestChunkCount = (int)(0.1 + pow(2.0, lodOffset));
             msb = new MStringBuilder(32);
-            oneVTPixelWorldLength = terrainData.largestChunkSize / pow(2.0, terrainData.lodDistances.Length - 1);
+            oneVTPixelWorldLength = terrainData.VTTexelLength();
             textureShader = Resources.Load<ComputeShader>("ProceduralTexture");
             shader = Resources.Load<ComputeShader>("TerrainCompute");
             current = this;
@@ -485,8 +491,9 @@ namespace MPipeline
             vtContainer = new NativeArray<int>(4, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
             maskLoadList = new NativeQueue<MaskLoadCommand>(10, Allocator.Persistent);
             ComputeShader editShader = Resources.Load<ComputeShader>("TerrainEdit");
-            maskLoader = new VirtualTextureLoader(terrainData.maskmapPath, editShader, largestChunkCount, MASK_RESOLUTION, false);
-            heightLoader = new VirtualTextureLoader(terrainData.heightmapPath, editShader, largestChunkCount, MASK_RESOLUTION, true);
+            loadingThread = new MTerrainLoadingThread(10);
+            maskLoader = new VirtualTextureLoader(terrainData.maskmapPath, editShader, largestChunkCount, MASK_RESOLUTION, false, loadingThread);
+            heightLoader = new VirtualTextureLoader(terrainData.heightmapPath, editShader, largestChunkCount, MASK_RESOLUTION, true, loadingThread);
 
             loadDataList = new NativeQueue<TerrainLoadData>(100, Allocator.Persistent);
             initializeLoadList = new NativeQueue<TerrainLoadData>(100, Allocator.Persistent);
@@ -523,7 +530,7 @@ namespace MPipeline
                 allLodLevles.Add((float)min(terrainData.lodDistances[max(0, i - 1)], terrainData.lodDistances[i]));
             }
             allLodLevles[terrainData.lodDistances.Length] = 0;
-            meshResolution = (int)(0.1 + pow(2.0, terrainData.renderingLevelCount - 1));
+            meshResolution = terrainData.GetMeshResolution();
             cullingFlags = new RenderTexture(new RenderTextureDescriptor
             {
                 graphicsFormat = GraphicsFormat.R8_UNorm,
@@ -623,6 +630,7 @@ namespace MPipeline
             materialBuffer.SetData(terrainData.allMaterials);
             decalLayerOffset = max(0, terrainData.lodDistances.Length - terrainData.allDecalLayers.Length);
             tree = new TerrainQuadTree(-1, TerrainQuadTree.LocalPos.LeftDown, 0, terrainData.largestChunkSize, double3(2, 0, 0), 0);
+
             StartCoroutine(AsyncLoader());
         }
 
@@ -634,7 +642,7 @@ namespace MPipeline
                 buffer.SetComputeIntParam(shader, ShaderIDs._Count, meshResolution);
                 buffer.SetComputeVectorParam(shader, ShaderIDs._StartPos, float4(i.startPos, (float)oneVTPixelWorldLength, 1));
                 buffer.SetComputeVectorArrayParam(shader, ShaderIDs.planes, planes);
-                buffer.SetComputeVectorParam(shader, ShaderIDs._HeightScaleOffset, (float4)double4(terrainData.heightScale, terrainData.heightOffset, 1, 1));
+                buffer.SetComputeVectorParam(shader, ShaderIDs._HeightScaleOffset, (float4)double4(terrainData.heightScale + terrainData.displacementScale, terrainData.heightOffset - terrainData.displacementScale, 1, 1));
                 buffer.SetComputeVectorParam(shader, ShaderIDs._FrustumMaxPoint, float4(frustumMaxPoint, 1));
                 buffer.SetComputeVectorParam(shader, ShaderIDs._FrustumMinPoint, float4(frustumMinPoint, 1));
                 buffer.SetComputeTextureParam(shader, 0, ShaderIDs._CullingTexture, cullingFlags);
@@ -682,6 +690,7 @@ namespace MPipeline
             meshBuffer.Dispose();
             allDrawCommand.Dispose();
             mipIDs.Dispose();
+            loadingThread.Dispose();
         }
 
         private struct CalculateQuadTree : IJob
@@ -698,8 +707,8 @@ namespace MPipeline
 
             public void Execute()
             {
-                double2 heightMinMax = double2(-current.terrainData.heightOffset - current.terrainData.displacementScale, -current.terrainData.heightOffset + current.terrainData.heightScale + -current.terrainData.displacementScale);
-                double2 heightCenterExtent = double2((heightMinMax.x + heightMinMax.y) , heightMinMax.y - heightMinMax.x) * 0.5;
+                double2 heightMinMax = double2(current.terrainData.heightOffset - current.terrainData.displacementScale, current.terrainData.heightOffset + current.terrainData.heightScale + current.terrainData.displacementScale);
+                double2 heightCenterExtent = double2(heightMinMax.x + heightMinMax.y, heightMinMax.y - heightMinMax.x) * 0.5;
                 tree->UpdateData(cameraXZPos, cameraDir, double4(heightMinMax, heightCenterExtent), camFrustumMin, camFrustumMax, frustumPlanes);
                 tree->CombineUpdate();
                 tree->SeparateUpdate();

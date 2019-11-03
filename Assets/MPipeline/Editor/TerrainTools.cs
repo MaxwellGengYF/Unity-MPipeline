@@ -8,7 +8,7 @@ using static Unity.Mathematics.math;
 namespace MPipeline
 {
 
-    public class TerrainTools : EditorWindow
+    public unsafe class TerrainTools : EditorWindow
     {
         public MTerrainData terrainData;
         public Vector2Int chunkPosition = Vector2Int.zero;
@@ -24,7 +24,7 @@ namespace MPipeline
         }
         private void OnGUI()
         {
-            if(!terrainEdit)
+            if (!terrainEdit)
             {
                 terrainEdit = Resources.Load<ComputeShader>("TerrainEdit");
             }
@@ -39,11 +39,13 @@ namespace MPipeline
             {
                 int chunkCount = (int)(0.1 + pow(2.0, terrainData.lodDistances.Length - terrainData.renderingLevelCount));
                 Debug.Log(chunkCount);
+                MTerrainLoadingThread ld = new MTerrainLoadingThread(10);
+
                 VirtualTextureLoader loader = new VirtualTextureLoader(
                     terrainData.heightmapPath,
                    terrainEdit,
                     chunkCount,
-                    MTerrain.MASK_RESOLUTION, true);
+                    MTerrain.MASK_RESOLUTION, true, ld);
                 RenderTexture cacheRt = new RenderTexture(new RenderTextureDescriptor
                 {
                     width = MTerrain.MASK_RESOLUTION,
@@ -55,9 +57,27 @@ namespace MPipeline
                     enableRandomWrite = true
                 });
                 cacheRt.Create();
+                int mipLevel = 0;
+                int meshResolution = terrainData.GetMeshResolution();
+                int saveMipLevel = 0;
+                ComputeBuffer cb = new ComputeBuffer(meshResolution * meshResolution, sizeof(float2));
+                
+                float2[] resultArr = new float2[meshResolution * meshResolution];
+                RenderTexture mipRT = new RenderTexture(MTerrain.MASK_RESOLUTION, MTerrain.MASK_RESOLUTION, 0, UnityEngine.Experimental.Rendering.GraphicsFormat.R32G32_SFloat, mipLevel);
+                mipRT.enableRandomWrite = true;
+                mipRT.useMipMap = true;
+                mipRT.autoGenerateMips = false;
+                mipRT.Create();
+                System.IO.FileStream fsm = new System.IO.FileStream(terrainData.boundPath, System.IO.FileMode.OpenOrCreate, System.IO.FileAccess.ReadWrite);
+                for (int i = MTerrain.MASK_RESOLUTION; i > 0; i /= 2)
+                {
+                    mipLevel++;
+                    if (i <= meshResolution) saveMipLevel++;
+                }
+                MTerrainBoundingTree btree = new MTerrainBoundingTree(saveMipLevel);
                 for (int x = 0; x < targetChunkCount; ++x)
                 {
-                    for(int y = 0; y < targetChunkCount; ++y)
+                    for (int y = 0; y < targetChunkCount; ++y)
                     {
                         int2 pos = int2(x, y) + int2(chunkPosition.x, chunkPosition.y);
                         if (pos.x >= chunkCount || pos.y >= chunkCount) continue;
@@ -69,11 +89,53 @@ namespace MPipeline
                         const int disp = MTerrain.MASK_RESOLUTION / 8;
                         terrainEdit.Dispatch(6, disp, disp, 1);
                         loader.WriteToDisk(cacheRt, 0, pos);
+                        for (int i = 0, res = MTerrain.MASK_RESOLUTION; i < mipLevel; ++i, res /= 2)
+                        {
+                            int pass;
+                            if (i == 0)
+                            {
+                                pass = 7;
+                                terrainEdit.SetTexture(pass, "_SourceArray", cacheRt);
+                                terrainEdit.SetTexture(pass, "_Mip1", mipRT);
+                            }
+                            else
+                            {
+                                if (res <= meshResolution)
+                                {
+                                    pass = 9;
+                                    terrainEdit.SetBuffer(pass, "_DataBuffer", cb);
+                                }
+                                else
+                                    pass = 8;
+                                terrainEdit.SetTexture(pass, "_Mip0", mipRT, i - 1);
+                                terrainEdit.SetTexture(pass, "_Mip1", mipRT, i);
+                            }
+                            terrainEdit.SetInt(ShaderIDs._Count, res);
+                            int mipdisp = Mathf.CeilToInt(res / 8f);
+                            terrainEdit.Dispatch(pass, mipdisp, mipdisp, 1);
+                            if (pass == 9)
+                            {
+                                cb.GetData(resultArr, 0, 0, res * res);
+                                int targetMipLevel = mipLevel - 1 - i;
+                                for (int xx = 0; xx < res * res; ++xx)
+                                {
+                                    btree[xx, targetMipLevel] = resultArr[xx];
+                                }
+                            }
+                        }
+                        btree.WriteToDisk(fsm, x + y * targetChunkCount);
                     }
                 }
                 
+                btree.Dispose();
                 cacheRt.Release();
+                cb.Dispose();
+                mipRT.Release();
                 loader.Dispose();
+                ld.Dispose();
+                
+                
+                fsm.Dispose();
             }
         }
     }

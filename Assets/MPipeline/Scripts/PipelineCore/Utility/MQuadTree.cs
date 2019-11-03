@@ -56,7 +56,7 @@ namespace MPipeline
             initializing = true;
             separate = false;
             dist = 0;
-            scale = 0;
+            isInRange = false;
             this.worldSize = worldSize;
             distOffset = MTerrain.current.terrainData.lodDeferredOffset;
             isRendering = false;
@@ -447,18 +447,17 @@ namespace MPipeline
             }
         }
         double2 toPoint;
-       // double3 toPoint3D;
+        // double3 toPoint3D;
         double dist;
-        double scale;
         bool separate;
+        bool isInRange;
         public void UpdateData(double3 camPos, double3 camDir, double4 heightMinMaxCenterExtent, double3 camFrustumMin, double3 camFrustumMax, float4* planes)
         {
             double2 centerworldPosXZ = CornerWorldPos;
             double2 extent = BoundingExtent;
             double4 xzBounding = double4(centerworldPosXZ, centerworldPosXZ + extent * 2);
             centerworldPosXZ += extent;
- 
-            bool isInRange = true;
+
             isInRange = MathLib.BoxContactWithBox(camFrustumMin, camFrustumMax, double3(xzBounding.x, heightMinMaxCenterExtent.x, xzBounding.y), double3(xzBounding.z, heightMinMaxCenterExtent.y, xzBounding.w));
             if (isInRange)
             {
@@ -466,10 +465,9 @@ namespace MPipeline
             }
             toPoint = camPos.xz - centerworldPosXZ;
             dist = MathLib.DistanceToQuad(worldSize, toPoint);
-            scale = isInRange ? 1 : MTerrain.current.terrainData.backfaceCullingScale;
             if (leftDown != null)
             {
-                leftDown->UpdateData(camPos, camDir, heightMinMaxCenterExtent, camFrustumMin,camFrustumMax, planes);
+                leftDown->UpdateData(camPos, camDir, heightMinMaxCenterExtent, camFrustumMin, camFrustumMax, planes);
                 leftUp->UpdateData(camPos, camDir, heightMinMaxCenterExtent, camFrustumMin, camFrustumMax, planes);
                 rightDown->UpdateData(camPos, camDir, heightMinMaxCenterExtent, camFrustumMin, camFrustumMax, planes);
                 rightUp->UpdateData(camPos, camDir, heightMinMaxCenterExtent, camFrustumMin, camFrustumMax, planes);
@@ -485,7 +483,7 @@ namespace MPipeline
                 rightDown->CombineUpdate();
                 rightUp->CombineUpdate();
             }
-
+            float scale = isInRange ? 1 : (float)MTerrain.current.terrainData.backfaceCullingScale;
             if (dist > MTerrain.current.allLodLevles[lodLevel] * scale - distOffset)
             {
                 separate = false;
@@ -520,7 +518,7 @@ namespace MPipeline
                     rightDown->SeparateUpdate();
                     rightUp->SeparateUpdate();
                 }
-                
+
             }
         }
     }
