@@ -51,6 +51,16 @@ namespace MPipeline
         public NativeQueue<TerrainLoadData> initializeLoadList;
         public NativeQueue<TerrainLoadData> loadDataList;
         public NativeQueue<MaskLoadCommand> maskLoadList;
+        public NativeQueue<MaskLoadCommand> boundBoxLoadList;
+        public struct Int2Equal : IFunction<int2, int2, bool>
+        {
+            public bool Run(ref int2 a, ref int2 b)
+            {
+                return a.x == b.x && a.y == b.y;
+            }
+        }
+        public NativeDictionary<int2, MTerrainBoundingTree, Int2Equal> boundingDict;
+        public FileStream boundingLoadStream;
         #endregion
         #region MESH_RENDERING
         private struct TerrainPoint
@@ -87,6 +97,7 @@ namespace MPipeline
             }
         }
         private JobHandle calculateHandle;
+        private JobHandle boundingLoadHandle;
         private MStringBuilder msb;
         public VirtualTexture vt { get; private set; }
         private double oneVTPixelWorldLength;
@@ -107,6 +118,7 @@ namespace MPipeline
                 camFrustumMin = cam.frustumMinPoint,
                 frustumPlanes = cam.frustumArray.unsafePtr
             }.Schedule();
+            boundingLoadHandle = new LoadBoundBox().Schedule(boundingLoadHandle);
         }
 
         public override void FinishJob()
@@ -624,12 +636,15 @@ namespace MPipeline
             normalTex.wrapMode = TextureWrapMode.Repeat;
             albedoTex.wrapMode = TextureWrapMode.Repeat;
             heightTex.wrapMode = TextureWrapMode.Repeat;
+            boundBoxLoadList = new NativeQueue<MaskLoadCommand>(10, Allocator.Persistent);
+            boundingLoadStream = new FileStream(terrainData.boundPath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+            boundingDict = new NativeDictionary<int2, MTerrainBoundingTree, Int2Equal>(20, Allocator.Persistent, new Int2Equal());
             InitializeMeshData();
             allDrawCommand = new NativeList<TerrainDrawCommand>(20, Allocator.Persistent);
             materialBuffer = new ComputeBuffer(max(1, terrainData.allMaterials.Length), sizeof(MTerrainData.HeightBlendMaterial));
             materialBuffer.SetData(terrainData.allMaterials);
             decalLayerOffset = max(0, terrainData.lodDistances.Length - terrainData.allDecalLayers.Length);
-            tree = new TerrainQuadTree(-1, TerrainQuadTree.LocalPos.LeftDown, 0, terrainData.largestChunkSize, double3(2, 0, 0), 0);
+            tree = new TerrainQuadTree(-1, TerrainQuadTree.LocalPos.LeftDown, 0, 0, terrainData.largestChunkSize, double3(2, 0, 0), 0);
 
             StartCoroutine(AsyncLoader());
         }
@@ -669,10 +684,13 @@ namespace MPipeline
         protected override void OnDisableFunc()
         {
             if (current != this) return;
+            boundingLoadHandle.Complete();
             tree.Dispose();
             current = null;
             vt.Dispose();
+            boundingDict.Dispose();
             maskVT.Dispose();
+            boundBoxLoadList.Dispose();
             loadDataList.Dispose();
             initializeLoadList.Dispose();
             materialBuffer.Dispose();
@@ -691,6 +709,7 @@ namespace MPipeline
             allDrawCommand.Dispose();
             mipIDs.Dispose();
             loadingThread.Dispose();
+            boundingLoadStream.Dispose();
         }
 
         private struct CalculateQuadTree : IJob
@@ -707,9 +726,8 @@ namespace MPipeline
 
             public void Execute()
             {
-                double2 heightMinMax = double2(current.terrainData.heightOffset - current.terrainData.displacementScale, current.terrainData.heightOffset + current.terrainData.heightScale + current.terrainData.displacementScale);
-                double2 heightCenterExtent = double2(heightMinMax.x + heightMinMax.y, heightMinMax.y - heightMinMax.x) * 0.5;
-                tree->UpdateData(cameraXZPos, cameraDir, double4(heightMinMax, heightCenterExtent), camFrustumMin, camFrustumMax, frustumPlanes);
+                double2 heightScaleOffset = double2(current.terrainData.heightScale, current.terrainData.heightOffset);
+                tree->UpdateData(cameraXZPos, cameraDir, heightScaleOffset, camFrustumMin, camFrustumMax, frustumPlanes);
                 tree->CombineUpdate();
                 tree->SeparateUpdate();
                 if (current.initializing)
@@ -718,6 +736,33 @@ namespace MPipeline
                     current.initializing = false;
                 }
                 tree->PushDrawRequest(allDrawCommand);
+            }
+        }
+
+        private struct LoadBoundBox : IJob
+        {
+            public void Execute()
+            {
+                MaskLoadCommand loadCommand;
+                lock (current)
+                {
+                    if (!current.boundBoxLoadList.TryDequeue(out loadCommand))
+                    {
+                        return;
+                    }
+                    if (loadCommand.load)
+                        current.boundingDict[loadCommand.pos] = new MTerrainBoundingTree(current.terrainData.renderingLevelCount);
+                    else
+                    {
+                        current.boundingDict[loadCommand.pos].Dispose();
+                        current.boundingDict.Remove(loadCommand.pos);
+                    }
+                }
+
+                if(loadCommand.load)
+                {
+                     current.boundingDict[loadCommand.pos].ReadFromDisk(current.boundingLoadStream, current.largestChunkCount * loadCommand.pos.y + loadCommand.pos.x);
+                }
             }
         }
     }

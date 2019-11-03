@@ -12,12 +12,12 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 010ce77163682284691fda8b292bbe7b, type: 3}
   m_Name: TerrainData
   m_EditorClassIdentifier: 
-  heightOffset: 0
-  heightScale: 0
+  heightOffset: -100
+  heightScale: 200
   displacementScale: 0
   materialTillingScale: 1
   terrainLocalYPositionToGround: -2
-  backfaceCullingScale: 0.10000000149011612
+  backfaceCullingScale: 0.5
   largestChunkSize: 2048
   screenOffset:
     x: -1024
@@ -26,13 +26,13 @@ MonoBehaviour:
   lodDistances:
   - 1500
   - 1200
+  - 500
   - 300
+  - 150
   - 70
-  - 55
-  - 35
-  - 25
-  - 15
-  - 8
+  - 45
+  - 30
+  - 12
   renderingLevelCount: 8
   allDecalLayers:
   - serializedVersion: 2
@@ -55,7 +55,7 @@ MonoBehaviour:
     m_Bits: 4294967295
   - serializedVersion: 2
     m_Bits: 4294967295
-  virtualTexCapacity: 115
+  virtualTexCapacity: 97
   heightmapTexCapacity: 4
   allMaterials:
   - firstMaterialIndex: 0.2
@@ -96,6 +96,7 @@ MonoBehaviour:
     heightBlendScale: 0
   heightmapPath: Assets/BinaryData/TerrainHeight.mquad
   maskmapPath: Assets/BinaryData/TerrainMask.mquad
+  boundPath: Assets/BinaryData/TerrainBound.mquad
   drawTerrainMaterial: {fileID: 2100000, guid: 895d3f610aae4944b88c1b1fc7f46f4d, type: 2}
   textures:
   - albedoOccTex:

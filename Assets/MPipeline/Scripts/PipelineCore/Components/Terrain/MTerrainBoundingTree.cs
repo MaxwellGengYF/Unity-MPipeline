@@ -13,11 +13,11 @@ namespace MPipeline
         private long* offset;
         private float2* boundingValue;
         private long byteSize;
-        public bool isReading { get; private set; }
+        public bool isCreate { get; private set; }
         private static byte[] byteCache = null;
         public MTerrainBoundingTree(int treeLevel)
         {
-            isReading = false;
+            isCreate = false;
             this.treeLevel = treeLevel;
             offset = MUnsafeUtility.Malloc<long>(sizeof(long) * treeLevel, Unity.Collections.Allocator.Persistent);
             offset[0] = 0;
@@ -34,7 +34,6 @@ namespace MPipeline
 
         public void ReadFromDisk(FileStream fstrm, int chunkOffset)
         {
-            isReading = true;
             if (byteCache == null || byteCache.Length < byteSize)
             {
                 byteCache = new byte[byteSize];
@@ -44,7 +43,7 @@ namespace MPipeline
             fstrm.Read(byteCache, 0, (int)byteSize);
 
             UnsafeUtility.MemCpy(boundingValue, byteCache.Ptr(), byteSize);
-            isReading = false;
+            isCreate = true;
         }
 
         public void WriteToDisk(FileStream fstrm, int chunkOffset)
@@ -64,8 +63,9 @@ namespace MPipeline
         {
             get
             {
-                if (mip < 0 || mip >= treeLevel) throw new System.IndexOutOfRangeException("Out!");
-                return ref boundingValue[offset[mip] + pos.x + pos.y * (int)(0.1 + pow(2, mip))];
+                int len = (int)(0.1 + pow(2, mip));
+                if (mip < 0 || mip >= treeLevel || pos.x >= len || pos.y >= len) throw new System.IndexOutOfRangeException("Out!");
+                return ref boundingValue[offset[mip] + pos.x + pos.y * len];
             }
         }
 
@@ -80,6 +80,7 @@ namespace MPipeline
 
         public void Dispose()
         {
+            isCreate = false;
             MUnsafeUtility.SafeFree(ref boundingValue, Unity.Collections.Allocator.Persistent);
             MUnsafeUtility.SafeFree(ref offset, Unity.Collections.Allocator.Persistent);
         }

@@ -33,6 +33,7 @@ namespace MPipeline
             heightTexture = EditorGUILayout.ObjectField("Height Texture", heightTexture, typeof(Texture), false) as Texture;
             targetChunkCount = EditorGUILayout.IntField("Chunk Count", targetChunkCount);
             targetChunkCount = max(0, targetChunkCount);
+            int largestChunkCount = (int)(pow(2.0, terrainData.GetLodOffset()) + 0.1);
             if (!terrainData)
                 return;
             if (GUILayout.Button("Update Height Texture"))
@@ -123,7 +124,7 @@ namespace MPipeline
                                 }
                             }
                         }
-                        btree.WriteToDisk(fsm, x + y * targetChunkCount);
+                        btree.WriteToDisk(fsm, x + y * largestChunkCount);
                     }
                 }
                 
