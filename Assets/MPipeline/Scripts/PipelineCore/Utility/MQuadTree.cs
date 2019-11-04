@@ -57,7 +57,7 @@ namespace MPipeline
             initializing = true;
             separate = false;
             dist = 0;
-            isInRange = false;
+            isInRange = 0;
             this.worldSize = worldSize;
             distOffset = MTerrain.current.terrainData.lodDeferredOffset;
             isRendering = false;
@@ -467,7 +467,7 @@ namespace MPipeline
         // double3 toPoint3D;
         double dist;
         bool separate;
-        bool isInRange;
+        int isInRange;
         public void UpdateData(double3 camPos, double3 camDir, double2 heightScaleOffset, double3 camFrustumMin, double3 camFrustumMax, float4* planes)
         {
             double2 centerworldPosXZ = CornerWorldPos;
@@ -489,12 +489,13 @@ namespace MPipeline
             }
 
             double2 heightMinMax = heightScaleOffset.y + texMinMax * heightScaleOffset.x;
-            isInRange = MathLib.BoxContactWithBox(camFrustumMin, camFrustumMax, double3(xzBounding.x, heightMinMax.x, xzBounding.y), double3(xzBounding.z, heightMinMax.y, xzBounding.w));
+            bool isInRange = MathLib.BoxContactWithBox(camFrustumMin, camFrustumMax, double3(xzBounding.x, heightMinMax.x, xzBounding.y), double3(xzBounding.z, heightMinMax.y, xzBounding.w));
             if (isInRange)
             {
                 double2 heightCenterExtent = double2(heightMinMax.x + heightMinMax.y, heightMinMax.y - heightMinMax.x) * 0.5;
                 isInRange = MathLib.BoxIntersect(double3(centerworldPosXZ.x, heightCenterExtent.x, centerworldPosXZ.y), double3(extent.x, heightCenterExtent.y, extent.y), planes, 6);
             }
+            this.isInRange = isInRange ? 0 : 1;
             toPoint = camPos.xz - centerworldPosXZ;
             dist = MathLib.DistanceToQuad(worldSize * 0.5, toPoint);
             if (leftDown != null)
@@ -515,13 +516,12 @@ namespace MPipeline
                 rightDown->CombineUpdate();
                 rightUp->CombineUpdate();
             }
-            float scale = isInRange ? 1 : (float)MTerrain.current.terrainData.backfaceCullingScale;
-            if (dist > MTerrain.current.allLodLevles[lodLevel] * scale - distOffset)
+            if (dist > MTerrain.current.allLodLevles[min(MTerrain.current.allLodLevles.Length - 1, lodLevel + isInRange)] - distOffset)
             {
                 separate = false;
                 Combine(lodLevel > MTerrain.current.lodOffset);
             }
-            else if (dist > MTerrain.current.allLodLevles[lodLevel + 1] * scale - distOffset)
+            else if (dist > MTerrain.current.allLodLevles[min(MTerrain.current.allLodLevles.Length - 1, lodLevel + 1 + isInRange)] - distOffset)
             {
                 separate = false;
                 Combine(lodLevel >= MTerrain.current.lodOffset);

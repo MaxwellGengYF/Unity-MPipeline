@@ -14,15 +14,14 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   heightOffset: -100
   heightScale: 200
-  displacementScale: 0
+  displacementScale: 10
   materialTillingScale: 1
   terrainLocalYPositionToGround: -2
-  backfaceCullingScale: 0.5
   largestChunkSize: 2048
   screenOffset:
     x: -1024
     y: -1024
-  lodDeferredOffset: 0
+  lodDeferredOffset: 2
   lodDistances:
   - 1500
   - 1200
@@ -55,7 +54,7 @@ MonoBehaviour:
     m_Bits: 4294967295
   - serializedVersion: 2
     m_Bits: 4294967295
-  virtualTexCapacity: 97
+  virtualTexCapacity: 106
   heightmapTexCapacity: 4
   allMaterials:
   - firstMaterialIndex: 0.2

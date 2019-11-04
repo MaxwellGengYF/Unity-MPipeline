@@ -244,6 +244,7 @@ namespace MPipeline
             albedoTex.GenerateMips();
             smTex.GenerateMips();
             normalTex.GenerateMips();
+            heightTex.GenerateMips();
             CommandBuffer buffer = RenderPipeline.BeforeFrameBuffer;
             buffer.SetComputeBufferParam(textureShader, 0, ShaderIDs._MaterialBuffer, materialBuffer);
             buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._VirtualMainTex, vt.GetTexture(0));
@@ -377,6 +378,10 @@ namespace MPipeline
                                 LoadTexture(loadData.startIndex, loadData.size, loadData.rootPos, loadData.maskScaleOffset, targetElement, RenderPipeline.BeforeFrameBuffer);
                                 DrawDecal(loadData.startIndex, loadData.size, targetElement, loadData.targetDecalLayer, loadData.maskScaleOffset, maskVT.GetChunkIndex(loadData.rootPos));
                             }
+                            else
+                            {
+                                throw new System.Exception("Virtual Texture No Capacity");
+                            }
                             yield return null;
                             break;
                         case TerrainLoadData.Operator.Separate:
@@ -385,9 +390,6 @@ namespace MPipeline
                             int2 leftUpIndex = loadData.startIndex + int2(0, subSize);
                             int2 rightDownIndex = loadData.startIndex + int2(subSize, 0);
                             int2 rightUpIndex = loadData.startIndex + subSize;
-                            yield return null;
-
-
                             if (vt.LeftedTextureElement >= 3)
                             {
                                 vt.LoadNewTextureChunks(loadData.startIndex, subSize, 2, vtContainer);
@@ -409,6 +411,9 @@ namespace MPipeline
                                 DrawDecal(leftUpIndex, subSize, vtContainer[2], loadData.targetDecalLayer, leftUpScaleOffset, maskElement);
                                 DrawDecal(rightDownIndex, subSize, vtContainer[1], loadData.targetDecalLayer, rightDownScaleOffset, maskElement);
                                 DrawDecal(rightUpIndex, subSize, vtContainer[3], loadData.targetDecalLayer, rightUpScaleOffset, maskElement);
+                            }else
+                            {
+                                throw new System.Exception("Virtual Texture No Capacity");
                             }
                             yield return null;
                             break;
@@ -423,6 +428,7 @@ namespace MPipeline
                             rightUpIndex = loadData.startIndex + subSize;
                             targetElement = vt.CombineQuadTextures(leftDownIndex, rightDownIndex, leftUpIndex, rightUpIndex, leftDownIndex, loadData.size, RenderPipeline.BeforeFrameBuffer);
                             GenerateMips(targetElement, RenderPipeline.BeforeFrameBuffer);
+                            yield return null;
                             break;
                     }
                 }
