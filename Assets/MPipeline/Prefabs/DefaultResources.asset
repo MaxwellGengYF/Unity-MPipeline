@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 2dbd0823b00f58a4caf0bda5f81b5c91, type: 3}
   m_Name: DefaultResources
   m_EditorClassIdentifier: 
-  clusterResources: {fileID: 0}
+  clusterResources: {fileID: 11400000, guid: 5c18b7c9458e3ea488761f9c56016cba, type: 2}
   availiableEvents:
   - {fileID: 11400000, guid: cfd7bbc3e9481ec458e874a8577ee260, type: 2}
   - {fileID: 11400000, guid: 2b92438e0f21bc94abd6c4972ddb265a, type: 2}

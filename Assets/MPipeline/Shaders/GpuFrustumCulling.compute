@@ -205,7 +205,7 @@ void OcclusionRecheck(uint id : SV_DISPATCHTHREADID)
 void ClearOcclusionData(uint id : SV_DISPATCHTHREADID)
 {
     uint threadCount = dispatchBuffer[4];
-    dispatchBuffer[0] = uint(ceil(threadCount / 64.0));
+    dispatchBuffer[0] = uint(ceil((0.1 + threadCount) / 64.0));
     dispatchBuffer[3] = threadCount;
     dispatchBuffer[4] = 0;
     reCheckCount[1] = 0;

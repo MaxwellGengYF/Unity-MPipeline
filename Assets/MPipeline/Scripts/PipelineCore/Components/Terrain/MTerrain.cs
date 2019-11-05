@@ -150,7 +150,7 @@ namespace MPipeline
             double oneHeightPixelSize = size * oneVTPixelWorldLength / COLOR_RESOLUTION;
 
             buffer.SetComputeIntParam(textureShader, ShaderIDs._OffsetIndex, texElement);
-            buffer.SetComputeVectorParam(textureShader, ShaderIDs._IndexBuffer, (float4)double4(rootPos, terrainData.heightScale, (1.0 / oneHeightPixelSize)));
+            buffer.SetComputeVectorParam(textureShader, ShaderIDs._IndexBuffer, (float4)double4(rootPos, terrainData.heightScale, (2.0 / oneHeightPixelSize)));
             buffer.SetComputeVectorParam(textureShader, ShaderIDs._IndexTextureSize, float4(MASK_RESOLUTION, min(255, terrainData.allMaterials.Length - 1), vt.indexSize));
             buffer.SetComputeVectorParam(textureShader, ShaderIDs._TextureSize, (float4)double4(maskScaleOffset, size * terrainData.materialTillingScale));
             const int disp = COLOR_RESOLUTION / 8;
@@ -276,8 +276,9 @@ namespace MPipeline
                             VirtualTextureLoader.MaskBuffer maskLoadBuffer = maskLoader.ScheduleLoadingJob(maskCommand.pos);
                             VirtualTextureLoader.MaskBuffer heightLoadBuffer = heightLoader.ScheduleLoadingJob(maskCommand.pos);
                             loadingThread.Schedule();
-                            yield return maskLoader.ReadToTexture(maskVT.GetTexture(0), maskEle, maskLoadBuffer, 1);
-                            yield return heightLoader.ReadToTexture(maskVT.GetTexture(1), maskEle, heightLoadBuffer, 2);
+                            const int frameSepar = (MASK_RESOLUTION / 2048) * (MASK_RESOLUTION / 2048);
+                            yield return maskLoader.ReadToTexture(maskVT.GetTexture(0), maskEle, maskLoadBuffer, frameSepar);
+                            yield return heightLoader.ReadToTexture(maskVT.GetTexture(1), maskEle, heightLoadBuffer, frameSepar * 2);
                         }
                         else
                         {

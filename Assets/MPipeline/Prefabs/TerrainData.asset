@@ -60,10 +60,6 @@ MonoBehaviour:
     secondMaterialIndex: 0.2
     offset: 0
     heightBlendScale: 0
-  - firstMaterialIndex: 1.2
-    secondMaterialIndex: 1.2
-    offset: 0
-    heightBlendScale: 0
   heightmapPath: Assets/BinaryData/TerrainHeight.mquad
   maskmapPath: Assets/BinaryData/TerrainMask.mquad
   boundPath: Assets/BinaryData/TerrainBound.mquad

@@ -41,6 +41,7 @@ namespace MPipeline
             rt.enableRandomWrite = true;
             rt.filterMode = FilterMode.Trilinear;
             rt.wrapMode = TextureWrapMode.Repeat;
+            rt.anisoLevel = 16;
             rt.Create();
             indexPool = new NativeList<int>(maximumPoolCapacity, maximumPoolCapacity, Allocator.Persistent);
             for (int i = 0; i < maximumPoolCapacity; ++i)

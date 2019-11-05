@@ -267,9 +267,13 @@ namespace MPipeline
                         startIndex = startIndex
                     });
                 }
-
+                isRendering = false;
             }
-            isRendering = false;
+            else
+            {
+                m_isRendering = false;
+            }
+            
             if (leftDown != null)
             {
                 leftDown->Dispose();

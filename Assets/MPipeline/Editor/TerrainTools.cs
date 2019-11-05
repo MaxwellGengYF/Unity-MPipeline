@@ -84,7 +84,7 @@ namespace MPipeline
                         terrainEdit.SetInt(ShaderIDs._Count, MTerrain.MASK_RESOLUTION);
                         terrainEdit.SetInt(ShaderIDs._OffsetIndex, 0);
                         terrainEdit.SetVector("_ScaleOffset", float4(float2(1.0 / targetChunkCount), float2(x, y) / targetChunkCount));
-                        const int disp = MTerrain.MASK_RESOLUTION / 8;
+                        const int disp = MTerrain.MASK_RESOLUTION / 16;
                         terrainEdit.Dispatch(6, disp, disp, 1);
                         loader.WriteToDisk(cacheRt, 0, pos);
                         for (int i = 0, res = MTerrain.MASK_RESOLUTION; i < mipLevel; ++i, res /= 2)
@@ -109,7 +109,7 @@ namespace MPipeline
                                 terrainEdit.SetTexture(pass, "_Mip1", mipRT, i);
                             }
                             terrainEdit.SetInt(ShaderIDs._Count, res);
-                            int mipdisp = Mathf.CeilToInt(res / 8f);
+                            int mipdisp = Mathf.CeilToInt(res / 16f);
                             terrainEdit.Dispatch(pass, mipdisp, mipdisp, 1);
                             if (pass == 9)
                             {
@@ -163,7 +163,7 @@ namespace MPipeline
                         terrainEdit.SetInt(ShaderIDs._Count, MTerrain.MASK_RESOLUTION);
                         terrainEdit.SetInt(ShaderIDs._OffsetIndex, 0);
                         terrainEdit.SetVector("_ScaleOffset", float4(float2(1.0 / targetChunkCount), float2(x, y) / targetChunkCount));
-                        const int disp = MTerrain.MASK_RESOLUTION / 8;
+                        const int disp = MTerrain.MASK_RESOLUTION / 16;
                         terrainEdit.Dispatch(6, disp, disp, 1);
                         loader.WriteToDisk(cacheRt, 0, pos);
                     }

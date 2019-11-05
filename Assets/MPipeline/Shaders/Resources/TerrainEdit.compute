@@ -38,7 +38,7 @@ float2 pos##_localQuadPos = mul((float3x3)_QuadMatrix, float3(pos, 1)).xy + 0.5;
 float pos##_inQuad = dot(abs(pos##_localQuadPos - saturate(pos##_localQuadPos)), 1) < 1e-4;\
 result = pos##_ToFirstCircle + pos##_ToSecondCircle + pos##_inQuad * _QuadMatrix[2][2];
 
-[numthreads(8,8,1)]
+[numthreads(16,16,1)]
 void DrawMask(uint2 id : SV_DISPATCHTHREADID)
 {
     float2 uv = (id + 0.5) / _Count;
@@ -51,7 +51,7 @@ void DrawMask(uint2 id : SV_DISPATCHTHREADID)
 }
 RWStructuredBuffer<uint> _ElementBuffer;
 
-[numthreads(8,8,1)]
+[numthreads(16,16,1)]
 void DecodeToMask(uint2 id : SV_DISPATCHTHREADID)
 {
     uint index = id.y * _Count + id.x;
@@ -61,7 +61,7 @@ void DecodeToMask(uint2 id : SV_DISPATCHTHREADID)
     _DestTex[uint3(id, _OffsetIndex)] = value / 255.0;
 }
 
-[numthreads(64,1,1)]
+[numthreads(256,1,1)]
 void EncodeR8(uint id : SV_DISPATCHTHREADID)
 {
     uint idx = id * 4;
@@ -83,7 +83,7 @@ void EncodeR8(uint id : SV_DISPATCHTHREADID)
     _ElementBuffer[id] = result;
 }
 
-[numthreads(8,8,1)]
+[numthreads(16,16,1)]
 void DecodeR16(uint2 id : SV_DISPATCHTHREADID)
 {
     uint index = id.y * _Count + id.x;
@@ -94,7 +94,7 @@ void DecodeR16(uint2 id : SV_DISPATCHTHREADID)
 }
 
 
-[numthreads(64,1,1)]
+[numthreads(256,1,1)]
 void EncodeR16(uint id : SV_DISPATCHTHREADID)
 {
     uint idx = id * 2;
@@ -108,7 +108,7 @@ void EncodeR16(uint id : SV_DISPATCHTHREADID)
     _ElementBuffer[id] = result;
 }
 
-[numthreads(8,8,1)]
+[numthreads(16,16,1)]
 void Copy(uint2 id : SV_DISPATCHTHREADID)
 {
     float2 uv = (id + 0.5) / _Count;
@@ -118,7 +118,7 @@ Texture2DArray<float> _SourceArray; SamplerState sampler_SourceArray;
 RWTexture2D<float2> _Mip0;
 RWTexture2D<float2> _Mip1;
 RWStructuredBuffer<float2> _DataBuffer;
-[numthreads(8,8,1)]
+[numthreads(16,16,1)]
 void MipBound(uint2 id : SV_DISPATCHTHREADID)
 {
     if(id.x >= _Count || id.y >= _Count) return;

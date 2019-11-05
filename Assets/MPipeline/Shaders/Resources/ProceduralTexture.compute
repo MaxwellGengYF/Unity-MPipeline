@@ -169,13 +169,12 @@ void NormalToWorld(uint2 id : SV_DISPATCHTHREADID)
         float3 normal = normalize(cross(float3(uvOffset[i].x, heightDiff, uvOffset[i].y), tangent));
         normalSum += normal;
     }
-    normalSum.xz *= 2;
     normalSum = normalize(normalSum);
     float2 absoluteUV = (id + 0.5) / _ColorResolution;
     float2 tangentNormalXY = _VirtualBumpMap[uint3(id, _OffsetIndex)].xy;
     float3 tangentNormal = float3(tangentNormalXY, sqrt(1 - dot(tangentNormalXY, tangentNormalXY)));
     float3 tangent = float3(1,0,0);
-    float3 binormal = cross(tangent, normalSum);
+    float3 binormal = normalize(cross(tangent, normalSum));
     tangent = normalize(cross(normalSum, binormal));
     float3x3 TBN = float3x3(tangent, binormal, normalSum);
     _VirtualBumpMap[uint3(id, _OffsetIndex)] = normalize(mul(tangentNormal, TBN)).xz;

@@ -124,7 +124,7 @@ namespace MPipeline
             terrainEditShader.SetInt(ShaderIDs._Count, (int)resolution);
             terrainEditShader.SetTexture(readPass, ShaderIDs._DestTex, rt);
             terrainEditShader.SetBuffer(readPass, ShaderIDs._ElementBuffer, readWriteBuffer);
-            int disp = (int)resolution / 8;
+            int disp = (int)resolution / 16;
             terrainEditShader.Dispatch(readPass, disp, disp, 1);
         }
 
@@ -134,7 +134,7 @@ namespace MPipeline
             terrainEditShader.SetInt(ShaderIDs._Count, (int)resolution);
             terrainEditShader.SetTexture(writePass, ShaderIDs._DestTex, rt);
             terrainEditShader.SetBuffer(writePass, ShaderIDs._ElementBuffer, readWriteBuffer);
-            int disp = (int)(size / 64 / 4);
+            int disp = (int)(size / 256 / 4);
             terrainEditShader.Dispatch(writePass, disp, 1, 1);
             readWriteBuffer.GetData(fileReadBuffer, 0, 0, readWriteBuffer.count * 4);
             maskLoader.Position = GetByteOffset(chunkCoord, terrainMaskCount);

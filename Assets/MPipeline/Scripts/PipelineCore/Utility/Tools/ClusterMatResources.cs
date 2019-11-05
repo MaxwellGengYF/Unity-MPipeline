@@ -121,9 +121,8 @@ namespace MPipeline
                     loadShader.SetInt(ShaderIDs._Count, loader.targetIndex);
                     int2 disp = resolution.xy / 8;
                     loadShader.Dispatch(blitPass, disp.x, disp.y, 1);
-                    const int targetLevel = 6;
                     buffer.SetComputeIntParam(loadShader, ShaderIDs._Count, loader.targetIndex);
-                    for (int mip = 0; mip < targetLevel; ++mip)
+                    for (int mip = 0; mip < mipIDs.Length; ++mip)
                     {
                         buffer.SetComputeTextureParam(loadShader, 4, mipIDs[mip], loader.targetTexArray, mip);
                     }
