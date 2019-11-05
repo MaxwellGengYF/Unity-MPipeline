@@ -78,6 +78,7 @@ void UpSample (uint2 id : SV_DispatchThreadID)
     float4 albedo_occ;
     float2 normal;
     float2 sm;
+   // lerpValue = lerpValue > 0.5 ? 1 : 0;
     BILINEAR_INTERPOLATION(float4, albedo_occs, lerpValue, albedo_occ)
     BILINEAR_INTERPOLATION(float2, normals, lerpValue, normal)
     BILINEAR_INTERPOLATION(float2, sms, lerpValue, sm)
@@ -153,27 +154,30 @@ void NormalToWorld(uint2 id : SV_DISPATCHTHREADID)
     [unroll]
     for(uint i = 0; i < 9; ++i)
     {
-        heights[i] = _SourceTex[id + uvOffset[i] + 1].x;
+        heights[i] = _SourceTex[id + uvOffset[i] + int2(1,1)].x;
     }
     float3 normalSum = 0;
    
     [unroll]
     for(i = 1; i < 9; ++i)
     {
-        float heightDiff = (heights[i] - heights[0]) * _IndexBuffer.z * _IndexBuffer.w;
-        float3 tangent = normalize(cross(float3(0,1,0), normalize(float3(uvOffset[i].x, 0, uvOffset[i].y))));
-        float3 normal = normalize(cross(normalize(float3(uvOffset[i].x, heightDiff, uvOffset[i].y)), tangent));
+        float3 horizonVec = float3(uvOffset[i].x, 0, uvOffset[i].y);
+        float horizonLen = length(horizonVec);
+        float heightDiff = (heights[i] - heights[0]) * _IndexBuffer.z * _IndexBuffer.w * horizonLen;
+        horizonVec /= horizonLen;
+        float3 tangent = cross(float3(0,1,0),horizonVec);
+        float3 normal = normalize(cross(float3(uvOffset[i].x, heightDiff, uvOffset[i].y), tangent));
         normalSum += normal;
     }
+    normalSum.xz *= 2;
     normalSum = normalize(normalSum);
     float2 absoluteUV = (id + 0.5) / _ColorResolution;
     float2 tangentNormalXY = _VirtualBumpMap[uint3(id, _OffsetIndex)].xy;
     float3 tangentNormal = float3(tangentNormalXY, sqrt(1 - dot(tangentNormalXY, tangentNormalXY)));
     float3 tangent = float3(1,0,0);
-    float3 binormal = normalize(cross(tangent, normalSum));
+    float3 binormal = cross(tangent, normalSum);
     tangent = normalize(cross(normalSum, binormal));
     float3x3 TBN = float3x3(tangent, binormal, normalSum);
-    
     _VirtualBumpMap[uint3(id, _OffsetIndex)] = normalize(mul(tangentNormal, TBN)).xz;
 }
 

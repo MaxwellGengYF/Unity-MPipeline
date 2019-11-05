@@ -73,7 +73,7 @@ namespace MPipeline
         private RenderTexture cullingFlags;
         private int meshResolution;
         private ComputeBuffer meshBuffer;
-        
+
         #endregion
         public PipelineCamera cam;
         private ComputeShader shader;
@@ -200,11 +200,6 @@ namespace MPipeline
                 heightIndex = heightIndex
             });
         }
-        void CalculateRootPos(ref int2 rootPos, ref float3 maskScaleOffset)
-        {
-            rootPos += (int2)maskScaleOffset.yz;
-            maskScaleOffset.yz = frac(maskScaleOffset.yz);
-        }
         IEnumerator AsyncLoader()
         {
             textureShader.SetTexture(1, ShaderIDs._VirtualMainTex, albedoTex);
@@ -245,29 +240,29 @@ namespace MPipeline
             smTex.GenerateMips();
             normalTex.GenerateMips();
             heightTex.GenerateMips();
-            CommandBuffer buffer = RenderPipeline.BeforeFrameBuffer;
-            buffer.SetComputeBufferParam(textureShader, 0, ShaderIDs._MaterialBuffer, materialBuffer);
-            buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._VirtualMainTex, vt.GetTexture(0));
-            buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._VirtualBumpMap, vt.GetTexture(1));
-            buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._VirtualSMO, vt.GetTexture(2));
-            buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._HeightMap, heightTex);
-            buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._MainTex, albedoTex);
-            buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._BumpMap, normalTex);
-            buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._SMMap, smTex);
-            buffer.SetComputeIntParam(textureShader, ShaderIDs._HeightResolution, MASK_RESOLUTION);
-            int rtID = maskVT.GetTextureFormat(0).rtPropertyID;
-            buffer.SetComputeTextureParam(textureShader, 0, rtID, maskVT.GetTexture(0));
-            buffer.SetComputeTextureParam(textureShader, 0, maskVT.indexTexID, maskVT.indexTex);
-            //      buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._NoiseTexture, terrainData.warpNoiseTexture);
-            buffer.SetComputeTextureParam(textureShader, 4, ShaderIDs._VirtualBumpMap, vt.GetTexture(1));
-            buffer.SetComputeTextureParam(textureShader, 3, ShaderIDs._IndexTexture, maskVT.indexTex);
-            buffer.SetComputeTextureParam(textureShader, 3, ShaderIDs._VirtualHeightmap, maskVT.GetTexture(1));
-            buffer.SetComputeTextureParam(textureShader, 3, ShaderIDs._DestTex, heightloadingCacheRT);
-            buffer.SetComputeTextureParam(textureShader, 4, ShaderIDs._SourceTex, heightloadingCacheRT);
-            buffer.SetComputeIntParam(textureShader, ShaderIDs._ColorResolution, COLOR_RESOLUTION);
-            buffer.SetGlobalVector(ShaderIDs._HeightScaleOffset, (float4)double4(terrainData.heightScale, terrainData.heightOffset, 1, 1));
             while (enabled)
             {
+                CommandBuffer buffer = RenderPipeline.BeforeFrameBuffer;
+                buffer.SetComputeBufferParam(textureShader, 0, ShaderIDs._MaterialBuffer, materialBuffer);
+                buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._VirtualMainTex, vt.GetTexture(0));
+                buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._VirtualBumpMap, vt.GetTexture(1));
+                buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._VirtualSMO, vt.GetTexture(2));
+                buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._HeightMap, heightTex);
+                buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._MainTex, albedoTex);
+                buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._BumpMap, normalTex);
+                buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._SMMap, smTex);
+                buffer.SetComputeIntParam(textureShader, ShaderIDs._HeightResolution, MASK_RESOLUTION);
+                int rtID = maskVT.GetTextureFormat(0).rtPropertyID;
+                buffer.SetComputeTextureParam(textureShader, 0, rtID, maskVT.GetTexture(0));
+                buffer.SetComputeTextureParam(textureShader, 0, maskVT.indexTexID, maskVT.indexTex);
+                //      buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._NoiseTexture, terrainData.warpNoiseTexture);
+                buffer.SetComputeTextureParam(textureShader, 4, ShaderIDs._VirtualBumpMap, vt.GetTexture(1));
+                buffer.SetComputeTextureParam(textureShader, 3, ShaderIDs._IndexTexture, maskVT.indexTex);
+                buffer.SetComputeTextureParam(textureShader, 3, ShaderIDs._VirtualHeightmap, maskVT.GetTexture(1));
+                buffer.SetComputeTextureParam(textureShader, 3, ShaderIDs._DestTex, heightloadingCacheRT);
+                buffer.SetComputeTextureParam(textureShader, 4, ShaderIDs._SourceTex, heightloadingCacheRT);
+                buffer.SetComputeIntParam(textureShader, ShaderIDs._ColorResolution, COLOR_RESOLUTION);
+                buffer.SetGlobalVector(ShaderIDs._HeightScaleOffset, (float4)double4(terrainData.heightScale, terrainData.heightOffset, 1, 1));
                 TerrainLoadData loadData;
                 MaskLoadCommand maskCommand;
                 int targetElement;
@@ -313,7 +308,6 @@ namespace MPipeline
 
                                     if (elementAva)
                                     {
-                                        CalculateRootPos(ref loadData.rootPos, ref loadData.maskScaleOffset);
                                         LoadTexture(loadData.startIndex, loadData.size, loadData.rootPos, loadData.maskScaleOffset, targetElement, RenderPipeline.BeforeFrameBuffer);
 
                                     }
@@ -363,7 +357,6 @@ namespace MPipeline
                             targetElement = vt.GetChunkIndex(loadData.startIndex);
                             if (targetElement >= 0)
                             {
-                                CalculateRootPos(ref loadData.rootPos, ref loadData.maskScaleOffset);
                                 LoadTexture(loadData.startIndex, loadData.size, loadData.rootPos, loadData.maskScaleOffset, targetElement, RenderPipeline.BeforeFrameBuffer);
                                 DrawDecal(loadData.startIndex, loadData.size, targetElement, loadData.targetDecalLayer, loadData.maskScaleOffset, maskVT.GetChunkIndex(loadData.rootPos));
                             }
@@ -374,13 +367,12 @@ namespace MPipeline
 
                             if (elementAva)
                             {
-                                CalculateRootPos(ref loadData.rootPos, ref loadData.maskScaleOffset);
                                 LoadTexture(loadData.startIndex, loadData.size, loadData.rootPos, loadData.maskScaleOffset, targetElement, RenderPipeline.BeforeFrameBuffer);
                                 DrawDecal(loadData.startIndex, loadData.size, targetElement, loadData.targetDecalLayer, loadData.maskScaleOffset, maskVT.GetChunkIndex(loadData.rootPos));
                             }
                             else
                             {
-                                throw new System.Exception("Virtual Texture No Capacity");
+                                Debug.LogError("Virtual Texture No Capacity in loading  " + textureCapacity);
                             }
                             yield return null;
                             break;
@@ -393,7 +385,6 @@ namespace MPipeline
                             if (vt.LeftedTextureElement >= 3)
                             {
                                 vt.LoadNewTextureChunks(loadData.startIndex, subSize, 2, vtContainer);
-                                CalculateRootPos(ref loadData.rootPos, ref loadData.maskScaleOffset);
                                 float subScale = loadData.maskScaleOffset.x;
                                 float2 leftUpOffset = float2(loadData.maskScaleOffset.yz + float2(0, subScale));
                                 float2 rightDownOffset = float2(loadData.maskScaleOffset.yz + float2(subScale, 0));
@@ -411,9 +402,10 @@ namespace MPipeline
                                 DrawDecal(leftUpIndex, subSize, vtContainer[2], loadData.targetDecalLayer, leftUpScaleOffset, maskElement);
                                 DrawDecal(rightDownIndex, subSize, vtContainer[1], loadData.targetDecalLayer, rightDownScaleOffset, maskElement);
                                 DrawDecal(rightUpIndex, subSize, vtContainer[3], loadData.targetDecalLayer, rightUpScaleOffset, maskElement);
-                            }else
+                            }
+                            else
                             {
-                                throw new System.Exception("Virtual Texture No Capacity");
+                                Debug.LogError("Virtual Texture No Capacity  in separate   " + textureCapacity + "  " + vt.LeftedTextureElement);
                             }
                             yield return null;
                             break;
@@ -650,7 +642,7 @@ namespace MPipeline
             materialBuffer = new ComputeBuffer(max(1, terrainData.allMaterials.Length), sizeof(MTerrainData.HeightBlendMaterial));
             materialBuffer.SetData(terrainData.allMaterials);
             decalLayerOffset = max(0, terrainData.lodDistances.Length - terrainData.allDecalLayers.Length);
-            tree = new TerrainQuadTree(-1, TerrainQuadTree.LocalPos.LeftDown, 0, 0, terrainData.largestChunkSize, double3(2, 0, 0), 0);
+            tree = new TerrainQuadTree(-1, TerrainQuadTree.LocalPos.LeftDown, 0, 0, terrainData.largestChunkSize, double3(1, 0, 0), 0);
 
             StartCoroutine(AsyncLoader());
         }
@@ -765,9 +757,9 @@ namespace MPipeline
                     }
                 }
 
-                if(loadCommand.load)
+                if (loadCommand.load)
                 {
-                     current.boundingDict[loadCommand.pos].ReadFromDisk(current.boundingLoadStream, current.largestChunkCount * loadCommand.pos.y + loadCommand.pos.x);
+                    current.boundingDict[loadCommand.pos].ReadFromDisk(current.boundingLoadStream, current.largestChunkCount * loadCommand.pos.y + loadCommand.pos.x);
                 }
             }
         }

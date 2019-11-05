@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: TerrainData
   m_EditorClassIdentifier: 
   heightOffset: -100
-  heightScale: 200
+  heightScale: 300
   displacementScale: 10
   materialTillingScale: 1
   terrainLocalYPositionToGround: -2
@@ -22,9 +22,10 @@ MonoBehaviour:
     x: -1024
     y: -1024
   lodDeferredOffset: 2
+  backfaceCullingLevel: 0.5
   lodDistances:
+  - 2000
   - 1500
-  - 1200
   - 500
   - 300
   - 150
@@ -52,43 +53,13 @@ MonoBehaviour:
     m_Bits: 4294967295
   - serializedVersion: 2
     m_Bits: 4294967295
-  - serializedVersion: 2
-    m_Bits: 4294967295
-  virtualTexCapacity: 106
+  virtualTexCapacity: 94
   heightmapTexCapacity: 4
   allMaterials:
   - firstMaterialIndex: 0.2
     secondMaterialIndex: 0.2
     offset: 0
     heightBlendScale: 0
-  - firstMaterialIndex: 0.2
-    secondMaterialIndex: 1.2
-    offset: -0.4
-    heightBlendScale: 2
-  - firstMaterialIndex: 0.2
-    secondMaterialIndex: 1.2
-    offset: -0.2
-    heightBlendScale: 2
-  - firstMaterialIndex: 0.2
-    secondMaterialIndex: 1.2
-    offset: 0
-    heightBlendScale: 2
-  - firstMaterialIndex: 0.2
-    secondMaterialIndex: 1.2
-    offset: 0.2
-    heightBlendScale: 2
-  - firstMaterialIndex: 0.2
-    secondMaterialIndex: 1.2
-    offset: 0.4
-    heightBlendScale: 2
-  - firstMaterialIndex: 0.2
-    secondMaterialIndex: 1.2
-    offset: 0.5
-    heightBlendScale: 2
-  - firstMaterialIndex: 0.2
-    secondMaterialIndex: 1.2
-    offset: 0.8
-    heightBlendScale: 2
   - firstMaterialIndex: 1.2
     secondMaterialIndex: 1.2
     offset: 0

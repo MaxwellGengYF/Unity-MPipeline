@@ -17,6 +17,7 @@ namespace MPipeline
             public float offset;
             public float heightBlendScale;
         };
+        
         public double heightOffset = 0;
         public double heightScale = 10;
         public double displacementScale = 10;
@@ -25,6 +26,8 @@ namespace MPipeline
         public double largestChunkSize = 1000;
         public double2 screenOffset;
         public double lodDeferredOffset = 2;
+        [Range(0.1f, 1)]
+        public float backfaceCullingLevel = 0.5f;
         //public Texture2D warpNoiseTexture;
         public double[] lodDistances = new double[]
         {
