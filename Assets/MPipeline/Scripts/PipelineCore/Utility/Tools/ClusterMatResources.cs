@@ -73,13 +73,13 @@ namespace MPipeline
         }
         public void Init(PipelineResources res)
         {
-            mipIDs = new NativeArray<int>(6, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            mipIDs = new NativeArray<int>(2, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
             mipIDs[0] = Shader.PropertyToID("_Mip0");
             mipIDs[1] = Shader.PropertyToID("_Mip1");
-            mipIDs[2] = Shader.PropertyToID("_Mip2");
+            /*mipIDs[2] = Shader.PropertyToID("_Mip2");
             mipIDs[3] = Shader.PropertyToID("_Mip3");
             mipIDs[4] = Shader.PropertyToID("_Mip4");
-            mipIDs[5] = Shader.PropertyToID("_Mip5");
+            mipIDs[5] = Shader.PropertyToID("_Mip5");*/
             msbForCluster = new MStringBuilder(100);
             for (int i = 0; i < clusterProperties.Count; ++i)
             {
@@ -126,7 +126,7 @@ namespace MPipeline
                     {
                         buffer.SetComputeTextureParam(loadShader, 4, mipIDs[mip], loader.targetTexArray, mip);
                     }
-                    resolution /= 32;
+                    resolution /= 16;
                     buffer.DispatchCompute(loadShader, 4, resolution.x, resolution.y, 1);
                     loader.aref.ReleaseAsset();
                     asyncLoader[i] = asyncLoader[asyncLoader.Count - 1];
