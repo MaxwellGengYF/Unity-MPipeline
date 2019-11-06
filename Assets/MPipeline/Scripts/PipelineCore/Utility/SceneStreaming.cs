@@ -45,8 +45,8 @@ namespace MPipeline
 
         }
         static string[] allStrings = new string[3];
-        private static byte[] bytesArray = new byte[8192];
-        private static byte[] GetByteArray(int length)
+        public static byte[] bytesArray = new byte[8192];
+        public static byte[] GetByteArray(int length)
         {
             if (bytesArray == null || bytesArray.Length < length)
             {

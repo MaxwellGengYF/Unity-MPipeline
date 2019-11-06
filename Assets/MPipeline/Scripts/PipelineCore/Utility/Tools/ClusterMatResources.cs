@@ -7,6 +7,7 @@ using Unity.Collections;
 using UnityEngine.Rendering;
 using UnityEngine.AddressableAssets;
 using UnityEngine.Experimental.Rendering;
+using Unity.Collections.LowLevel.Unsafe;
 using UnityEngine.ResourceManagement.AsyncOperations;
 namespace MPipeline
 {
@@ -23,7 +24,7 @@ namespace MPipeline
         public int size;
     }
 
-    public class ClusterMatResources : ScriptableObject
+    public sealed unsafe class ClusterMatResources : ScriptableObject
     {
         #region SERIALIZABLE
         public enum TextureSize
@@ -43,6 +44,7 @@ namespace MPipeline
         public TexturePool rgbaPool;
         public TexturePool emissionPool;
         public TexturePool heightPool;
+        
         public const string infosPath = "Assets/BinaryData/MapDatas/";
         #endregion
 
@@ -59,7 +61,23 @@ namespace MPipeline
         }
         public VirtualMaterialManager vmManager;
         private MStringBuilder msbForCluster;
+        private string guidCache;
         private List<AsyncTextureLoader> asyncLoader = new List<AsyncTextureLoader>(100);
+        private List<AssetReference> allReferenceCache = new List<AssetReference>(200);
+        private struct Int4x4Equal : IFunction<int4x4, int4x4, bool>
+        {
+            public bool Run(ref int4x4 a, ref int4x4 b)
+            {
+                ulong* aPtr = (ulong*)a.Ptr();
+                ulong* bPtr = (ulong*)b.Ptr();
+                for(int i = 0; i < 8; ++i)
+                {
+                    if (aPtr[i] != bPtr[i]) return false;
+                }
+                return true;
+            }
+        }
+        private NativeDictionary<int4x4, int, Int4x4Equal> referenceCacheDict;
         private NativeArray<int> mipIDs;
         public void AddLoadCommand(AssetReference aref, RenderTexture targetTexArray, int targetIndex, bool isNormal)
         {
@@ -71,8 +89,26 @@ namespace MPipeline
                 isNormal = isNormal,
             });
         }
+
+        public AssetReference GetReference(ref int4x4 guid)
+        {
+            int index;
+            if(referenceCacheDict.Get(guid, out index))
+            {
+                return allReferenceCache[index];
+            }
+            fixed(char* c = guidCache)
+            {
+                UnsafeUtility.MemCpy(c, guid.Ptr(), sizeof(int4x4));
+            }
+            referenceCacheDict.Add(guid, allReferenceCache.Count);
+            AssetReference aref = new AssetReference(guidCache);
+            allReferenceCache.Add(aref);
+            return aref;
+        }
         public void Init(PipelineResources res)
         {
+            referenceCacheDict = new NativeDictionary<int4x4, int, Int4x4Equal>(200, Allocator.Persistent, new Int4x4Equal());
             mipIDs = new NativeArray<int>(2, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
             mipIDs[0] = Shader.PropertyToID("_Mip0");
             mipIDs[1] = Shader.PropertyToID("_Mip1");
@@ -91,8 +127,8 @@ namespace MPipeline
             emissionPool.Init(2, GraphicsFormat.R16G16B16A16_SFloat, (int)fixedTextureSize, this);
             heightPool.Init(3, GraphicsFormat.R8_UNorm, (int)fixedTextureSize, this);
             vmManager = new VirtualMaterialManager(materialPoolSize, maximumMaterialCount, res.shaders.streamingShader);
+            guidCache = new string(' ', 32);
         }
-
         public void UpdateData(CommandBuffer buffer, PipelineResources res)
         {
             for (int i = 0; i < asyncLoader.Count; ++i)
@@ -142,7 +178,9 @@ namespace MPipeline
             emissionPool.Dispose();
             heightPool.Dispose();
             vmManager.Dispose();
+            referenceCacheDict.Dispose();
             mipIDs.Dispose();
+            
         }
         public void TransformScene(uint value, MonoBehaviour behavior)
         {

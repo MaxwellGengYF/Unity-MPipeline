@@ -33,7 +33,6 @@ public unsafe sealed class VirtualMaterial
         public int _SecondaryBumpMap;
         public int _SecondarySpecularMap;
         public float4 _SecondaryTileOffset;
-
     }
 
     #region EDITOR_TOOLS
