@@ -62,9 +62,9 @@ namespace MPipeline
 
 
 
-        public int GetTex(AssetReference guid, bool isNormal = false)
+        public int GetTex(int4x4 guidValue, bool isNormal = false)
         {
-
+            AssetReference guid = clusterRes.GetReference(ref guidValue);
             int index;
             if (guidToIndex.TryGetValue(guid, out index))
             {
@@ -89,8 +89,9 @@ namespace MPipeline
             return index;
         }
 
-        public void RemoveTex(AssetReference guid)
+        public void RemoveTex(int4x4 guidValue)
         {
+            AssetReference guid = clusterRes.GetReference(ref guidValue);
             int index;
             if (guidToIndex.TryGetValue(guid, out index))
             {

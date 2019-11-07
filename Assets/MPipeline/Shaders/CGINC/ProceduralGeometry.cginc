@@ -147,7 +147,7 @@ void frag (v2f IN,
 				o.Emission = matProp._EmissionColor;
 			}
 			else{
-				o.Emission =matProp._EmissionColor * SampleTex(_GPURPEmissionMap, sampler_GPURPEmissionMap, uv, matProp._EmissionMap, 1);
+				o.Emission = matProp._EmissionColor * SampleTex(_GPURPEmissionMap, sampler_GPURPEmissionMap, uv, matProp._EmissionMap, 1);
 			}
 			o.Albedo = c.rgb;
 

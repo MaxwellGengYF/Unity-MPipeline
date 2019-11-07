@@ -319,12 +319,12 @@ namespace MPipeline
         }
         public static void InitRenderTarget(ref RenderTargets tar, Camera tarcam, CommandBuffer buffer)
         {
-            buffer.GetTemporaryRT(RenderTargets.gbufferIndex[0], tarcam.pixelWidth, tarcam.pixelHeight, 0, FilterMode.Point, GraphicsFormat.R8G8B8A8_UNorm, 1, false);
-            buffer.GetTemporaryRT(RenderTargets.gbufferIndex[1], tarcam.pixelWidth, tarcam.pixelHeight, 0, FilterMode.Point, GraphicsFormat.R8G8B8A8_UNorm, 1, false);
-            buffer.GetTemporaryRT(RenderTargets.gbufferIndex[2], tarcam.pixelWidth, tarcam.pixelHeight, 0, FilterMode.Point, GraphicsFormat.A2B10G10R10_UNormPack32, 1, false);
+            buffer.GetTemporaryRT(RenderTargets.gbufferIndex[0], tarcam.pixelWidth, tarcam.pixelHeight, 0, FilterMode.Bilinear, GraphicsFormat.R8G8B8A8_UNorm, 1, false);
+            buffer.GetTemporaryRT(RenderTargets.gbufferIndex[1], tarcam.pixelWidth, tarcam.pixelHeight, 0, FilterMode.Bilinear, GraphicsFormat.R8G8B8A8_UNorm, 1, false);
+            buffer.GetTemporaryRT(RenderTargets.gbufferIndex[2], tarcam.pixelWidth, tarcam.pixelHeight, 0, FilterMode.Bilinear, GraphicsFormat.A2B10G10R10_UNormPack32, 1, false);
             buffer.GetTemporaryRT(RenderTargets.gbufferIndex[3], tarcam.pixelWidth, tarcam.pixelHeight, 0, FilterMode.Bilinear, GraphicsFormat.R16G16B16A16_SFloat, 1, false);
-            buffer.GetTemporaryRT(ShaderIDs._DepthBufferTexture, tarcam.pixelWidth, tarcam.pixelHeight, 32, FilterMode.Point, RenderTextureFormat.Depth, RenderTextureReadWrite.Linear, 1, false);
-            buffer.GetTemporaryRT(ShaderIDs._CameraDepthTexture, tarcam.pixelWidth, tarcam.pixelHeight, 0, FilterMode.Point, GraphicsFormat.R32_SFloat, 1, false);
+            buffer.GetTemporaryRT(ShaderIDs._DepthBufferTexture, tarcam.pixelWidth, tarcam.pixelHeight, 32, FilterMode.Bilinear, RenderTextureFormat.Depth, RenderTextureReadWrite.Linear, 1, false);
+            buffer.GetTemporaryRT(ShaderIDs._CameraDepthTexture, tarcam.pixelWidth, tarcam.pixelHeight, 0, FilterMode.Bilinear, GraphicsFormat.R32_SFloat, 1, false);
             buffer.GetTemporaryRT(ShaderIDs._BackupMap, tarcam.pixelWidth, tarcam.pixelHeight, 0, FilterMode.Bilinear, GraphicsFormat.R16G16B16A16_SFloat, 1, false);
             buffer.GetTemporaryRT(ShaderIDs._CameraMotionVectorsTexture, tarcam.pixelWidth, tarcam.pixelHeight, 0, FilterMode.Bilinear, GraphicsFormat.R16G16_SNorm, 1, false);
             foreach (var i in RenderTargets.gbufferIndex)

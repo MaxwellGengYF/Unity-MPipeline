@@ -158,7 +158,12 @@ namespace MPipeline
                 if (Application.isPlaying)
                 {
 #endif
-                    hizOccData = IPerCameraData.GetProperty(cam, (c) => new HizOcclusionData(c.cam.pixelWidth));
+                    HizOcclusionData.GetHizOcclusionData getter = new HizOcclusionData.GetHizOcclusionData
+                    {
+                        screenWidth = cam.cam.pixelWidth
+                    };
+
+                    hizOccData = IPerCameraData.GetProperty<HizOcclusionData, HizOcclusionData.GetHizOcclusionData>(cam, getter);
                     hizOccData.UpdateWidth(cam.cam.pixelWidth);
                     SceneController.CullCluster_LastFrameDepthHiZ(ref options, hizOccData, cam);
                     buffer.DrawProceduralIndirect(Matrix4x4.identity, clusterMat, 2, MeshTopology.Triangles, SceneController.baseBuffer.instanceCountBuffer, 0);
@@ -232,6 +237,14 @@ namespace MPipeline
     }
     public class HizOcclusionData : IPerCameraData
     {
+        public struct GetHizOcclusionData : IGetCameraData
+        {
+            public int screenWidth;
+            public IPerCameraData Run()
+            {
+                return new HizOcclusionData(screenWidth);
+            }
+        }
         public RenderTexture historyDepth { get; private set; }
         public int targetWidth { get; private set; }
         public int mip { get; private set; }

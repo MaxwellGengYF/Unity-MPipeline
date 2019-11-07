@@ -30,10 +30,6 @@ namespace MPipeline
 
         [System.NonSerialized]
         public Material overrideOpaqueMaterial;
-        private System.Func<PipelineCamera, LastVPData> getLastVP = (c) =>
-        {
-            return new LastVPData(c.cam);
-        };
         LastVPData lastData;
         public override void PreRenderFrame(PipelineCamera cam, ref PipelineCommandData data)
         {
@@ -51,7 +47,11 @@ namespace MPipeline
                 frustumPlanes[i] = cam.frustumArray[i];
             }
             PipelineFunctions.InitRenderTarget(ref cam.targets, cam.cam, data.buffer);
-            lastData = IPerCameraData.GetProperty(cam, getLastVP);
+            var getter = new LastVPData.GetLastVPData
+            {
+                c = cam.cam
+            };
+            lastData = IPerCameraData.GetProperty<LastVPData, LastVPData.GetLastVPData>(cam, getter);
             calculateJob.isD3D = GraphicsUtility.platformIsD3D;
             calculateJob.nonJitterP = cam.cam.nonJitteredProjectionMatrix;
             calculateJob.worldToView = cam.cam.worldToCameraMatrix;
@@ -152,7 +152,14 @@ namespace MPipeline
         public float4x4 lastVP = Matrix4x4.identity;
         public float4x4 lastP;
         public float4x4 camlocalToWorld;
-
+        public struct GetLastVPData : IGetCameraData
+        {
+            public Camera c;
+            public IPerCameraData Run()
+            {
+                return new LastVPData(c);
+            }
+        }
 
         public LastVPData(Camera c)
         {

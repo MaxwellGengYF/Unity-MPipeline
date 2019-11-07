@@ -42,7 +42,8 @@ namespace MPipeline
         {
             CommandBuffer buffer = data.buffer;
             handle.Complete();
-            SkyboxPreviewMatrix last = IPerCameraData.GetProperty(camera, () => new SkyboxPreviewMatrix());
+            var getter = new SkyboxPreviewMatrix.GetSkyboxPreviewMatrix();
+            SkyboxPreviewMatrix last = IPerCameraData.GetProperty<SkyboxPreviewMatrix, SkyboxPreviewMatrix.GetSkyboxPreviewMatrix>(camera, getter);
             buffer.SetGlobalMatrix(_LastSkyVP, last.lastViewProj);
             targetIdentifiers[0] = camera.targets.renderTargetIdentifier;
             targetIdentifiers[1] = ShaderIDs._CameraMotionVectorsTexture;
@@ -91,6 +92,13 @@ namespace MPipeline
         }
         public class SkyboxPreviewMatrix : IPerCameraData
         {
+            public struct GetSkyboxPreviewMatrix : IGetCameraData
+            {
+                public IPerCameraData Run()
+                {
+                    return new SkyboxPreviewMatrix();
+                }
+            }
             public float4x4 lastViewProj;
             public SkyboxPreviewMatrix()
             {

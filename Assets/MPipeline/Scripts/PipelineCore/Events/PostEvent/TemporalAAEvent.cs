@@ -80,8 +80,16 @@ namespace MPipeline
 
         public override void PreRenderFrame(PipelineCamera cam, ref PipelineCommandData data)
         {
-            texComponent = IPerCameraData.GetProperty(cam, (c) => new HistoryTexture(c.cam));
-            prevDepthData = IPerCameraData.GetProperty(cam, (cc) => new PreviousDepthData(new Vector2Int(cc.cam.pixelWidth, cc.cam.pixelHeight)));
+            HistoryTexture.GetHistoryTexture getHis = new HistoryTexture.GetHistoryTexture
+            {
+                cam = cam.cam
+            };
+            texComponent = IPerCameraData.GetProperty<HistoryTexture, HistoryTexture.GetHistoryTexture>(cam, getHis);
+            PreviousDepthData.GetPreviousDepthData getDepthData = new PreviousDepthData.GetPreviousDepthData
+            {
+                currentSize = new Vector2Int(cam.cam.pixelWidth, cam.cam.pixelHeight)
+            };
+            prevDepthData = IPerCameraData.GetProperty<PreviousDepthData, PreviousDepthData.GetPreviousDepthData>(cam, getDepthData);
             prevDepthData.targetObject = this;
             data.buffer.SetGlobalVector(ShaderIDs._LastJitter, texComponent.jitter);
             cam.cam.ResetProjectionMatrix();
@@ -145,6 +153,14 @@ namespace MPipeline
 
     public class HistoryTexture : IPerCameraData
     {
+        public struct GetHistoryTexture : IGetCameraData
+        {
+            public Camera cam;
+            public IPerCameraData Run()
+            {
+                return new HistoryTexture(cam);
+            }
+        }
         public RenderTexture historyTex;
         public RenderTexture historyMV;
         public Vector2 jitter;

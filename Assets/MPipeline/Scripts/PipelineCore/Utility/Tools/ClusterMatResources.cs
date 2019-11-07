@@ -44,7 +44,7 @@ namespace MPipeline
         public TexturePool rgbaPool;
         public TexturePool emissionPool;
         public TexturePool heightPool;
-        
+
         public const string infosPath = "Assets/BinaryData/MapDatas/";
         #endregion
 
@@ -61,7 +61,6 @@ namespace MPipeline
         }
         public VirtualMaterialManager vmManager;
         private MStringBuilder msbForCluster;
-        private string guidCache;
         private List<AsyncTextureLoader> asyncLoader = new List<AsyncTextureLoader>(100);
         private List<AssetReference> allReferenceCache = new List<AssetReference>(200);
         private struct Int4x4Equal : IFunction<int4x4, int4x4, bool>
@@ -70,7 +69,7 @@ namespace MPipeline
             {
                 ulong* aPtr = (ulong*)a.Ptr();
                 ulong* bPtr = (ulong*)b.Ptr();
-                for(int i = 0; i < 8; ++i)
+                for (int i = 0; i < 8; ++i)
                 {
                     if (aPtr[i] != bPtr[i]) return false;
                 }
@@ -92,15 +91,13 @@ namespace MPipeline
 
         public AssetReference GetReference(ref int4x4 guid)
         {
+            if (!referenceCacheDict.isCreated) referenceCacheDict = new NativeDictionary<int4x4, int, Int4x4Equal>(100, Allocator.Persistent, new Int4x4Equal());
             int index;
-            if(referenceCacheDict.Get(guid, out index))
+            if (referenceCacheDict.Get(guid, out index))
             {
                 return allReferenceCache[index];
             }
-            fixed(char* c = guidCache)
-            {
-                UnsafeUtility.MemCpy(c, guid.Ptr(), sizeof(int4x4));
-            }
+            string guidCache = new string((char*)guid.Ptr(), 0, 32);
             referenceCacheDict.Add(guid, allReferenceCache.Count);
             AssetReference aref = new AssetReference(guidCache);
             allReferenceCache.Add(aref);
@@ -127,7 +124,6 @@ namespace MPipeline
             emissionPool.Init(2, GraphicsFormat.R16G16B16A16_SFloat, (int)fixedTextureSize, this);
             heightPool.Init(3, GraphicsFormat.R8_UNorm, (int)fixedTextureSize, this);
             vmManager = new VirtualMaterialManager(materialPoolSize, maximumMaterialCount, res.shaders.streamingShader);
-            guidCache = new string(' ', 32);
         }
         public void UpdateData(CommandBuffer buffer, PipelineResources res)
         {
@@ -180,7 +176,7 @@ namespace MPipeline
             vmManager.Dispose();
             referenceCacheDict.Dispose();
             mipIDs.Dispose();
-            
+
         }
         public void TransformScene(uint value, MonoBehaviour behavior)
         {

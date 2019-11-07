@@ -15,16 +15,12 @@ namespace MPipeline
         public static bool loading = false;
         public string name;
         public int clusterCount;
-        public VirtualMaterial vm;
         public enum State
         {
             Unloaded, Loaded, Loading
         }
         [NonSerialized]
         public State state;
-        private NativeArray<Cluster> clusterBuffer;
-        private NativeArray<Point> pointsBuffer;
-        private NativeArray<int> triangleMatBuffer;
         private NativeArray<VirtualMaterial.MaterialProperties> materialProperties;
         private NativeArray<int> materialIndexBuffer;
         private ClusterMatResources resources;
@@ -44,6 +40,7 @@ namespace MPipeline
             state = State.Unloaded;
 
         }
+        private SceneStreamLoader loader;
         static string[] allStrings = new string[3];
         public static byte[] bytesArray = new byte[8192];
         public static byte[] GetByteArray(int length)
@@ -58,75 +55,62 @@ namespace MPipeline
 
         public void GenerateAsync(bool listCommand = true)
         {
-            var allProperties = vm.allProperties;
-            materialProperties = new NativeArray<VirtualMaterial.MaterialProperties>(allProperties.Count, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
+            allStrings[0] = ClusterMatResources.infosPath;
+            allStrings[1] = name;
+            allStrings[2] = ".mpipe";
+            sb.Combine(allStrings);
+            loader.fsm = new FileStream(sb.str, FileMode.Open, FileAccess.Read);
+            loader.LoadAll(clusterCount);
+            materialIndexBuffer = resources.vmManager.SetMaterials(loader.allProperties.Length);
+            for(int i = 0; i < loader.cluster.Length; ++i)
+            {
+                loader.cluster[i].index = propertyCount;
+            }
+            materialProperties = new NativeArray<VirtualMaterial.MaterialProperties>(loader.allProperties.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
             VirtualMaterial.MaterialProperties* propertiesPtr = materialProperties.Ptr();
             //Update Material
             for (int i = 0; i < materialProperties.Length; ++i)
             {
                 ref var currProp = ref propertiesPtr[i];
-                currProp = allProperties[i];
+                currProp = loader.allProperties[i];
                 if (currProp._MainTex >= 0)
                 {
-                    currProp._MainTex = resources.rgbaPool.GetTex(vm.albedoGUIDs[currProp._MainTex]);
+                    currProp._MainTex = resources.rgbaPool.GetTex(loader.albedoGUIDs[currProp._MainTex]);
                 }
                 if (currProp._SecondaryMainTex >= 0)
                 {
-                    currProp._SecondaryMainTex = resources.rgbaPool.GetTex(vm.secondAlbedoGUIDs[currProp._SecondaryMainTex]);
+                    currProp._SecondaryMainTex = resources.rgbaPool.GetTex(loader.secondAlbedoGUIDs[currProp._SecondaryMainTex]);
                 }
                 if (currProp._BumpMap >= 0)
                 {
-                    currProp._BumpMap = resources.rgbaPool.GetTex(vm.normalGUIDs[currProp._BumpMap], true);
+                    currProp._BumpMap = resources.rgbaPool.GetTex(loader.normalGUIDs[currProp._BumpMap], true);
                 }
                 if (currProp._SecondaryBumpMap >= 0)
                 {
-                    currProp._SecondaryBumpMap = resources.rgbaPool.GetTex(vm.secondNormalGUIDs[currProp._SecondaryBumpMap], true);
+                    currProp._SecondaryBumpMap = resources.rgbaPool.GetTex(loader.secondNormalGUIDs[currProp._SecondaryBumpMap], true);
                 }
 
                 if (currProp._SpecularMap >= 0)
                 {
-                    currProp._SpecularMap = resources.rgbaPool.GetTex(vm.smoGUIDs[currProp._SpecularMap]);
+                    currProp._SpecularMap = resources.rgbaPool.GetTex(loader.smoGUIDs[currProp._SpecularMap]);
                 }
                 if (currProp._SecondarySpecularMap >= 0)
                 {
-                    currProp._SecondarySpecularMap = resources.rgbaPool.GetTex(vm.secondSpecGUIDs[currProp._SecondarySpecularMap]);
+                    currProp._SecondarySpecularMap = resources.rgbaPool.GetTex(loader.secondSpecGUIDs[currProp._SecondarySpecularMap]);
                 }
                 if (currProp._EmissionMap >= 0)
                 {
-                    currProp._EmissionMap = resources.emissionPool.GetTex(vm.emissionGUIDs[currProp._EmissionMap]);
+                    currProp._EmissionMap = resources.emissionPool.GetTex(loader.emissionGUIDs[currProp._EmissionMap]);
                 }
                 if (currProp._HeightMap >= 0)
                 {
-                    currProp._HeightMap = resources.heightPool.GetTex(vm.heightGUIDs[currProp._HeightMap]);
+                    currProp._HeightMap = resources.heightPool.GetTex(loader.heightGUIDs[currProp._HeightMap]);
                 }
             }
-            //Update Cluster
-            clusterBuffer = new NativeArray<Cluster>(clusterCount, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-            pointsBuffer = new NativeArray<Point>(clusterCount * PipelineBaseBuffer.CLUSTERCLIPCOUNT, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-            triangleMatBuffer = new NativeArray<int>(clusterCount * PipelineBaseBuffer.CLUSTERTRIANGLECOUNT, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
-            Cluster* clusterData = clusterBuffer.Ptr();
-            Point* verticesData = pointsBuffer.Ptr();
-            int* triangleMatData = triangleMatBuffer.Ptr();
-            allStrings[0] = ClusterMatResources.infosPath;
-            allStrings[1] = name;
-            allStrings[2] = ".mpipe";
-            sb.Combine(allStrings);
-            using (FileStream reader = new FileStream(sb.str, FileMode.Open, FileAccess.Read))
-            {
-                int length = (int)reader.Length;
 
-                byte[] bytes = GetByteArray(length);
-                reader.Read(bytes, 0, length);
-                fixed (byte* b = bytes)
-                {
-                    UnsafeUtility.MemCpy(clusterData, b, clusterBuffer.Length * sizeof(Cluster));
-                    UnsafeUtility.MemCpy(verticesData, b + clusterBuffer.Length * sizeof(Cluster), pointsBuffer.Length * sizeof(Point));
-                    UnsafeUtility.MemCpy(triangleMatData, b + clusterBuffer.Length * sizeof(Cluster) + pointsBuffer.Length * sizeof(Point), triangleMatBuffer.Length * sizeof(int));
-                }
-            }
-            for (int i = 0; i < triangleMatBuffer.Length; ++i)
+            for (int i = 0; i < loader.triangleMats.Length; ++i)
             {
-                triangleMatData[i] = materialIndexBuffer[triangleMatData[i]];
+                loader.triangleMats[i] = materialIndexBuffer[loader.triangleMats[i]];
             }
             //Transform Points in runtime
             LoadingCommandQueue commandQueue = LoadingThread.commandQueue;
@@ -148,20 +132,11 @@ namespace MPipeline
                     yield return null;
                 }
                 loading = true;
-                materialIndexBuffer = resources.vmManager.SetMaterials(vm.allProperties.Count);
                 LoadingThread.AddCommand(generateAsyncFunc, this);
             }
         }
 
-        public bool GenerateSync()
-        {
-            if (state != State.Unloaded) return false;
-            if (loading) return false;
-            materialIndexBuffer = resources.vmManager.SetMaterials(vm.allProperties.Count);
-            GenerateAsync(false);
-            GenerateRunSync();
-            return true;
-        }
+      
 
         public IEnumerator Delete()
         {
@@ -176,13 +151,6 @@ namespace MPipeline
                 DeleteRun();
             }
         }
-        public bool DeleteSync()
-        {
-            if (state == State.Unloaded) return false;
-            if (loading) return false;
-            DeleteRun();
-            return true;
-        }
 
         #region MainThreadCommand
         private const int MAXIMUMINTCOUNT = 5000;
@@ -194,6 +162,7 @@ namespace MPipeline
             PipelineBaseBuffer baseBuffer = SceneController.baseBuffer;
             int result = baseBuffer.clusterCount - clusterCount;
             ComputeShader shader = resources.shaders.streamingShader;
+            
             if (result > 0)
             {
                 NativeArray<int> indirectArgs = new NativeArray<int>(5, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
@@ -218,89 +187,74 @@ namespace MPipeline
                 buffer.DispatchCompute(shader, 3, baseBuffer.moveCountBuffer, 0);
             }
             this.resources.vmManager.UnloadMaterials(materialIndexBuffer);
-            foreach (var i in vm.albedoGUIDs)
+            foreach (var i in loader.albedoGUIDs)
             {
                 this.resources.rgbaPool.RemoveTex(i);
             }
-            foreach (var i in vm.normalGUIDs)
+            foreach (var i in loader.normalGUIDs)
             {
                 this.resources.rgbaPool.RemoveTex(i);
             }
-            foreach (var i in vm.emissionGUIDs)
+            foreach (var i in loader.emissionGUIDs)
             {
                 this.resources.emissionPool.RemoveTex(i);
             }
-            foreach(var i in vm.smoGUIDs)
+            foreach(var i in loader.smoGUIDs)
             {
                 this.resources.rgbaPool.RemoveTex(i);
             }
-            foreach (var i in vm.heightGUIDs)
+            foreach (var i in loader.heightGUIDs)
             {
                 this.resources.heightPool.RemoveTex(i);
             }
-            foreach(var i in vm.secondAlbedoGUIDs)
+            foreach(var i in loader.secondAlbedoGUIDs)
             {
                 this.resources.rgbaPool.RemoveTex(i);
             }
-            foreach (var i in vm.secondNormalGUIDs)
+            foreach (var i in loader.secondNormalGUIDs)
             {
                 this.resources.rgbaPool.RemoveTex(i);
             }
-            foreach (var i in vm.secondSpecGUIDs)
+            foreach (var i in loader.secondSpecGUIDs)
             {
                 this.resources.rgbaPool.RemoveTex(i);
             }
             baseBuffer.clusterCount = result;
             loading = false;
             state = State.Unloaded;
+            loader.Dispose();
         }
-
+        private static void SetCustomData<T>(ComputeBuffer cb, NativeList<T> arr, int managed, int compute, int count) where T : unmanaged
+        {
+            cb.SetDataPtr(arr.unsafePtr + managed, compute, count);
+        }
         private IEnumerator GenerateRun()
         {
             PipelineResources resources = RenderPipeline.current.resources;
             PipelineBaseBuffer baseBuffer = SceneController.baseBuffer;
             int targetCount;
             int currentCount = 0;
-            while ((targetCount = currentCount + MAXIMUMVERTCOUNT) < clusterBuffer.Length)
+            while ((targetCount = currentCount + MAXIMUMVERTCOUNT) < clusterCount)
             {
-                baseBuffer.clusterBuffer.SetData(clusterBuffer, currentCount, currentCount + baseBuffer.clusterCount, MAXIMUMVERTCOUNT);
-                baseBuffer.verticesBuffer.SetData(pointsBuffer, currentCount * PipelineBaseBuffer.CLUSTERCLIPCOUNT, (currentCount + baseBuffer.clusterCount) * PipelineBaseBuffer.CLUSTERCLIPCOUNT, MAXIMUMVERTCOUNT * PipelineBaseBuffer.CLUSTERCLIPCOUNT);
-                baseBuffer.triangleMaterialBuffer.SetData(triangleMatBuffer, currentCount * PipelineBaseBuffer.CLUSTERTRIANGLECOUNT, (currentCount + baseBuffer.clusterCount) * PipelineBaseBuffer.CLUSTERTRIANGLECOUNT, MAXIMUMVERTCOUNT * PipelineBaseBuffer.CLUSTERTRIANGLECOUNT);
+                SetCustomData(baseBuffer.clusterBuffer, loader.cluster,  currentCount, currentCount + baseBuffer.clusterCount, MAXIMUMVERTCOUNT);
+                SetCustomData(baseBuffer.verticesBuffer, loader.points, currentCount * PipelineBaseBuffer.CLUSTERCLIPCOUNT, (currentCount + baseBuffer.clusterCount) * PipelineBaseBuffer.CLUSTERCLIPCOUNT, MAXIMUMVERTCOUNT * PipelineBaseBuffer.CLUSTERCLIPCOUNT);
+               SetCustomData(baseBuffer.triangleMaterialBuffer, loader.triangleMats, currentCount * PipelineBaseBuffer.CLUSTERTRIANGLECOUNT, (currentCount + baseBuffer.clusterCount) * PipelineBaseBuffer.CLUSTERTRIANGLECOUNT, MAXIMUMVERTCOUNT * PipelineBaseBuffer.CLUSTERTRIANGLECOUNT);
                 currentCount = targetCount;
                 yield return null;
             }
             //TODO
-            baseBuffer.clusterBuffer.SetData(clusterBuffer, currentCount, currentCount + baseBuffer.clusterCount, clusterBuffer.Length - currentCount);
-            baseBuffer.verticesBuffer.SetData(pointsBuffer, currentCount * PipelineBaseBuffer.CLUSTERCLIPCOUNT, (currentCount + baseBuffer.clusterCount) * PipelineBaseBuffer.CLUSTERCLIPCOUNT, (clusterBuffer.Length - currentCount) * PipelineBaseBuffer.CLUSTERCLIPCOUNT);
-            baseBuffer.triangleMaterialBuffer.SetData(triangleMatBuffer, currentCount * PipelineBaseBuffer.CLUSTERTRIANGLECOUNT, (currentCount + baseBuffer.clusterCount) * PipelineBaseBuffer.CLUSTERTRIANGLECOUNT, (clusterBuffer.Length - currentCount) * PipelineBaseBuffer.CLUSTERTRIANGLECOUNT);
-            int clusterCount = clusterBuffer.Length;
+            SetCustomData(baseBuffer.clusterBuffer, loader.cluster, currentCount, currentCount + baseBuffer.clusterCount, clusterCount - currentCount);
+            SetCustomData(baseBuffer.verticesBuffer, loader.points,currentCount * PipelineBaseBuffer.CLUSTERCLIPCOUNT, (currentCount + baseBuffer.clusterCount) * PipelineBaseBuffer.CLUSTERCLIPCOUNT, (clusterCount - currentCount) * PipelineBaseBuffer.CLUSTERCLIPCOUNT);
+            SetCustomData(baseBuffer.triangleMaterialBuffer, loader.triangleMats, currentCount * PipelineBaseBuffer.CLUSTERTRIANGLECOUNT, (currentCount + baseBuffer.clusterCount) * PipelineBaseBuffer.CLUSTERTRIANGLECOUNT, (clusterCount - currentCount) * PipelineBaseBuffer.CLUSTERTRIANGLECOUNT);
             loading = false;
             state = State.Loaded;
             baseBuffer.clusterCount += clusterCount;
             yield return null;
-            clusterBuffer.Dispose();
-            pointsBuffer.Dispose();
-            triangleMatBuffer.Dispose();
+            loader.cluster.Dispose();
+            loader.points.Dispose();
+            loader.triangleMats.Dispose();
             this.resources.vmManager.UpdateMaterialToGPU(materialProperties, materialIndexBuffer);
             materialProperties.Dispose();
-            Debug.Log("Loaded");
-        }
-
-        private void GenerateRunSync()
-        {
-            PipelineBaseBuffer baseBuffer = SceneController.baseBuffer;
-            baseBuffer.clusterBuffer.SetData(clusterBuffer, 0, baseBuffer.clusterCount, clusterBuffer.Length);
-            baseBuffer.verticesBuffer.SetData(pointsBuffer, 0, baseBuffer.clusterCount * PipelineBaseBuffer.CLUSTERCLIPCOUNT, clusterBuffer.Length * PipelineBaseBuffer.CLUSTERCLIPCOUNT);
-            baseBuffer.triangleMaterialBuffer.SetData(triangleMatBuffer, 0, baseBuffer.clusterCount * PipelineBaseBuffer.CLUSTERTRIANGLECOUNT, clusterBuffer.Length * PipelineBaseBuffer.CLUSTERTRIANGLECOUNT);
-            int clusterCount = clusterBuffer.Length;
-            clusterBuffer.Dispose();
-            pointsBuffer.Dispose();
-            triangleMatBuffer.Dispose();
-            this.resources.vmManager.UpdateMaterialToGPU(materialProperties, materialIndexBuffer);
-            materialProperties.Dispose();
-            loading = false;
-            state = State.Loaded;
-            baseBuffer.clusterCount += clusterCount;
             Debug.Log("Loaded");
         }
         #endregion
