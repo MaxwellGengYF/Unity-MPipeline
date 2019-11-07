@@ -56,24 +56,31 @@ MonoBehaviour:
   virtualTexCapacity: 94
   heightmapTexCapacity: 4
   allMaterials:
-  - firstMaterialIndex: 0.2
-    secondMaterialIndex: 0.2
-    offset: 0
-    heightBlendScale: 0
+  - firstMaterialIndex: 0
+    secondMaterialIndex: 1
+    offset: 1
+    heightBlendScale: 5.1
+  - firstMaterialIndex: 0
+    secondMaterialIndex: 1
+    offset: 0.49
+    heightBlendScale: 5.1
+  - firstMaterialIndex: 0
+    secondMaterialIndex: 1
+    offset: 0.26
+    heightBlendScale: 5.1
+  - firstMaterialIndex: 0
+    secondMaterialIndex: 1
+    offset: -0.05
+    heightBlendScale: 5.1
+  - firstMaterialIndex: 0
+    secondMaterialIndex: 1
+    offset: -1
+    heightBlendScale: 1
   heightmapPath: Assets/BinaryData/TerrainHeight.mquad
   maskmapPath: Assets/BinaryData/TerrainMask.mquad
   boundPath: Assets/BinaryData/TerrainBound.mquad
   drawTerrainMaterial: {fileID: 2100000, guid: 895d3f610aae4944b88c1b1fc7f46f4d, type: 2}
   textures:
-  - albedoOccTex:
-      m_AssetGUID: 6a64b33beaa48414183960482167c609
-      m_SubObjectName: 
-    normalTex:
-      m_AssetGUID: 368389984bba0204a8556ab05c56f0cd
-      m_SubObjectName: 
-    SMTex:
-      m_AssetGUID: 693221d22472a624789402d1cd8c9aee
-      m_SubObjectName: 
   - albedoOccTex:
       m_AssetGUID: a2621691916d76a449c3916dd8017a59
       m_SubObjectName: 
@@ -82,4 +89,13 @@ MonoBehaviour:
       m_SubObjectName: 
     SMTex:
       m_AssetGUID: cc70c50286ba8844883d814336504f0b
+      m_SubObjectName: 
+  - albedoOccTex:
+      m_AssetGUID: 6a64b33beaa48414183960482167c609
+      m_SubObjectName: 
+    normalTex:
+      m_AssetGUID: 368389984bba0204a8556ab05c56f0cd
+      m_SubObjectName: 
+    SMTex:
+      m_AssetGUID: 693221d22472a624789402d1cd8c9aee
       m_SubObjectName: 

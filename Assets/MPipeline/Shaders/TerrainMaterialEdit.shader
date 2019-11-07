@@ -46,10 +46,10 @@
             void frag (v2f i, out float3 albedo : SV_TARGET0, out float2 normal : SV_TARGET1, out float3 smo : SV_TARGET2)
             {
                 HeightBlendMaterial mat;
-                mat.firstMaterialIndex = _Setting.x;
-                mat.secondMaterialIndex = _Setting.y;
-                mat.offset = _Setting.z;
-                mat.heightBlendScale = _Setting.w;
+                mat.firstMaterialIndex = 0;
+                mat.secondMaterialIndex = 0;
+                mat.offset = _Setting.x;
+                mat.heightBlendScale = _Setting.y;
                 GetHeightBlendInEditor(mat, 
                 _Albedo0.SampleLevel(sampler_Albedo0, i.uv, 0),
                 UnpackNormal(_Normal0.SampleLevel(sampler_Normal0, i.uv, 0)),

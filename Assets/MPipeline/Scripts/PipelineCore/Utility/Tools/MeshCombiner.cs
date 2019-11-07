@@ -131,7 +131,7 @@ namespace MPipeline
                 }
             }
             CombinedModel model = ProcessCluster(GetComponentsInChildren<MeshRenderer>(false), ref loader, lowLevelDict);
-            property.clusterCount = ClusterGenerator.GenerateCluster(model.allPoints, model.allMatIndex, model.bound, voxelCount, containIndex < 0 ? res.clusterProperties.Count : containIndex, ref loader);
+            loader.clusterCount = ClusterGenerator.GenerateCluster(model.allPoints, model.allMatIndex, model.bound, voxelCount, containIndex < 0 ? res.clusterProperties.Count : containIndex, ref loader);
           
             res.maximumMaterialCount = Mathf.Max(1, res.maximumMaterialCount);
             res.maximumMaterialCount = Mathf.Max(res.maximumMaterialCount, loader.allProperties.Length);
@@ -141,7 +141,7 @@ namespace MPipeline
                 AssetDatabase.CreateAsset(res, "Assets/SceneManager.asset");
             else
                 EditorUtility.SetDirty(res);
-            loader.SaveAll(property.clusterCount);
+            loader.SaveAll();
             loader.Dispose();
         }
 #endif

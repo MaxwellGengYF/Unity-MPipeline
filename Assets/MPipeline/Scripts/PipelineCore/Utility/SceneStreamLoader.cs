@@ -10,6 +10,7 @@ namespace MPipeline
     public unsafe struct SceneStreamLoader
     {
         public FileStream fsm;
+        public int clusterCount;
         public NativeList<int4x4> albedoGUIDs;
         public NativeList<int4x4> normalGUIDs;
         public NativeList<int4x4> smoGUIDs;
@@ -23,7 +24,21 @@ namespace MPipeline
         public NativeList<Point> points;
         public NativeList<int> triangleMats;
 
-        void LoadClusterData(int clusterCount, out NativeList<Cluster> cluster, out NativeList<Point> points, out NativeList<int> triangleMats)
+        void LoadClusterCount()
+        {
+            byte[] bytes = SceneStreaming.GetByteArray(4);
+            fsm.Read(bytes, 0, 4);
+            clusterCount = *(int*)bytes.Ptr();
+        }
+
+        void SaveClusterCount()
+        {
+            byte[] bytes = SceneStreaming.GetByteArray(4);
+            *(int*)bytes.Ptr() = clusterCount;
+            fsm.Write(bytes, 0, 4);
+        }
+
+        void LoadClusterData(out NativeList<Cluster> cluster, out NativeList<Point> points, out NativeList<int> triangleMats)
         {
             cluster = new NativeList<Cluster>(clusterCount, clusterCount, Allocator.Persistent);
             points = new NativeList<Point>(clusterCount * PipelineBaseBuffer.CLUSTERCLIPCOUNT, clusterCount * PipelineBaseBuffer.CLUSTERCLIPCOUNT, Allocator.Persistent);
@@ -39,7 +54,7 @@ namespace MPipeline
             }
         }
 
-        void SaveClusterData(int clusterCount, NativeList<Cluster> cluster, NativeList<Point> points, NativeList<int> triangleMats)
+        void SaveClusterData(NativeList<Cluster> cluster, NativeList<Point> points, NativeList<int> triangleMats)
         {
             int length = cluster.Length * sizeof(Cluster) + points.Length * sizeof(Point) + triangleMats.Length * sizeof(int);
             byte[] bytes = SceneStreaming.GetByteArray(length);
@@ -98,8 +113,9 @@ namespace MPipeline
             fsm.Write(cacheArray, 0, arr.Length * sizeof(VirtualMaterial.MaterialProperties) + sizeof(int));
         }
 
-        public void LoadAll(int clusterCount)
+        public void LoadAll()
         {
+            LoadClusterCount();
             LoadGUIDArray(ref albedoGUIDs);
             LoadGUIDArray(ref normalGUIDs);
             LoadGUIDArray(ref smoGUIDs);
@@ -109,11 +125,12 @@ namespace MPipeline
             LoadGUIDArray(ref secondNormalGUIDs);
             LoadGUIDArray(ref secondSpecGUIDs);
             LoadMaterialArray(ref allProperties);
-            LoadClusterData(clusterCount, out cluster, out points, out triangleMats);
+            LoadClusterData(out cluster, out points, out triangleMats);
         }
 
-        public void SaveAll(int clusterCount)
+        public void SaveAll()
         {
+            SaveClusterCount();
             SaveGUIDArray(albedoGUIDs);
             SaveGUIDArray(normalGUIDs);
             SaveGUIDArray(smoGUIDs);
@@ -123,7 +140,7 @@ namespace MPipeline
             SaveGUIDArray(secondNormalGUIDs);
             SaveGUIDArray(secondSpecGUIDs);
             SaveMaterialArray(allProperties);
-            SaveClusterData(clusterCount, cluster, points, triangleMats);
+            SaveClusterData(cluster, points, triangleMats);
         }
 
         public void Dispose()

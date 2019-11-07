@@ -14,7 +14,6 @@ namespace MPipeline
     {
         public static bool loading = false;
         public string name;
-        public int clusterCount;
         public enum State
         {
             Unloaded, Loaded, Loading
@@ -60,7 +59,7 @@ namespace MPipeline
             allStrings[2] = ".mpipe";
             sb.Combine(allStrings);
             loader.fsm = new FileStream(sb.str, FileMode.Open, FileAccess.Read);
-            loader.LoadAll(clusterCount);
+            loader.LoadAll();
             materialIndexBuffer = resources.vmManager.SetMaterials(loader.allProperties.Length);
             for(int i = 0; i < loader.cluster.Length; ++i)
             {
@@ -160,7 +159,7 @@ namespace MPipeline
         {
             PipelineResources resources = RenderPipeline.current.resources;
             PipelineBaseBuffer baseBuffer = SceneController.baseBuffer;
-            int result = baseBuffer.clusterCount - clusterCount;
+            int result = baseBuffer.clusterCount - loader.clusterCount;
             ComputeShader shader = resources.shaders.streamingShader;
             
             if (result > 0)
@@ -172,7 +171,7 @@ namespace MPipeline
                 indirectArgs[3] = result;
                 indirectArgs[4] = propertyCount;
                 baseBuffer.moveCountBuffer.SetData(indirectArgs);
-                ComputeBuffer indexBuffer = SceneController.GetTempPropertyBuffer(clusterCount, 8);
+                ComputeBuffer indexBuffer = SceneController.GetTempPropertyBuffer(loader.clusterCount, 8);
                 CommandBuffer buffer = RenderPipeline.BeforeFrameBuffer;
                 indirectArgs.Dispose();
                 buffer.SetComputeBufferParam(shader, 0, ShaderIDs.instanceCountBuffer, baseBuffer.moveCountBuffer);
@@ -234,7 +233,7 @@ namespace MPipeline
             PipelineBaseBuffer baseBuffer = SceneController.baseBuffer;
             int targetCount;
             int currentCount = 0;
-            while ((targetCount = currentCount + MAXIMUMVERTCOUNT) < clusterCount)
+            while ((targetCount = currentCount + MAXIMUMVERTCOUNT) < loader.clusterCount)
             {
                 SetCustomData(baseBuffer.clusterBuffer, loader.cluster,  currentCount, currentCount + baseBuffer.clusterCount, MAXIMUMVERTCOUNT);
                 SetCustomData(baseBuffer.verticesBuffer, loader.points, currentCount * PipelineBaseBuffer.CLUSTERCLIPCOUNT, (currentCount + baseBuffer.clusterCount) * PipelineBaseBuffer.CLUSTERCLIPCOUNT, MAXIMUMVERTCOUNT * PipelineBaseBuffer.CLUSTERCLIPCOUNT);
@@ -243,12 +242,12 @@ namespace MPipeline
                 yield return null;
             }
             //TODO
-            SetCustomData(baseBuffer.clusterBuffer, loader.cluster, currentCount, currentCount + baseBuffer.clusterCount, clusterCount - currentCount);
-            SetCustomData(baseBuffer.verticesBuffer, loader.points,currentCount * PipelineBaseBuffer.CLUSTERCLIPCOUNT, (currentCount + baseBuffer.clusterCount) * PipelineBaseBuffer.CLUSTERCLIPCOUNT, (clusterCount - currentCount) * PipelineBaseBuffer.CLUSTERCLIPCOUNT);
-            SetCustomData(baseBuffer.triangleMaterialBuffer, loader.triangleMats, currentCount * PipelineBaseBuffer.CLUSTERTRIANGLECOUNT, (currentCount + baseBuffer.clusterCount) * PipelineBaseBuffer.CLUSTERTRIANGLECOUNT, (clusterCount - currentCount) * PipelineBaseBuffer.CLUSTERTRIANGLECOUNT);
+            SetCustomData(baseBuffer.clusterBuffer, loader.cluster, currentCount, currentCount + baseBuffer.clusterCount, loader.clusterCount - currentCount);
+            SetCustomData(baseBuffer.verticesBuffer, loader.points,currentCount * PipelineBaseBuffer.CLUSTERCLIPCOUNT, (currentCount + baseBuffer.clusterCount) * PipelineBaseBuffer.CLUSTERCLIPCOUNT, (loader.clusterCount - currentCount) * PipelineBaseBuffer.CLUSTERCLIPCOUNT);
+            SetCustomData(baseBuffer.triangleMaterialBuffer, loader.triangleMats, currentCount * PipelineBaseBuffer.CLUSTERTRIANGLECOUNT, (currentCount + baseBuffer.clusterCount) * PipelineBaseBuffer.CLUSTERTRIANGLECOUNT, (loader.clusterCount - currentCount) * PipelineBaseBuffer.CLUSTERTRIANGLECOUNT);
             loading = false;
             state = State.Loaded;
-            baseBuffer.clusterCount += clusterCount;
+            baseBuffer.clusterCount += loader.clusterCount;
             yield return null;
             loader.cluster.Dispose();
             loader.points.Dispose();
