@@ -48,20 +48,13 @@ namespace MPipeline
             }
         }
         /// <returns></returns> Cluster Count
-        public static int GenerateCluster(NativeList<Point> pointsFromMesh, NativeList<int> mats, Bounds bd, string fileName, int voxelCount, int sceneCount)
+        public static int GenerateCluster(NativeList<Point> pointsFromMesh, NativeList<int> mats, Bounds bd, int voxelCount, int sceneCount, ref SceneStreamLoader loader)
         {
             NativeList<Cluster> boxes; NativeList<Point> points; NativeList<int> outMats;
             GetCluster(pointsFromMesh, mats, bd, out boxes, out points, out outMats, voxelCount);
-            string filenameWithExtent = fileName + ".mpipe";
-            byte[] bytes = new byte[boxes.Length * sizeof(Cluster) + points.Length * sizeof(Point) + sizeof(int) * outMats.Length];
-            for(int i = 0; i < boxes.Length; ++i)
-            {
-                boxes[i].index = sceneCount;
-            }
-            UnsafeUtility.MemCpy(bytes.Ptr(), boxes.unsafePtr, boxes.Length * sizeof(Cluster));
-            UnsafeUtility.MemCpy(bytes.Ptr() + boxes.Length * sizeof(Cluster), points.unsafePtr, points.Length * sizeof(Point));
-            UnsafeUtility.MemCpy(bytes.Ptr() + boxes.Length * sizeof(Cluster) + points.Length * sizeof(Point), outMats.unsafePtr, outMats.Length * sizeof(int));
-            File.WriteAllBytes(ClusterMatResources.infosPath + filenameWithExtent, bytes);
+            loader.cluster = boxes;
+            loader.points = points;
+            loader.triangleMats = outMats;
             //Dispose Native Array
             return boxes.Length;
         }

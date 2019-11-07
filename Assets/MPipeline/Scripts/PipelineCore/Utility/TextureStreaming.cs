@@ -19,18 +19,20 @@ namespace MPipeline
     {
         public int maximumPoolCapacity = 50;
         public RenderTexture rt { get; private set; }
+        public int LeftedTexs
+        {
+            get { return indexPool.Length; }
+        }
         private int streamingIndex;
         private NativeArray<int> usageCount;
         private NativeList<int> indexPool;
         private Dictionary<AssetReference, int> guidToIndex;
         private ClusterMatResources clusterRes;
-        private bool isNormal;
-        public void Init(int streamingIndex, GraphicsFormat format, int resolution, ClusterMatResources clusterRes, bool isNormal)
+        public void Init(int streamingIndex, GraphicsFormat format, int resolution, ClusterMatResources clusterRes)
         {
-            this.isNormal = isNormal;
             this.clusterRes = clusterRes;
             this.streamingIndex = streamingIndex;
-            const int targetLevel = 6;
+            const int targetLevel = 2;
             rt = new RenderTexture(resolution, resolution, 0, format, targetLevel);
             rt.useMipMap = targetLevel > 1;
             rt.autoGenerateMips = false;
@@ -39,6 +41,7 @@ namespace MPipeline
             rt.enableRandomWrite = true;
             rt.filterMode = FilterMode.Trilinear;
             rt.wrapMode = TextureWrapMode.Repeat;
+            rt.anisoLevel = 16;
             rt.Create();
             indexPool = new NativeList<int>(maximumPoolCapacity, maximumPoolCapacity, Allocator.Persistent);
             for (int i = 0; i < maximumPoolCapacity; ++i)
@@ -59,9 +62,9 @@ namespace MPipeline
 
 
 
-        public int GetTex(AssetReference guid)
+        public int GetTex(int4x4 guidValue, bool isNormal = false)
         {
-            
+            AssetReference guid = clusterRes.GetReference(ref guidValue);
             int index;
             if (guidToIndex.TryGetValue(guid, out index))
             {
@@ -71,7 +74,8 @@ namespace MPipeline
             {
                 if (indexPool.Length <= 0)
                 {
-                    throw new Exception("Texture Pool out of Range!!");
+                    Debug.Log("Texture Pool out of Range!!");
+                    return 0;
                 }
                 index = indexPool[indexPool.Length - 1];
                 indexPool.RemoveLast();
@@ -81,12 +85,13 @@ namespace MPipeline
                 //TODO
                 //Streaming Load Texture
             }
-            
+
             return index;
         }
 
-        public void RemoveTex(AssetReference guid)
+        public void RemoveTex(int4x4 guidValue)
         {
+            AssetReference guid = clusterRes.GetReference(ref guidValue);
             int index;
             if (guidToIndex.TryGetValue(guid, out index))
             {

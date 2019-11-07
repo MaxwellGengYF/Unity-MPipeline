@@ -44,7 +44,6 @@ float GetShadow(float4 worldPos, float depth, float nol)
 	#endif
 	float atten = 0;
 
-	float ShadowMapDistance = _DirShadowMap.SampleCmpLevelZero(sampler_DirShadowMap, float3(shadowUV, zAxisUV), dist);
 	PCSSValue *= lerp(0.5, 1, abs(nol));
 	for (int i = 0; i < SAMPLECOUNT; ++i) {
 		seed = MNoise(seed) * 2 - 1;

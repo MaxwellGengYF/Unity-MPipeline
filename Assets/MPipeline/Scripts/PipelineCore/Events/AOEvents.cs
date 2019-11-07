@@ -151,7 +151,7 @@ namespace MPipeline
             {
                 res = res
             };
-            AOHistoryData historyData = IPerCameraData.GetProperty<AOHistoryData, IGetCameraData>(cam, evt);
+            AOHistoryData historyData = IPerCameraData.GetProperty<AOHistoryData, GetDataEvent>(cam, evt);
             UpdateVariable_SSAO(historyData, cam, ref data, res, originRes);
             RenderSSAO(historyData, cam, ref data, res, originRes);
         }

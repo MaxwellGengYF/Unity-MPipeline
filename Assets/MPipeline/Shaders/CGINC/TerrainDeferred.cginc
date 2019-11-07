@@ -2,7 +2,8 @@
 // Upgrade NOTE: excluded shader from OpenGL ES 2.0 because it uses non-square matrices
 #pragma exclude_renderers gles
 #define __MPIPEDEFERRED_INCLUDE__
-#define TESS_COUNT 62
+#define TESS_COUNT 63
+#define SHADOW_TESS_COUNT 15
 #define UNITY_PASS_DEFERRED
 #include "UnityStandardUtils.cginc"
 #include "Lighting.cginc"
@@ -257,7 +258,7 @@ inline UnityTessellationFactors hsconst_shadow (InputPatch<InternalTessInterp_ap
   UnityTessellationFactors o;
   float2 pos = v[0].normalizePos + v[1].normalizePos + v[2].normalizePos;
   pos *= 0.333333333;
-  float3 tess = tessDist(v[0].pos.xz, v[1].pos.xz, v[2].pos.xz, _TessellationFactors.x, _TessellationFactors.y, TESS_COUNT);
+  float3 tess = tessDist(v[0].pos.xz, v[1].pos.xz, v[2].pos.xz, _TessellationFactors.x, _TessellationFactors.y, SHADOW_TESS_COUNT);//9
   tess *= _CullingTexture.SampleLevel(sampler_CullingTexture, pos, 0);
   o.edge[0] = tess.x;
   o.edge[1] = tess.y;

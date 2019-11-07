@@ -115,10 +115,8 @@ namespace MPipeline
         private static int SSR_ProjectToPixelMatrix_ID = Shader.PropertyToID("_SSR_ProjectToPixelMatrix");
         */
         //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
-        private System.Func<PipelineCamera, SSRCameraData> getDataFunc;
         public void Init(PipelineResources res)
         {
-            getDataFunc = (c) => new SSRCameraData(new Vector2Int(c.cam.pixelWidth, c.cam.pixelHeight), 2);
             StochasticScreenSpaceReflectionMaterial = new Material(res.shaders.ssrShader);
             ssrDatas = new ComputeBuffer(1, sizeof(SSRData), ComputeBufferType.Constant);
             rand = new Random((uint)System.Guid.NewGuid().GetHashCode());
@@ -133,13 +131,22 @@ namespace MPipeline
 
         public void PreRender(PipelineCamera cam)
         {
-            prevDepthData = IPerCameraData.GetProperty(cam, (cc) => new PreviousDepthData(new Vector2Int(cc.cam.pixelWidth, cc.cam.pixelHeight)));
+            PreviousDepthData.GetPreviousDepthData getDepthData = new PreviousDepthData.GetPreviousDepthData
+            {
+                currentSize = new Vector2Int(cam.cam.pixelWidth, cam.cam.pixelHeight)
+            };
+            prevDepthData = IPerCameraData.GetProperty<PreviousDepthData, PreviousDepthData.GetPreviousDepthData>(cam, getDepthData);
             prevDepthData.targetObject = this;
         }
 
         public int Render(ref PipelineCommandData data, PipelineCamera cam, PropertySetEvent proper)
         {
-            SSRCameraData cameraData = IPerCameraData.GetProperty(cam, getDataFunc);
+            SSRCameraData.GetSSRCameraData getCam = new SSRCameraData.GetSSRCameraData
+            {
+                currentSize = new Vector2Int(cam.cam.pixelWidth, cam.cam.pixelHeight),
+                resolution = 2
+            };
+            SSRCameraData cameraData = IPerCameraData.GetProperty<SSRCameraData, SSRCameraData.GetSSRCameraData>(cam, getCam);
             SSR_UpdateVariable(cameraData, cam.cam, ref data, proper);
             RenderScreenSpaceReflection(data.buffer, cameraData, cam);
             return SSR_TemporalCurr_ID;
@@ -254,6 +261,14 @@ namespace MPipeline
     }
     public class PreviousDepthData : IPerCameraData
     {
+        public struct GetPreviousDepthData : IGetCameraData
+        {
+            public Vector2Int currentSize;
+            public IPerCameraData Run()
+            {
+                return new PreviousDepthData(currentSize);
+            }
+        }
         public object targetObject;
         public Vector2 CameraSize { get; private set; }
         public RenderTexture SSR_PrevDepth_RT;
@@ -278,6 +293,15 @@ namespace MPipeline
     }
     public class SSRCameraData : IPerCameraData
     {
+        public struct GetSSRCameraData : IGetCameraData
+        {
+            public Vector2Int currentSize;
+            public int resolution;
+            public IPerCameraData Run()
+            {
+                return new SSRCameraData(currentSize, resolution);
+            }
+        }
         public Vector2 CameraSize { get; private set; }
         public int RayCastingResolution { get; private set; }
         public RenderTexture SSR_TemporalPrev_RT, SSR_HierarchicalDepth_RT, SSR_HierarchicalDepth_BackUp_RT;

@@ -76,7 +76,7 @@ namespace MPipeline
             {
                 DestroyImmediate(clusterMat);
             }
-            if(m_afterGeometryBuffer != null)
+            if (m_afterGeometryBuffer != null)
             {
                 m_afterGeometryBuffer.Dispose();
                 m_afterGeometryBuffer = null;
@@ -151,18 +151,23 @@ namespace MPipeline
                 lst[i].DrawDepthPrepass(buffer);
             }
             HizOcclusionData hizOccData = null;
-            PipelineFunctions.UpdateFrustumMinMaxPoint(buffer, proper.frustumMinPoint, proper.frustumMaxPoint);
+            PipelineFunctions.UpdateFrustumMinMaxPoint(buffer, cam.frustumMinPoint, cam.frustumMaxPoint);
             if (useHiZ && SceneController.gpurpEnabled)
             {
 #if UNITY_EDITOR
                 if (Application.isPlaying)
                 {
 #endif
-                    hizOccData = IPerCameraData.GetProperty(cam, (c) => new HizOcclusionData(c.cam.pixelWidth));
+                    HizOcclusionData.GetHizOcclusionData getter = new HizOcclusionData.GetHizOcclusionData
+                    {
+                        screenWidth = cam.cam.pixelWidth
+                    };
+
+                    hizOccData = IPerCameraData.GetProperty<HizOcclusionData, HizOcclusionData.GetHizOcclusionData>(cam, getter);
                     hizOccData.UpdateWidth(cam.cam.pixelWidth);
                     SceneController.CullCluster_LastFrameDepthHiZ(ref options, hizOccData, cam);
                     buffer.DrawProceduralIndirect(Matrix4x4.identity, clusterMat, 2, MeshTopology.Triangles, SceneController.baseBuffer.instanceCountBuffer, 0);
-                   
+
 #if UNITY_EDITOR
                 }
 #endif
@@ -194,7 +199,6 @@ namespace MPipeline
                     buffer.SetGlobalBuffer(ShaderIDs._TriangleMaterialBuffer, SceneController.baseBuffer.triangleMaterialBuffer);
                     buffer.SetGlobalTexture(ShaderIDs._GPURPMainTex, data.resources.clusterResources.rgbaPool.rt);
                     buffer.SetGlobalTexture(ShaderIDs._GPURPEmissionMap, data.resources.clusterResources.emissionPool.rt);
-                    buffer.SetGlobalTexture(ShaderIDs._GPURPBumpMap, data.resources.clusterResources.normalPool.rt);
                     buffer.SetGlobalTexture(ShaderIDs._GPURPHeightMap, data.resources.clusterResources.heightPool.rt);
                     buffer.DrawProceduralIndirect(Matrix4x4.identity, clusterMat, 0, MeshTopology.Triangles, SceneController.baseBuffer.instanceCountBuffer, 0);
 #if UNITY_EDITOR
@@ -204,7 +208,7 @@ namespace MPipeline
             SceneController.RenderScene(ref data, ref opaqueFilter, ref drawSettings, ref proper.cullResults);
             if (MTerrain.current)
             {
-                MTerrain.current.DrawTerrain(buffer, 0, proper.frustumPlanes, proper.frustumMinPoint, proper.frustumMaxPoint);
+                MTerrain.current.DrawTerrain(buffer, 0, proper.frustumPlanes, cam.frustumMinPoint, cam.frustumMaxPoint);
             }
 
             //Draw AlphaTest
@@ -222,7 +226,7 @@ namespace MPipeline
             }
             //Draw Depth
             data.buffer.Blit(ShaderIDs._DepthBufferTexture, ShaderIDs._CameraDepthTexture);
-            if(needUpdateGeometryBuffer)
+            if (needUpdateGeometryBuffer)
             {
                 needUpdateGeometryBuffer = false;
                 data.ExecuteCommandBuffer();
@@ -233,6 +237,14 @@ namespace MPipeline
     }
     public class HizOcclusionData : IPerCameraData
     {
+        public struct GetHizOcclusionData : IGetCameraData
+        {
+            public int screenWidth;
+            public IPerCameraData Run()
+            {
+                return new HizOcclusionData(screenWidth);
+            }
+        }
         public RenderTexture historyDepth { get; private set; }
         public int targetWidth { get; private set; }
         public int mip { get; private set; }

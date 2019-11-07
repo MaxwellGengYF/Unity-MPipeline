@@ -34,7 +34,7 @@ namespace MPipeline
                 //Material Count
             }
         }
-        public CombinedModel ProcessCluster(MeshRenderer[] allRenderers, Dictionary<MeshRenderer, bool> lowLODLevels)
+        public CombinedModel ProcessCluster(MeshRenderer[] allRenderers, ref SceneStreamLoader loader, Dictionary<MeshRenderer, bool> lowLODLevels)
         {
             List<MeshFilter> allFilters = new List<MeshFilter>(allRenderers.Length);
             int sumVertexLength = 0;
@@ -51,8 +51,7 @@ namespace MPipeline
             }
             NativeList<Point> points = new NativeList<Point>(sumVertexLength, Allocator.Temp);
             NativeList<int> triangleMaterials = new NativeList<int>(sumVertexLength / 3, Allocator.Temp);
-            VirtualMaterial vm = new VirtualMaterial();
-            var matToIndexDict = vm.GetMaterialsData(allRenderers);
+            var matToIndexDict = VirtualMaterial.GetMaterialsData(allRenderers, ref loader);
             for (int i = 0; i < allFilters.Count; ++i)
             {
                 Mesh mesh = allFilters[i].sharedMesh;
@@ -79,7 +78,6 @@ namespace MPipeline
             md.bound = b;
             md.allPoints = points;
             md.allMatIndex = triangleMaterials;
-            md.vm = vm;
             return md;
         }
 
@@ -88,7 +86,6 @@ namespace MPipeline
             public NativeList<Point> allPoints;
             public NativeList<int> allMatIndex;
             public Bounds bound;
-            public VirtualMaterial vm;
         }
         public string modelName = "TestFile";
         [Range(100, 500)]
@@ -107,6 +104,8 @@ namespace MPipeline
             }
 
             SceneStreaming property = new SceneStreaming();
+            SceneStreamLoader loader = new SceneStreamLoader();
+            loader.fsm = new FileStream(ClusterMatResources.infosPath + modelName + ".mpipe", FileMode.OpenOrCreate, FileAccess.ReadWrite);
             property.name = modelName;
             int containIndex = -1;
             for(int i = 0; i < res.clusterProperties.Count; ++i)
@@ -131,17 +130,19 @@ namespace MPipeline
                     }
                 }
             }
-            CombinedModel model = ProcessCluster(GetComponentsInChildren<MeshRenderer>(false), lowLevelDict);
-            property.vm = model.vm;
-            property.clusterCount = ClusterGenerator.GenerateCluster(model.allPoints, model.allMatIndex, model.bound, modelName, voxelCount, containIndex < 0 ? res.clusterProperties.Count : containIndex);
+            CombinedModel model = ProcessCluster(GetComponentsInChildren<MeshRenderer>(false), ref loader, lowLevelDict);
+            property.clusterCount = ClusterGenerator.GenerateCluster(model.allPoints, model.allMatIndex, model.bound, voxelCount, containIndex < 0 ? res.clusterProperties.Count : containIndex, ref loader);
+          
             res.maximumMaterialCount = Mathf.Max(1, res.maximumMaterialCount);
-            res.maximumMaterialCount = Mathf.Max(res.maximumMaterialCount, model.vm.allProperties.Count);
+            res.maximumMaterialCount = Mathf.Max(res.maximumMaterialCount, loader.allProperties.Length);
             if (containIndex < 0) res.clusterProperties.Add(property);
             else res.clusterProperties[containIndex] = property;
             if (save)
                 AssetDatabase.CreateAsset(res, "Assets/SceneManager.asset");
             else
                 EditorUtility.SetDirty(res);
+            loader.SaveAll(property.clusterCount);
+            loader.Dispose();
         }
 #endif
     }

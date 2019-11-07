@@ -34,12 +34,23 @@ namespace MPipeline
         {
             return new float4(normal, -dot(normal, inPoint));
         }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double4 GetPlaneDouble(double3 normal, double3 inPoint)
+        {
+            return new double4(normal, -dot(normal, inPoint));
+        }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float4 GetPlane(float3 a, float3 b, float3 c)
         {
             float3 normal = normalize(cross(b - a, c - a));
             return float4(normal, -dot(normal, a));
+        }
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double4 GetPlaneDouble(double3 a, double3 b, double3 c)
+        {
+            double3 normal = normalize(cross(b - a, c - a));
+            return double4(normal, -dot(normal, a));
         }
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public static float GetDistanceToPlane(float4 plane, float3 inPoint)
@@ -91,6 +102,29 @@ namespace MPipeline
                     return false;
                 }
             }
+            return true;
+        }
+
+        public static bool BoxIntersect(double3 position, double3 extent, float4* planes, int len)
+        {
+            for (uint i = 0; i < len; ++i)
+            {
+                float4 plane = planes[i];
+                float3 absNormal = abs(plane.xyz);
+                if ((dot(position, plane.xyz) - dot(absNormal, extent)) > -plane.w)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public static bool BoxContactWithBox(double3 min0, double3 max0, double3 min1, double3 max1)
+        {
+            bool3 v = min0 > max1;
+            if (v.x || v.y || v.z) return false;
+            v = min1 > max0;
+            if (v.x || v.y || v.z) return false;
             return true;
         }
 

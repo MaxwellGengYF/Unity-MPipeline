@@ -118,8 +118,8 @@ namespace MPipeline
                 voxelVolumeCullHandle = new VoxelFogVolumeCull
                 {
                     allDatas = VoxelFogBase.allVoxelData,
-                    maxPoint = proper.frustumMaxPoint,
-                    minPoint = proper.frustumMinPoint,
+                    maxPoint = cam.frustumMaxPoint,
+                    minPoint = cam.frustumMinPoint,
                     planes = (float4*)proper.frustumPlanes.Ptr(),
                     resultIndices = resultIndices
                 }.Schedule(VoxelFogBase.allVoxelData.Length, max(1, VoxelFogBase.allVoxelData.Length / 4));
@@ -142,8 +142,8 @@ namespace MPipeline
                 pass |= 0b1000;
             //TODO
             //Enable fourth bit as Global Illumination
-
-            HistoryVolumetric historyVolume = IPerCameraData.GetProperty(cam, () => new HistoryVolumetric());
+            HistoryVolumetric.GetHisotryVolumetric getter = new HistoryVolumetric.GetHisotryVolumetric();
+            HistoryVolumetric historyVolume = IPerCameraData.GetProperty<HistoryVolumetric, HistoryVolumetric.GetHisotryVolumetric>(cam, getter);
             //Volumetric Light
             buffer.SetGlobalVector(ShaderIDs._FroxelSize, float4(downSampledSize, 1));
             buffer.SetGlobalTexture(ShaderIDs._VolumeTex, volumeTex);
@@ -287,6 +287,13 @@ namespace MPipeline
     }
     public class HistoryVolumetric : IPerCameraData
     {
+        public struct GetHisotryVolumetric : IGetCameraData
+        {
+            public IPerCameraData Run()
+            {
+                return new HistoryVolumetric();
+            }
+        }
         public RenderTexture lastVolume = null;
         public override void DisposeProperty()
         {

@@ -69,5 +69,4 @@ MonoBehaviour:
     sssShader: {fileID: 4800000, guid: e897628345ef1444bb78afdf212e8b9b, type: 3}
     bakePreIntShader: {fileID: 4800000, guid: f4fb6e2c64982644f98560203441b9dd, type: 3}
     rapidBlurShader: {fileID: 4800000, guid: 14ceb9d3d9ad7db44ae2f5e8c3d77867, type: 3}
-    blitNormalShader: {fileID: 4800000, guid: 2b29461aabbb9f943ac5754156bab1eb, type: 3}
     cyberGlitchShader: {fileID: 4800000, guid: 54000453458bb2b49b3f44bd9cab343d, type: 3}

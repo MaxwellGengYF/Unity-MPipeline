@@ -1,5 +1,4 @@
-﻿#if UNITY_EDITOR
-using System.Collections;
+﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Unity.Mathematics;
@@ -12,7 +11,6 @@ using System.IO;
 using Unity.Collections.LowLevel.Unsafe;
 using Random = UnityEngine.Random;
 using UnityEngine.AddressableAssets;
-using MPipeline.PCG;
 namespace MPipeline
 {
     public unsafe sealed class Test : MonoBehaviour
@@ -28,25 +26,26 @@ namespace MPipeline
         {
             Shader.DisableKeyword("USE_WHITE");
         }
-
+        public ClusterMatResources tex;
         [EasyButtons.Button]
         void TestCross()
         {
-            Debug.Log(cross(float3(0, 0, 1), float3(1, 0, 0)));
+            Debug.Log(tex.rgbaPool.LeftedTexs);
+            Debug.Log(tex.heightPool.LeftedTexs);
+            Debug.Log(tex.emissionPool.LeftedTexs);
         }
 
         private void Update()
         {
-            /*
+            
             int value;
             if (int.TryParse(Input.inputString, out value))
             {
                 var clusterResources = RenderPipeline.current.resources.clusterResources;
                 clusterResources.TransformScene((uint)value, this);
             }
-            */
+            
         }
 
     }
 }
-#endif

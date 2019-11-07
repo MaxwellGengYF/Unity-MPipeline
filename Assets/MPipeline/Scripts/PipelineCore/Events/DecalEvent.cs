@@ -73,8 +73,8 @@ namespace MPipeline
                 availiableDistanceSqr = lightingEvt.cbdrDistance * lightingEvt.cbdrDistance,
                 camPos = cam.cam.transform.position,
                 allDatas = Decal.decalDatas.unsafePtr,
-                camMinPos = proper.frustumMinPoint,
-                camMaxPos = proper.frustumMaxPoint
+                camMinPos = cam.frustumMinPoint,
+                camMaxPos = cam.frustumMaxPoint
             };
             cullJob.indexCompares = decalCompareResults.Ptr();
             handle = cullJob.ScheduleRefBurst(Decal.allDecalCount, max(1, Decal.allDecalCount / 4));

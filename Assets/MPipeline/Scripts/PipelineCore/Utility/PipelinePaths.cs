@@ -35,7 +35,6 @@ namespace MPipeline
         public Shader sssShader;
         public Shader bakePreIntShader;
         public Shader rapidBlurShader;
-        public Shader blitNormalShader;
         public Shader cyberGlitchShader;
     }
 

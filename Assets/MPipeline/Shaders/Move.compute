@@ -3,10 +3,12 @@
 #pragma kernel PointFunc
 #pragma kernel MaterialFunc
 #pragma kernel IndexFunc
-#pragma kernel MipFunc
 #pragma kernel MipGroupSync
+#pragma kernel BlitTo
+#pragma kernel BlitTo BLIT_NORMAL
 #define COMPUTESHADER
 #include "CGINC/Procedural.cginc"
+#include "UnityCG.cginc"
 struct ClusterMeshData
 {
     float3 extent;
@@ -59,14 +61,6 @@ void IndexFunc(uint2 id : SV_DISPATCHTHREADID)
     uint2 index = _IndexBuffer[id.x] * CLUSTERTRIANGLECOUNT + id.y;
     _TriangleMaterialBuffer[index.x] = _TriangleMaterialBuffer[index.y];
 }
-RWTexture2DArray<float4> _SourceTex;
-RWTexture2DArray<float4> _DestTex;
-[numthreads(8,8,1)]
-void MipFunc(uint2 id : SV_DISPATCHTHREADID)
-{
-    uint2 idx = id * 2;
-    _DestTex[uint3(id, _Count)] = 0.25 * (_SourceTex[uint3(idx, _Count)] + _SourceTex[uint3(idx + uint2(0, 1), _Count)] + _SourceTex[uint3(idx + uint2(1, 1), _Count)] + _SourceTex[uint3(idx + uint2(1, 0), _Count)]);
-}
 
 inline uint2 GetDispatchID(uint2 groupID, uint2 threadID, uint2 threadCount)
 {
@@ -91,9 +85,12 @@ RWTexture2DArray<float4> _Mip3;
 RWTexture2DArray<float4> _Mip4;
 RWTexture2DArray<float4> _Mip5;
 
-[numthreads(16, 16, 1)]
-void MipGroupSync(uint2 groupID : SV_GROUPID, uint2 threadID : SV_GROUPTHREADID)
+[numthreads(8, 8, 1)]
+void MipGroupSync(/*uint2 groupID : SV_GROUPID, uint2 threadID : SV_GROUPTHREADID*/uint2 id : SV_DISPATCHTHREADID)
 {
+    uint2 idx = id * 2;
+    _Mip1[uint3(id, _Count)] = 0.25 * (_Mip0[uint3(idx, _Count)] + _Mip0[uint3(idx + uint2(0, 1), _Count)] + _Mip0[uint3(idx + uint2(1, 1), _Count)] + _Mip0[uint3(idx + uint2(1, 0), _Count)]); 
+    /*
     uint2 idx;
     uint2 id;
     uint2 current_Group_Length = uint2(16,16);
@@ -109,5 +106,26 @@ void MipGroupSync(uint2 groupID : SV_GROUPID, uint2 threadID : SV_GROUPTHREADID)
     CALCULATE_MIP(_Mip3, _Mip4, current_Group_Length)
     GROUP_SYNC(current_Group_Length)
     //len = 1
-    CALCULATE_MIP(_Mip4, _Mip5, current_Group_Length)
+    CALCULATE_MIP(_Mip4, _Mip5, current_Group_Length)*/
+}
+Texture2D<float4> _SourceTex;
+RWTexture2DArray<float4> _DestTex;
+inline float4 EncodeFloatRGCustom(float2 v)
+{
+    float2 kEncodeMul = float2(1, 255);
+    float kEncodeBit = 1/255.0;
+    float4 enc = kEncodeMul.xyxy * v.xxyy;
+    enc = frac(enc);
+    enc.xz -= enc.yw * kEncodeBit;
+    return enc;
+}
+
+[numthreads(8,8,1)]
+void BlitTo(uint2 id : SV_DISPATCHTHREADID)
+{
+    #ifdef BLIT_NORMAL
+    _DestTex[uint3(id, _Count)] = EncodeFloatRGCustom(clamp(UnpackNormal(_SourceTex[id]).xy * 0.5 + 0.5, 0, 0.9999));
+    #else
+    _DestTex[uint3(id, _Count)] = _SourceTex[id];
+    #endif
 }
