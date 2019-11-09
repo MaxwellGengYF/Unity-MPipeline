@@ -43,13 +43,16 @@
             Texture2D<float4> _SMO1; SamplerState sampler_SMO1;
             float4 _Setting;
 
-            void frag (v2f i, out float3 albedo : SV_TARGET0, out float2 normal : SV_TARGET1, out float3 smo : SV_TARGET2)
+            void frag (v2f i, out float4 albedoOutput : SV_TARGET0, out float4 normalOutput : SV_TARGET1, out float4 smoOutput : SV_TARGET2)
             {
+                float3 albedo;
+                float3 smo;
                 HeightBlendMaterial mat;
                 mat.firstMaterialIndex = 0;
                 mat.secondMaterialIndex = 0;
                 mat.offset = _Setting.x;
                 mat.heightBlendScale = _Setting.y;
+                float2 normal;
                 GetHeightBlendInEditor(mat, 
                 _Albedo0.SampleLevel(sampler_Albedo0, i.uv, 0),
                 UnpackNormal(_Normal0.SampleLevel(sampler_Normal0, i.uv, 0)),
@@ -59,6 +62,9 @@
                 _SMO1.SampleLevel(sampler_SMO1, i.uv, 0),
                 albedo, normal, smo
                 );
+                normalOutput = float4(normal, 1, 1);
+                albedoOutput = float4(albedo, 1);
+                smoOutput = float4(smo, 1);
             }
             ENDCG
         }

@@ -7,6 +7,7 @@ using UnityEngine.Experimental.Rendering;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Unity.Mathematics;
+using System.IO;
 using static Unity.Mathematics.math;
 namespace MPipeline
 {
@@ -65,12 +66,14 @@ namespace MPipeline
         private RenderTexture drawAlbedoRT;
         private RenderTexture drawNormalRT;
         private RenderTexture drawSMORT;
-        private RenderTargetIdentifier[] colorBuffers;
+        private RenderTargetIdentifier[] colorBuffersIdentifier;
+        private RenderBuffer[] colorBuffers;
         private Material heightBlendMaterial;
+        public string savePath;
         private void OnEnable()
         {
             drawAlbedoRT = new RenderTexture(2048, 2048, 0, GraphicsFormat.R32G32B32A32_SFloat, 0);
-            drawNormalRT = new RenderTexture(2048, 2048, 0, GraphicsFormat.R32G32_SFloat, 0);
+            drawNormalRT = new RenderTexture(2048, 2048, 0, GraphicsFormat.R32G32B32A32_SFloat, 0);
             drawSMORT = new RenderTexture(2048, 2048, 0, GraphicsFormat.R32G32B32A32_SFloat, 0);
             drawAlbedoRT.wrapMode = TextureWrapMode.Repeat;
             drawNormalRT.wrapMode = TextureWrapMode.Repeat;
@@ -79,7 +82,13 @@ namespace MPipeline
             drawNormalRT.Create();
             drawSMORT.Create();
             heightBlendMaterial = new Material(Shader.Find("Hidden/TerrainMaterialEdit"));
-            colorBuffers = new RenderTargetIdentifier[]
+            colorBuffersIdentifier = new RenderTargetIdentifier[]
+            {
+                drawAlbedoRT.colorBuffer,
+                drawNormalRT.colorBuffer,
+                drawSMORT.colorBuffer
+            };
+            colorBuffers = new RenderBuffer[]
             {
                 drawAlbedoRT.colorBuffer,
                 drawNormalRT.colorBuffer,
@@ -100,7 +109,7 @@ namespace MPipeline
             if (!mat) return;
             CommandBuffer bf = RenderPipeline.BeforeFrameBuffer;
             if (!drawAlbedoRT || !drawNormalRT || !drawSMORT) return;
-            bf.SetRenderTarget(colors: colorBuffers, depth: drawAlbedoRT.depthBuffer);
+            bf.SetRenderTarget(colors: colorBuffersIdentifier, depth: drawAlbedoRT.depthBuffer);
             bf.ClearRenderTarget(false, true, Color.black);
             if (renderingMaterial.x < 0 || renderingMaterial.x >= allMaterials.Count) return;
             if (allMaterials.Count == 0) return;
@@ -123,6 +132,60 @@ namespace MPipeline
             mat.SetFloat("_Occlusion", 1);
             mat.SetFloat("_MetallicIntensity", 1);
         }
+
+        public void DrawToMaterialImmidietly()
+        {
+            Material mat = GetComponent<MeshRenderer>().sharedMaterial;
+            if (!mat) return;
+            if (!drawAlbedoRT || !drawNormalRT || !drawSMORT) return;
+            Graphics.SetRenderTarget(colorBuffers, drawAlbedoRT.depthBuffer);
+            GL.Clear(false, true, Color.black);
+            if (renderingMaterial.x < 0 || renderingMaterial.x >= allMaterials.Count) return;
+            if (allMaterials.Count == 0) return;
+            var heightBlend = allMaterials[renderingMaterial.x];
+            if (renderingMaterial.y < 0 || renderingMaterial.y >= heightBlend.blendWeights.Count) return;
+            heightBlendMaterial.SetVector("_Setting", float4(heightBlend.blendWeights[renderingMaterial.y].offset, heightBlend.blendWeights[renderingMaterial.y].heightBlendScale, 1, 1));
+            heightBlendMaterial.SetTexture("_Albedo0", heightBlend.frontPack.albedo);
+            heightBlendMaterial.SetTexture("_Albedo1", heightBlend.backPack.albedo);
+            heightBlendMaterial.SetTexture("_Normal0", heightBlend.frontPack.normal);
+            heightBlendMaterial.SetTexture("_Normal1", heightBlend.backPack.normal);
+            heightBlendMaterial.SetTexture("_SMO0", heightBlend.frontPack.smo);
+            heightBlendMaterial.SetTexture("_SMO1", heightBlend.backPack.smo);
+            heightBlendMaterial.SetPass(0);
+            Graphics.DrawMeshNow(GraphicsUtility.mesh, Matrix4x4.identity);
+            mat.SetTexture(ShaderIDs._MainTex, drawAlbedoRT);
+            mat.SetTexture(ShaderIDs._BumpMap, drawNormalRT);
+            mat.SetTexture("_SpecularMap", drawSMORT);
+            mat.SetColor(ShaderIDs._Color, Color.white);
+            mat.SetFloat("_Glossiness", 1);
+            mat.SetFloat("_Occlusion", 1);
+            mat.SetFloat("_MetallicIntensity", 1);
+        }
+
+        public bool SaveFile(int2 index, string targetDirectory)
+        {
+            renderingMaterial = index;
+            DrawToMaterialImmidietly();
+            return MEditorLib.GenerateWorldCreatorTexture(drawAlbedoRT, drawNormalRT, targetDirectory + "/", "TestPic");
+        }
+
+        public void SaveAllFile()
+        {
+            string[] dircts = Directory.GetDirectories(savePath);
+            int offset = 0;
+            for(int i = 0; i < allMaterials.Count; ++i)
+            {
+                for (int a = 0; a < allMaterials[i].blendWeights.Count; ++a)
+                {
+                    if (!SaveFile(int2(i, a), dircts[offset]))
+                        --a;
+                    offset++;
+                    if (offset >= dircts.Length) return;
+                }
+
+            }
+        }
+
         public bool CheckResources()
         {
             for (int i = 0; i < allMaterials.Count; ++i)
@@ -280,7 +343,7 @@ namespace MPipeline
                                     EditorGUILayout.LabelField("Element " + a + ": ");
                                     EditorGUI.indentLevel++;
                                     var weight = mat.blendWeights[a];
-                                    weight.offset = EditorGUILayout.Slider("Offset: ",  weight.offset, -1, 1);
+                                    weight.offset = EditorGUILayout.Slider("Offset: ", weight.offset, -1, 1);
                                     weight.heightBlendScale = EditorGUILayout.Slider("Blend Scale: ", weight.heightBlendScale, -20, 20);
                                     mat.blendWeights[a] = weight;
                                     EditorGUILayout.BeginHorizontal();
@@ -292,7 +355,7 @@ namespace MPipeline
                                             target.renderingMaterial = int2(i, a);
                                         }
                                     }
-                                    if(GUILayout.Button("Remove This"))
+                                    if (GUILayout.Button("Remove This"))
                                     {
                                         mat.blendWeights.RemoveAt(a);
                                         a--;
@@ -360,6 +423,10 @@ namespace MPipeline
             {
                 if (target.CheckResources())
                     target.SaveData();
+            }
+            if (GUILayout.Button("Save To World Creator File"))
+            {
+                target.SaveAllFile();
             }
         }
     }

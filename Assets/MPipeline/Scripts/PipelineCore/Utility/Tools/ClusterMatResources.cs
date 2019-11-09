@@ -117,7 +117,7 @@ namespace MPipeline
             for (int i = 0; i < clusterProperties.Count; ++i)
             {
                 var cur = clusterProperties[i];
-                cur.Init(i, msbForCluster, this);
+                cur.Init(msbForCluster, this);
             }
 
             rgbaPool.Init(0, GraphicsFormat.R8G8B8A8_UNorm, (int)fixedTextureSize, this);

@@ -30,14 +30,15 @@ namespace MPipeline
         };
 
         int propertyCount;
+        static int propertyStaticCount = int.MinValue;
         private MStringBuilder sb;
-        public void Init(int propertyCount, MStringBuilder msb, ClusterMatResources resources)
+        public void Init(MStringBuilder msb, ClusterMatResources resources)
         {
             this.resources = resources;
             sb = msb;
-            this.propertyCount = propertyCount;
             state = State.Unloaded;
-
+            propertyCount = propertyStaticCount;
+            propertyStaticCount++;
         }
         private SceneStreamLoader loader;
         static string[] allStrings = new string[3];

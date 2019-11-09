@@ -30,9 +30,7 @@ namespace MPipeline
         [EasyButtons.Button]
         void TestCross()
         {
-            Debug.Log(tex.rgbaPool.LeftedTexs);
-            Debug.Log(tex.heightPool.LeftedTexs);
-            Debug.Log(tex.emissionPool.LeftedTexs);
+            Debug.Log(System.Guid.NewGuid().ToString());
         }
 
         private void Update()
