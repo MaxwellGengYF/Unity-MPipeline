@@ -5,6 +5,8 @@
 #pragma kernel WritePixel
 #pragma kernel WritePixelNormal
 #pragma kernel WritePixelToArray
+#pragma kernel CopyMask
+#pragma kernel CopyMask REVERSE
 #include "UnityCG.cginc"
 RWStructuredBuffer<float4> _TextureDatas;
 Texture2D<float4> _TargetTexture; SamplerState sampler_TargetTexture;
@@ -67,4 +69,16 @@ void WritePixelToArray(uint2 id : SV_DISPATCHTHREADID)
     int2 texID = id.x;
     #endif
     _TargetRTArray[uint3(texID - uint2(0, _Height), _Offset)] = _TargetTexture[id];
+}
+Texture2D<float> _SourceTex;
+RWTexture2D<float4> _DestTex;
+float4 _Mask;
+[numthreads(8,8,1)]
+void CopyMask(uint2 id : SV_DISPATCHTHREADID)
+{
+    #ifdef REVERSE
+     _DestTex[id] = lerp(_DestTex[id], 1 - _SourceTex[id].xxxx, _Mask);
+    #else
+    _DestTex[id] = lerp(_DestTex[id], _SourceTex[id].xxxx, _Mask);
+    #endif
 }

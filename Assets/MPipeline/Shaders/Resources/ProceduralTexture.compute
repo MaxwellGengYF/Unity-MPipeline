@@ -31,10 +31,12 @@ inline float SampleMask(float2 uv)
     float3 realUV = GetVirtualTextureUV(_MaskIndexMap, _IndexTextureSize, floor(_IndexBuffer.xy + uv), frac(uv));
     return _VirtualMaskmap.SampleLevel(sampler_VirtualMaskmap, realUV, 0);
 }
-float2 BilinearSampleMask(float2 uv, out float4 result)
+float2 BilinearSampleMask(float2 uv, out float4 result, float2 noise)
 {
-    float2 absoluteUV = frac(uv.xy * _IndexTextureSize.x);
     float2 pixelLength = 1.0 / _IndexTextureSize.x;
+    uv += noise * pixelLength * 2;
+    float2 absoluteUV = frac(uv.xy * _IndexTextureSize.x);
+    
     //uv.xy -= absoluteUV > 0.5 ? 0 : pixelLength;
     float2 lerpValue = absoluteUV - 0.5;
     pixelLength *= (lerpValue < 0) ? -1 : 1;
@@ -62,15 +64,14 @@ void UpSample (uint2 id : SV_DispatchThreadID)
     float2 maskVirtualUV = absoluteUV * _TextureSize.x + _TextureSize.yz;
     float2 uv = absoluteUV * _TextureSize.w;
     float4 mask;
-    float2 lerpValue = BilinearSampleMask(maskVirtualUV, mask);
-    //float noiseValue = _NoiseTexture.SampleLevel(sampler_NoiseTexture, maskVirtualUV, 0);
-    //lerpValue = pow(lerpValue, max(1e-4, 0.5 + 3 * noiseValue));
+        float lod = log2(_TextureSize.w);
+    float2 noiseValue = _NoiseTexture.SampleLevel(sampler_NoiseTexture, uv, 0).xy;
+    float2 lerpValue = BilinearSampleMask(maskVirtualUV, mask, noiseValue - 0.5);
     mask *= _IndexTextureSize.y;
     mask += 0.4;
     float4 albedo_occs[4];
     float2 normals[4];
     float2 sms[4];
-    float lod = log2(_TextureSize.w);
     GetHeightBlendMaterial(mask.x, uv, lod, albedo_occs[0], normals[0], sms[0]);
     GetHeightBlendMaterial(mask.y, uv, lod, albedo_occs[1], normals[1], sms[1]);
     GetHeightBlendMaterial(mask.z, uv, lod, albedo_occs[2], normals[2], sms[2]);

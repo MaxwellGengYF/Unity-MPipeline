@@ -502,12 +502,12 @@ public unsafe class TransformTextureSettings : ScriptableWizard
                 imp.sRGBTexture = false;
                 imp.SetPlatformTextureSettings(albedoSettings);
             }
-            else if (i.name.ToLower().Contains("_normal"))
+            else if (i.name.ToLower().Contains("_normal") || i.name.ToLower().Contains("_nor"))
             {
                 imp.textureType = TextureImporterType.NormalMap;
                 imp.SetPlatformTextureSettings(albedoSettings);
             }
-            else if (i.name.ToLower().Contains("_height"))
+            else if (i.name.ToLower().Contains("_height") || i.name.ToLower().Contains("_disp"))
             {
                 imp.sRGBTexture = false;
                 imp.SetPlatformTextureSettings(heightSettings);

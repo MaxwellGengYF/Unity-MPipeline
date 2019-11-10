@@ -28,6 +28,7 @@ namespace MPipeline
         public double lodDeferredOffset = 2;
         [Range(0.1f, 1)]
         public float backfaceCullingLevel = 0.5f;
+        public Texture noiseTex;
         //public Texture2D warpNoiseTexture;
         public double[] lodDistances = new double[]
         {

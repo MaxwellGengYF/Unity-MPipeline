@@ -153,6 +153,7 @@ namespace MPipeline
             buffer.SetComputeVectorParam(textureShader, ShaderIDs._IndexBuffer, (float4)double4(rootPos, terrainData.heightScale, (2.0 / oneHeightPixelSize)));
             buffer.SetComputeVectorParam(textureShader, ShaderIDs._IndexTextureSize, float4(MASK_RESOLUTION, min(255, terrainData.allMaterials.Length - 1), vt.indexSize));
             buffer.SetComputeVectorParam(textureShader, ShaderIDs._TextureSize, (float4)double4(maskScaleOffset, size * terrainData.materialTillingScale));
+        //    buffer.SetComputeVectorParam(textureShader, ShaderIDs._TextureUVOffset, float4(startIndex, 1, 1));
             const int disp = COLOR_RESOLUTION / 8;
             buffer.DispatchCompute(textureShader, 0, disp, disp, 1);
             buffer.SetComputeVectorParam(textureShader, ShaderIDs._IndexTextureSize, float4(float2(1) / maskVT.indexSize, maskVT.indexSize));
@@ -251,11 +252,11 @@ namespace MPipeline
                 buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._MainTex, albedoTex);
                 buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._BumpMap, normalTex);
                 buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._SMMap, smTex);
+                buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._NoiseTexture, terrainData.noiseTex);
                 buffer.SetComputeIntParam(textureShader, ShaderIDs._HeightResolution, MASK_RESOLUTION);
                 int rtID = maskVT.GetTextureFormat(0).rtPropertyID;
                 buffer.SetComputeTextureParam(textureShader, 0, rtID, maskVT.GetTexture(0));
                 buffer.SetComputeTextureParam(textureShader, 0, maskVT.indexTexID, maskVT.indexTex);
-                //      buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._NoiseTexture, terrainData.warpNoiseTexture);
                 buffer.SetComputeTextureParam(textureShader, 4, ShaderIDs._VirtualBumpMap, vt.GetTexture(1));
                 buffer.SetComputeTextureParam(textureShader, 3, ShaderIDs._IndexTexture, maskVT.indexTex);
                 buffer.SetComputeTextureParam(textureShader, 3, ShaderIDs._VirtualHeightmap, maskVT.GetTexture(1));
