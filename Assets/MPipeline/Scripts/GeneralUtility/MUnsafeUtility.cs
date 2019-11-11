@@ -52,6 +52,15 @@ public unsafe static class MUnsafeUtility
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static char* Ptr(this string arr)
+    {
+        fixed(char* c = arr)
+        {
+            return c;
+        }
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void SetPtr<T>(ref this NativeArray<T> arr, void* targetPtr) where T : unmanaged
     {
         ulong* ptr = (ulong*)(AddressOf(ref arr));

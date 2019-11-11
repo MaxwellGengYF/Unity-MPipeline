@@ -12,10 +12,12 @@ namespace MPipeline
         [System.Serializable]
         public struct HeightBlendMaterial
         {
-            public float firstMaterialIndex;
-            public float secondMaterialIndex;
-            public float offset;
-            public float heightBlendScale;
+            public float materialIndex;
+            public float3 albedoColor;
+            public float2 normalScale;
+            public float smoothness;
+            public float metallic;
+            public float occlusion;
         };
         
         public double heightOffset = 0;
@@ -28,6 +30,7 @@ namespace MPipeline
         public double lodDeferredOffset = 2;
         [Range(0.1f, 1)]
         public float backfaceCullingLevel = 0.5f;
+        public Texture noiseTex;
         //public Texture2D warpNoiseTexture;
         public double[] lodDistances = new double[]
         {

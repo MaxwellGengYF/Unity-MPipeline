@@ -35,30 +35,29 @@
                 return o;
             }
 
-            Texture2D<float3> _Albedo0; SamplerState sampler_Albedo0;
-            Texture2D<float4> _Normal0; SamplerState sampler_Normal0;
-            Texture2D<float4> _SMO0; SamplerState sampler_SMO0;
-            Texture2D<float3> _Albedo1; SamplerState sampler_Albedo1;
-            Texture2D<float4> _Normal1; SamplerState sampler_Normal1;
-            Texture2D<float4> _SMO1; SamplerState sampler_SMO1;
-            float4 _Setting;
+            Texture2D<float3> _Albedo; SamplerState sampler_Albedo;
+            Texture2D<float4> _SMO; SamplerState sampler_SMO;
+            Texture2D<float4> _Normal; SamplerState sampler_Normal;
+            float3 _Color;
+            float _Smoothness;
+            float _Metallic;
+            float _Occlusion;
+            float2 _NormalScale;
 
-            void frag (v2f i, out float3 albedo : SV_TARGET0, out float2 normal : SV_TARGET1, out float3 smo : SV_TARGET2)
+
+            void frag (v2f i, out float4 albedoOutput : SV_TARGET0, out float4 normalOutput : SV_TARGET1, out float4 smoOutput : SV_TARGET2)
             {
-                HeightBlendMaterial mat;
-                mat.firstMaterialIndex = _Setting.x;
-                mat.secondMaterialIndex = _Setting.y;
-                mat.offset = _Setting.z;
-                mat.heightBlendScale = _Setting.w;
-                GetHeightBlendInEditor(mat, 
-                _Albedo0.SampleLevel(sampler_Albedo0, i.uv, 0),
-                UnpackNormal(_Normal0.SampleLevel(sampler_Normal0, i.uv, 0)),
-                _SMO0.SampleLevel(sampler_SMO0, i.uv, 0),
-                _Albedo1.SampleLevel(sampler_Albedo1, i.uv, 0),
-                UnpackNormal(_Normal1.SampleLevel(sampler_Normal1, i.uv, 0)),
-                _SMO1.SampleLevel(sampler_SMO1, i.uv, 0),
-                albedo, normal, smo
-                );
+                float3 albedo;
+                float3 smo;
+                float2 normal =  UnpackNormal(_Normal.SampleLevel(sampler_Normal, i.uv, 0)).xy * _NormalScale;
+                albedo = _Albedo.SampleLevel(sampler_Albedo, i.uv, 0) * _Color;
+                smo = _SMO.SampleLevel(sampler_SMO, i.uv, 0);
+                smo.xy *= float2(_Smoothness, _Metallic);
+                smo.z = lerp(1, smo.z, _Occlusion);
+
+                normalOutput = float4(normal * 0.5 + 0.5, 1, 1);
+                albedoOutput = float4(albedo, 1);
+                smoOutput = float4(smo, 1);
             }
             ENDCG
         }
