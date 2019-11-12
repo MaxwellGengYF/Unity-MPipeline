@@ -5,6 +5,7 @@
 #pragma kernel HeightToNormal
 #pragma kernel NormalToWorld
 #pragma kernel GenerateMipmap
+#pragma kernel GenerateRandomTileMap
 #include "UnityCG.cginc"
 #include "../CGINC/VirtualTexture.cginc"
 #include "../CGINC/HeightBlendMaterial.cginc"
@@ -14,7 +15,7 @@ Texture2D<float4> _MaskIndexMap;
 RWTexture2DArray<float4> _VirtualMainTex;
 RWTexture2DArray<float2> _VirtualBumpMap;
 RWTexture2DArray<float4> _VirtualSMO;
-RWTexture2DArray<float> _MaskTex;
+//RWTexture2DArray<float> _MaskTex;
 
 Texture2D<float4> _SourceTex; SamplerState sampler_SourceTex;
 RWTexture2D<float4> _DestTex;
@@ -34,7 +35,7 @@ inline float SampleMask(float2 uv)
 float2 BilinearSampleMask(float2 uv, out float4 result, float2 noise)
 {
     float2 pixelLength = 1.0 / _IndexTextureSize.x;
-    uv += noise * pixelLength * 2;
+    uv += noise * pixelLength * 3;
     float2 absoluteUV = frac(uv.xy * _IndexTextureSize.x);
     
     //uv.xy -= absoluteUV > 0.5 ? 0 : pixelLength;
@@ -65,17 +66,17 @@ void UpSample (uint2 id : SV_DispatchThreadID)
     float2 uv = absoluteUV * _TextureSize.w;
     float4 mask;
         float lod = log2(_TextureSize.w);
-    float2 noiseValue = _NoiseTexture.SampleLevel(sampler_NoiseTexture, uv, 0).xy;
-    float2 lerpValue = BilinearSampleMask(maskVirtualUV, mask, noiseValue - 0.5);
+    float2 noiseValue = _NoiseTexture.SampleLevel(sampler_NoiseTexture, (_Offset.xy + uv) * 0.25, 0).xy  - 0.5;
+    float2 lerpValue = BilinearSampleMask(maskVirtualUV, mask, noiseValue);
     mask *= _IndexTextureSize.y;
     mask += 0.4;
     float4 albedo_occs[4];
     float2 normals[4];
     float2 sms[4];
-    GetHeightBlendMaterial(mask.x, uv, lod, albedo_occs[0], normals[0], sms[0]);
-    GetHeightBlendMaterial(mask.y, uv, lod, albedo_occs[1], normals[1], sms[1]);
-    GetHeightBlendMaterial(mask.z, uv, lod, albedo_occs[2], normals[2], sms[2]);
-    GetHeightBlendMaterial(mask.w, uv, lod, albedo_occs[3], normals[3], sms[3]);
+    GetHeightBlendMaterial(mask.x, uv, lod, noiseValue, albedo_occs[0], normals[0], sms[0]);
+    GetHeightBlendMaterial(mask.y, uv, lod, noiseValue, albedo_occs[1], normals[1], sms[1]);
+    GetHeightBlendMaterial(mask.z, uv, lod, noiseValue, albedo_occs[2], normals[2], sms[2]);
+    GetHeightBlendMaterial(mask.w, uv, lod, noiseValue, albedo_occs[3], normals[3], sms[3]);
     float4 albedo_occ;
     float2 normal;
     float2 sm;
@@ -99,7 +100,7 @@ void NormalToTex (uint2 id : SV_DISPATCHTHREADID)
     float3 albedo = _TerrainMainTexArray[id].xyz;
     _VirtualMainTex[idx] = float4(albedo, smo.z);
     _VirtualSMO[idx] = float4(smo.xy, 0, 0);
-    _MaskTex[idx] = smo.w;
+   // _MaskTex[idx] = smo.w;
 }
 
 [numthreads(8,8,1)]
@@ -109,7 +110,7 @@ void ClearColorTex(uint2 id : SV_DISPATCHTHREADID)
     _VirtualBumpMap[idx] = 0;
     _VirtualMainTex[idx] = 1;
     _VirtualSMO[idx] = 1;
-    _MaskTex[idx] = 1;
+   // _MaskTex[idx] = 1;
 }
 Texture2DArray<float> _VirtualHeightmap; SamplerState sampler_VirtualHeightmap;
 Texture2D<float4> _IndexTexture;
@@ -206,4 +207,51 @@ void GenerateMipmap(uint2 id : SV_DISPATCHTHREADID)
     uint2 idx = id * 2;
     _Mip1[uint3(id, _OffsetIndex)] = 
     (_Mip0[uint3(idx, _OffsetIndex)] + _Mip0[uint3(idx + uint2(0,1), _OffsetIndex)] + _Mip0[uint3(idx + uint2(1,0), _OffsetIndex)] + _Mip0[uint3(idx + 1, _OffsetIndex)]) * 0.25;
+}
+#include "../CGINC/Random.cginc"
+//_TextureSize: XY: Full Texture Size
+[numthreads(8,8,1)]
+void GenerateRandomTileMap(uint2 id : SV_DISPATCHTHREADID)
+{
+    float2 randomSeed = MNoise((id + 0.5) * _TextureSize.xy);
+    float2 allWaitingRandoms[16];
+    int a = 0;
+    [loop]
+    for(int i = 0; i < 4; ++i)
+    {
+        [loop]
+        for(int j = 0; j < 4; ++j)
+        {
+            allWaitingRandoms[a] = float2(i, j) / 4.0;
+            ++a;
+        }
+    }
+    [loop]
+    for(a = 15; a >= 0; a--)
+    {
+        randomSeed = static_MNoise(randomSeed);
+        uint currentIndex = uint(frac(randomSeed.x + randomSeed.y) * a + 1e-4);
+        float2 temp = allWaitingRandoms[a];
+        allWaitingRandoms[a] = allWaitingRandoms[currentIndex];
+        allWaitingRandoms[currentIndex] = temp;
+    }
+    const float4 offsets[4] = {
+        float4(0,0,1,1),
+        float4(0,0.25, -1,1),
+        float4(0.25, 0, 1, -1),
+        float4(0.25,0.25,-1,-1)
+    };
+    a = 0;
+    [loop]
+    for(int i = 0; i < 4; ++i)
+    {
+        [loop]
+        for(int j = 0; j < 4; ++j)
+        {
+            randomSeed = static_MNoise(randomSeed);
+            uint currentIndex = uint(frac(randomSeed.x + randomSeed.y) * 4 + 1e-4);
+            _DestTex[id * 4 + uint2(i,j)] = float4(allWaitingRandoms[a] + offsets[currentIndex].xy, offsets[currentIndex].zw);
+            ++a;
+        }
+    }
 }

@@ -57,102 +57,210 @@ MonoBehaviour:
   virtualTexCapacity: 94
   heightmapTexCapacity: 4
   allMaterials:
-  - firstMaterialIndex: 0
-    secondMaterialIndex: 1
-    offset: 0.37
-    heightBlendScale: 20
-  - firstMaterialIndex: 0
-    secondMaterialIndex: 1
-    offset: -0.03
-    heightBlendScale: 20
-  - firstMaterialIndex: 0
-    secondMaterialIndex: 2
-    offset: 0.05
-    heightBlendScale: 20
-  - firstMaterialIndex: 0
-    secondMaterialIndex: 2
-    offset: 0.02
-    heightBlendScale: -20
-  - firstMaterialIndex: 3
-    secondMaterialIndex: 4
-    offset: 0.42
-    heightBlendScale: 5
-  - firstMaterialIndex: 3
-    secondMaterialIndex: 4
-    offset: 0.49
-    heightBlendScale: -5
-  - firstMaterialIndex: 3
-    secondMaterialIndex: 4
-    offset: 0.66
-    heightBlendScale: 5
-  - firstMaterialIndex: 3
-    secondMaterialIndex: 4
-    offset: 0.45
-    heightBlendScale: -20
-  - firstMaterialIndex: 5
-    secondMaterialIndex: 6
-    offset: 0.42
-    heightBlendScale: 5
-  - firstMaterialIndex: 5
-    secondMaterialIndex: 6
-    offset: 0.49
-    heightBlendScale: -5
-  - firstMaterialIndex: 5
-    secondMaterialIndex: 6
-    offset: 0.66
-    heightBlendScale: 5
-  - firstMaterialIndex: 5
-    secondMaterialIndex: 6
-    offset: 0.45
-    heightBlendScale: -20
-  - firstMaterialIndex: 7
-    secondMaterialIndex: 8
-    offset: 0.42
-    heightBlendScale: 5
-  - firstMaterialIndex: 7
-    secondMaterialIndex: 8
-    offset: 0.49
-    heightBlendScale: -5
-  - firstMaterialIndex: 7
-    secondMaterialIndex: 8
-    offset: 0.66
-    heightBlendScale: 5
-  - firstMaterialIndex: 7
-    secondMaterialIndex: 8
-    offset: 0.45
-    heightBlendScale: -20
-  - firstMaterialIndex: 9
-    secondMaterialIndex: 10
-    offset: 0.42
-    heightBlendScale: 5
-  - firstMaterialIndex: 9
-    secondMaterialIndex: 10
-    offset: 0.49
-    heightBlendScale: -5
-  - firstMaterialIndex: 9
-    secondMaterialIndex: 10
-    offset: 0.66
-    heightBlendScale: 5
-  - firstMaterialIndex: 9
-    secondMaterialIndex: 10
-    offset: 0.45
-    heightBlendScale: -20
-  - firstMaterialIndex: 11
-    secondMaterialIndex: 10
-    offset: 0.42
-    heightBlendScale: 5
-  - firstMaterialIndex: 11
-    secondMaterialIndex: 10
-    offset: 0.49
-    heightBlendScale: -5
-  - firstMaterialIndex: 11
-    secondMaterialIndex: 10
-    offset: 0.66
-    heightBlendScale: 5
-  - firstMaterialIndex: 11
-    secondMaterialIndex: 10
-    offset: 0.45
-    heightBlendScale: -20
+  - materialIndex: 0
+    albedoColor:
+      x: 1
+      y: 1
+      z: 1
+    normalScale:
+      x: 1
+      y: 1
+    smoothness: 1
+    metallic: 1
+    occlusion: 1
+    antiRepeat: 1
+  - materialIndex: 1
+    albedoColor:
+      x: 1
+      y: 1
+      z: 1
+    normalScale:
+      x: 1
+      y: 1
+    smoothness: 1
+    metallic: 1
+    occlusion: 1
+    antiRepeat: 1
+  - materialIndex: 2
+    albedoColor:
+      x: 1
+      y: 1
+      z: 1
+    normalScale:
+      x: 1
+      y: 1
+    smoothness: 1
+    metallic: 1
+    occlusion: 1
+    antiRepeat: 1
+  - materialIndex: 3
+    albedoColor:
+      x: 1
+      y: 1
+      z: 1
+    normalScale:
+      x: 1
+      y: 1
+    smoothness: 1
+    metallic: 1
+    occlusion: 1
+    antiRepeat: 1
+  - materialIndex: 4
+    albedoColor:
+      x: 1
+      y: 1
+      z: 1
+    normalScale:
+      x: 1
+      y: 1
+    smoothness: 1
+    metallic: 1
+    occlusion: 1
+    antiRepeat: 1
+  - materialIndex: 5
+    albedoColor:
+      x: 1
+      y: 1
+      z: 1
+    normalScale:
+      x: 1
+      y: 1
+    smoothness: 1
+    metallic: 1
+    occlusion: 1
+    antiRepeat: 1
+  - materialIndex: 6
+    albedoColor:
+      x: 1
+      y: 1
+      z: 1
+    normalScale:
+      x: 1
+      y: 1
+    smoothness: 1
+    metallic: 1
+    occlusion: 1
+    antiRepeat: 1
+  - materialIndex: 7
+    albedoColor:
+      x: 1
+      y: 1
+      z: 1
+    normalScale:
+      x: 1
+      y: 1
+    smoothness: 1
+    metallic: 1
+    occlusion: 1
+    antiRepeat: 1
+  - materialIndex: 8
+    albedoColor:
+      x: 1
+      y: 1
+      z: 1
+    normalScale:
+      x: 1
+      y: 1
+    smoothness: 1
+    metallic: 1
+    occlusion: 1
+    antiRepeat: 1
+  - materialIndex: 9
+    albedoColor:
+      x: 1
+      y: 1
+      z: 1
+    normalScale:
+      x: 1
+      y: 1
+    smoothness: 1
+    metallic: 1
+    occlusion: 1
+    antiRepeat: 0
+  - materialIndex: 10
+    albedoColor:
+      x: 1
+      y: 1
+      z: 1
+    normalScale:
+      x: 1
+      y: 1
+    smoothness: 1
+    metallic: 1
+    occlusion: 1
+    antiRepeat: 1
+  - materialIndex: 11
+    albedoColor:
+      x: 1
+      y: 1
+      z: 1
+    normalScale:
+      x: 1
+      y: 1
+    smoothness: 1
+    metallic: 1
+    occlusion: 1
+    antiRepeat: 1
+  - materialIndex: 12
+    albedoColor:
+      x: 1
+      y: 1
+      z: 1
+    normalScale:
+      x: 1
+      y: 1
+    smoothness: 1
+    metallic: 1
+    occlusion: 1
+    antiRepeat: 0
+  - materialIndex: 13
+    albedoColor:
+      x: 1
+      y: 1
+      z: 1
+    normalScale:
+      x: 1
+      y: 1
+    smoothness: 1
+    metallic: 1
+    occlusion: 1
+    antiRepeat: 1
+  - materialIndex: 14
+    albedoColor:
+      x: 1
+      y: 1
+      z: 1
+    normalScale:
+      x: 1
+      y: 1
+    smoothness: 1
+    metallic: 1
+    occlusion: 1
+    antiRepeat: 1
+  - materialIndex: 15
+    albedoColor:
+      x: 1
+      y: 1
+      z: 1
+    normalScale:
+      x: 1
+      y: 1
+    smoothness: 1
+    metallic: 1
+    occlusion: 1
+    antiRepeat: 1
+  - materialIndex: 16
+    albedoColor:
+      x: 1
+      y: 1
+      z: 1
+    normalScale:
+      x: 1
+      y: 1
+    smoothness: 1
+    metallic: 1
+    occlusion: 1
+    antiRepeat: 1
   heightmapPath: Assets/BinaryData/TerrainHeight.mquad
   maskmapPath: Assets/BinaryData/TerrainMask.mquad
   boundPath: Assets/BinaryData/TerrainBound.mquad
@@ -177,13 +285,22 @@ MonoBehaviour:
       m_AssetGUID: 3026ff38d12a37e41aeb699928f88300
       m_SubObjectName: 
   - albedoOccTex:
-      m_AssetGUID: 822727de22cbc7d448a6debae50000ec
+      m_AssetGUID: 149297a5be5893946937f617b3d72fd5
       m_SubObjectName: 
     normalTex:
       m_AssetGUID: 21f79659cc78b8d43a997f220c08d53b
       m_SubObjectName: 
     SMTex:
-      m_AssetGUID: 3026ff38d12a37e41aeb699928f88300
+      m_AssetGUID: e9b6fe64ed2e5c2459c08362af8933d5
+      m_SubObjectName: 
+  - albedoOccTex:
+      m_AssetGUID: 822727de22cbc7d448a6debae50000ec
+      m_SubObjectName: 
+    normalTex:
+      m_AssetGUID: a9c43eff151478f48a291c0b28e4975b
+      m_SubObjectName: 
+    SMTex:
+      m_AssetGUID: a664c7e7c0c37174ebcf1e9d8c9abc4c
       m_SubObjectName: 
   - albedoOccTex:
       m_AssetGUID: 7592c641630913f4f9d7926caa9f8bab
@@ -222,6 +339,33 @@ MonoBehaviour:
       m_AssetGUID: 4b887a76cd08ee747bd3475db237e4aa
       m_SubObjectName: 
   - albedoOccTex:
+      m_AssetGUID: 2dcd02e82b24a4d42a08297b9e9a03df
+      m_SubObjectName: 
+    normalTex:
+      m_AssetGUID: 623802baa02d45d4799901bb980754ac
+      m_SubObjectName: 
+    SMTex:
+      m_AssetGUID: babea4f7445caae4f9bf3bb9bd305de5
+      m_SubObjectName: 
+  - albedoOccTex:
+      m_AssetGUID: 8083324b4e266b245b0a2633d00324e6
+      m_SubObjectName: 
+    normalTex:
+      m_AssetGUID: e475411a86517b44cb8da09cce43d59d
+      m_SubObjectName: 
+    SMTex:
+      m_AssetGUID: 997419d1fc413ab48966b561c1f2425c
+      m_SubObjectName: 
+  - albedoOccTex:
+      m_AssetGUID: e2352d4376855774ba413e9eff70eca9
+      m_SubObjectName: 
+    normalTex:
+      m_AssetGUID: a7b3797088657374abf921b404f09c99
+      m_SubObjectName: 
+    SMTex:
+      m_AssetGUID: 6a50cb67d6f2e514785f20366552a107
+      m_SubObjectName: 
+  - albedoOccTex:
       m_AssetGUID: 3c7eeff947786e5418792a4d33b8ccf4
       m_SubObjectName: 
     normalTex:
@@ -238,6 +382,15 @@ MonoBehaviour:
       m_SubObjectName: 
     SMTex:
       m_AssetGUID: 0f147646edd93a5448e3e55a96504c1f
+      m_SubObjectName: 
+  - albedoOccTex:
+      m_AssetGUID: 47e47769d1869d040b41cbe4e71a2495
+      m_SubObjectName: 
+    normalTex:
+      m_AssetGUID: 0dcb99c27fa5df548b30b53e8bbe8ac5
+      m_SubObjectName: 
+    SMTex:
+      m_AssetGUID: 9b4c8705a623f0c4b87c7a3df4ba32c2
       m_SubObjectName: 
   - albedoOccTex:
       m_AssetGUID: 67d1cbf45a17d0543a7cb2e12f607bd3

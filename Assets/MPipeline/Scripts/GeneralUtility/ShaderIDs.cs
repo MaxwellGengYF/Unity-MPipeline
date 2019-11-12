@@ -163,6 +163,7 @@ public static partial class ShaderIDs
     public static readonly int _OriginTransformMatrices = Shader.PropertyToID("_OriginTransformMatrices");
     public static readonly int _LastTransformMatrices = Shader.PropertyToID("_LastTransformMatrices");
     public static readonly int _NoiseTexture = Shader.PropertyToID("_NoiseTexture");
+    public static readonly int _NoiseTillingTexture = Shader.PropertyToID("_NoiseTillingTexture");
     public static readonly int _NoiseTexture_Size = Shader.PropertyToID("_NoiseTexture_Size");
     public static readonly int _Offset = Shader.PropertyToID("_Offset");
     public static readonly int _OffsetDirection = Shader.PropertyToID("_OffsetDirection");

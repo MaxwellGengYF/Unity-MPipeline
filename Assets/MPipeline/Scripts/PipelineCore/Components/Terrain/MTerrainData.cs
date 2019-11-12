@@ -12,10 +12,13 @@ namespace MPipeline
         [System.Serializable]
         public struct HeightBlendMaterial
         {
-            public float firstMaterialIndex;
-            public float secondMaterialIndex;
-            public float offset;
-            public float heightBlendScale;
+            public float materialIndex;
+            public float3 albedoColor;
+            public float2 normalScale;
+            public float smoothness;
+            public float metallic;
+            public float occlusion;
+            public float antiRepeat;
         };
         
         public double heightOffset = 0;

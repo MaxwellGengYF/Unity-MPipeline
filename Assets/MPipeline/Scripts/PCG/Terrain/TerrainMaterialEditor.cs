@@ -41,18 +41,29 @@ namespace MPipeline
             public string name;
             public bool foldOut;
         }
-        [System.Serializable]
-        public struct BlendWeight
+        public enum Channel
         {
-            public float offset;
-            public float heightBlendScale;
+            R, G, B, A
         }
+        [System.Serializable]
+        public struct VTMaterial
+        {
+            public float3 albedoColor;
+            public float2 normalScale;
+            public float smoothness;
+            public float metallic;
+            public float occlusion;
+            public int antiRepeat;
+            public Texture2D splatMap;
+            public int2 splatStartPos;
+            public Channel chan;
+        }
+
         [System.Serializable]
         public struct BlendMaterial
         {
             public TexturePack frontPack;
-            public TexturePack backPack;
-            public List<BlendWeight> blendWeights;
+            public List<VTMaterial> blendWeights;
             public bool isOpen;
         }
         [HideInInspector]
@@ -63,13 +74,22 @@ namespace MPipeline
         public MTerrainData targetData;
         [HideInInspector]
         public int2 renderingMaterial;
+
+        public float2 textureTillingSize = 1;
         private RenderTexture drawAlbedoRT;
+        private ComputeShader texShader;
         private RenderTexture drawNormalRT;
         private RenderTexture drawSMORT;
         private RenderTargetIdentifier[] colorBuffersIdentifier;
         private RenderBuffer[] colorBuffers;
         private Material heightBlendMaterial;
+        private RenderTexture randomTileRT;
+        private ComputeShader terrainEditShader;
         public string savePath;
+        [HideInInspector]
+        public bool matOpen;
+        [HideInInspector]
+        public bool splatOpen;
         private void OnEnable()
         {
             drawAlbedoRT = new RenderTexture(2048, 2048, 0, GraphicsFormat.R32G32B32A32_SFloat, 0);
@@ -81,6 +101,7 @@ namespace MPipeline
             drawAlbedoRT.Create();
             drawNormalRT.Create();
             drawSMORT.Create();
+            terrainEditShader = Resources.Load<ComputeShader>("TerrainEdit");
             heightBlendMaterial = new Material(Shader.Find("Hidden/TerrainMaterialEdit"));
             colorBuffersIdentifier = new RenderTargetIdentifier[]
             {
@@ -94,35 +115,126 @@ namespace MPipeline
                 drawNormalRT.colorBuffer,
                 drawSMORT.colorBuffer
             };
+            randomTileRT = new RenderTexture(256, 256, 0, GraphicsFormat.R16G16B16A16_SNorm, 0);
+            randomTileRT.enableRandomWrite = true;
+            randomTileRT.wrapMode = TextureWrapMode.Repeat;
+            randomTileRT.filterMode = FilterMode.Point;
+            randomTileRT.Create();
+            texShader = Resources.Load<ComputeShader>("ProceduralTexture");
+            texShader.SetTexture(6, ShaderIDs._DestTex, randomTileRT);
+            texShader.SetVector(ShaderIDs._TextureSize, float4(float2(1.0 / 256), 1, 1));
+            texShader.Dispatch(6, 8, 8, 1);
+        }
+        private void SaveToMask(RenderTexture cacheRt, Texture splat, Channel chan, int2 targetChunkOffset, float targetIndex)
+        {
+            terrainEditShader.SetTexture(10, ShaderIDs._MainTex, splat);
+            terrainEditShader.SetVector(ShaderIDs._TextureSize, float4(targetChunkOffset.x * MTerrain.MASK_RESOLUTION + 0.5f, targetChunkOffset.y * MTerrain.MASK_RESOLUTION + 0.5f, targetIndex, 1));
+            switch (chan)
+            {
+                case Channel.R:
+                    terrainEditShader.SetVector("_Mask", float4(1, 0, 0, 0));
+                    break;
+                case Channel.G:
+                    terrainEditShader.SetVector("_Mask", float4(0, 1, 0, 0));
+                    break;
+                case Channel.B:
+                    terrainEditShader.SetVector("_Mask", float4(0, 0, 1, 0));
+                    break;
+                case Channel.A:
+                    terrainEditShader.SetVector("_Mask", float4(0, 0, 0, 1));
+                    break;
+            }
+            terrainEditShader.SetTexture(10, ShaderIDs._DestTex, cacheRt);
+            const int disp = MTerrain.MASK_RESOLUTION / 8;
+            terrainEditShader.Dispatch(10, disp, disp, 1);
+
+        }
+        public void UpdateMaterialIndex()
+        {
+            int count = 0;
+            RenderTexture cacheRT = new RenderTexture(MTerrain.MASK_RESOLUTION, MTerrain.MASK_RESOLUTION, 0, GraphicsFormat.R32_SFloat, 0);
+            cacheRT.dimension = TextureDimension.Tex2DArray;
+            cacheRT.volumeDepth = 1;
+            cacheRT.enableRandomWrite = true;
+            cacheRT.Create();
+            int largestChunkCount = (int)(pow(2.0, targetData.GetLodOffset()) + 0.1);
+            VirtualTextureLoader loader = new VirtualTextureLoader(
+             targetData.maskmapPath,
+            terrainEditShader,
+             largestChunkCount,
+             MTerrain.MASK_RESOLUTION, false, null);
+            Dictionary<int2, List<int3>> commandDict = new Dictionary<int2, List<int3>>(256);
+            for (int i = 0; i < allMaterials.Count; ++i)
+            {
+                for (int j = 0; j < allMaterials[i].blendWeights.Count; ++j)
+                {
+                    var mat = allMaterials[i].blendWeights[j];
+                    Texture splat = mat.splatMap;
+                    if (splat)
+                    {
+                        int2 border = largestChunkCount - mat.splatStartPos;
+                        border = min(border, splat.width / MTerrain.MASK_RESOLUTION);
+                        for (int x = 0; x < border.x; ++x)
+                            for (int y = 0; y < border.y; ++y)
+                            {
+                                if (!commandDict.ContainsKey(int2(x, y) + mat.splatStartPos))
+                                {
+                                    commandDict.Add(int2(x, y) + mat.splatStartPos, new List<int3>());
+                                }
+                                commandDict[int2(x, y) + mat.splatStartPos].Add(int3(i, j, count));
+                            }
+                    }
+                    count++;
+                }
+            }
+            foreach (var i in commandDict)
+            {
+                foreach (var j in i.Value)
+                {
+                    var mat = allMaterials[j.x].blendWeights[j.y];
+                    int2 offsetValue = i.Key - mat.splatStartPos;
+                    SaveToMask(cacheRT, mat.splatMap, mat.chan, offsetValue, j.z / (count - 1f));
+                }
+                loader.WriteToDisk(cacheRT, 0, i.Key);
+            }
+            loader.Dispose();
+            DestroyImmediate(cacheRT);
         }
 
         private void OnDisable()
         {
+
             DestroyImmediate(heightBlendMaterial);
             DestroyImmediate(drawAlbedoRT);
             DestroyImmediate(drawNormalRT);
             DestroyImmediate(drawSMORT);
+            DestroyImmediate(randomTileRT);
         }
         public void DrawToMaterial()
         {
             Material mat = GetComponent<MeshRenderer>().sharedMaterial;
             if (!mat) return;
-            CommandBuffer bf = RenderPipeline.BeforeFrameBuffer;
+
             if (!drawAlbedoRT || !drawNormalRT || !drawSMORT) return;
+            CommandBuffer bf = RenderPipeline.BeforeFrameBuffer;
             bf.SetRenderTarget(colors: colorBuffersIdentifier, depth: drawAlbedoRT.depthBuffer);
             bf.ClearRenderTarget(false, true, Color.black);
             if (renderingMaterial.x < 0 || renderingMaterial.x >= allMaterials.Count) return;
             if (allMaterials.Count == 0) return;
             var heightBlend = allMaterials[renderingMaterial.x];
             if (renderingMaterial.y < 0 || renderingMaterial.y >= heightBlend.blendWeights.Count) return;
-            heightBlendMaterial.SetVector("_Setting", float4(heightBlend.blendWeights[renderingMaterial.y].offset, heightBlend.blendWeights[renderingMaterial.y].heightBlendScale, 1, 1));
-
-            heightBlendMaterial.SetTexture("_Albedo0", heightBlend.frontPack.albedo);
-            heightBlendMaterial.SetTexture("_Albedo1", heightBlend.backPack.albedo);
-            heightBlendMaterial.SetTexture("_Normal0", heightBlend.frontPack.normal);
-            heightBlendMaterial.SetTexture("_Normal1", heightBlend.backPack.normal);
-            heightBlendMaterial.SetTexture("_SMO0", heightBlend.frontPack.smo);
-            heightBlendMaterial.SetTexture("_SMO1", heightBlend.backPack.smo);
+            var blendMat = heightBlend.blendWeights[renderingMaterial.y];
+            heightBlendMaterial.SetTexture(ShaderIDs._NoiseTillingTexture, randomTileRT);
+            heightBlendMaterial.SetTexture(ShaderIDs._NoiseTexture, targetData.noiseTex);
+            heightBlendMaterial.SetVector(ShaderIDs._TextureSize, float4(textureTillingSize, 1, 1));
+            heightBlendMaterial.SetTexture("_Albedo", heightBlend.frontPack.albedo);
+            heightBlendMaterial.SetTexture("_Normal", heightBlend.frontPack.normal);
+            heightBlendMaterial.SetTexture("_SMO", heightBlend.frontPack.smo);
+            heightBlendMaterial.SetVector("_Color", float4(blendMat.albedoColor, blendMat.antiRepeat));
+            heightBlendMaterial.SetFloat("_Smoothness", blendMat.smoothness);
+            heightBlendMaterial.SetFloat("_Metallic", blendMat.metallic);
+            heightBlendMaterial.SetFloat("_Occlusion", blendMat.occlusion);
+            heightBlendMaterial.SetVector("_NormalScale", float4(blendMat.normalScale, 1, 1));
             bf.DrawMesh(GraphicsUtility.mesh, Matrix4x4.identity, heightBlendMaterial, 0, 0);
             mat.SetTexture(ShaderIDs._MainTex, drawAlbedoRT);
             mat.SetTexture(ShaderIDs._BumpMap, drawNormalRT);
@@ -144,13 +256,18 @@ namespace MPipeline
             if (allMaterials.Count == 0) return;
             var heightBlend = allMaterials[renderingMaterial.x];
             if (renderingMaterial.y < 0 || renderingMaterial.y >= heightBlend.blendWeights.Count) return;
-            heightBlendMaterial.SetVector("_Setting", float4(heightBlend.blendWeights[renderingMaterial.y].offset, heightBlend.blendWeights[renderingMaterial.y].heightBlendScale, 1, 1));
-            heightBlendMaterial.SetTexture("_Albedo0", heightBlend.frontPack.albedo);
-            heightBlendMaterial.SetTexture("_Albedo1", heightBlend.backPack.albedo);
-            heightBlendMaterial.SetTexture("_Normal0", heightBlend.frontPack.normal);
-            heightBlendMaterial.SetTexture("_Normal1", heightBlend.backPack.normal);
-            heightBlendMaterial.SetTexture("_SMO0", heightBlend.frontPack.smo);
-            heightBlendMaterial.SetTexture("_SMO1", heightBlend.backPack.smo);
+            var blendMat = heightBlend.blendWeights[renderingMaterial.y];
+            heightBlendMaterial.SetVector(ShaderIDs._TextureSize, float4(1));
+            heightBlendMaterial.SetTexture(ShaderIDs._NoiseTillingTexture, randomTileRT);
+            heightBlendMaterial.SetTexture(ShaderIDs._NoiseTexture, targetData.noiseTex);
+            heightBlendMaterial.SetTexture("_Albedo", heightBlend.frontPack.albedo);
+            heightBlendMaterial.SetTexture("_Normal", heightBlend.frontPack.normal);
+            heightBlendMaterial.SetTexture("_SMO", heightBlend.frontPack.smo);
+            heightBlendMaterial.SetVector("_Color", float4(blendMat.albedoColor, 0));
+            heightBlendMaterial.SetFloat("_Smoothness", blendMat.smoothness);
+            heightBlendMaterial.SetFloat("_Metallic", blendMat.metallic);
+            heightBlendMaterial.SetFloat("_Occlusion", blendMat.occlusion);
+            heightBlendMaterial.SetVector("_NormalScale", float4(blendMat.normalScale, 1, 1));
             heightBlendMaterial.SetPass(0);
             Graphics.DrawMeshNow(GraphicsUtility.mesh, Matrix4x4.identity);
             mat.SetTexture(ShaderIDs._MainTex, drawAlbedoRT);
@@ -173,7 +290,7 @@ namespace MPipeline
         {
             string[] dircts = Directory.GetDirectories(savePath);
             int offset = 0;
-            for(int i = 0; i < allMaterials.Count; ++i)
+            for (int i = 0; i < allMaterials.Count; ++i)
             {
                 for (int a = 0; a < allMaterials[i].blendWeights.Count; ++a)
                 {
@@ -191,8 +308,7 @@ namespace MPipeline
             for (int i = 0; i < allMaterials.Count; ++i)
             {
                 var a = allMaterials[i];
-                if (!a.frontPack.albedo || !a.frontPack.normal || !a.frontPack.smo ||
-                    !a.backPack.albedo || !a.backPack.normal || !a.backPack.smo)
+                if (!a.frontPack.albedo || !a.frontPack.normal || !a.frontPack.smo)
                 {
                     Debug.LogError("Group " + i + " has NULL");
                     return false;
@@ -220,13 +336,16 @@ namespace MPipeline
             {
                 MTerrainData.HeightBlendMaterial hb = new MTerrainData.HeightBlendMaterial
                 {
-                    firstMaterialIndex = GetValue(i.frontPack),
-                    secondMaterialIndex = GetValue(i.backPack),
+                    materialIndex = GetValue(i.frontPack),
                 };
                 foreach (var j in i.blendWeights)
                 {
-                    hb.heightBlendScale = j.heightBlendScale;
-                    hb.offset = j.offset;
+                    hb.smoothness = j.smoothness;
+                    hb.metallic = j.metallic;
+                    hb.occlusion = j.occlusion;
+                    hb.normalScale = j.normalScale;
+                    hb.albedoColor = j.albedoColor;
+                    hb.antiRepeat = j.antiRepeat;
                     allMats.Add(hb);
                 }
             }
@@ -248,11 +367,6 @@ namespace MPipeline
     [CustomEditor(typeof(TerrainMaterialEditor))]
     public sealed class TerrainMaterialEditorWindow : Editor
     {
-        bool matFolder;
-        private void OnEnable()
-        {
-            matFolder = false;
-        }
         public override void OnInspectorGUI()
         {
             TerrainMaterialEditor target = serializedObject.targetObject as TerrainMaterialEditor;
@@ -269,8 +383,8 @@ namespace MPipeline
                 return;
             }
             base.OnInspectorGUI();
-            matFolder = EditorGUILayout.Foldout(matFolder, "Materials: ");
-            if (matFolder)
+            target.matOpen = EditorGUILayout.Foldout(target.matOpen, "Materials: ");
+            if (target.matOpen)
             {
                 EditorGUI.indentLevel++;
                 try
@@ -309,15 +423,6 @@ namespace MPipeline
                                 mat.frontPack.smo = EditorGUILayout.ObjectField("Front SMO Textures: ", mat.frontPack.smo, typeof(Texture), false) as Texture;
                                 EditorGUI.indentLevel--;
                             }
-                            mat.backPack.isOpen = EditorGUILayout.Foldout(mat.backPack.isOpen, "Back Pack: ");
-                            if (mat.backPack.isOpen)
-                            {
-                                EditorGUI.indentLevel++;
-                                mat.backPack.albedo = EditorGUILayout.ObjectField("Back Albedo Textures: ", mat.backPack.albedo, typeof(Texture), false) as Texture;
-                                mat.backPack.normal = EditorGUILayout.ObjectField("Back Normal Textures: ", mat.backPack.normal, typeof(Texture), false) as Texture;
-                                mat.backPack.smo = EditorGUILayout.ObjectField("Back SMO Textures: ", mat.backPack.smo, typeof(Texture), false) as Texture;
-                                EditorGUI.indentLevel--;
-                            }
                             mat.isOpen = EditorGUILayout.Foldout(mat.isOpen, "Blend Weights: ");
                             if (mat.isOpen)
                             {
@@ -343,8 +448,23 @@ namespace MPipeline
                                     EditorGUILayout.LabelField("Element " + a + ": ");
                                     EditorGUI.indentLevel++;
                                     var weight = mat.blendWeights[a];
-                                    weight.offset = EditorGUILayout.Slider("Offset: ", weight.offset, -1, 1);
-                                    weight.heightBlendScale = EditorGUILayout.Slider("Blend Scale: ", weight.heightBlendScale, -20, 20);
+                                    weight.antiRepeat = EditorGUILayout.Toggle("Anti Repeat", weight.antiRepeat == 1) ? 1 : 0;
+                                    weight.smoothness = EditorGUILayout.Slider("Smoothness: ", weight.smoothness, 0, 1);
+                                    weight.metallic = EditorGUILayout.Slider("Metallic: ", weight.metallic, 0, 1);
+                                    weight.occlusion = EditorGUILayout.Slider("Occlusion: ", weight.occlusion, 0, 1);
+                                    weight.splatMap = EditorGUILayout.ObjectField("Splat Map: ", weight.splatMap, typeof(Texture2D), false) as Texture2D;
+                                    if (weight.splatMap)
+                                    {
+                                        Vector2Int vec = new Vector2Int(weight.splatStartPos.x, weight.splatStartPos.y);
+                                        vec = EditorGUILayout.Vector2IntField("Target Chunk Pos: ", vec);
+                                        weight.splatStartPos = int2(vec.x, vec.y);
+                                        weight.splatStartPos = max(0, weight.splatStartPos);
+                                        weight.chan = (TerrainMaterialEditor.Channel)EditorGUILayout.EnumPopup("Channel: ", weight.chan);
+                                    }
+                                    Color albedo = EditorGUILayout.ColorField(new GUIContent("Albedo: "), new Color(weight.albedoColor.x, weight.albedoColor.y, weight.albedoColor.z), true, false, false);
+                                    weight.albedoColor = float3(albedo.r, albedo.g, albedo.b);
+                                    weight.normalScale = EditorGUILayout.Vector2Field("Normal Scale: ", weight.normalScale);
+
                                     mat.blendWeights[a] = weight;
                                     EditorGUILayout.BeginHorizontal();
                                     bool2 equal = target.renderingMaterial == int2(i, a);
@@ -399,13 +519,16 @@ namespace MPipeline
                         var targetmat = new TerrainMaterialEditor.BlendMaterial
                         {
                             frontPack = new TerrainMaterialEditor.TexturePack(),
-                            backPack = new TerrainMaterialEditor.TexturePack(),
-                            blendWeights = new List<TerrainMaterialEditor.BlendWeight>()
+                            blendWeights = new List<TerrainMaterialEditor.VTMaterial>()
                         };
-                        targetmat.blendWeights.Add(new TerrainMaterialEditor.BlendWeight
+                        targetmat.blendWeights.Add(new TerrainMaterialEditor.VTMaterial
                         {
-                            heightBlendScale = 0,
-                            offset = 0
+                            albedoColor = 1,
+                            metallic = 1,
+                            normalScale = 1,
+                            occlusion = 1,
+                            smoothness = 1,
+                            antiRepeat = 0
                         });
                         target.allMaterials.Add(targetmat);
                         target.allMaterialsInfos.Add(new TerrainMaterialEditor.MaterialInfo
@@ -427,6 +550,10 @@ namespace MPipeline
             if (GUILayout.Button("Save To World Creator File"))
             {
                 target.SaveAllFile();
+            }
+            if(GUILayout.Button("Save Material Mask"))
+            {
+                target.UpdateMaterialIndex();
             }
         }
     }
