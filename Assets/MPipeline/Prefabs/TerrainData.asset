@@ -92,7 +92,7 @@ MonoBehaviour:
     smoothness: 1
     metallic: 1
     occlusion: 1
-    antiRepeat: 1
+    antiRepeat: 0
   - materialIndex: 3
     albedoColor:
       x: 1

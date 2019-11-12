@@ -54,6 +54,13 @@ namespace MPipeline
             public float metallic;
             public float occlusion;
             public int antiRepeat;
+            public bool splatOpen;
+            public List<SplatSettings> splatSettings;
+        }
+
+        [System.Serializable]
+        public struct SplatSettings
+        {
             public Texture2D splatMap;
             public int2 splatStartPos;
             public Channel chan;
@@ -163,26 +170,30 @@ namespace MPipeline
             terrainEditShader,
              largestChunkCount,
              MTerrain.MASK_RESOLUTION, false, null);
-            Dictionary<int2, List<int3>> commandDict = new Dictionary<int2, List<int3>>(256);
+            Dictionary<int2, List<Pair<SplatSettings, int>>> commandDict = new Dictionary<int2, List<Pair<SplatSettings, int>>>(256);
             for (int i = 0; i < allMaterials.Count; ++i)
             {
                 for (int j = 0; j < allMaterials[i].blendWeights.Count; ++j)
                 {
                     var mat = allMaterials[i].blendWeights[j];
-                    Texture splat = mat.splatMap;
-                    if (splat)
+                    foreach (var a in mat.splatSettings)
                     {
-                        int2 border = largestChunkCount - mat.splatStartPos;
-                        border = min(border, splat.width / MTerrain.MASK_RESOLUTION);
-                        for (int x = 0; x < border.x; ++x)
-                            for (int y = 0; y < border.y; ++y)
-                            {
-                                if (!commandDict.ContainsKey(int2(x, y) + mat.splatStartPos))
+                        Texture splat = a.splatMap;
+                        if (splat)
+                        {
+                            int2 border = largestChunkCount - a.splatStartPos;
+                            border = min(border, splat.width / MTerrain.MASK_RESOLUTION);
+                            for (int x = 0; x < border.x; ++x)
+                                for (int y = 0; y < border.y; ++y)
                                 {
-                                    commandDict.Add(int2(x, y) + mat.splatStartPos, new List<int3>());
+                                    if (!commandDict.ContainsKey(int2(x, y) + a.splatStartPos))
+                                    {
+                                        commandDict.Add(int2(x, y) + a.splatStartPos, new List<Pair<SplatSettings, int>>());
+                                    }
+                                    commandDict[int2(x, y) + a.splatStartPos].Add(new Pair<SplatSettings, int>(a, count));
                                 }
-                                commandDict[int2(x, y) + mat.splatStartPos].Add(int3(i, j, count));
-                            }
+                        }
+
                     }
                     count++;
                 }
@@ -191,9 +202,8 @@ namespace MPipeline
             {
                 foreach (var j in i.Value)
                 {
-                    var mat = allMaterials[j.x].blendWeights[j.y];
-                    int2 offsetValue = i.Key - mat.splatStartPos;
-                    SaveToMask(cacheRT, mat.splatMap, mat.chan, offsetValue, j.z / (count - 1f));
+                    int2 offsetValue = i.Key - j.key.splatStartPos;
+                    SaveToMask(cacheRT, j.key.splatMap, j.key.chan, offsetValue, j.value / (count - 1f));
                 }
                 loader.WriteToDisk(cacheRT, 0, i.Key);
             }
@@ -452,19 +462,51 @@ namespace MPipeline
                                     weight.smoothness = EditorGUILayout.Slider("Smoothness: ", weight.smoothness, 0, 1);
                                     weight.metallic = EditorGUILayout.Slider("Metallic: ", weight.metallic, 0, 1);
                                     weight.occlusion = EditorGUILayout.Slider("Occlusion: ", weight.occlusion, 0, 1);
-                                    weight.splatMap = EditorGUILayout.ObjectField("Splat Map: ", weight.splatMap, typeof(Texture2D), false) as Texture2D;
-                                    if (weight.splatMap)
-                                    {
-                                        Vector2Int vec = new Vector2Int(weight.splatStartPos.x, weight.splatStartPos.y);
-                                        vec = EditorGUILayout.Vector2IntField("Target Chunk Pos: ", vec);
-                                        weight.splatStartPos = int2(vec.x, vec.y);
-                                        weight.splatStartPos = max(0, weight.splatStartPos);
-                                        weight.chan = (TerrainMaterialEditor.Channel)EditorGUILayout.EnumPopup("Channel: ", weight.chan);
-                                    }
+
                                     Color albedo = EditorGUILayout.ColorField(new GUIContent("Albedo: "), new Color(weight.albedoColor.x, weight.albedoColor.y, weight.albedoColor.z), true, false, false);
                                     weight.albedoColor = float3(albedo.r, albedo.g, albedo.b);
                                     weight.normalScale = EditorGUILayout.Vector2Field("Normal Scale: ", weight.normalScale);
+                                    if (weight.splatSettings == null) weight.splatSettings = new List<TerrainMaterialEditor.SplatSettings>();
+                                    weight.splatOpen = EditorGUILayout.Foldout(weight.splatOpen, "Splats: ");
+                                    if (weight.splatOpen)
+                                    {
+                                        int count = EditorGUILayout.IntField("Splat Count: ", weight.splatSettings.Count);
+                                        count = max(count, 0);
+                                        if (weight.splatSettings.Count > count)
+                                        {
+                                            int v = weight.splatSettings.Count - count;
+                                            for (int b = 0; b < v; ++b)
+                                            {
+                                                weight.splatSettings.RemoveAt(weight.splatSettings.Count - 1);
+                                            }
+                                        }
+                                        else if (weight.splatSettings.Count < count)
+                                        {
+                                            int v = count - weight.splatSettings.Count;
+                                            for (int b = 0; b < v; ++b)
+                                            {
+                                                weight.splatSettings.Add(new TerrainMaterialEditor.SplatSettings
+                                                {
+                                                    chan = TerrainMaterialEditor.Channel.R,
+                                                    splatMap = null,
+                                                    splatStartPos = 0
+                                                });
+                                            }
+                                        }
+                                        for (int b = 0; b < weight.splatSettings.Count; ++b)
+                                        {
+                                            EditorGUILayout.LabelField("Splat " + b + ": ");
+                                            var set = weight.splatSettings[b];
+                                            EditorGUI.indentLevel++;
+                                            set.splatMap = (Texture2D)EditorGUILayout.ObjectField("Splat Map: ", set.splatMap, typeof(Texture2D), false);
+                                            Vector2Int rest = EditorGUILayout.Vector2IntField("Splat Start Pos: ", new Vector2Int(set.splatStartPos.x, set.splatStartPos.y));
+                                            set.splatStartPos = int2(rest.x, rest.y);
+                                            set.chan = (TerrainMaterialEditor.Channel)EditorGUILayout.EnumPopup("Channel: ", set.chan);
+                                            EditorGUI.indentLevel--;
+                                            weight.splatSettings[b] = set;
+                                        }
 
+                                    }
                                     mat.blendWeights[a] = weight;
                                     EditorGUILayout.BeginHorizontal();
                                     bool2 equal = target.renderingMaterial == int2(i, a);
@@ -528,7 +570,9 @@ namespace MPipeline
                             normalScale = 1,
                             occlusion = 1,
                             smoothness = 1,
-                            antiRepeat = 0
+                            antiRepeat = 0,
+                            splatOpen = false,
+                            splatSettings = new List<TerrainMaterialEditor.SplatSettings>()
                         });
                         target.allMaterials.Add(targetmat);
                         target.allMaterialsInfos.Add(new TerrainMaterialEditor.MaterialInfo
@@ -551,7 +595,7 @@ namespace MPipeline
             {
                 target.SaveAllFile();
             }
-            if(GUILayout.Button("Save Material Mask"))
+            if (GUILayout.Button("Save Material Mask"))
             {
                 target.UpdateMaterialIndex();
             }

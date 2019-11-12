@@ -24,7 +24,13 @@ void GetHeightBlendMaterial(float bufferIndex, float2 uv, float scale, float2 no
     HeightBlendMaterial mat = _MaterialBuffer[bufferIndex];
     [branch]
     if(mat.antiRepeat > 0.5){
-        float2 absoluteUV = (_Offset.xy + uv + noiseValue) * 0.015625;
+        float2 absoluteUV = (_Offset.xy + uv + noiseValue) * 4;
+        [flatten]
+        if(abs(absoluteUV.y) % 2 == 1)
+        {
+            absoluteUV.x += 0.5;
+        }
+        absoluteUV *= 0.00390625;
         float4 uvOffsetScale = _NoiseTillingTexture.SampleLevel(sampler_NoiseTillingTexture, absoluteUV, 0);
         uv = uv * uvOffsetScale.zw + uvOffsetScale.xy;
     }
