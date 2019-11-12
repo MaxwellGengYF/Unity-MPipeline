@@ -68,6 +68,7 @@ MonoBehaviour:
     smoothness: 1
     metallic: 1
     occlusion: 1
+    antiRepeat: 1
   - materialIndex: 1
     albedoColor:
       x: 1
@@ -79,6 +80,7 @@ MonoBehaviour:
     smoothness: 1
     metallic: 1
     occlusion: 1
+    antiRepeat: 1
   - materialIndex: 2
     albedoColor:
       x: 1
@@ -90,6 +92,7 @@ MonoBehaviour:
     smoothness: 1
     metallic: 1
     occlusion: 1
+    antiRepeat: 0
   - materialIndex: 3
     albedoColor:
       x: 1
@@ -101,6 +104,7 @@ MonoBehaviour:
     smoothness: 1
     metallic: 1
     occlusion: 1
+    antiRepeat: 1
   - materialIndex: 4
     albedoColor:
       x: 1
@@ -112,6 +116,7 @@ MonoBehaviour:
     smoothness: 1
     metallic: 1
     occlusion: 1
+    antiRepeat: 1
   - materialIndex: 5
     albedoColor:
       x: 1
@@ -123,6 +128,7 @@ MonoBehaviour:
     smoothness: 1
     metallic: 1
     occlusion: 1
+    antiRepeat: 1
   - materialIndex: 6
     albedoColor:
       x: 1
@@ -134,6 +140,7 @@ MonoBehaviour:
     smoothness: 1
     metallic: 1
     occlusion: 1
+    antiRepeat: 1
   - materialIndex: 7
     albedoColor:
       x: 1
@@ -145,6 +152,7 @@ MonoBehaviour:
     smoothness: 1
     metallic: 1
     occlusion: 1
+    antiRepeat: 1
   - materialIndex: 8
     albedoColor:
       x: 1
@@ -156,6 +164,7 @@ MonoBehaviour:
     smoothness: 1
     metallic: 1
     occlusion: 1
+    antiRepeat: 1
   - materialIndex: 9
     albedoColor:
       x: 1
@@ -167,6 +176,7 @@ MonoBehaviour:
     smoothness: 1
     metallic: 1
     occlusion: 1
+    antiRepeat: 0
   - materialIndex: 10
     albedoColor:
       x: 1
@@ -178,6 +188,7 @@ MonoBehaviour:
     smoothness: 1
     metallic: 1
     occlusion: 1
+    antiRepeat: 1
   - materialIndex: 11
     albedoColor:
       x: 1
@@ -189,6 +200,7 @@ MonoBehaviour:
     smoothness: 1
     metallic: 1
     occlusion: 1
+    antiRepeat: 1
   - materialIndex: 12
     albedoColor:
       x: 1
@@ -200,6 +212,7 @@ MonoBehaviour:
     smoothness: 1
     metallic: 1
     occlusion: 1
+    antiRepeat: 0
   - materialIndex: 13
     albedoColor:
       x: 1
@@ -211,6 +224,7 @@ MonoBehaviour:
     smoothness: 1
     metallic: 1
     occlusion: 1
+    antiRepeat: 1
   - materialIndex: 14
     albedoColor:
       x: 1
@@ -222,6 +236,7 @@ MonoBehaviour:
     smoothness: 1
     metallic: 1
     occlusion: 1
+    antiRepeat: 1
   - materialIndex: 15
     albedoColor:
       x: 1
@@ -233,6 +248,7 @@ MonoBehaviour:
     smoothness: 1
     metallic: 1
     occlusion: 1
+    antiRepeat: 1
   - materialIndex: 16
     albedoColor:
       x: 1
@@ -244,6 +260,7 @@ MonoBehaviour:
     smoothness: 1
     metallic: 1
     occlusion: 1
+    antiRepeat: 1
   heightmapPath: Assets/BinaryData/TerrainHeight.mquad
   maskmapPath: Assets/BinaryData/TerrainMask.mquad
   boundPath: Assets/BinaryData/TerrainBound.mquad

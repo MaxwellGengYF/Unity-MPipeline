@@ -30,13 +30,14 @@ namespace MPipeline
                 terrainEdit = Resources.Load<ComputeShader>("TerrainEdit");
             }
             terrainData = (MTerrainData)EditorGUILayout.ObjectField("Terrain Data", terrainData, typeof(MTerrainData), false);
+            if (!terrainData)
+                return;
             chunkPosition = EditorGUILayout.Vector2IntField("Chunk Position", new Vector2Int(chunkPosition.x, chunkPosition.y));
             heightTexture = EditorGUILayout.ObjectField("Height Texture", heightTexture, typeof(Texture), false) as Texture;
             targetChunkCount = EditorGUILayout.IntField("Chunk Count", targetChunkCount);
             targetChunkCount = max(0, targetChunkCount);
+
             int largestChunkCount = (int)(pow(2.0, terrainData.GetLodOffset()) + 0.1);
-            if (!terrainData)
-                return;
             if (GUILayout.Button("Update Height Texture"))
             {
                 VirtualTextureLoader loader = new VirtualTextureLoader(
@@ -134,24 +135,13 @@ namespace MPipeline
                 Debug.Log("Finish!");
             }
             maskTexture = EditorGUILayout.ObjectField("Mask Texture", maskTexture, typeof(Texture), false) as Texture;
-            if (GUILayout.Button("Update Mask Texture"))
+            void SaveToMask(RenderTexture cacheRt)
             {
                 VirtualTextureLoader loader = new VirtualTextureLoader(
-                    terrainData.maskmapPath,
-                   terrainEdit,
-                    largestChunkCount,
-                    MTerrain.MASK_RESOLUTION, false, null);
-                RenderTexture cacheRt = new RenderTexture(new RenderTextureDescriptor
-                {
-                    width = MTerrain.MASK_RESOLUTION,
-                    height = MTerrain.MASK_RESOLUTION,
-                    volumeDepth = 1,
-                    dimension = UnityEngine.Rendering.TextureDimension.Tex2DArray,
-                    msaaSamples = 1,
-                    graphicsFormat = UnityEngine.Experimental.Rendering.GraphicsFormat.R32_SFloat,
-                    enableRandomWrite = true
-                });
-                cacheRt.Create();
+                   terrainData.maskmapPath,
+                  terrainEdit,
+                   largestChunkCount,
+                   MTerrain.MASK_RESOLUTION, false, null);
                 for (int x = 0; x < targetChunkCount; ++x)
                 {
                     for (int y = 0; y < targetChunkCount; ++y)
@@ -168,8 +158,24 @@ namespace MPipeline
                         loader.WriteToDisk(cacheRt, 0, pos);
                     }
                 }
-                cacheRt.Release();
                 loader.Dispose();
+            }
+            if (GUILayout.Button("Update Mask Texture"))
+            {
+                RenderTexture cacheRt = new RenderTexture(new RenderTextureDescriptor
+                {
+                    width = MTerrain.MASK_RESOLUTION,
+                    height = MTerrain.MASK_RESOLUTION,
+                    volumeDepth = 1,
+                    dimension = UnityEngine.Rendering.TextureDimension.Tex2DArray,
+                    msaaSamples = 1,
+                    graphicsFormat = UnityEngine.Experimental.Rendering.GraphicsFormat.R32_SFloat,
+                    enableRandomWrite = true
+                });
+                cacheRt.Create();
+                SaveToMask(cacheRt);
+                cacheRt.Release();
+
             }
         }
     }

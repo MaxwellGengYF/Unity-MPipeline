@@ -9,6 +9,7 @@
 #pragma kernel MipBound
 #pragma kernel MipBound GENERATE_MIP
 #pragma kernel MipBound TO_BUFFER GENERATE_MIP
+#pragma kernel SplatToMask
 #include "UnityCG.cginc"
 
 RWStructuredBuffer<float> _DistanceBuffer;
@@ -133,4 +134,16 @@ void MipBound(uint2 id : SV_DISPATCHTHREADID)
     #ifdef TO_BUFFER
     _DataBuffer[id.x + id.y * _Count] = _Mip1[id];
     #endif
+}
+Texture2D<float4> _MainTex;
+float4 _TextureSize;
+float4 _Mask;
+[numthreads(8,8,1)]
+void SplatToMask(uint2 id : SV_DISPATCHTHREADID)
+{
+    uint2 realID = _TextureSize.xy + id;
+    if(dot(_MainTex[realID], _Mask) > 0.5)
+    {
+        _DestTex[uint3(id, 0)] = _TextureSize.z;
+    }
 }

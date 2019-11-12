@@ -8,6 +8,7 @@ struct HeightBlendMaterial
     float smoothness;
     float metallic;
     float occlusion;
+    float antiRepeat;
 };
 Texture2DArray<float4> _MainTex; SamplerState sampler_MainTex;
 Texture2DArray<float2> _BumpMap; SamplerState sampler_BumpMap;
@@ -15,11 +16,26 @@ Texture2DArray<float4> _SMMap; SamplerState sampler_SMMap;
 Texture2DArray<float> _HeightMap; SamplerState sampler_HeightMap;
 StructuredBuffer<HeightBlendMaterial> _MaterialBuffer;
 Texture2D<float4> _NoiseTexture; SamplerState sampler_NoiseTexture;
+Texture2D<float4> _NoiseTillingTexture; SamplerState sampler_NoiseTillingTexture;
 float4 _Offset;//UV Integer Offset
 
-void GetHeightBlendMaterial(float bufferIndex, float2 uv, float scale, out float4 albedo_occ, out float2 normal, out float2 sm)
+void GetHeightBlendMaterial(float bufferIndex, float2 uv, float scale, float2 noiseValue, out float4 albedo_occ, out float2 normal, out float2 sm)
 {
     HeightBlendMaterial mat = _MaterialBuffer[bufferIndex];
+    [branch]
+    if(mat.antiRepeat > 0.5){
+        float2 absoluteUV = (_Offset.xy + uv) * 4;
+        [flatten]
+        if(abs(absoluteUV.y) % 2 >= 1)
+        {
+            absoluteUV.x += 0.5;
+        }
+        absoluteUV += noiseValue * 4;
+        absoluteUV *= 0.00390625;
+        float4 uvOffsetScale = _NoiseTillingTexture.SampleLevel(sampler_NoiseTillingTexture, absoluteUV, 0);
+        uv = uv * uvOffsetScale.zw + uvOffsetScale.xy;
+    }
+
     albedo_occ = _MainTex.SampleLevel(sampler_MainTex, float3(uv, mat.materialIndex), scale);
     albedo_occ.xyz *= mat.albedoColor;
     albedo_occ.w = lerp(1, albedo_occ.w, mat.occlusion);

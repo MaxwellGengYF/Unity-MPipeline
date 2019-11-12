@@ -18,6 +18,7 @@ namespace MPipeline
             public float smoothness;
             public float metallic;
             public float occlusion;
+            public float antiRepeat;
         };
         
         public double heightOffset = 0;

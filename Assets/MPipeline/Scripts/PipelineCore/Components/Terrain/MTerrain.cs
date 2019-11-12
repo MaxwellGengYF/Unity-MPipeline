@@ -76,13 +76,14 @@ namespace MPipeline
 
         #endregion
         public PipelineCamera cam;
+        private RenderTexture randomTileRT;
         private ComputeShader shader;
         private ComputeShader textureShader;
         private int largestChunkCount;
         private RenderTexture albedoTex;
         private RenderTexture normalTex;
         private RenderTexture smTex;
-      //  private RenderTexture heightTex;
+        //  private RenderTexture heightTex;
         private RenderTexture heightloadingCacheRT;
         private NativeArray<int> mipIDs;
         public VirtualTexture maskVT { get; private set; }
@@ -154,7 +155,7 @@ namespace MPipeline
             buffer.SetComputeVectorParam(textureShader, ShaderIDs._IndexBuffer, (float4)double4(rootPos, terrainData.heightScale, (2.0 / oneHeightPixelSize)));
             buffer.SetComputeVectorParam(textureShader, ShaderIDs._IndexTextureSize, float4(MASK_RESOLUTION, min(255, terrainData.allMaterials.Length - 1), vt.indexSize));
             buffer.SetComputeVectorParam(textureShader, ShaderIDs._TextureSize, (float4)double4(maskScaleOffset, size * terrainData.materialTillingScale));
-            buffer.SetComputeVectorParam(textureShader, ShaderIDs._Offset, float4(startIndex % 128, 1, 1));
+            buffer.SetComputeVectorParam(textureShader, ShaderIDs._Offset, float4(startIndex % 256, 1, 1));
             const int disp = COLOR_RESOLUTION / 8;
             buffer.DispatchCompute(textureShader, 0, disp, disp, 1);
             buffer.SetComputeVectorParam(textureShader, ShaderIDs._IndexTextureSize, float4(float2(1) / maskVT.indexSize, maskVT.indexSize));
@@ -207,11 +208,11 @@ namespace MPipeline
             textureShader.SetTexture(1, ShaderIDs._VirtualMainTex, albedoTex);
             textureShader.SetTexture(1, ShaderIDs._VirtualBumpMap, normalTex);
             textureShader.SetTexture(1, ShaderIDs._VirtualSMO, smTex);
-       //     textureShader.SetTexture(1, ShaderIDs._MaskTex, heightTex);
+            //     textureShader.SetTexture(1, ShaderIDs._MaskTex, heightTex);
             textureShader.SetTexture(2, ShaderIDs._VirtualMainTex, albedoTex);
             textureShader.SetTexture(2, ShaderIDs._VirtualBumpMap, normalTex);
             textureShader.SetTexture(2, ShaderIDs._VirtualSMO, smTex);
-        //    textureShader.SetTexture(2, ShaderIDs._MaskTex, heightTex);
+            //    textureShader.SetTexture(2, ShaderIDs._MaskTex, heightTex);
             for (int i = 0; i < terrainData.textures.Length; ++i)
             {
                 PBRTexture texs = terrainData.textures[i];
@@ -241,15 +242,22 @@ namespace MPipeline
             albedoTex.GenerateMips();
             smTex.GenerateMips();
             normalTex.GenerateMips();
-         //   heightTex.GenerateMips();
+            //   heightTex.GenerateMips();
+            CommandBuffer buffer = RenderPipeline.BeforeFrameBuffer;
+            Unity.Mathematics.Random r = new Unity.Mathematics.Random((uint)System.Guid.NewGuid().GetHashCode());
+            buffer.SetComputeTextureParam(textureShader, 6, ShaderIDs._DestTex, randomTileRT);
+            buffer.SetComputeVectorParam(textureShader, ShaderIDs._TextureSize, float4(float2(1.0 / 256), 1, 1));
+            buffer.SetComputeVectorParam(textureShader, ShaderIDs._RandomSeed, r.NextFloat4() + float4(0,0,0.5f,0.5f));
+            buffer.DispatchCompute(textureShader, 6, 8, 8, 1);
             while (enabled)
             {
-                CommandBuffer buffer = RenderPipeline.BeforeFrameBuffer;
+                buffer = RenderPipeline.BeforeFrameBuffer;
+                buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._NoiseTillingTexture, randomTileRT);
                 buffer.SetComputeBufferParam(textureShader, 0, ShaderIDs._MaterialBuffer, materialBuffer);
                 buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._VirtualMainTex, vt.GetTexture(0));
                 buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._VirtualBumpMap, vt.GetTexture(1));
                 buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._VirtualSMO, vt.GetTexture(2));
-              //  buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._HeightMap, heightTex);
+                //  buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._HeightMap, heightTex);
                 buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._MainTex, albedoTex);
                 buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._BumpMap, normalTex);
                 buffer.SetComputeTextureParam(textureShader, 0, ShaderIDs._SMMap, smTex);
@@ -601,21 +609,21 @@ namespace MPipeline
                 useDynamicScale = false
             });
             smTex.Create();
-         /*   heightTex = new RenderTexture(new RenderTextureDescriptor
-            {
-                graphicsFormat = GraphicsFormat.R8_UNorm,
-                dimension = TextureDimension.Tex2DArray,
-                width = COLOR_RESOLUTION,
-                height = COLOR_RESOLUTION,
-                volumeDepth = Mathf.Max(1, terrainData.textures.Length),
-                enableRandomWrite = true,
-                msaaSamples = 1,
-                useMipMap = true,
-                autoGenerateMips = false,
-                mipCount = 6,
-                depthBufferBits = 0,
-                useDynamicScale = false
-            });*/
+            /*   heightTex = new RenderTexture(new RenderTextureDescriptor
+               {
+                   graphicsFormat = GraphicsFormat.R8_UNorm,
+                   dimension = TextureDimension.Tex2DArray,
+                   width = COLOR_RESOLUTION,
+                   height = COLOR_RESOLUTION,
+                   volumeDepth = Mathf.Max(1, terrainData.textures.Length),
+                   enableRandomWrite = true,
+                   msaaSamples = 1,
+                   useMipMap = true,
+                   autoGenerateMips = false,
+                   mipCount = 6,
+                   depthBufferBits = 0,
+                   useDynamicScale = false
+               });*/
             heightloadingCacheRT = new RenderTexture(new RenderTextureDescriptor
             {
                 width = COLOR_RESOLUTION + 2,
@@ -631,12 +639,18 @@ namespace MPipeline
                 depthBufferBits = 0,
                 useDynamicScale = false,
             });
+            randomTileRT = new RenderTexture(256, 256, 0, GraphicsFormat.R16G16B16A16_SNorm, 0);
+            randomTileRT.enableRandomWrite = true;
+            randomTileRT.wrapMode = TextureWrapMode.Repeat;
+            randomTileRT.filterMode = FilterMode.Point;
+            randomTileRT.Create();
+            
             heightloadingCacheRT.Create();
-        //    heightTex.Create();
+            //    heightTex.Create();
             smTex.wrapMode = TextureWrapMode.Repeat;
             normalTex.wrapMode = TextureWrapMode.Repeat;
             albedoTex.wrapMode = TextureWrapMode.Repeat;
-         //   heightTex.wrapMode = TextureWrapMode.Repeat;
+            //   heightTex.wrapMode = TextureWrapMode.Repeat;
             boundBoxLoadList = new NativeQueue<MaskLoadCommand>(10, Allocator.Persistent);
             boundingLoadStream = new FileStream(terrainData.boundPath, FileMode.OpenOrCreate, FileAccess.ReadWrite);
             boundingDict = new NativeDictionary<int2, MTerrainBoundingTree, Int2Equal>(20, Allocator.Persistent, new Int2Equal());
@@ -700,12 +714,13 @@ namespace MPipeline
             heightLoader.Dispose();
             maskLoadList.Dispose();
             vtContainer.Dispose();
-            DestroyImmediate(albedoTex);
-            DestroyImmediate(cullingFlags);
-            DestroyImmediate(normalTex);
-            DestroyImmediate(smTex);
-        //    DestroyImmediate(heightTex);
-            DestroyImmediate(heightloadingCacheRT);
+            Destroy(albedoTex);
+            Destroy(cullingFlags);
+            Destroy(normalTex);
+            Destroy(smTex);
+            //    DestroyImmediate(heightTex);
+            Destroy(heightloadingCacheRT);
+            Destroy(randomTileRT);
             meshBuffer.Dispose();
             allDrawCommand.Dispose();
             mipIDs.Dispose();
