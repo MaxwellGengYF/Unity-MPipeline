@@ -26,14 +26,36 @@ cbuffer UnityPerMaterial
 	float2 _NormalIntensity;
     float _HeightBlendScale;
 }
+#include "../CGINC/VirtualTexture.cginc"
  sampler2D _MainTex;
             float4 _MainTex_ST;
             sampler2D _BumpMap;
             sampler2D _SMO;
-            float2 _HeightScaleOffset;
-            Texture2DArray<float> _VirtualHeightmap; SamplerState sampler_VirtualHeightmap;
-            uint _OffsetIndex;
+            float4 _HeightScaleOffset;
+            Texture2DArray<float> _VirtualHeightmap; SamplerState sampler_VirtualHeightmap; float4 _VirtualHeightmap_TexelSize;
+            Texture2D<float4> _MaskIndexMap;
+            float4 _MaskIndexMap_TexelSize;
+            float2 _OffsetIndex;
             float4 _MaskScaleOffset;
+inline float SampleHeight(float3 uvs[4], float2 weight)
+{
+  float4 result = float4(
+    _VirtualHeightmap.SampleLevel(sampler_VirtualHeightmap, uvs[0], 0),
+    _VirtualHeightmap.SampleLevel(sampler_VirtualHeightmap, uvs[1], 0),
+    _VirtualHeightmap.SampleLevel(sampler_VirtualHeightmap, uvs[2], 0),
+    _VirtualHeightmap.SampleLevel(sampler_VirtualHeightmap, uvs[3], 0)
+  );
+  result.xy = lerp(result.xy, result.zw, weight.y);
+  return lerp(result.x, result.y, weight.x);
+}
+
+float GetVTHeight(float2 localUV)
+{
+    float3 uvs[4];
+    float2 weight;
+    GetBilinearVirtualTextureUV(_MaskIndexMap,_MaskIndexMap_TexelSize, _OffsetIndex, localUV, _VirtualHeightmap_TexelSize, uvs, weight);
+    return SampleHeight(uvs, weight);
+}
 ENDCG
         Pass
         {
@@ -83,7 +105,7 @@ ENDCG
 
             float GetBlendWeight(float worldHeight, float2 screenUV)
             {
-                float vtHeight = _VirtualHeightmap.SampleLevel(sampler_VirtualHeightmap, float3(screenUV * _MaskScaleOffset.x + _MaskScaleOffset.yz, _OffsetIndex + 0.2), 0);
+                float vtHeight = GetVTHeight(screenUV * _MaskScaleOffset.x + _MaskScaleOffset.yz);
                 float vtWorldHeight = vtHeight * _HeightScaleOffset.x + _HeightScaleOffset.y;
                 float blendWeight = (worldHeight - vtWorldHeight) * _HeightBlendScale;
                 return saturate(blendWeight);
@@ -149,10 +171,10 @@ ENDCG
             float frag (v2f i) : SV_Target
             {
                 float2 screenUV = i.screenUV.xy / i.screenUV.z;
-                float vtHeight = _VirtualHeightmap.SampleLevel(sampler_VirtualHeightmap, float3(screenUV * _MaskScaleOffset.x + _MaskScaleOffset.yz, _OffsetIndex + 0.2), 0);
+                float vtHeight = GetVTHeight(screenUV * _MaskScaleOffset.x + _MaskScaleOffset.yz);
                  float vtWorldHeight = vtHeight * _HeightScaleOffset.x + _HeightScaleOffset.y;
                 float heightDiff = i.worldPos.y - vtWorldHeight;
-                return clamp(heightDiff * _MaskScaleOffset.w, 0, 1);
+                return  saturate(heightDiff * _MaskScaleOffset.w);
             }
             ENDCG
         }

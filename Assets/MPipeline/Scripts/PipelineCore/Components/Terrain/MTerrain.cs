@@ -31,7 +31,7 @@ namespace MPipeline
         }
         public const int MASK_RESOLUTION = 2048;
         public const int COLOR_RESOLUTION = 1024;
-        public const int HEIGHT_RESOLUTION = 128;
+        public const int HEIGHT_RESOLUTION = 64;
         public const GraphicsFormat HEIGHT_FORMAT = GraphicsFormat.R16_SNorm;
         public MTerrainData terrainData;
         public VTDecalCamera decalCamera;
@@ -182,7 +182,7 @@ namespace MPipeline
             vtPosDouble += terrainData.screenOffset;
             return vtPosDouble;
         }
-        void DrawDecal(int2 startIndex, int size, int targetElement, LayerMask decalCullingMask, float3 maskScaleOffset, int heightIndex)
+        void DrawDecal(int2 startIndex, int size, int targetElement, LayerMask decalCullingMask, float3 maskScaleOffset, int2 heightIndex)
         {
             double cameraSize = size * oneVTPixelWorldLength * 0.5;
             double2 centerPos = VTPosToWorldPos(startIndex) + cameraSize;
@@ -200,7 +200,7 @@ namespace MPipeline
                 size = (float)cameraSize,
                 heightRT = vt.GetTexture(3),
                 maskScaleOffset = maskScaleOffset,
-                heightIndex = heightIndex
+                startIndex = heightIndex
             });
         }
         IEnumerator AsyncLoader()
@@ -343,7 +343,7 @@ namespace MPipeline
 
                                     if (loadData.targetDecalLayer != 0)
                                     {
-                                        DrawDecal(loadData.startIndex, loadData.size, targetElement, loadData.targetDecalLayer, loadData.maskScaleOffset, maskVT.GetChunkIndex(loadData.rootPos));
+                                        DrawDecal(loadData.startIndex, loadData.size, targetElement, loadData.targetDecalLayer, loadData.maskScaleOffset, loadData.rootPos);
                                         yield return null;
                                     }
                                 }
@@ -369,7 +369,7 @@ namespace MPipeline
                             if (targetElement >= 0)
                             {
                                 LoadTexture(loadData.startIndex, loadData.size, loadData.rootPos, loadData.maskScaleOffset, targetElement, RenderPipeline.BeforeFrameBuffer);
-                                DrawDecal(loadData.startIndex, loadData.size, targetElement, loadData.targetDecalLayer, loadData.maskScaleOffset, maskVT.GetChunkIndex(loadData.rootPos));
+                                DrawDecal(loadData.startIndex, loadData.size, targetElement, loadData.targetDecalLayer, loadData.maskScaleOffset, loadData.rootPos);
                             }
                             break;
                         case TerrainLoadData.Operator.Load:
@@ -379,7 +379,7 @@ namespace MPipeline
                             if (elementAva)
                             {
                                 LoadTexture(loadData.startIndex, loadData.size, loadData.rootPos, loadData.maskScaleOffset, targetElement, RenderPipeline.BeforeFrameBuffer);
-                                DrawDecal(loadData.startIndex, loadData.size, targetElement, loadData.targetDecalLayer, loadData.maskScaleOffset, maskVT.GetChunkIndex(loadData.rootPos));
+                                DrawDecal(loadData.startIndex, loadData.size, targetElement, loadData.targetDecalLayer, loadData.maskScaleOffset, loadData.rootPos);
                             }
                             else
                             {
@@ -408,11 +408,10 @@ namespace MPipeline
                                 LoadTexture(leftUpIndex, subSize, loadData.rootPos, leftUpScaleOffset, vtContainer[2], RenderPipeline.BeforeFrameBuffer);
                                 LoadTexture(rightDownIndex, subSize, loadData.rootPos, rightDownScaleOffset, vtContainer[1], RenderPipeline.BeforeFrameBuffer);
                                 LoadTexture(rightUpIndex, subSize, loadData.rootPos, rightUpScaleOffset, vtContainer[3], RenderPipeline.BeforeFrameBuffer);
-                                int maskElement = maskVT.GetChunkIndex(loadData.rootPos);
-                                DrawDecal(leftDownIndex, subSize, vtContainer[0], loadData.targetDecalLayer, leftDownScaleOffset, maskElement);
-                                DrawDecal(leftUpIndex, subSize, vtContainer[2], loadData.targetDecalLayer, leftUpScaleOffset, maskElement);
-                                DrawDecal(rightDownIndex, subSize, vtContainer[1], loadData.targetDecalLayer, rightDownScaleOffset, maskElement);
-                                DrawDecal(rightUpIndex, subSize, vtContainer[3], loadData.targetDecalLayer, rightUpScaleOffset, maskElement);
+                                DrawDecal(leftDownIndex, subSize, vtContainer[0], loadData.targetDecalLayer, leftDownScaleOffset, loadData.rootPos);
+                                DrawDecal(leftUpIndex, subSize, vtContainer[2], loadData.targetDecalLayer, leftUpScaleOffset, loadData.rootPos);
+                                DrawDecal(rightDownIndex, subSize, vtContainer[1], loadData.targetDecalLayer, rightDownScaleOffset, loadData.rootPos);
+                                DrawDecal(rightUpIndex, subSize, vtContainer[3], loadData.targetDecalLayer, rightUpScaleOffset, loadData.rootPos);
                             }
                             else
                             {
@@ -685,7 +684,6 @@ namespace MPipeline
                 buffer.SetGlobalVector(ShaderIDs._StartPos, float4(i.startPos, (float)oneVTPixelWorldLength, meshResolution));
                 buffer.SetGlobalVector(ShaderIDs._TextureSize, float4(i.startVTIndex, 0, chunkCount - 0.5f));
                 buffer.SetGlobalTexture(ShaderIDs._CullingTexture, cullingFlags);
-                buffer.SetGlobalTexture(ShaderIDs._VirtualHeightmap, maskVT.GetTexture(1));
                 buffer.DrawProcedural(Matrix4x4.identity, terrainData.drawTerrainMaterial, pass, MeshTopology.Triangles, meshBuffer.count);
             }
         }

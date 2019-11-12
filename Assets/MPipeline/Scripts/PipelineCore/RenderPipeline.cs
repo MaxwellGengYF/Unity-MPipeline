@@ -218,12 +218,16 @@ namespace MPipeline
             foreach (var camPtr in PipelineCamera.CameraSearchDict)
             {
                 PipelineCamera cam = MUnsafeUtility.GetObject<PipelineCamera>((void*)camPtr.value);
-                var values = cam.allDatas.Values;
-                foreach (var j in values)
+                if (cam.allDatas.isCreated)
                 {
-                    j.DisposeProperty();
+                    foreach (var i in cam.allDatas)
+                    {
+                        IPerCameraData data = ((IPerCameraData)MUnsafeUtility.GetHookedObject(i.value));
+                        data.DisposeProperty();
+                        MUnsafeUtility.RemoveHookedObject(i.value);
+                    }
+                    cam.allDatas.Dispose();
                 }
-                cam.allDatas.Clear();
             }
             if (motionVectorMatricesBuffer != null) motionVectorMatricesBuffer.Dispose();
             MotionVectorDrawer.Dispose();

@@ -14,7 +14,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   heightOffset: -100
   heightScale: 300
-  displacementScale: 10
+  displacementScale: 50
   materialTillingScale: 1
   terrainLocalYPositionToGround: -2
   largestChunkSize: 2048

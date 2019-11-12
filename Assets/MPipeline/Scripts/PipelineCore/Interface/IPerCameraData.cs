@@ -10,23 +10,26 @@ namespace MPipeline
     {
         public static T GetProperty<T, R>(PipelineCamera camera, R runnable) where T : IPerCameraData where R : struct, IGetCameraData
         {
+            int index;
             IPerCameraData data;
-            if (!camera.allDatas.TryGetValue(typeof(T), out data))
+            if (!camera.allDatas.Get((ulong)MUnsafeUtility.GetManagedPtr(typeof(T)), out index))
             {
                 data = runnable.Run();
-                camera.allDatas.Add(typeof(T), data);
+                index = MUnsafeUtility.HookObject(data);
+                camera.allDatas.Add((ulong)MUnsafeUtility.GetManagedPtr(typeof(T)), index);
             }
-            return (T)data;
+            return MUnsafeUtility.GetHookedObject(index) as T;
         }
 
         public static void RemoveProperty<T>(PipelineCamera camera)
         {
-            IPerCameraData data = camera.allDatas[typeof(T)];
+            int index = camera.allDatas[(ulong)MUnsafeUtility.GetManagedPtr(typeof(T))];
+            IPerCameraData data = MUnsafeUtility.GetHookedObject(index) as IPerCameraData;
             if (data != null)
             {
                 data.DisposeProperty();
             }
-            data = null;
+            MUnsafeUtility.RemoveHookedObject(index);
         }
 
         public abstract void DisposeProperty();

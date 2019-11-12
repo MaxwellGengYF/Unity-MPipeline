@@ -25,7 +25,7 @@ namespace MPipeline
             public RenderTargetIdentifier heightRT;
             public float3 maskScaleOffset;
             public int depthSlice;
-            public int heightIndex;
+            public int2 startIndex;
         }
         [EasyButtons.Button]
         void SetAspect()
@@ -38,7 +38,7 @@ namespace MPipeline
         private RenderTexture heightTempTex;
         private void OnEnable()
         {
-            heightTempTex = new RenderTexture(MTerrain.HEIGHT_RESOLUTION * 4, MTerrain.HEIGHT_RESOLUTION * 4, 16, MTerrain.HEIGHT_FORMAT, 3);
+            heightTempTex = new RenderTexture(MTerrain.HEIGHT_RESOLUTION * 2, MTerrain.HEIGHT_RESOLUTION * 2, 16, MTerrain.HEIGHT_FORMAT, 2);
             heightTempTex.useMipMap = true;
             heightTempTex.autoGenerateMips = false;
             heightTempTex.filterMode = FilterMode.Point;
@@ -106,7 +106,7 @@ namespace MPipeline
 
                         ComputeShader copyShader = data.resources.shaders.texCopyShader;
                         buffer.SetGlobalVector(ShaderIDs._MaskScaleOffset, float4(orthoCam.maskScaleOffset, (float)(1.0 / MTerrain.current.terrainData.displacementScale)));
-                        buffer.SetGlobalInt(ShaderIDs._OffsetIndex, orthoCam.heightIndex);
+                        buffer.SetGlobalVector(ShaderIDs._OffsetIndex, float4(orthoCam.startIndex, 1, 1));
                         var terrainData = MTerrain.current.terrainData;
                         buffer.SetGlobalVector(ShaderIDs._HeightScaleOffset, (float4)double4(terrainData.heightScale, terrainData.heightOffset, 1, 1));
                         buffer.GetTemporaryRT(RenderTargets.gbufferIndex[0], MTerrain.COLOR_RESOLUTION, MTerrain.COLOR_RESOLUTION, 16, FilterMode.Point, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear, 1, true);
@@ -145,7 +145,7 @@ namespace MPipeline
                         data.ExecuteCommandBuffer();
                         data.context.DrawRenderers(result, ref drawH, ref filter);
                         buffer.GenerateMips(heightTempTex);
-                        buffer.CopyTexture(heightTempTex, 0, 2, orthoCam.heightRT, orthoCam.depthSlice, 0);
+                        buffer.CopyTexture(heightTempTex, 0, 1, orthoCam.heightRT, orthoCam.depthSlice, 0);
                     }
                 }
                 if (!rendering)
