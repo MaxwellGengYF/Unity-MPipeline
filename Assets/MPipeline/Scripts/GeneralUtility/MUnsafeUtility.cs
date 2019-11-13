@@ -64,6 +64,12 @@ public unsafe static class MUnsafeUtility
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void SetHookedObject(int index, object obj)
+    {
+        antiGCCollect[index] = obj;
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Resize<T>(ref this NativeArray<T> arr, int targetLength, Allocator alloc) where T : unmanaged
     {
         if (targetLength <= arr.Length) return;

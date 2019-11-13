@@ -39,7 +39,7 @@ namespace MPipeline
         public static PipelineBaseBuffer baseBuffer { get; private set; }
 
         public static NativeList<ulong> addList;
-        private static Dictionary<int, ComputeBuffer> allTempBuffers = new Dictionary<int, ComputeBuffer>(11);
+        private static NativeDictionary<int, int, PipelineCamera.IntEqual> allTempBuffers;
         public static void SetState()
         {
             if (singletonReady && baseBuffer.clusterCount > 0)
@@ -53,21 +53,25 @@ namespace MPipeline
         }
         public static ComputeBuffer GetTempPropertyBuffer(int length, int stride)
         {
+            if (!allTempBuffers.isCreated)
+                allTempBuffers = new NativeDictionary<int, int, PipelineCamera.IntEqual>(11, Allocator.Persistent, new PipelineCamera.IntEqual());
             ComputeBuffer target;
-            if (allTempBuffers.TryGetValue(stride, out target))
+            int targetIndex;
+            if (allTempBuffers.Get(stride, out targetIndex))
             {
+                target = MUnsafeUtility.GetHookedObject(targetIndex) as ComputeBuffer;
                 if (target.count < length)
                 {
                     target.Dispose();
                     target = new ComputeBuffer(length, stride);
-                    allTempBuffers[stride] = target;
+                    MUnsafeUtility.SetHookedObject(targetIndex, target);
                 }
                 return target;
             }
             else
             {
                 target = new ComputeBuffer(length, stride);
-                allTempBuffers[stride] = target;
+                allTempBuffers[stride] = MUnsafeUtility.HookObject(target);
                 return target;
             }
         }
@@ -87,6 +91,30 @@ namespace MPipeline
             PipelineFunctions.InitBaseBuffer(baseBuffer, maximumClusterCount);
         }
 
+        public static void MoveScene(int sceneIndex, float3 deltaPosition, int clusterCount)
+        {
+            const int CLEAR_KERNEL = 7;
+            const int COLLECT_KERNEL = 8;
+            const int EXECUTE_CLUSTER_KERNEL = 9;
+            const int EXECUTE_POINT_KERNEL = 10;
+            ComputeShader shad = resources.shaders.streamingShader;
+            ComputeBuffer tempBuffer = GetTempPropertyBuffer(clusterCount + 1, sizeof(uint));
+            CommandBuffer cb = RenderPipeline.BeforeFrameBuffer;
+            cb.SetComputeIntParam(shad, ShaderIDs._TargetElement, sceneIndex);
+            cb.SetComputeBufferParam(shad, CLEAR_KERNEL, ShaderIDs._TempPropBuffer, tempBuffer);
+            cb.SetComputeBufferParam(shad, COLLECT_KERNEL, ShaderIDs._TempPropBuffer, tempBuffer);
+            cb.SetComputeBufferParam(shad, COLLECT_KERNEL, ShaderIDs.clusterBuffer, baseBuffer.clusterBuffer);
+            cb.SetComputeBufferParam(shad, EXECUTE_CLUSTER_KERNEL, ShaderIDs._TempPropBuffer, tempBuffer);
+            cb.SetComputeBufferParam(shad, EXECUTE_CLUSTER_KERNEL, ShaderIDs.clusterBuffer, baseBuffer.clusterBuffer);
+            cb.SetComputeBufferParam(shad, EXECUTE_POINT_KERNEL, ShaderIDs.verticesBuffer, baseBuffer.verticesBuffer);
+            cb.SetComputeBufferParam(shad, EXECUTE_POINT_KERNEL, ShaderIDs._TempPropBuffer, tempBuffer);
+            cb.SetComputeVectorParam(shad, ShaderIDs._OffsetDirection, float4(deltaPosition, 1));
+            cb.DispatchCompute(shad, CLEAR_KERNEL, 1, 1, 1);
+            ComputeShaderUtility.Dispatch(shad, cb, COLLECT_KERNEL, baseBuffer.clusterCount);
+            ComputeShaderUtility.Dispatch(shad, cb, EXECUTE_CLUSTER_KERNEL, clusterCount);
+            cb.DispatchCompute(shad, EXECUTE_POINT_KERNEL, clusterCount, 1, 1);
+        }
+
         public static void Dispose(PipelineResources res)
         {
             singletonReady = false;
@@ -94,10 +122,13 @@ namespace MPipeline
             if (Application.isPlaying && res.clusterResources)
                 res.clusterResources.Dispose();
             addList.Dispose();
-            var values = allTempBuffers.Values;
-            foreach (var i in values)
+            if (allTempBuffers.isCreated)
             {
-                i.Dispose();
+                foreach (var i in allTempBuffers)
+                {
+                    ComputeBuffer bf = MUnsafeUtility.GetHookedObject(i.value) as ComputeBuffer;
+                    bf.Dispose();
+                }
             }
         }
         //Press number load scene

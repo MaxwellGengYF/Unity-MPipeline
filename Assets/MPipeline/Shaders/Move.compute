@@ -6,6 +6,10 @@
 #pragma kernel MipGroupSync
 #pragma kernel BlitTo
 #pragma kernel BlitTo BLIT_NORMAL
+#pragma kernel ClearTargetSceneBuffer
+#pragma kernel CollectTargetScene
+#pragma kernel ExecuteClusterMoving
+#pragma kernel ExecutePointMoving
 #define COMPUTESHADER
 #include "CGINC/Procedural.cginc"
 #include "UnityCG.cginc"
@@ -128,4 +132,37 @@ void BlitTo(uint2 id : SV_DISPATCHTHREADID)
     #else
     _DestTex[uint3(id, _Count)] = _SourceTex[id];
     #endif
+}
+RWStructuredBuffer<uint> _TempPropBuffer;
+int _TargetElement;
+
+[numthreads(1, 1, 1)]
+void ClearTargetSceneBuffer(uint id : SV_DISPATCHTHREADID)
+{
+    _TempPropBuffer[0] = 0;
+}
+
+[numthreads(64,1,1)]
+void CollectTargetScene(uint id : SV_DISPATCHTHREADID)
+{
+    if(id >= _Count) return;
+    if(clusterBuffer[id].index == _TargetElement)
+    {
+        uint currentIndex;
+        InterlockedAdd(_TempPropBuffer[0], 1, currentIndex);
+        _TempPropBuffer[currentIndex + 1] = id;
+    }
+}
+float3 _OffsetDirection;
+[numthreads(64, 1, 1)]
+void ExecuteClusterMoving(uint id : SV_DISPATCHTHREADID)
+{
+    if(id >= _Count) return;
+    clusterBuffer[_TempPropBuffer[id + 1]].position += _OffsetDirection;
+}
+
+[numthreads(1, CLUSTERCLIPCOUNT, 1)]
+void ExecutePointMoving(uint2 id : SV_DISPATCHTHREADID)
+{
+    verticesBuffer[id.y + _TempPropBuffer[id.x + 1] * CLUSTERCLIPCOUNT].vertex += _OffsetDirection;
 }

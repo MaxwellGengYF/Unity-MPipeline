@@ -30,6 +30,7 @@ namespace MPipeline
         int propertyCount;
         static int propertyStaticCount = int.MinValue;
         private static MStringBuilder sb;
+        private float3 originPos;
         public void Awake()
         {
             if (!sb.isCreated)
@@ -39,6 +40,7 @@ namespace MPipeline
             state = State.Unloaded;
             propertyCount = propertyStaticCount;
             propertyStaticCount++;
+            originPos = transform.position;
         }
         private SceneStreamLoader loader;
         static string[] allStrings = new string[3];
@@ -51,8 +53,16 @@ namespace MPipeline
             }
             return bytesArray;
         }
-
-
+        /*
+        private void Update()
+        {
+            if(state == State.Loaded)
+            {
+                SceneController.MoveScene(propertyCount, (float3)transform.position - originPos, loader.clusterCount);
+                originPos = transform.position;
+            }
+        }
+        */
         public void GenerateAsync(bool listCommand = true)
         {
             var resources = ClusterMatResources.current;
