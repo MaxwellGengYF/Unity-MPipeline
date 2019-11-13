@@ -48,7 +48,7 @@ namespace MPipeline
             }
         }
         /// <returns></returns> Cluster Count
-        public static int GenerateCluster(NativeList<Point> pointsFromMesh, NativeList<int> mats, Bounds bd, int voxelCount, int sceneCount, ref SceneStreamLoader loader)
+        public static int GenerateCluster(NativeList<Point> pointsFromMesh, NativeList<int> mats, Bounds bd, int voxelCount, ref SceneStreamLoader loader)
         {
             NativeList<Cluster> boxes; NativeList<Point> points; NativeList<int> outMats;
             GetCluster(pointsFromMesh, mats, bd, out boxes, out points, out outMats, voxelCount);

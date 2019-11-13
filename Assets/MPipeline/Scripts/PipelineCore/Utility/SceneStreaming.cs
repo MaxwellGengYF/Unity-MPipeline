@@ -9,20 +9,18 @@ using UnityEngine.Rendering;
 using System.IO;
 namespace MPipeline
 {
-    [Serializable]
-    public unsafe sealed class SceneStreaming
+    public unsafe sealed class SceneStreaming : MonoBehaviour
     {
-        public static bool loading = false;
-        public string name;
+        public static bool loading = true;
+        public string fileName;
         public enum State
         {
             Unloaded, Loaded, Loading
         }
-        [NonSerialized]
-        public State state;
+
+        public State state { get; private set; }
         private NativeArray<VirtualMaterial.MaterialProperties> materialProperties;
         private NativeArray<int> materialIndexBuffer;
-        private ClusterMatResources resources;
         private static Action<object> generateAsyncFunc = (obj) =>
         {
             SceneStreaming str = obj as SceneStreaming;
@@ -31,11 +29,13 @@ namespace MPipeline
 
         int propertyCount;
         static int propertyStaticCount = int.MinValue;
-        private MStringBuilder sb;
-        public void Init(MStringBuilder msb, ClusterMatResources resources)
+        private static MStringBuilder sb;
+        public void Awake()
         {
-            this.resources = resources;
-            sb = msb;
+            if (!sb.isCreated)
+            {
+                sb = new MStringBuilder(100);
+            }
             state = State.Unloaded;
             propertyCount = propertyStaticCount;
             propertyStaticCount++;
@@ -55,14 +55,15 @@ namespace MPipeline
 
         public void GenerateAsync(bool listCommand = true)
         {
+            var resources = ClusterMatResources.current;
             allStrings[0] = ClusterMatResources.infosPath;
-            allStrings[1] = name;
+            allStrings[1] = fileName;
             allStrings[2] = ".mpipe";
             sb.Combine(allStrings);
             loader.fsm = new FileStream(sb.str, FileMode.Open, FileAccess.Read);
             loader.LoadAll();
             materialIndexBuffer = resources.vmManager.SetMaterials(loader.allProperties.Length);
-            for(int i = 0; i < loader.cluster.Length; ++i)
+            for (int i = 0; i < loader.cluster.Length; ++i)
             {
                 loader.cluster[i].index = propertyCount;
             }
@@ -136,7 +137,16 @@ namespace MPipeline
             }
         }
 
-      
+        public void OnDestroy()
+        {
+            if (state != State.Unloaded)
+            {
+                Debug.LogError("Scene: \"" + fileName + "\" is still running! That will cause a leak!");
+            }
+            loader.Dispose();
+            if (materialProperties.IsCreated) materialProperties.Dispose();
+            if (materialIndexBuffer.IsCreated) materialIndexBuffer.Dispose();
+        }
 
         public IEnumerator Delete()
         {
@@ -149,6 +159,7 @@ namespace MPipeline
                 }
                 loading = true;
                 DeleteRun();
+                loading = false;
             }
         }
 
@@ -158,11 +169,12 @@ namespace MPipeline
 
         public void DeleteRun()
         {
+            var clusterResources = ClusterMatResources.current;
             PipelineResources resources = RenderPipeline.current.resources;
             PipelineBaseBuffer baseBuffer = SceneController.baseBuffer;
             int result = baseBuffer.clusterCount - loader.clusterCount;
             ComputeShader shader = resources.shaders.streamingShader;
-            
+
             if (result > 0)
             {
                 NativeArray<int> indirectArgs = new NativeArray<int>(5, Allocator.Temp, NativeArrayOptions.UninitializedMemory);
@@ -186,41 +198,41 @@ namespace MPipeline
                 buffer.DispatchCompute(shader, 1, baseBuffer.moveCountBuffer, 0);
                 buffer.DispatchCompute(shader, 3, baseBuffer.moveCountBuffer, 0);
             }
-            this.resources.vmManager.UnloadMaterials(materialIndexBuffer);
+            clusterResources.vmManager.UnloadMaterials(materialIndexBuffer);
             foreach (var i in loader.albedoGUIDs)
             {
-                this.resources.rgbaPool.RemoveTex(i);
+                clusterResources.rgbaPool.RemoveTex(i);
             }
             foreach (var i in loader.normalGUIDs)
             {
-                this.resources.rgbaPool.RemoveTex(i);
+                clusterResources.rgbaPool.RemoveTex(i);
             }
             foreach (var i in loader.emissionGUIDs)
             {
-                this.resources.emissionPool.RemoveTex(i);
+                clusterResources.emissionPool.RemoveTex(i);
             }
-            foreach(var i in loader.smoGUIDs)
+            foreach (var i in loader.smoGUIDs)
             {
-                this.resources.rgbaPool.RemoveTex(i);
+                clusterResources.rgbaPool.RemoveTex(i);
             }
             foreach (var i in loader.heightGUIDs)
             {
-                this.resources.heightPool.RemoveTex(i);
+                clusterResources.heightPool.RemoveTex(i);
             }
-            foreach(var i in loader.secondAlbedoGUIDs)
+            foreach (var i in loader.secondAlbedoGUIDs)
             {
-                this.resources.rgbaPool.RemoveTex(i);
+                clusterResources.rgbaPool.RemoveTex(i);
             }
             foreach (var i in loader.secondNormalGUIDs)
             {
-                this.resources.rgbaPool.RemoveTex(i);
+                clusterResources.rgbaPool.RemoveTex(i);
             }
             foreach (var i in loader.secondSpecGUIDs)
             {
-                this.resources.rgbaPool.RemoveTex(i);
+                clusterResources.rgbaPool.RemoveTex(i);
             }
             baseBuffer.clusterCount = result;
-            loading = false;
+
             state = State.Unloaded;
             loader.Dispose();
         }
@@ -230,21 +242,22 @@ namespace MPipeline
         }
         private IEnumerator GenerateRun()
         {
+            var clusterResources = ClusterMatResources.current;
             PipelineResources resources = RenderPipeline.current.resources;
             PipelineBaseBuffer baseBuffer = SceneController.baseBuffer;
             int targetCount;
             int currentCount = 0;
             while ((targetCount = currentCount + MAXIMUMVERTCOUNT) < loader.clusterCount)
             {
-                SetCustomData(baseBuffer.clusterBuffer, loader.cluster,  currentCount, currentCount + baseBuffer.clusterCount, MAXIMUMVERTCOUNT);
+                SetCustomData(baseBuffer.clusterBuffer, loader.cluster, currentCount, currentCount + baseBuffer.clusterCount, MAXIMUMVERTCOUNT);
                 SetCustomData(baseBuffer.verticesBuffer, loader.points, currentCount * PipelineBaseBuffer.CLUSTERCLIPCOUNT, (currentCount + baseBuffer.clusterCount) * PipelineBaseBuffer.CLUSTERCLIPCOUNT, MAXIMUMVERTCOUNT * PipelineBaseBuffer.CLUSTERCLIPCOUNT);
-               SetCustomData(baseBuffer.triangleMaterialBuffer, loader.triangleMats, currentCount * PipelineBaseBuffer.CLUSTERTRIANGLECOUNT, (currentCount + baseBuffer.clusterCount) * PipelineBaseBuffer.CLUSTERTRIANGLECOUNT, MAXIMUMVERTCOUNT * PipelineBaseBuffer.CLUSTERTRIANGLECOUNT);
+                SetCustomData(baseBuffer.triangleMaterialBuffer, loader.triangleMats, currentCount * PipelineBaseBuffer.CLUSTERTRIANGLECOUNT, (currentCount + baseBuffer.clusterCount) * PipelineBaseBuffer.CLUSTERTRIANGLECOUNT, MAXIMUMVERTCOUNT * PipelineBaseBuffer.CLUSTERTRIANGLECOUNT);
                 currentCount = targetCount;
                 yield return null;
             }
             //TODO
             SetCustomData(baseBuffer.clusterBuffer, loader.cluster, currentCount, currentCount + baseBuffer.clusterCount, loader.clusterCount - currentCount);
-            SetCustomData(baseBuffer.verticesBuffer, loader.points,currentCount * PipelineBaseBuffer.CLUSTERCLIPCOUNT, (currentCount + baseBuffer.clusterCount) * PipelineBaseBuffer.CLUSTERCLIPCOUNT, (loader.clusterCount - currentCount) * PipelineBaseBuffer.CLUSTERCLIPCOUNT);
+            SetCustomData(baseBuffer.verticesBuffer, loader.points, currentCount * PipelineBaseBuffer.CLUSTERCLIPCOUNT, (currentCount + baseBuffer.clusterCount) * PipelineBaseBuffer.CLUSTERCLIPCOUNT, (loader.clusterCount - currentCount) * PipelineBaseBuffer.CLUSTERCLIPCOUNT);
             SetCustomData(baseBuffer.triangleMaterialBuffer, loader.triangleMats, currentCount * PipelineBaseBuffer.CLUSTERTRIANGLECOUNT, (currentCount + baseBuffer.clusterCount) * PipelineBaseBuffer.CLUSTERTRIANGLECOUNT, (loader.clusterCount - currentCount) * PipelineBaseBuffer.CLUSTERTRIANGLECOUNT);
             loading = false;
             state = State.Loaded;
@@ -253,7 +266,7 @@ namespace MPipeline
             loader.cluster.Dispose();
             loader.points.Dispose();
             loader.triangleMats.Dispose();
-            this.resources.vmManager.UpdateMaterialToGPU(materialProperties, materialIndexBuffer);
+            clusterResources.vmManager.UpdateMaterialToGPU(materialProperties, materialIndexBuffer);
             materialProperties.Dispose();
             Debug.Log("Loaded");
         }

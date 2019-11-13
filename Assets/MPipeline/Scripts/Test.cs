@@ -15,6 +15,7 @@ namespace MPipeline
 {
     public unsafe sealed class Test : MonoBehaviour
     {
+        public List<SceneStreaming> streamers;
         [EasyButtons.Button]
         void EnableWhiteModel()
         {
@@ -39,8 +40,17 @@ namespace MPipeline
             int value;
             if (int.TryParse(Input.inputString, out value))
             {
-                var clusterResources = RenderPipeline.current.resources.clusterResources;
-                clusterResources.TransformScene((uint)value, this);
+                if(value < streamers.Count)
+                {
+                    if(streamers[value].state == SceneStreaming.State.Unloaded)
+                    {
+                        StartCoroutine(streamers[value].Generate());
+                    }
+                    else if(streamers[value].state == SceneStreaming.State.Loaded)
+                    {
+                        StartCoroutine(streamers[value].Delete());
+                    }
+                }
             }
             
         }

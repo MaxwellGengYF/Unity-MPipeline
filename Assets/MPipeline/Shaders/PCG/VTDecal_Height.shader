@@ -174,7 +174,8 @@ ENDCG
                 float vtHeight = GetVTHeight(screenUV * _MaskScaleOffset.x + _MaskScaleOffset.yz);
                  float vtWorldHeight = vtHeight * _HeightScaleOffset.x + _HeightScaleOffset.y;
                 float heightDiff = i.worldPos.y - vtWorldHeight;
-                return  saturate(heightDiff * _MaskScaleOffset.w);
+                float blendWeight = saturate(heightDiff * _HeightBlendScale);
+                return  saturate(lerp(0, heightDiff, blendWeight) * _MaskScaleOffset.w);
             }
             ENDCG
         }
