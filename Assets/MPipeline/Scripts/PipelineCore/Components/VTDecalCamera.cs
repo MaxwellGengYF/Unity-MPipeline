@@ -23,7 +23,6 @@ namespace MPipeline
             public RenderTargetIdentifier normalRT;
             public RenderTargetIdentifier smoRT;
             public RenderTargetIdentifier heightRT;
-            public float3 maskScaleOffset;
             public int depthSlice;
             public int2 startIndex;
         }
@@ -105,16 +104,16 @@ namespace MPipeline
                         };
 
                         ComputeShader copyShader = data.resources.shaders.texCopyShader;
-                        buffer.SetGlobalVector(ShaderIDs._MaskScaleOffset, float4(orthoCam.maskScaleOffset, 1));
-                        buffer.SetGlobalVector(ShaderIDs._OffsetIndex, float4(orthoCam.startIndex, 1, 1));
+                        buffer.SetGlobalVector(ShaderIDs._OffsetIndex, float4(orthoCam.startIndex, orthoCam.depthSlice, 1));
                         var terrainData = MTerrain.current.terrainData;
-                        buffer.SetGlobalVector(ShaderIDs._HeightScaleOffset, (float4)double4(terrainData.heightScale, terrainData.heightOffset, 1, 1));
+                        buffer.SetGlobalVector(ShaderIDs._HeightScaleOffset, (float4)double4(terrainData.heightScale, terrainData.heightOffset, -terrainData.maxDisplaceHeight, terrainData.maxDisplaceHeight));
                         buffer.GetTemporaryRT(RenderTargets.gbufferIndex[0], MTerrain.COLOR_RESOLUTION, MTerrain.COLOR_RESOLUTION, 16, FilterMode.Point, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear, 1, true);
                         buffer.GetTemporaryRT(RenderTargets.gbufferIndex[2], MTerrain.COLOR_RESOLUTION, MTerrain.COLOR_RESOLUTION, 0, FilterMode.Point, RenderTextureFormat.RGHalf, RenderTextureReadWrite.Linear, 1, true);
                         buffer.GetTemporaryRT(RenderTargets.gbufferIndex[1], MTerrain.COLOR_RESOLUTION, MTerrain.COLOR_RESOLUTION, 0, FilterMode.Point, RenderTextureFormat.ARGB32, RenderTextureReadWrite.Linear, 1, true);
                         idfs[0] = RenderTargets.gbufferIndex[0];
                         idfs[1] = RenderTargets.gbufferIndex[2];
                         idfs[2] = RenderTargets.gbufferIndex[1];
+                        buffer.SetGlobalTexture(ShaderIDs._VirtualDisplacement, orthoCam.heightRT);
                         buffer.SetComputeIntParam(copyShader, ShaderIDs._Count, orthoCam.depthSlice);
                         buffer.SetComputeTextureParam(copyShader, 7, ShaderIDs._VirtualMainTex, orthoCam.albedoRT);
                         buffer.SetComputeTextureParam(copyShader, 7, ShaderIDs._VirtualBumpMap, orthoCam.normalRT);
@@ -139,6 +138,7 @@ namespace MPipeline
                         buffer.ReleaseTemporaryRT(RenderTargets.gbufferIndex[1]);
                         buffer.ReleaseTemporaryRT(RenderTargets.gbufferIndex[2]);
                         buffer.ReleaseTemporaryRT(RenderTargets.gbufferIndex[0]);
+                        
 
                         buffer.CopyTexture(orthoCam.heightRT, orthoCam.depthSlice, 0, heightTempTex, 0, 0);
                         buffer.SetRenderTarget(heightTempTex);

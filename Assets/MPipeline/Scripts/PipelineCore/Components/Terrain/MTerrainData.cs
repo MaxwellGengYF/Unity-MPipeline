@@ -23,6 +23,7 @@ namespace MPipeline
         
         public double heightOffset = 0;
         public double heightScale = 10;
+        public double maxDisplaceHeight = 5;
         public double materialTillingScale = 1;
         public double terrainLocalYPositionToGround = -2;
         public double largestChunkSize = 1000;

@@ -496,7 +496,7 @@ namespace MPipeline
             double2 heightMinMax = heightScaleOffset.y + texMinMax * heightScaleOffset.x;
             double2 heightCenterExtent = double2(heightMinMax.x + heightMinMax.y, heightMinMax.y - heightMinMax.x) * 0.5;
             double3 centerWorldPos = double3(centerworldPosXZ.x, heightCenterExtent.x, centerworldPosXZ.y);
-            double3 centerExtent = double3(extent, heightCenterExtent.y, extent);
+            double3 centerExtent = double3(extent, heightCenterExtent.y + MTerrain.current.terrainData.maxDisplaceHeight, extent);
             
             isInRange = MathLib.BoxContactWithBox(camFrustumMin, camFrustumMax, double3(xzBounding.x, heightMinMax.x, xzBounding.y), double3(xzBounding.z, heightMinMax.y, xzBounding.w));
             if (isInRange)

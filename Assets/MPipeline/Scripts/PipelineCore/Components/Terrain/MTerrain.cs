@@ -186,7 +186,7 @@ namespace MPipeline
             vtPosDouble += terrainData.screenOffset;
             return vtPosDouble;
         }
-        void DrawDecal(int2 startIndex, int size, int targetElement, LayerMask decalCullingMask, float3 maskScaleOffset, int2 heightIndex)
+        void DrawDecal(int2 startIndex, int size, int targetElement, LayerMask decalCullingMask, int2 heightIndex)
         {
             double cameraSize = size * oneVTPixelWorldLength * 0.5;
             double2 centerPos = VTPosToWorldPos(startIndex) + cameraSize;
@@ -203,7 +203,6 @@ namespace MPipeline
                 rotation = Quaternion.Euler(90, 0, 0),
                 size = (float)cameraSize,
                 heightRT = vt.GetTexture(3),
-                maskScaleOffset = maskScaleOffset,
                 startIndex = heightIndex
             });
         }
@@ -351,7 +350,7 @@ namespace MPipeline
 
                                     if (loadData.targetDecalLayer != 0)
                                     {
-                                        DrawDecal(loadData.startIndex, loadData.size, targetElement, loadData.targetDecalLayer, loadData.maskScaleOffset, loadData.rootPos);
+                                        DrawDecal(loadData.startIndex, loadData.size, targetElement, loadData.targetDecalLayer, loadData.rootPos);
                                         yield return null;
                                     }
                                 }
@@ -377,7 +376,7 @@ namespace MPipeline
                             if (targetElement >= 0)
                             {
                                 LoadTexture(loadData.startIndex, loadData.size, loadData.rootPos, loadData.maskScaleOffset, targetElement, RenderPipeline.BeforeFrameBuffer);
-                                DrawDecal(loadData.startIndex, loadData.size, targetElement, loadData.targetDecalLayer, loadData.maskScaleOffset, loadData.rootPos);
+                                DrawDecal(loadData.startIndex, loadData.size, targetElement, loadData.targetDecalLayer, loadData.rootPos);
                             }
                             break;
                         case TerrainLoadData.Operator.Load:
@@ -387,7 +386,7 @@ namespace MPipeline
                             if (elementAva)
                             {
                                 LoadTexture(loadData.startIndex, loadData.size, loadData.rootPos, loadData.maskScaleOffset, targetElement, RenderPipeline.BeforeFrameBuffer);
-                                DrawDecal(loadData.startIndex, loadData.size, targetElement, loadData.targetDecalLayer, loadData.maskScaleOffset, loadData.rootPos);
+                                DrawDecal(loadData.startIndex, loadData.size, targetElement, loadData.targetDecalLayer, loadData.rootPos);
                             }
                             else
                             {
@@ -416,10 +415,10 @@ namespace MPipeline
                                 LoadTexture(leftUpIndex, subSize, loadData.rootPos, leftUpScaleOffset, vtContainer[2], RenderPipeline.BeforeFrameBuffer);
                                 LoadTexture(rightDownIndex, subSize, loadData.rootPos, rightDownScaleOffset, vtContainer[1], RenderPipeline.BeforeFrameBuffer);
                                 LoadTexture(rightUpIndex, subSize, loadData.rootPos, rightUpScaleOffset, vtContainer[3], RenderPipeline.BeforeFrameBuffer);
-                                DrawDecal(leftDownIndex, subSize, vtContainer[0], loadData.targetDecalLayer, leftDownScaleOffset, loadData.rootPos);
-                                DrawDecal(leftUpIndex, subSize, vtContainer[2], loadData.targetDecalLayer, leftUpScaleOffset, loadData.rootPos);
-                                DrawDecal(rightDownIndex, subSize, vtContainer[1], loadData.targetDecalLayer, rightDownScaleOffset, loadData.rootPos);
-                                DrawDecal(rightUpIndex, subSize, vtContainer[3], loadData.targetDecalLayer, rightUpScaleOffset, loadData.rootPos);
+                                DrawDecal(leftDownIndex, subSize, vtContainer[0], loadData.targetDecalLayer, loadData.rootPos);
+                                DrawDecal(leftUpIndex, subSize, vtContainer[2], loadData.targetDecalLayer, loadData.rootPos);
+                                DrawDecal(rightDownIndex, subSize, vtContainer[1], loadData.targetDecalLayer, loadData.rootPos);
+                                DrawDecal(rightUpIndex, subSize, vtContainer[3], loadData.targetDecalLayer, loadData.rootPos);
                             }
                             else
                             {
