@@ -175,7 +175,7 @@ ENDCG
                  float vtWorldHeight = vtHeight * _HeightScaleOffset.x + _HeightScaleOffset.y;
                 float heightDiff = i.worldPos.y - vtWorldHeight;
                 float blendWeight = saturate(heightDiff * _HeightBlendScale);
-                return  saturate(lerp(0, heightDiff, blendWeight) * _MaskScaleOffset.w);
+                return saturate((lerp(vtWorldHeight, i.worldPos.y, blendWeight) - _HeightScaleOffset.y) / _HeightScaleOffset.x);
             }
             ENDCG
         }

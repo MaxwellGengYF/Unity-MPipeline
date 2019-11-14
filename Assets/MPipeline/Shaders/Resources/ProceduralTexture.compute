@@ -6,6 +6,7 @@
 #pragma kernel NormalToWorld
 #pragma kernel GenerateMipmap
 #pragma kernel GenerateRandomTileMap
+#pragma kernel ReadNormal
 #include "UnityCG.cginc"
 #include "../CGINC/VirtualTexture.cginc"
 #include "../CGINC/HeightBlendMaterial.cginc"
@@ -15,6 +16,7 @@ Texture2D<float4> _MaskIndexMap;
 RWTexture2DArray<float4> _VirtualMainTex;
 RWTexture2DArray<float2> _VirtualBumpMap;
 RWTexture2DArray<float4> _VirtualSMO;
+RWTexture2DArray<float> _VirtualDisplacement;
 //RWTexture2DArray<float> _MaskTex;
 
 Texture2D<float4> _SourceTex; SamplerState sampler_SourceTex;
@@ -254,4 +256,20 @@ void GenerateRandomTileMap(uint2 id : SV_DISPATCHTHREADID)
             ++a;
         }
     }
+}
+
+[numthreads(8,8,1)]
+void ReadNormal(uint2 id : SV_DISPATCHTHREADID)
+{
+    float2 absoluteUV = (id + 0.5) / _Count;
+    float2 maskVirtualUV = absoluteUV * _TextureSize.x + _TextureSize.yz;
+     float3 bilinearUVs[4]; float2 bilinearWeight;
+    GetBilinearVirtualTextureUV(_IndexTexture, _IndexTextureSize, _IndexBuffer.xy, maskVirtualUV, float2(1.0/_HeightResolution, _HeightResolution).xxyy, bilinearUVs, bilinearWeight);
+    float4 heights =float4(_VirtualHeightmap.SampleLevel(sampler_VirtualHeightmap, bilinearUVs[0], 0),
+                            _VirtualHeightmap.SampleLevel(sampler_VirtualHeightmap, bilinearUVs[1], 0),
+                            _VirtualHeightmap.SampleLevel(sampler_VirtualHeightmap, bilinearUVs[2], 0),
+                            _VirtualHeightmap.SampleLevel(sampler_VirtualHeightmap, bilinearUVs[3], 0));
+    heights.xy = lerp(heights.xy, heights.zw, bilinearWeight.y);
+    heights.x = lerp(heights.x, heights.y, bilinearWeight.x);
+    _VirtualDisplacement[uint3(id, _OffsetIndex)] = heights.x;
 }

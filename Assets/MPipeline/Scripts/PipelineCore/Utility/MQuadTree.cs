@@ -171,13 +171,6 @@ namespace MPipeline
                 return double4(leftCorner, rightCorner);
             }
         }
-        public double2 BoundingExtent
-        {
-            get
-            {
-                return MTerrain.current.terrainData.largestChunkSize / pow(2, lodLevel) * 0.5;
-            }
-        }
         public double2 CenterWorldPos
         {
             get
@@ -476,7 +469,7 @@ namespace MPipeline
                 }
             }
         }
-        double2 toPoint;
+        double3 toPoint;
         // double3 toPoint3D;
         double dist;
         bool separate;
@@ -484,7 +477,7 @@ namespace MPipeline
         public void UpdateData(double3 camPos, double3 camDir, double2 heightScaleOffset, double3 camFrustumMin, double3 camFrustumMax, float4* planes)
         {
             double2 centerworldPosXZ = CornerWorldPos;
-            double2 extent = BoundingExtent;
+            double extent = worldSize * 0.5;
             double4 xzBounding = double4(centerworldPosXZ, centerworldPosXZ + extent * 2);
             centerworldPosXZ += extent;
             double2 texMinMax = double2(0, 1);
@@ -500,16 +493,19 @@ namespace MPipeline
                 }
 
             }
-
             double2 heightMinMax = heightScaleOffset.y + texMinMax * heightScaleOffset.x;
+            double2 heightCenterExtent = double2(heightMinMax.x + heightMinMax.y, heightMinMax.y - heightMinMax.x) * 0.5;
+            double3 centerWorldPos = double3(centerworldPosXZ.x, heightCenterExtent.x, centerworldPosXZ.y);
+            double3 centerExtent = double3(extent, heightCenterExtent.y, extent);
+            
             isInRange = MathLib.BoxContactWithBox(camFrustumMin, camFrustumMax, double3(xzBounding.x, heightMinMax.x, xzBounding.y), double3(xzBounding.z, heightMinMax.y, xzBounding.w));
             if (isInRange)
             {
-                double2 heightCenterExtent = double2(heightMinMax.x + heightMinMax.y, heightMinMax.y - heightMinMax.x) * 0.5;
-                isInRange = MathLib.BoxIntersect(double3(centerworldPosXZ.x, heightCenterExtent.x, centerworldPosXZ.y), double3(extent.x, heightCenterExtent.y, extent.y), planes, 6);
+                
+                isInRange = MathLib.BoxIntersect(centerWorldPos, centerExtent, planes, 6);
             }
-            toPoint = camPos.xz - centerworldPosXZ;
-            dist = MathLib.DistanceToQuad(worldSize * 0.5, toPoint);
+            toPoint = camPos - centerWorldPos;
+            dist = MathLib.DistanceToCube(centerExtent, toPoint);
             if (leftDown != null)
             {
                 leftDown->UpdateData(camPos, camDir, heightScaleOffset, camFrustumMin, camFrustumMax, planes);

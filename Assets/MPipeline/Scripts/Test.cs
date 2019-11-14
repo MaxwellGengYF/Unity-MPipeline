@@ -28,31 +28,37 @@ namespace MPipeline
             Shader.DisableKeyword("USE_WHITE");
         }
         public ClusterMatResources tex;
+        public Transform cube;
         [EasyButtons.Button]
         void TestCross()
         {
-            Debug.Log(System.Guid.NewGuid().ToString());
+            RaycastHit rh;
+            if (Physics.Raycast(transform.position, cube.position - transform.position, out rh))
+            {
+                Debug.Log(rh.distance);
+            }
+            Debug.Log(MathLib.DistanceToCube(double3(cube.localScale * 0.5f), double3(cube.position - transform.position)));
         }
 
         private void Update()
         {
-            
+
             int value;
             if (int.TryParse(Input.inputString, out value))
             {
-                if(value < streamers.Count)
+                if (value < streamers.Count)
                 {
-                    if(streamers[value].state == SceneStreaming.State.Unloaded)
+                    if (streamers[value].state == SceneStreaming.State.Unloaded)
                     {
                         StartCoroutine(streamers[value].Generate());
                     }
-                    else if(streamers[value].state == SceneStreaming.State.Loaded)
+                    else if (streamers[value].state == SceneStreaming.State.Loaded)
                     {
                         StartCoroutine(streamers[value].Delete());
                     }
                 }
             }
-            
+
         }
 
     }

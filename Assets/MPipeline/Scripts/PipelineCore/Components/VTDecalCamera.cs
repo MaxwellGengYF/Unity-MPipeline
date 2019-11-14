@@ -38,8 +38,8 @@ namespace MPipeline
         private RenderTexture heightTempTex;
         private void OnEnable()
         {
-            heightTempTex = new RenderTexture(MTerrain.HEIGHT_RESOLUTION * 2, MTerrain.HEIGHT_RESOLUTION * 2, 16, MTerrain.HEIGHT_FORMAT, 2);
-            heightTempTex.useMipMap = true;
+            heightTempTex = new RenderTexture(MTerrain.HEIGHT_RESOLUTION, MTerrain.HEIGHT_RESOLUTION, 16, MTerrain.HEIGHT_FORMAT, 0);
+            heightTempTex.useMipMap = false;
             heightTempTex.autoGenerateMips = false;
             heightTempTex.filterMode = FilterMode.Point;
             heightTempTex.antiAliasing = 1;
@@ -105,7 +105,7 @@ namespace MPipeline
                         };
 
                         ComputeShader copyShader = data.resources.shaders.texCopyShader;
-                        buffer.SetGlobalVector(ShaderIDs._MaskScaleOffset, float4(orthoCam.maskScaleOffset, (float)(1.0 / MTerrain.current.terrainData.displacementScale)));
+                        buffer.SetGlobalVector(ShaderIDs._MaskScaleOffset, float4(orthoCam.maskScaleOffset, 1));
                         buffer.SetGlobalVector(ShaderIDs._OffsetIndex, float4(orthoCam.startIndex, 1, 1));
                         var terrainData = MTerrain.current.terrainData;
                         buffer.SetGlobalVector(ShaderIDs._HeightScaleOffset, (float4)double4(terrainData.heightScale, terrainData.heightOffset, 1, 1));
@@ -140,18 +140,13 @@ namespace MPipeline
                         buffer.ReleaseTemporaryRT(RenderTargets.gbufferIndex[2]);
                         buffer.ReleaseTemporaryRT(RenderTargets.gbufferIndex[0]);
 
-                        buffer.SetRenderTarget(color: heightTempTex.colorBuffer, depth: heightTempTex.depthBuffer, 0);
-                        buffer.ClearRenderTarget(true, true, Color.black);
+                        buffer.CopyTexture(orthoCam.heightRT, orthoCam.depthSlice, 0, heightTempTex, 0, 0);
+                        buffer.SetRenderTarget(heightTempTex);
+                        buffer.ClearRenderTarget(true, false, Color.black);
                         data.ExecuteCommandBuffer();
                         data.context.DrawRenderers(result, ref drawH, ref filter);
-                        buffer.GenerateMips(heightTempTex);
-                        buffer.CopyTexture(heightTempTex, 0, 1, orthoCam.heightRT, orthoCam.depthSlice, 0);
+                        buffer.CopyTexture(heightTempTex, 0, 0, orthoCam.heightRT, orthoCam.depthSlice, 0);
                     }
-                }
-                if (!rendering)
-                {
-                    buffer.SetRenderTarget(orthoCam.heightRT, mipLevel: 0, cubemapFace: CubemapFace.Unknown, depthSlice: orthoCam.depthSlice);
-                    buffer.ClearRenderTarget(false, true, Color.black);
                 }
                 MTerrain.current.GenerateMips(orthoCam.depthSlice, buffer);
                 data.ExecuteCommandBuffer();

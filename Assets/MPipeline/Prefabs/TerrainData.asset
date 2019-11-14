@@ -14,7 +14,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   heightOffset: -100
   heightScale: 300
-  displacementScale: 50
   materialTillingScale: 1
   terrainLocalYPositionToGround: -2
   largestChunkSize: 2048
@@ -54,7 +53,7 @@ MonoBehaviour:
     m_Bits: 4294967295
   - serializedVersion: 2
     m_Bits: 4294967295
-  virtualTexCapacity: 94
+  virtualTexCapacity: 91
   heightmapTexCapacity: 4
   allMaterials:
   - materialIndex: 0

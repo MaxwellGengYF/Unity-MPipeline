@@ -210,9 +210,20 @@ namespace MPipeline
             quadToTarget = abs(quadToTarget);
             double len = length(quadToTarget);
             quadToTarget /= len;
-            double dotV = max(dot(float2(0, 1), quadToTarget), dot(float2(1, 0), quadToTarget));
+            double dotV = max(dot(double2(0, 1), quadToTarget), dot(double2(1, 0), quadToTarget));
             double leftLen = size / dotV;
             return len - leftLen;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        public static double DistanceToCube(double3 size, double3 quadToTarget)
+        {
+            quadToTarget = abs(quadToTarget);
+            double len = length(quadToTarget);
+            quadToTarget /= len;
+            double dotV = min(size.x / quadToTarget.x, size.y / quadToTarget.y);
+            dotV = min(dotV, size.z / quadToTarget.z);
+            return len - dotV;
         }
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
