@@ -10,6 +10,8 @@
 #pragma kernel CollectTargetScene
 #pragma kernel ExecuteClusterMoving
 #pragma kernel ExecutePointMoving
+#pragma kernel ExecuteClusterMoving MOVE_ALL
+#pragma kernel ExecutePointMoving MOVE_ALL
 #define COMPUTESHADER
 #include "CGINC/Procedural.cginc"
 #include "UnityCG.cginc"
@@ -158,11 +160,19 @@ float3 _OffsetDirection;
 void ExecuteClusterMoving(uint id : SV_DISPATCHTHREADID)
 {
     if(id >= _Count) return;
+    #ifdef MOVE_ALL
+    clusterBuffer[id].position += _OffsetDirection;
+    #else
     clusterBuffer[_TempPropBuffer[id + 1]].position += _OffsetDirection;
+    #endif
 }
 
 [numthreads(1, CLUSTERCLIPCOUNT, 1)]
 void ExecutePointMoving(uint2 id : SV_DISPATCHTHREADID)
 {
+    #ifdef MOVE_ALL
+    verticesBuffer[id.y + id.x* CLUSTERCLIPCOUNT].vertex += _OffsetDirection;
+    #else
     verticesBuffer[id.y + _TempPropBuffer[id.x + 1] * CLUSTERCLIPCOUNT].vertex += _OffsetDirection;
+    #endif
 }

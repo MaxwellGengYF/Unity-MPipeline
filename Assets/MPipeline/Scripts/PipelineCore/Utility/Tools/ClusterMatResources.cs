@@ -53,6 +53,8 @@ namespace MPipeline
             public AssetReference aref;
             public AsyncOperationHandle<Texture> loader;
             public RenderTexture targetTexArray;
+            public NativeList<bool> finishFlags;
+            public int finishFlagsIndex;
             public int targetMipLevel;
             public int targetIndex;
             public bool startLoading;
@@ -76,11 +78,13 @@ namespace MPipeline
         }
         private NativeDictionary<int4x4, int, Int4x4Equal> referenceCacheDict;
         private NativeArray<int> mipIDs;
-        public void AddLoadCommand(AssetReference aref, RenderTexture targetTexArray, int targetIndex, bool isNormal)
+        public void AddLoadCommand(AssetReference aref, RenderTexture targetTexArray, int targetIndex, bool isNormal, ref NativeList<bool> flagList, int flagListIndex)
         {
             asyncLoader.Add(new AsyncTextureLoader
             {
                 aref = aref,
+                finishFlags = flagList,
+                finishFlagsIndex = flagListIndex,
                 targetTexArray = targetTexArray,
                 targetIndex = targetIndex,
                 isNormal = isNormal,
@@ -156,6 +160,7 @@ namespace MPipeline
                     buffer.DispatchCompute(loadShader, 4, resolution.x, resolution.y, 1);
                     loader.aref.ReleaseAsset();
                     asyncLoader[i] = asyncLoader[asyncLoader.Count - 1];
+                    loader.finishFlags[loader.finishFlagsIndex] = true;
                     asyncLoader.RemoveAt(asyncLoader.Count - 1);
                     i--;
                 }

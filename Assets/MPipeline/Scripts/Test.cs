@@ -28,16 +28,10 @@ namespace MPipeline
             Shader.DisableKeyword("USE_WHITE");
         }
         public ClusterMatResources tex;
-        public Transform cube;
         [EasyButtons.Button]
         void TestCross()
         {
-            RaycastHit rh;
-            if (Physics.Raycast(transform.position, cube.position - transform.position, out rh))
-            {
-                Debug.Log(rh.distance);
-            }
-            Debug.Log(MathLib.DistanceToCube(double3(cube.localScale * 0.5f), double3(cube.position - transform.position)));
+            SceneController.MoveAllScenes(float3(0,1,0));
         }
 
         private void Update()

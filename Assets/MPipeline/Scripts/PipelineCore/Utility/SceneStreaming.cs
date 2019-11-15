@@ -21,13 +21,15 @@ namespace MPipeline
         public State state { get; private set; }
         private NativeArray<VirtualMaterial.MaterialProperties> materialProperties;
         private NativeArray<int> materialIndexBuffer;
+        private NativeList<bool> textureLoadingFlags;
+        public int clusterCount => loader.clusterCount;
         private static Action<object> generateAsyncFunc = (obj) =>
         {
             SceneStreaming str = obj as SceneStreaming;
             str.GenerateAsync();
         };
 
-        int propertyCount;
+        public int propertyCount { get; private set; }
         static int propertyStaticCount = int.MinValue;
         private static MStringBuilder sb;
         private float3 originPos;
@@ -41,6 +43,7 @@ namespace MPipeline
             propertyCount = propertyStaticCount;
             propertyStaticCount++;
             originPos = transform.position;
+            textureLoadingFlags = new NativeList<bool>(50, Allocator.Persistent);
         }
         private SceneStreamLoader loader;
         static string[] allStrings = new string[3];
@@ -79,6 +82,7 @@ namespace MPipeline
             }
             materialProperties = new NativeArray<VirtualMaterial.MaterialProperties>(loader.allProperties.Length, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
             VirtualMaterial.MaterialProperties* propertiesPtr = materialProperties.Ptr();
+            textureLoadingFlags.Clear();
             //Update Material
             for (int i = 0; i < materialProperties.Length; ++i)
             {
@@ -86,36 +90,36 @@ namespace MPipeline
                 currProp = loader.allProperties[i];
                 if (currProp._MainTex >= 0)
                 {
-                    currProp._MainTex = resources.rgbaPool.GetTex(loader.albedoGUIDs[currProp._MainTex]);
+                    currProp._MainTex = resources.rgbaPool.GetTex(loader.albedoGUIDs[currProp._MainTex], ref textureLoadingFlags);
                 }
                 if (currProp._SecondaryMainTex >= 0)
                 {
-                    currProp._SecondaryMainTex = resources.rgbaPool.GetTex(loader.secondAlbedoGUIDs[currProp._SecondaryMainTex]);
+                    currProp._SecondaryMainTex = resources.rgbaPool.GetTex(loader.secondAlbedoGUIDs[currProp._SecondaryMainTex], ref textureLoadingFlags);
                 }
                 if (currProp._BumpMap >= 0)
                 {
-                    currProp._BumpMap = resources.rgbaPool.GetTex(loader.normalGUIDs[currProp._BumpMap], true);
+                    currProp._BumpMap = resources.rgbaPool.GetTex(loader.normalGUIDs[currProp._BumpMap], ref textureLoadingFlags, true);
                 }
                 if (currProp._SecondaryBumpMap >= 0)
                 {
-                    currProp._SecondaryBumpMap = resources.rgbaPool.GetTex(loader.secondNormalGUIDs[currProp._SecondaryBumpMap], true);
+                    currProp._SecondaryBumpMap = resources.rgbaPool.GetTex(loader.secondNormalGUIDs[currProp._SecondaryBumpMap], ref textureLoadingFlags, true);
                 }
 
                 if (currProp._SpecularMap >= 0)
                 {
-                    currProp._SpecularMap = resources.rgbaPool.GetTex(loader.smoGUIDs[currProp._SpecularMap]);
+                    currProp._SpecularMap = resources.rgbaPool.GetTex(loader.smoGUIDs[currProp._SpecularMap], ref textureLoadingFlags);
                 }
                 if (currProp._SecondarySpecularMap >= 0)
                 {
-                    currProp._SecondarySpecularMap = resources.rgbaPool.GetTex(loader.secondSpecGUIDs[currProp._SecondarySpecularMap]);
+                    currProp._SecondarySpecularMap = resources.rgbaPool.GetTex(loader.secondSpecGUIDs[currProp._SecondarySpecularMap], ref textureLoadingFlags);
                 }
                 if (currProp._EmissionMap >= 0)
                 {
-                    currProp._EmissionMap = resources.emissionPool.GetTex(loader.emissionGUIDs[currProp._EmissionMap]);
+                    currProp._EmissionMap = resources.emissionPool.GetTex(loader.emissionGUIDs[currProp._EmissionMap], ref textureLoadingFlags);
                 }
                 if (currProp._HeightMap >= 0)
                 {
-                    currProp._HeightMap = resources.heightPool.GetTex(loader.heightGUIDs[currProp._HeightMap]);
+                    currProp._HeightMap = resources.heightPool.GetTex(loader.heightGUIDs[currProp._HeightMap], ref textureLoadingFlags);
                 }
             }
 
@@ -152,10 +156,11 @@ namespace MPipeline
             if (state != State.Unloaded)
             {
                 Debug.LogError("Scene: \"" + fileName + "\" is still running! That will cause a leak!");
+                loader.Dispose();
+                if (materialProperties.IsCreated) materialProperties.Dispose();
+                if (materialIndexBuffer.IsCreated) materialIndexBuffer.Dispose();
             }
-            loader.Dispose();
-            if (materialProperties.IsCreated) materialProperties.Dispose();
-            if (materialIndexBuffer.IsCreated) materialIndexBuffer.Dispose();
+            textureLoadingFlags.Dispose();
         }
 
         public IEnumerator Delete()
@@ -278,6 +283,13 @@ namespace MPipeline
             loader.triangleMats.Dispose();
             clusterResources.vmManager.UpdateMaterialToGPU(materialProperties, materialIndexBuffer);
             materialProperties.Dispose();
+            for (int i = 0; i < textureLoadingFlags.Length; ++i)
+            {
+                while (!textureLoadingFlags[i])
+                {
+                    yield return null;
+                }
+            }
             Debug.Log("Loaded");
         }
         #endregion

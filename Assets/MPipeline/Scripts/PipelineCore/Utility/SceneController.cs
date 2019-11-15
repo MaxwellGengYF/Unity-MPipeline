@@ -90,13 +90,62 @@ namespace MPipeline
             baseBuffer = new PipelineBaseBuffer();
             PipelineFunctions.InitBaseBuffer(baseBuffer, maximumClusterCount);
         }
-
+        public struct MoveCommand
+        {
+            public int sceneIndex;
+            public float3 deltaPosition;
+            public int clusterCount;
+        }
+        const int CLEAR_KERNEL = 7;
+        const int COLLECT_KERNEL = 8;
+        const int EXECUTE_CLUSTER_KERNEL = 9;
+        const int EXECUTE_POINT_KERNEL = 10;
+        const int EXECUTE_CLUSTER_KERNEL_MOVE_ALL = 11;
+        const int EXECUTE_POINT_KERNEL_MOVE_ALL = 12;
+        public static void MoveEachScenes(NativeList<MoveCommand> allCommands)
+        {
+            int maximumClusterCount = 0;
+            if (allCommands.Length > 0)
+            {
+                maximumClusterCount = allCommands[0].clusterCount;
+                for (int i = 1; i < allCommands.Length; ++i)
+                {
+                    maximumClusterCount = max(maximumClusterCount, allCommands[i].clusterCount);
+                }
+            }
+            ComputeShader shad = resources.shaders.streamingShader;
+            ComputeBuffer tempBuffer = GetTempPropertyBuffer(maximumClusterCount + 1, sizeof(uint));
+            CommandBuffer cb = RenderPipeline.BeforeFrameBuffer;
+            cb.SetComputeBufferParam(shad, CLEAR_KERNEL, ShaderIDs._TempPropBuffer, tempBuffer);
+            cb.SetComputeBufferParam(shad, COLLECT_KERNEL, ShaderIDs._TempPropBuffer, tempBuffer);
+            cb.SetComputeBufferParam(shad, COLLECT_KERNEL, ShaderIDs.clusterBuffer, baseBuffer.clusterBuffer);
+            cb.SetComputeBufferParam(shad, EXECUTE_CLUSTER_KERNEL, ShaderIDs._TempPropBuffer, tempBuffer);
+            cb.SetComputeBufferParam(shad, EXECUTE_CLUSTER_KERNEL, ShaderIDs.clusterBuffer, baseBuffer.clusterBuffer);
+            cb.SetComputeBufferParam(shad, EXECUTE_POINT_KERNEL, ShaderIDs.verticesBuffer, baseBuffer.verticesBuffer);
+            cb.SetComputeBufferParam(shad, EXECUTE_POINT_KERNEL, ShaderIDs._TempPropBuffer, tempBuffer);
+            foreach (var i in allCommands)
+            {
+                cb.SetComputeIntParam(shad, ShaderIDs._TargetElement, i.sceneIndex);
+                cb.SetComputeVectorParam(shad, ShaderIDs._OffsetDirection, float4(i.deltaPosition, 1));
+                cb.DispatchCompute(shad, CLEAR_KERNEL, 1, 1, 1);
+                ComputeShaderUtility.Dispatch(shad, cb, COLLECT_KERNEL, baseBuffer.clusterCount);
+                ComputeShaderUtility.Dispatch(shad, cb, EXECUTE_CLUSTER_KERNEL, i.clusterCount);
+                cb.DispatchCompute(shad, EXECUTE_POINT_KERNEL, i.clusterCount, 1, 1);
+            }
+        }
+        public static void MoveAllScenes(float3 delta)
+        {
+            if (baseBuffer.clusterCount <= 0) return;
+            ComputeShader shad = resources.shaders.streamingShader;
+            CommandBuffer cb = RenderPipeline.BeforeFrameBuffer;
+            cb.SetComputeBufferParam(shad, EXECUTE_CLUSTER_KERNEL_MOVE_ALL, ShaderIDs.clusterBuffer, baseBuffer.clusterBuffer);
+            cb.SetComputeBufferParam(shad, EXECUTE_POINT_KERNEL_MOVE_ALL, ShaderIDs.verticesBuffer, baseBuffer.verticesBuffer);
+            cb.SetComputeVectorParam(shad, ShaderIDs._OffsetDirection, float4(delta, 1));
+            ComputeShaderUtility.Dispatch(shad, cb, EXECUTE_CLUSTER_KERNEL_MOVE_ALL, baseBuffer.clusterCount);
+            cb.DispatchCompute(shad, EXECUTE_POINT_KERNEL_MOVE_ALL, baseBuffer.clusterCount, 1, 1);
+        }
         public static void MoveScene(int sceneIndex, float3 deltaPosition, int clusterCount)
         {
-            const int CLEAR_KERNEL = 7;
-            const int COLLECT_KERNEL = 8;
-            const int EXECUTE_CLUSTER_KERNEL = 9;
-            const int EXECUTE_POINT_KERNEL = 10;
             ComputeShader shad = resources.shaders.streamingShader;
             ComputeBuffer tempBuffer = GetTempPropertyBuffer(clusterCount + 1, sizeof(uint));
             CommandBuffer cb = RenderPipeline.BeforeFrameBuffer;
