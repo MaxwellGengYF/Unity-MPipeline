@@ -194,7 +194,6 @@ void frag_surf (v2f_surf IN,
   //TODO
   //Get TBN From height
   o.Normal = o.Normal.xzy;
-  
   outEmission = ProceduralStandardSpecular_Deferred (o, outGBuffer0, outGBuffer1, outGBuffer2); //GI neccessary here!
 
 

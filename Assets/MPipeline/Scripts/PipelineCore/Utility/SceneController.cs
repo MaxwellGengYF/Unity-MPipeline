@@ -39,7 +39,24 @@ namespace MPipeline
         public static PipelineBaseBuffer baseBuffer { get; private set; }
 
         public static NativeList<ulong> addList;
-        private static NativeDictionary<int, int, PipelineCamera.IntEqual> allTempBuffers;
+        private struct BufferKey
+        {
+            public int size;
+            public ComputeBufferType type;
+            public override int GetHashCode()
+            {
+                return size.GetHashCode() | (type.GetHashCode() & 65535);
+            }
+            public struct Equal : IFunction<BufferKey, BufferKey, bool>
+            {
+                public bool Run(ref BufferKey a, ref BufferKey b)
+                {
+                    return a.size == b.size && a.type == b.type;
+                }
+            }
+        }
+
+        private static NativeDictionary<BufferKey, int, BufferKey.Equal> allTempBuffers;
         public static void SetState()
         {
             if (singletonReady && baseBuffer.clusterCount > 0)
@@ -51,19 +68,19 @@ namespace MPipeline
                 gpurpEnabled = false;
             }
         }
-        public static ComputeBuffer GetTempPropertyBuffer(int length, int stride)
+        public static ComputeBuffer GetTempPropertyBuffer(int length, int stride, ComputeBufferType type = ComputeBufferType.Default)
         {
             if (!allTempBuffers.isCreated)
-                allTempBuffers = new NativeDictionary<int, int, PipelineCamera.IntEqual>(11, Allocator.Persistent, new PipelineCamera.IntEqual());
+                allTempBuffers = new NativeDictionary<BufferKey, int, BufferKey.Equal>(11, Allocator.Persistent, new BufferKey.Equal());
             ComputeBuffer target;
             int targetIndex;
-            if (allTempBuffers.Get(stride, out targetIndex))
+            if (allTempBuffers.Get(new BufferKey { size = stride, type = type }, out targetIndex))
             {
                 target = MUnsafeUtility.GetHookedObject(targetIndex) as ComputeBuffer;
                 if (target.count < length)
                 {
                     target.Dispose();
-                    target = new ComputeBuffer(length, stride);
+                    target = new ComputeBuffer(length, stride, type);
                     MUnsafeUtility.SetHookedObject(targetIndex, target);
                 }
                 return target;
@@ -71,7 +88,7 @@ namespace MPipeline
             else
             {
                 target = new ComputeBuffer(length, stride);
-                allTempBuffers[stride] = MUnsafeUtility.HookObject(target);
+                allTempBuffers[new BufferKey { size = stride, type = type }] = MUnsafeUtility.HookObject(target);
                 return target;
             }
         }
@@ -90,6 +107,28 @@ namespace MPipeline
             baseBuffer = new PipelineBaseBuffer();
             PipelineFunctions.InitBaseBuffer(baseBuffer, maximumClusterCount);
         }
+
+        public static int GetMoveCountBuffer()
+        {
+            if (baseBuffer.moveCountBuffers.Length > 0)
+            {
+                int index = baseBuffer.moveCountBuffers[baseBuffer.moveCountBuffers.Length - 1];
+                baseBuffer.moveCountBuffers.RemoveLast();
+                return index;
+            }
+            else
+            {
+                ComputeBuffer cb = new ComputeBuffer(5, sizeof(int), ComputeBufferType.IndirectArguments);
+                return MUnsafeUtility.HookObject(cb);
+            }
+        }
+
+        public static void ReturnMoveCountBuffer(int index)
+        {
+            
+            baseBuffer.moveCountBuffers.Add(index);
+        }
+
         public struct MoveCommand
         {
             public int sceneIndex;

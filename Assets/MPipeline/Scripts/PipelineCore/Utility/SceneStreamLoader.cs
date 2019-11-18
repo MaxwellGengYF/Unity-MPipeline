@@ -113,9 +113,11 @@ namespace MPipeline
             fsm.Write(cacheArray, 0, arr.Length * sizeof(VirtualMaterial.MaterialProperties) + sizeof(int));
         }
 
-        public void LoadAll()
+        public bool LoadAll(int leftedCluster)
         {
+            fsm.Position = 0;
             LoadClusterCount();
+            if (clusterCount > leftedCluster) return false;
             LoadGUIDArray(ref albedoGUIDs);
             LoadGUIDArray(ref normalGUIDs);
             LoadGUIDArray(ref smoGUIDs);
@@ -126,6 +128,7 @@ namespace MPipeline
             LoadGUIDArray(ref secondSpecGUIDs);
             LoadMaterialArray(ref allProperties);
             LoadClusterData(out cluster, out points, out triangleMats);
+            return true;
         }
 
         public void SaveAll()

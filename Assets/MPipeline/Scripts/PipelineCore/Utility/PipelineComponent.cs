@@ -249,7 +249,7 @@ namespace MPipeline
         public ComputeBuffer verticesBuffer;        //Point
         public ComputeBuffer triangleMaterialBuffer;
         public ComputeBuffer reCheckCount;        //Point
-        public ComputeBuffer moveCountBuffer;
+        public NativeList<int> moveCountBuffers;
         public int clusterCount;
         public const int INDIRECTSIZE = 20;
         public const int CLUSTERCLIPCOUNT = 384;
