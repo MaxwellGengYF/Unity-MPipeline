@@ -16,6 +16,7 @@ namespace MPipeline
     public unsafe sealed class Test : MonoBehaviour
     {
         public List<SceneStreaming> streamers;
+        public SceneStreaming parentStreamer;
         public List<float> distances;
         public Transform point;
         private int level = 0;
@@ -37,54 +38,17 @@ namespace MPipeline
             SceneController.MoveAllScenes(float3(0, 1, 0));
         }
 
+        bool sb;
         private void Update()
         {
-            float dist = distance(point.position, transform.position);
-            if (dist < distances[level])
+            if(Input.GetKeyDown(KeyCode.Space))
             {
-                if (level > 0)
-                {
-                    if (dist < distances[level - 1])
-                    {
-                        level--;
-                        StartCoroutine(streamers[level].Generate());
-                        StartCoroutine(streamers[level + 1].Delete());
-                    }
-                }
-                else if(streamers[0].state == SceneStreaming.State.Unloaded)
-                {
-                    StartCoroutine(streamers[0].Generate());
-                }
+                if (sb)
+                    StartCoroutine(SceneStreaming.Combine(parentStreamer, streamers));
+                else
+                    StartCoroutine(SceneStreaming.Separate(parentStreamer, streamers));
+                sb = !sb;
             }
-            else
-            {
-                if (level < streamers.Count - 1)
-                {
-                    level++;
-                    StartCoroutine(streamers[level].Generate());
-                    StartCoroutine(streamers[level - 1].Delete());
-                }
-                else if(streamers[level].state == SceneStreaming.State.Loaded)
-                {
-                    StartCoroutine(streamers[level].Delete());
-                }
-            }
-
-            /*int value;
-            if (int.TryParse(Input.inputString, out value))
-            {
-                if (value < streamers.Count)
-                {
-                    if (streamers[value].state == SceneStreaming.State.Unloaded)
-                    {
-                        StartCoroutine(streamers[value].Generate());
-                    }
-                    else if (streamers[value].state == SceneStreaming.State.Loaded)
-                    {
-                        StartCoroutine(streamers[value].Delete());
-                    }
-                }
-            }*/
         }
     }
 }

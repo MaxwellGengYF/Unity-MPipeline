@@ -29,6 +29,7 @@ namespace MPipeline
             public int rightUpSon;
         }
         private NativeQueue<LoadCommand> allLoadingCommand;
+        private List<SceneStreaming> childrenList = new List<SceneStreaming>(4);
         protected override void OnEnableFunc()
         {
             levelOffset = new NativeList<int>(allLevel, Allocator.Persistent);
@@ -43,14 +44,20 @@ namespace MPipeline
 
         private IEnumerator Loader()
         {
-            while(enabled)
+            while (enabled)
             {
                 LoadCommand cmd;
                 if (allLoadingCommand.TryDequeue(out cmd))
                 {
-                    switch(cmd.ope)
+                    switch (cmd.ope)
                     {
                         case LoadCommand.Operator.Combine:
+                            childrenList.Clear();
+                            if (allGPURPScene[cmd.leftDownSon]) childrenList.Add(allGPURPScene[cmd.leftDownSon]);
+                            if (allGPURPScene[cmd.leftUpSon]) childrenList.Add(allGPURPScene[cmd.leftUpSon]);
+                            if (allGPURPScene[cmd.rightDownSon]) childrenList.Add(allGPURPScene[cmd.rightDownSon]);
+                            if (allGPURPScene[cmd.rightUpSon]) childrenList.Add(allGPURPScene[cmd.rightUpSon]);
+                            yield return SceneStreaming.Combine(allGPURPScene[cmd.parent], childrenList);
                             break;
                         case LoadCommand.Operator.Disable:
                             yield return allGPURPScene[cmd.parent].Delete();
@@ -59,6 +66,12 @@ namespace MPipeline
                             yield return allGPURPScene[cmd.parent].Generate();
                             break;
                         case LoadCommand.Operator.Separate:
+                            childrenList.Clear();
+                            if (allGPURPScene[cmd.leftDownSon]) childrenList.Add(allGPURPScene[cmd.leftDownSon]);
+                            if (allGPURPScene[cmd.leftUpSon]) childrenList.Add(allGPURPScene[cmd.leftUpSon]);
+                            if (allGPURPScene[cmd.rightDownSon]) childrenList.Add(allGPURPScene[cmd.rightDownSon]);
+                            if (allGPURPScene[cmd.rightUpSon]) childrenList.Add(allGPURPScene[cmd.rightUpSon]);
+                            yield return SceneStreaming.Separate(allGPURPScene[cmd.parent], childrenList);
                             break;
                     }
                 }
@@ -146,7 +159,6 @@ namespace MPipeline
 
         private void Combine(bool willRender)
         {
-            //TODO
         }
 
         public void FirstUpdate(double3 cameraPos, ref Data data)

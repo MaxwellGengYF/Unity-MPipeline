@@ -131,6 +131,7 @@ namespace MPipeline
             if (maximumLength <= 0)
             {
                 baseBuffer.clusterCount = 0;
+                baseBuffer.prepareClusterCount = 0;
                 return;
             }
             baseBuffer.clusterBuffer = new ComputeBuffer(maximumLength, sizeof(Cluster));
@@ -143,6 +144,7 @@ namespace MPipeline
             baseBuffer.verticesBuffer = new ComputeBuffer(maximumLength * PipelineBaseBuffer.CLUSTERCLIPCOUNT, sizeof(Point));
             baseBuffer.triangleMaterialBuffer = new ComputeBuffer(maximumLength * PipelineBaseBuffer.CLUSTERTRIANGLECOUNT, sizeof(int));
             baseBuffer.clusterCount = 0;
+            baseBuffer.prepareClusterCount = 0;
             if (GeometryEvent.useHiZ)
             {
                 baseBuffer.reCheckCount = new ComputeBuffer(5, sizeof(int), ComputeBufferType.IndirectArguments);

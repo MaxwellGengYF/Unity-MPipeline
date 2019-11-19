@@ -251,6 +251,7 @@ namespace MPipeline
         public ComputeBuffer reCheckCount;        //Point
         public NativeList<int> moveCountBuffers;
         public int clusterCount;
+        public int prepareClusterCount;
         public const int INDIRECTSIZE = 20;
         public const int CLUSTERCLIPCOUNT = 384;
         public const int CLUSTERTRIANGLECOUNT = CLUSTERCLIPCOUNT / 3;
