@@ -235,6 +235,7 @@ namespace MPipeline
         protected override void Render(ScriptableRenderContext renderContext, Camera[] cameras)
         {
             currentFrameCamera.Clear();
+            if (!PipelineCamera.CameraSearchDict.isCreated) return;
             foreach(var cam in cameras)
             {
                 CameraSetting csg;
