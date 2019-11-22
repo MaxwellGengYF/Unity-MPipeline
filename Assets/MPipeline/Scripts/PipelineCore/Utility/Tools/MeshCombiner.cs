@@ -90,32 +90,44 @@ namespace MPipeline
         public string modelName = "TestFile";
         [Range(100, 500)]
         public int voxelCount = 100;
+
+        public SceneStreaming property;
         [EasyButtons.Button]
         public void TryThis()
         {
-            bool save = false;
+            string fileName = ClusterMatResources.infosPath + modelName + ".mpipe";
+            if(!property)
+            {
+                Debug.LogError("Property Empty!");
+            }
 
-            if (res == null)
+            if(string.IsNullOrEmpty(modelName))
+            {
+                Debug.LogError("Name Empty!");
+                return;
+            }
+            if (File.Exists(fileName))
+            {
+                Debug.LogError("File Already Exists!");
+                return;
+            }
+
+
+            bool save = false;
+            if (!res)
+            {
+                res = AssetDatabase.LoadAssetAtPath<ClusterMatResources>("Assets/SceneManager.asset");
+            }
+            if (!res)
             {
                 save = true;
                 res = ScriptableObject.CreateInstance<ClusterMatResources>();
                 res.name = "SceneManager";
-                res.clusterProperties = new List<SceneStreaming>();
             }
-
-            SceneStreaming property = new SceneStreaming();
             SceneStreamLoader loader = new SceneStreamLoader();
-            loader.fsm = new FileStream(ClusterMatResources.infosPath + modelName + ".mpipe", FileMode.OpenOrCreate, FileAccess.ReadWrite);
-            property.name = modelName;
-            int containIndex = -1;
-            for(int i = 0; i < res.clusterProperties.Count; ++i)
-            {
-                if (property.name ==  res.clusterProperties[i].name)
-                {
-                    containIndex = i;
-                    break;
-                }
-            }
+
+            loader.fsm = new FileStream(fileName, FileMode.OpenOrCreate, FileAccess.ReadWrite);
+            property.fileName = modelName;
             LODGroup[] groups = GetComponentsInChildren<LODGroup>();
             Dictionary<MeshRenderer, bool> lowLevelDict = new Dictionary<MeshRenderer, bool>();
             foreach (var i in groups)
@@ -131,12 +143,10 @@ namespace MPipeline
                 }
             }
             CombinedModel model = ProcessCluster(GetComponentsInChildren<MeshRenderer>(false), ref loader, lowLevelDict);
-            loader.clusterCount = ClusterGenerator.GenerateCluster(model.allPoints, model.allMatIndex, model.bound, voxelCount, containIndex < 0 ? res.clusterProperties.Count : containIndex, ref loader);
-          
+            loader.clusterCount = ClusterGenerator.GenerateCluster(model.allPoints, model.allMatIndex, model.bound, voxelCount, ref loader);
+
             res.maximumMaterialCount = Mathf.Max(1, res.maximumMaterialCount);
             res.maximumMaterialCount = Mathf.Max(res.maximumMaterialCount, loader.allProperties.Length);
-            if (containIndex < 0) res.clusterProperties.Add(property);
-            else res.clusterProperties[containIndex] = property;
             if (save)
                 AssetDatabase.CreateAsset(res, "Assets/SceneManager.asset");
             else

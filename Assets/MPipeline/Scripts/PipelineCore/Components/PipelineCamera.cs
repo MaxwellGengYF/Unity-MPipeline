@@ -33,7 +33,7 @@ namespace MPipeline
                 return a == b;
             }
         }
-        private struct PtrEqual : IFunction<ulong, ulong, bool>
+        public struct PtrEqual : IFunction<ulong, ulong, bool>
         {
             [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
             public bool Run(ref ulong a, ref ulong b)
@@ -47,11 +47,14 @@ namespace MPipeline
         public RenderTargets targets;
         public UnityEngine.Rendering.PostProcessing.PostProcessProfile postProfile;
         public PipelineResources.CameraRenderingPath renderingPath = PipelineResources.CameraRenderingPath.GPUDeferred;
-        public Dictionary<Type, IPerCameraData> allDatas = new Dictionary<Type, IPerCameraData>(17);
+        public NativeDictionary<ulong, int, PtrEqual> allDatas;
         public bool inverseRender = false;
         public RenderTargetIdentifier cameraTarget = BuiltinRenderTextureType.CameraTarget;
         private static NativeDictionary<int, ulong, IntEqual> cameraSearchDict;
-        public static NativeDictionary<int, ulong, IntEqual> CameraSearchDict => cameraSearchDict;
+        public static NativeDictionary<int, ulong, IntEqual> CameraSearchDict
+        {
+            get { return cameraSearchDict; }
+        }
         public float3 frustumMinPoint { get; private set; }
         public float3 frustumMaxPoint { get; private set; }
         [HideInInspector]
@@ -73,6 +76,7 @@ namespace MPipeline
         }
         private void OnEnable()
         {
+            if (!allDatas.isCreated) allDatas = new NativeDictionary<ulong, int, PtrEqual>(17, Allocator.Persistent, new PtrEqual());
             AddToDict();
             GetComponent<Camera>().layerCullDistances = layerCullDistance;
         }
@@ -85,9 +89,16 @@ namespace MPipeline
         }
         private void OnDestroy()
         {
-            foreach (var i in allDatas.Values)
-                i.DisposeProperty();
-            allDatas.Clear();
+            if (allDatas.isCreated)
+            {
+                foreach (var i in allDatas)
+                {
+                    IPerCameraData data = ((IPerCameraData)MUnsafeUtility.GetHookedObject(i.value));
+                    data.DisposeProperty();
+                    MUnsafeUtility.RemoveHookedObject(i.value);
+                }
+                allDatas.Dispose();
+            }
             cam = null;
             /* foreach (var i in commandBuffers.Values)
              {

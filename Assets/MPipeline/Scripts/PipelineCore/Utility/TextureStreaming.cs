@@ -62,7 +62,7 @@ namespace MPipeline
 
 
 
-        public int GetTex(int4x4 guidValue, bool isNormal = false)
+        public int GetTex(int4x4 guidValue, ref NativeList<bool> flagList, bool isNormal = false)
         {
             AssetReference guid = clusterRes.GetReference(ref guidValue);
             int index;
@@ -81,7 +81,9 @@ namespace MPipeline
                 indexPool.RemoveLast();
                 usageCount[index] = 1;
                 guidToIndex.Add(guid, index);
-                clusterRes.AddLoadCommand(guid, rt, index, isNormal);
+                int flagIndex = flagList.Length;
+                flagList.Add(false);
+                clusterRes.AddLoadCommand(guid, rt, index, isNormal, ref flagList, flagIndex);
                 //TODO
                 //Streaming Load Texture
             }

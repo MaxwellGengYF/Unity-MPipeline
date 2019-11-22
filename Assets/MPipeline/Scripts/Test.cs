@@ -15,6 +15,11 @@ namespace MPipeline
 {
     public unsafe sealed class Test : MonoBehaviour
     {
+        public List<SceneStreaming> streamers;
+        public SceneStreaming parentStreamer;
+        public List<float> distances;
+        public Transform point;
+        private int level = 0;
         [EasyButtons.Button]
         void EnableWhiteModel()
         {
@@ -27,23 +32,17 @@ namespace MPipeline
             Shader.DisableKeyword("USE_WHITE");
         }
         public ClusterMatResources tex;
-        [EasyButtons.Button]
-        void TestCross()
-        {
-            Debug.Log(System.Guid.NewGuid().ToString());
-        }
-
+        bool sb;
         private void Update()
         {
-            
-            int value;
-            if (int.TryParse(Input.inputString, out value))
+            if(Input.GetKeyDown(KeyCode.Space))
             {
-                var clusterResources = RenderPipeline.current.resources.clusterResources;
-                clusterResources.TransformScene((uint)value, this);
+                if (sb)
+                    StartCoroutine(SceneStreaming.Combine(parentStreamer, streamers));
+                else
+                    StartCoroutine(SceneStreaming.Separate(parentStreamer, streamers));
+                sb = !sb;
             }
-            
         }
-
     }
 }

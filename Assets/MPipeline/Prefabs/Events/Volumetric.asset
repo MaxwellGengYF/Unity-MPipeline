@@ -16,6 +16,6 @@ MonoBehaviour:
   enableSuperSample: 0
   availableDistance: 48
   indirectIntensity: 0.16666667
-  linearFogDensity: 0.0002
+  linearFogDensity: 0.0003
   darkerWeight: 0.75
   brighterWeight: 0.95

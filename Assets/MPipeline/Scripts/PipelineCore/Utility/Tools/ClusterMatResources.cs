@@ -26,6 +26,7 @@ namespace MPipeline
 
     public sealed unsafe class ClusterMatResources : ScriptableObject
     {
+        public static ClusterMatResources current { get; private set; }
         #region SERIALIZABLE
         public enum TextureSize
         {
@@ -39,8 +40,6 @@ namespace MPipeline
         public int maximumClusterCount = 100000;
         public int maximumMaterialCount = 1;
         public int materialPoolSize = 500;
-
-        public List<SceneStreaming> clusterProperties;
         public TexturePool rgbaPool;
         public TexturePool emissionPool;
         public TexturePool heightPool;
@@ -54,13 +53,14 @@ namespace MPipeline
             public AssetReference aref;
             public AsyncOperationHandle<Texture> loader;
             public RenderTexture targetTexArray;
+            public NativeList<bool> finishFlags;
+            public int finishFlagsIndex;
             public int targetMipLevel;
             public int targetIndex;
             public bool startLoading;
             public bool isNormal;
         }
         public VirtualMaterialManager vmManager;
-        private MStringBuilder msbForCluster;
         private List<AsyncTextureLoader> asyncLoader = new List<AsyncTextureLoader>(100);
         private List<AssetReference> allReferenceCache = new List<AssetReference>(200);
         private struct Int4x4Equal : IFunction<int4x4, int4x4, bool>
@@ -78,11 +78,13 @@ namespace MPipeline
         }
         private NativeDictionary<int4x4, int, Int4x4Equal> referenceCacheDict;
         private NativeArray<int> mipIDs;
-        public void AddLoadCommand(AssetReference aref, RenderTexture targetTexArray, int targetIndex, bool isNormal)
+        public void AddLoadCommand(AssetReference aref, RenderTexture targetTexArray, int targetIndex, bool isNormal, ref NativeList<bool> flagList, int flagListIndex)
         {
             asyncLoader.Add(new AsyncTextureLoader
             {
                 aref = aref,
+                finishFlags = flagList,
+                finishFlagsIndex = flagListIndex,
                 targetTexArray = targetTexArray,
                 targetIndex = targetIndex,
                 isNormal = isNormal,
@@ -105,6 +107,7 @@ namespace MPipeline
         }
         public void Init(PipelineResources res)
         {
+            current = this;
             referenceCacheDict = new NativeDictionary<int4x4, int, Int4x4Equal>(200, Allocator.Persistent, new Int4x4Equal());
             mipIDs = new NativeArray<int>(2, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
             mipIDs[0] = Shader.PropertyToID("_Mip0");
@@ -113,17 +116,12 @@ namespace MPipeline
             mipIDs[3] = Shader.PropertyToID("_Mip3");
             mipIDs[4] = Shader.PropertyToID("_Mip4");
             mipIDs[5] = Shader.PropertyToID("_Mip5");*/
-            msbForCluster = new MStringBuilder(100);
-            for (int i = 0; i < clusterProperties.Count; ++i)
-            {
-                var cur = clusterProperties[i];
-                cur.Init(msbForCluster, this);
-            }
-
             rgbaPool.Init(0, GraphicsFormat.R8G8B8A8_UNorm, (int)fixedTextureSize, this);
             emissionPool.Init(2, GraphicsFormat.R16G16B16A16_SFloat, (int)fixedTextureSize, this);
             heightPool.Init(3, GraphicsFormat.R8_UNorm, (int)fixedTextureSize, this);
             vmManager = new VirtualMaterialManager(materialPoolSize, maximumMaterialCount, res.shaders.streamingShader);
+            SceneStreaming.loading = false;
+
         }
         public void UpdateData(CommandBuffer buffer, PipelineResources res)
         {
@@ -162,6 +160,7 @@ namespace MPipeline
                     buffer.DispatchCompute(loadShader, 4, resolution.x, resolution.y, 1);
                     loader.aref.ReleaseAsset();
                     asyncLoader[i] = asyncLoader[asyncLoader.Count - 1];
+                    loader.finishFlags[loader.finishFlagsIndex] = true;
                     asyncLoader.RemoveAt(asyncLoader.Count - 1);
                     i--;
                 }
@@ -170,6 +169,7 @@ namespace MPipeline
 
         public void Dispose()
         {
+            current = null;
             rgbaPool.Dispose();
             emissionPool.Dispose();
             heightPool.Dispose();
@@ -177,20 +177,6 @@ namespace MPipeline
             referenceCacheDict.Dispose();
             mipIDs.Dispose();
 
-        }
-        public void TransformScene(uint value, MonoBehaviour behavior)
-        {
-            if (value < clusterProperties.Count)
-            {
-                SceneStreaming str = clusterProperties[(int)value];
-                if (str.state == SceneStreaming.State.Loaded)
-                    // str.DeleteSync();
-                    behavior.StartCoroutine(str.Delete());
-                else if (str.state == SceneStreaming.State.Unloaded)
-                    // str.GenerateSync();
-                    behavior.StartCoroutine(str.Generate());
-
-            }
         }
         #endregion
     }

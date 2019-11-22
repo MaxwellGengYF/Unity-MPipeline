@@ -22,6 +22,20 @@ inline float3 GetVirtualTextureUV(Texture2D<float4> indexTex, float4 indexTexelS
     return float3(localUV, scaleOffset.w);
 }
 
+inline float3 GetVirtualTextureUVClamp(Texture2D<float4> indexTex, float4 indexTexelSize, float2 startChunkPos, float2 localUV)
+{
+    bool2 border = startChunkPos < 0;
+    localUV = border ? 0 : localUV;
+    startChunkPos = border ? 0 : startChunkPos;   
+    border = startChunkPos > (indexTexelSize.zw - 1);
+    localUV = border ? 1 : localUV;
+    startChunkPos = border ? (indexTexelSize.zw - 1) : startChunkPos;
+    float4 scaleOffset = indexTex[startChunkPos];
+    scaleOffset.w *= 2048;
+    localUV = localUV * scaleOffset.x + scaleOffset.yz;
+    return float3(localUV, scaleOffset.w);
+}
+
 inline float3 GetVirtualTextureUV(Texture2D<float4> indexTex, float4 indexTexelSize, float2 startChunkPos, float2 localUV, out float4 scaleOffset)
 {
     startChunkPos = (0.25 + startChunkPos) % indexTexelSize.zw;
@@ -31,13 +45,13 @@ inline float3 GetVirtualTextureUV(Texture2D<float4> indexTex, float4 indexTexelS
     return float3(localUV, scaleOffset.w);
 }
 
-inline float4 GetVirtualTextureScaleOffset(Texture2D<float4> indexTex, float4 indexTexelSize, float2 startChunkPos)
+inline float4 GetVirtualTextureScaleOffsetLocal(Texture2D<float4> indexTex, float4 indexTexelSize, float2 startChunkPos)
 {
-    startChunkPos = (0.25 + startChunkPos) % indexTexelSize.zw;
     float4 scaleOffset = indexTex[startChunkPos];
     scaleOffset.w *= 2048;
     return scaleOffset;
 }
+
 
 inline void GetBilinearVirtualTextureUV(Texture2D<float4> indexTex, float4 indexTexelSize, float2 startChunkPos, float2 localUV, float4 textureSize, out float3 uvs[4], out float2 weight)
 {
@@ -59,7 +73,7 @@ inline void GetBilinearVirtualTextureUV(Texture2D<float4> indexTex, float4 index
     [branch]
     if(dot(inBounding, 0.25) > 0.99)
     {
-        float4 scaleOffset = GetVirtualTextureScaleOffset(indexTex, indexTexelSize, startChunkPos);
+        float4 scaleOffset = GetVirtualTextureScaleOffsetLocal(indexTex, indexTexelSize, startChunkPos);
         uvs[0] = float3(uv[0] * scaleOffset.x + scaleOffset.yz, scaleOffset.w);
         uvs[1] = float3(uv[1] * scaleOffset.x + scaleOffset.yz, scaleOffset.w);
         uvs[2] = float3(uv[2] * scaleOffset.x + scaleOffset.yz, scaleOffset.w);
@@ -67,10 +81,10 @@ inline void GetBilinearVirtualTextureUV(Texture2D<float4> indexTex, float4 index
     }
     else
     {
-    uvs[0] = GetVirtualTextureUV(indexTex, indexTexelSize, floor(startChunkPos + uv[0]), frac(1 + uv[0]));
-    uvs[1] = GetVirtualTextureUV(indexTex, indexTexelSize, floor(startChunkPos + uv[1]), frac(1 +uv[1]));
-    uvs[2] = GetVirtualTextureUV(indexTex, indexTexelSize, floor(startChunkPos + uv[2]), frac(1 +uv[2]));
-    uvs[3] = GetVirtualTextureUV(indexTex, indexTexelSize, floor(startChunkPos + uv[3]), frac(1 +uv[3]));
+    uvs[0] = GetVirtualTextureUVClamp(indexTex, indexTexelSize, floor(startChunkPos + uv[0]), frac(1 + uv[0]));
+    uvs[1] = GetVirtualTextureUVClamp(indexTex, indexTexelSize, floor(startChunkPos + uv[1]), frac(1 +uv[1]));
+    uvs[2] = GetVirtualTextureUVClamp(indexTex, indexTexelSize, floor(startChunkPos + uv[2]), frac(1 +uv[2]));
+    uvs[3] = GetVirtualTextureUVClamp(indexTex, indexTexelSize, floor(startChunkPos + uv[3]), frac(1 +uv[3]));
     }
 }
 

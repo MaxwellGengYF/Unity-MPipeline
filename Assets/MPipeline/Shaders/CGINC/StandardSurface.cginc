@@ -1,10 +1,12 @@
 #ifndef __STANDARDSURFACE_INCLUDE__
 #define __STANDARDSURFACE_INCLUDE__
+//#define USE_VT_BLEND
 #include "VirtualTexture.cginc"
 	struct Input {
 			float2 uv_MainTex;
 			float3 viewDir;
 			float3 worldPos;
+			float3 worldNormal;
 			#ifdef USE_UV2
 			float2 uv2;
 			#endif
@@ -83,7 +85,7 @@ float4 _TerrainVTIndexTex_TexelSize;
 			secondNormal.xy = _VirtualBumpMap.SampleLevel(sampler_VirtualBumpMap, vtUV, 0);
 			secondNormal.z = sqrt(1 - dot(secondNormal.xy, secondNormal.xy));
 			float2 sm = _VirtualSMMap.SampleLevel(sampler_VirtualSMMap, vtUV, 0);
-			float lerpValue = pow(saturate(0.1 * (10 - IN.worldPos.y)), 2.2);
+			float lerpValue = saturate(IN.worldNormal.y);
 			c.xyz = lerp(c.xyz, secondCol.xyz, lerpValue);
 			spec.z = lerp(spec.z, secondCol.w, lerpValue);
 			spec.xy = lerp(spec.xy, sm, lerpValue);

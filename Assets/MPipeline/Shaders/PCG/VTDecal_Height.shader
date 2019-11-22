@@ -26,14 +26,21 @@ cbuffer UnityPerMaterial
 	float2 _NormalIntensity;
     float _HeightBlendScale;
 }
+#include "../CGINC/VirtualTexture.cginc"
  sampler2D _MainTex;
             float4 _MainTex_ST;
             sampler2D _BumpMap;
             sampler2D _SMO;
-            float2 _HeightScaleOffset;
-            Texture2DArray<float> _VirtualHeightmap; SamplerState sampler_VirtualHeightmap;
-            uint _OffsetIndex;
-            float4 _MaskScaleOffset;
+            float4 _HeightScaleOffset;
+            Texture2DArray<float> _VirtualDisplacement; SamplerState sampler_VirtualDisplacement;
+            Texture2D<float4> _MaskIndexMap;
+            float4 _MaskIndexMap_TexelSize;
+            float3 _OffsetIndex;
+
+float GetVTHeight(float2 localUV)
+{
+    return _VirtualDisplacement.SampleLevel(sampler_VirtualDisplacement, float3(localUV, _OffsetIndex.z), 0);
+}
 ENDCG
         Pass
         {
@@ -83,7 +90,7 @@ ENDCG
 
             float GetBlendWeight(float worldHeight, float2 screenUV)
             {
-                float vtHeight = _VirtualHeightmap.SampleLevel(sampler_VirtualHeightmap, float3(screenUV * _MaskScaleOffset.x + _MaskScaleOffset.yz, _OffsetIndex + 0.2), 0);
+                float vtHeight = GetVTHeight(screenUV);
                 float vtWorldHeight = vtHeight * _HeightScaleOffset.x + _HeightScaleOffset.y;
                 float blendWeight = (worldHeight - vtWorldHeight) * _HeightBlendScale;
                 return saturate(blendWeight);
@@ -149,10 +156,11 @@ ENDCG
             float frag (v2f i) : SV_Target
             {
                 float2 screenUV = i.screenUV.xy / i.screenUV.z;
-                float vtHeight = _VirtualHeightmap.SampleLevel(sampler_VirtualHeightmap, float3(screenUV * _MaskScaleOffset.x + _MaskScaleOffset.yz, _OffsetIndex + 0.2), 0);
+                float vtHeight = GetVTHeight(screenUV);
                  float vtWorldHeight = vtHeight * _HeightScaleOffset.x + _HeightScaleOffset.y;
                 float heightDiff = i.worldPos.y - vtWorldHeight;
-                return clamp(heightDiff * _MaskScaleOffset.w, 0, 1);
+                float blendWeight = saturate(heightDiff * _HeightBlendScale);
+                return saturate((clamp(lerp(vtWorldHeight, i.worldPos.y, blendWeight), vtWorldHeight + _HeightScaleOffset.z, vtWorldHeight + _HeightScaleOffset.w) - _HeightScaleOffset.y) / _HeightScaleOffset.x);
             }
             ENDCG
         }

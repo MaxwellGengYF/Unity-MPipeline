@@ -17,7 +17,7 @@ float3 ProcessNormal(float2 value)
 			float3 vtUV = float3(uv, vtIndex + 0.2);
 			float2 spec = _VirtualSMMap.Sample(sampler_VirtualSMMap, vtUV);
 			float4 c =  _VirtualMainTex.Sample(sampler_VirtualMainTex, vtUV);
-			o.Normal = ProcessNormal(_VirtualBumpMap.Sample(sampler_VirtualBumpMap, vtUV));
+			o.Normal = normalize(ProcessNormal(_VirtualBumpMap.Sample(sampler_VirtualBumpMap, vtUV)));
 			#ifdef DEBUG_QUAD_TREE
 			o.Albedo = float3(vtUV.xy, 0);
 			o.Occlusion = 1;

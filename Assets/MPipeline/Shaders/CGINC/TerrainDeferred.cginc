@@ -150,14 +150,14 @@ inline v2f_surf ds_surf (UnityTessellationFactors tessFactors, const OutputPatch
 o.screenUV.xyz = vi[0].screenUV*bary.x + vi[1].screenUV*bary.y + vi[2].screenUV*bary.z;
 float4 pack0 = vi[0].pack0*bary.x + vi[1].pack0*bary.y + vi[2].pack0*bary.z;
 o.vtUV =  vi[0].vtUV.z;
-float2 absoluteUV = vi[0].absoluteUV * bary.x + vi[1].absoluteUV * bary.y +vi[2].absoluteUV * bary.z;
+/*float2 absoluteUV = vi[0].absoluteUV * bary.x + vi[1].absoluteUV * bary.y +vi[2].absoluteUV * bary.z;
 float3 uvs[4];
 float2 weight;
 GetBilinearVirtualTextureUV(_MaskIndexMap,_MaskIndexMap_TexelSize, _HeightScaleOffset.zw, absoluteUV, _VirtualHeightmap_TexelSize, uvs, weight);
-  worldPos.y += SampleHeight(uvs, weight) * _HeightScaleOffset.x;
-  float2 uvNextOne = pack0.xy > 0.999 ? 1 : 0;
+  worldPos.y += SampleHeight(uvs, weight) * _HeightScaleOffset.x;*/
+  float2 uvNextOne = (pack0.xy > 0.999 && (vi[0].vtUV.xy + 1) < _TextureSize.w) ? 1 : 0;
  float3 dispVtUV = GetVirtualTextureUV(_TerrainVTIndexTex, _TerrainVTIndexTex_TexelSize, vi[0].vtUV.xy + uvNextOne, saturate(pack0.xy - uvNextOne));
-worldPos.y += _VirtualDisplacement.SampleLevel(sampler_VirtualDisplacement, dispVtUV, 0) * _TessellationFactors.w;
+worldPos.y += _VirtualDisplacement.SampleLevel(sampler_VirtualDisplacement, dispVtUV, 0) * _HeightScaleOffset.x;
 o.pos= mul(UNITY_MATRIX_VP, worldPos);
 o.worldPos.xyz = worldPos.xyz;
 o.screenUV.w = pack0.z;
@@ -194,7 +194,6 @@ void frag_surf (v2f_surf IN,
   //TODO
   //Get TBN From height
   o.Normal = o.Normal.xzy;
-  
   outEmission = ProceduralStandardSpecular_Deferred (o, outGBuffer0, outGBuffer1, outGBuffer2); //GI neccessary here!
 
 
@@ -282,15 +281,16 @@ inline v2f_shadow ds_shadow (UnityTessellationFactors tessFactors, const OutputP
   v2f_shadow o;
   float4 worldPos =  vi[0].pos*bary.x + vi[1].pos*bary.y + vi[2].pos*bary.z;
   worldPos.y += _HeightScaleOffset.y;
+  /*
 float2 absoluteUV = vi[0].absoluteUV * bary.x + vi[1].absoluteUV * bary.y +vi[2].absoluteUV * bary.z;
 float3 uvs[4];
 float2 weight;
 GetBilinearVirtualTextureUV(_MaskIndexMap,_MaskIndexMap_TexelSize, _HeightScaleOffset.zw, absoluteUV, _VirtualHeightmap_TexelSize, uvs, weight);
-  worldPos.y += SampleHeight(uvs, weight) * _HeightScaleOffset.x;
+  worldPos.y += SampleHeight(uvs, weight);*/
   float2 pack0 = vi[0].pack0*bary.x + vi[1].pack0*bary.y + vi[2].pack0*bary.z;
-  float2 uvNextOne = pack0 > 0.999 ? 1 : 0;
+  float2 uvNextOne = (pack0.xy > 0.999 && (vi[0].vtUV.xy + 1) < _TextureSize.w) ? 1 : 0;
   float3 dispVtUV = GetVirtualTextureUV(_TerrainVTIndexTex, _TerrainVTIndexTex_TexelSize, vi[0].vtUV + uvNextOne, saturate(pack0 - uvNextOne));
-worldPos.y += _VirtualDisplacement.SampleLevel(sampler_VirtualDisplacement, dispVtUV, 0) * _TessellationFactors.w;
+worldPos.y += _VirtualDisplacement.SampleLevel(sampler_VirtualDisplacement, dispVtUV, 0) * _HeightScaleOffset.x;
 o.pos= mul(_ShadowMapVP, worldPos);
 return o;
 }

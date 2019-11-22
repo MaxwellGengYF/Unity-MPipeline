@@ -218,12 +218,16 @@ namespace MPipeline
             foreach (var camPtr in PipelineCamera.CameraSearchDict)
             {
                 PipelineCamera cam = MUnsafeUtility.GetObject<PipelineCamera>((void*)camPtr.value);
-                var values = cam.allDatas.Values;
-                foreach (var j in values)
+                if (cam.allDatas.isCreated)
                 {
-                    j.DisposeProperty();
+                    foreach (var i in cam.allDatas)
+                    {
+                        IPerCameraData data = ((IPerCameraData)MUnsafeUtility.GetHookedObject(i.value));
+                        data.DisposeProperty();
+                        MUnsafeUtility.RemoveHookedObject(i.value);
+                    }
+                    cam.allDatas.Dispose();
                 }
-                cam.allDatas.Clear();
             }
             if (motionVectorMatricesBuffer != null) motionVectorMatricesBuffer.Dispose();
             MotionVectorDrawer.Dispose();
@@ -296,6 +300,7 @@ namespace MPipeline
             data.buffer.SetGlobalBuffer(ShaderIDs._LastFrameModel, motionVectorMatricesBuffer);
 
 #if UNITY_EDITOR
+            
             int tempID = Shader.PropertyToID("_TempRT");
 
             foreach (var pair in bakeList)
@@ -378,11 +383,15 @@ namespace MPipeline
             foreach (var cam in currentFrameCamera)
             {
                 renderingEditor = cam.isRenderingEditor;
+                
                 Render(cam.pipeCam, ref renderContext, cam.cam, propertyCheckedFlags);
                 data.ExecuteCommandBuffer();
 #if UNITY_EDITOR
                 if (renderingEditor)
+                {
                     renderContext.DrawGizmos(cam.cam, GizmoSubset.PostImageEffects);
+                    ScriptableRenderContext.EmitWorldGeometryForSceneView(cam.cam);
+                }
 #endif
                 renderContext.Submit();
                 needSubmit = false;

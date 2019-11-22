@@ -131,6 +131,7 @@ namespace MPipeline
             if (maximumLength <= 0)
             {
                 baseBuffer.clusterCount = 0;
+                baseBuffer.prepareClusterCount = 0;
                 return;
             }
             baseBuffer.clusterBuffer = new ComputeBuffer(maximumLength, sizeof(Cluster));
@@ -138,11 +139,12 @@ namespace MPipeline
             baseBuffer.instanceCountBuffer = new ComputeBuffer(5, 4, ComputeBufferType.IndirectArguments);
             NativeArray<uint> instanceCountBufferValue = new NativeArray<uint>(5, Allocator.Temp);
             instanceCountBufferValue[0] = PipelineBaseBuffer.CLUSTERCLIPCOUNT;
+            baseBuffer.moveCountBuffers = new NativeList<int>(5, Allocator.Persistent);
             baseBuffer.instanceCountBuffer.SetData(instanceCountBufferValue);
-            baseBuffer.moveCountBuffer = new ComputeBuffer(5, sizeof(int), ComputeBufferType.IndirectArguments);
             baseBuffer.verticesBuffer = new ComputeBuffer(maximumLength * PipelineBaseBuffer.CLUSTERCLIPCOUNT, sizeof(Point));
             baseBuffer.triangleMaterialBuffer = new ComputeBuffer(maximumLength * PipelineBaseBuffer.CLUSTERTRIANGLECOUNT, sizeof(int));
             baseBuffer.clusterCount = 0;
+            baseBuffer.prepareClusterCount = 0;
             if (GeometryEvent.useHiZ)
             {
                 baseBuffer.reCheckCount = new ComputeBuffer(5, sizeof(int), ComputeBufferType.IndirectArguments);
@@ -248,7 +250,16 @@ namespace MPipeline
             }
             DisposeBuffer(baseBuffer.instanceCountBuffer);
             DisposeBuffer(baseBuffer.resultBuffer);
-            DisposeBuffer(baseBuffer.moveCountBuffer);
+            if (baseBuffer.moveCountBuffers.isCreated)
+            {
+                foreach (var i in baseBuffer.moveCountBuffers)
+                {
+                    ComputeBuffer bf = (ComputeBuffer)MUnsafeUtility.GetHookedObject(i);
+                    MUnsafeUtility.RemoveHookedObject(i);
+                    bf.Dispose();
+                }
+                baseBuffer.moveCountBuffers.Dispose();
+            }
         }
         /// <summary>
         /// Set Basement buffers

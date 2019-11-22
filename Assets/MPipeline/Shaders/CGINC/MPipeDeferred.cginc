@@ -284,6 +284,7 @@ void frag_surf (v2f_surf IN,
   float3x3 wdMatrix= float3x3(IN.worldTangent.xyz * _NormalIntensity.x,IN.worldBinormal.xyz * _NormalIntensity.y, IN.worldNormal.xyz);
   surfIN.viewDir = normalize(mul(wdMatrixNormalized, worldViewDir));
   surfIN.worldPos = worldPos.xyz;
+  surfIN.worldNormal = IN.worldNormal;
   // call surface function
   float height = surf (surfIN, o);
   uint decLayer = _DecalLayer * _EnableDecal;

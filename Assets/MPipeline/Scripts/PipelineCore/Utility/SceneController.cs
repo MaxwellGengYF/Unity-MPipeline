@@ -39,7 +39,24 @@ namespace MPipeline
         public static PipelineBaseBuffer baseBuffer { get; private set; }
 
         public static NativeList<ulong> addList;
-        private static Dictionary<int, ComputeBuffer> allTempBuffers = new Dictionary<int, ComputeBuffer>(11);
+        private struct BufferKey
+        {
+            public int size;
+            public ComputeBufferType type;
+            public override int GetHashCode()
+            {
+                return size.GetHashCode() | (type.GetHashCode() & 65535);
+            }
+            public struct Equal : IFunction<BufferKey, BufferKey, bool>
+            {
+                public bool Run(ref BufferKey a, ref BufferKey b)
+                {
+                    return a.size == b.size && a.type == b.type;
+                }
+            }
+        }
+
+        private static NativeDictionary<BufferKey, int, BufferKey.Equal> allTempBuffers;
         public static void SetState()
         {
             if (singletonReady && baseBuffer.clusterCount > 0)
@@ -51,23 +68,27 @@ namespace MPipeline
                 gpurpEnabled = false;
             }
         }
-        public static ComputeBuffer GetTempPropertyBuffer(int length, int stride)
+        public static ComputeBuffer GetTempPropertyBuffer(int length, int stride, ComputeBufferType type = ComputeBufferType.Default)
         {
+            if (!allTempBuffers.isCreated)
+                allTempBuffers = new NativeDictionary<BufferKey, int, BufferKey.Equal>(11, Allocator.Persistent, new BufferKey.Equal());
             ComputeBuffer target;
-            if (allTempBuffers.TryGetValue(stride, out target))
+            int targetIndex;
+            if (allTempBuffers.Get(new BufferKey { size = stride, type = type }, out targetIndex))
             {
+                target = MUnsafeUtility.GetHookedObject(targetIndex) as ComputeBuffer;
                 if (target.count < length)
                 {
                     target.Dispose();
-                    target = new ComputeBuffer(length, stride);
-                    allTempBuffers[stride] = target;
+                    target = new ComputeBuffer(length, stride, type);
+                    MUnsafeUtility.SetHookedObject(targetIndex, target);
                 }
                 return target;
             }
             else
             {
                 target = new ComputeBuffer(length, stride);
-                allTempBuffers[stride] = target;
+                allTempBuffers[new BufferKey { size = stride, type = type }] = MUnsafeUtility.HookObject(target);
                 return target;
             }
         }
@@ -87,6 +108,102 @@ namespace MPipeline
             PipelineFunctions.InitBaseBuffer(baseBuffer, maximumClusterCount);
         }
 
+        public static int GetMoveCountBuffer()
+        {
+            if (baseBuffer.moveCountBuffers.Length > 0)
+            {
+                int index = baseBuffer.moveCountBuffers[baseBuffer.moveCountBuffers.Length - 1];
+                baseBuffer.moveCountBuffers.RemoveLast();
+                return index;
+            }
+            else
+            {
+                ComputeBuffer cb = new ComputeBuffer(5, sizeof(int), ComputeBufferType.IndirectArguments);
+                return MUnsafeUtility.HookObject(cb);
+            }
+        }
+
+        public static void ReturnMoveCountBuffer(int index)
+        {
+            
+            baseBuffer.moveCountBuffers.Add(index);
+        }
+
+        public struct MoveCommand
+        {
+            public int sceneIndex;
+            public float3 deltaPosition;
+            public int clusterCount;
+        }
+        const int CLEAR_KERNEL = 7;
+        const int COLLECT_KERNEL = 8;
+        const int EXECUTE_CLUSTER_KERNEL = 9;
+        const int EXECUTE_POINT_KERNEL = 10;
+        const int EXECUTE_CLUSTER_KERNEL_MOVE_ALL = 11;
+        const int EXECUTE_POINT_KERNEL_MOVE_ALL = 12;
+        public static void MoveEachScenes(NativeList<MoveCommand> allCommands)
+        {
+            int maximumClusterCount = 0;
+            if (allCommands.Length > 0)
+            {
+                maximumClusterCount = allCommands[0].clusterCount;
+                for (int i = 1; i < allCommands.Length; ++i)
+                {
+                    maximumClusterCount = max(maximumClusterCount, allCommands[i].clusterCount);
+                }
+            }
+            ComputeShader shad = resources.shaders.streamingShader;
+            ComputeBuffer tempBuffer = GetTempPropertyBuffer(maximumClusterCount + 1, sizeof(uint));
+            CommandBuffer cb = RenderPipeline.BeforeFrameBuffer;
+            cb.SetComputeBufferParam(shad, CLEAR_KERNEL, ShaderIDs._TempPropBuffer, tempBuffer);
+            cb.SetComputeBufferParam(shad, COLLECT_KERNEL, ShaderIDs._TempPropBuffer, tempBuffer);
+            cb.SetComputeBufferParam(shad, COLLECT_KERNEL, ShaderIDs.clusterBuffer, baseBuffer.clusterBuffer);
+            cb.SetComputeBufferParam(shad, EXECUTE_CLUSTER_KERNEL, ShaderIDs._TempPropBuffer, tempBuffer);
+            cb.SetComputeBufferParam(shad, EXECUTE_CLUSTER_KERNEL, ShaderIDs.clusterBuffer, baseBuffer.clusterBuffer);
+            cb.SetComputeBufferParam(shad, EXECUTE_POINT_KERNEL, ShaderIDs.verticesBuffer, baseBuffer.verticesBuffer);
+            cb.SetComputeBufferParam(shad, EXECUTE_POINT_KERNEL, ShaderIDs._TempPropBuffer, tempBuffer);
+            foreach (var i in allCommands)
+            {
+                cb.SetComputeIntParam(shad, ShaderIDs._TargetElement, i.sceneIndex);
+                cb.SetComputeVectorParam(shad, ShaderIDs._OffsetDirection, float4(i.deltaPosition, 1));
+                cb.DispatchCompute(shad, CLEAR_KERNEL, 1, 1, 1);
+                ComputeShaderUtility.Dispatch(shad, cb, COLLECT_KERNEL, baseBuffer.clusterCount);
+                ComputeShaderUtility.Dispatch(shad, cb, EXECUTE_CLUSTER_KERNEL, i.clusterCount);
+                cb.DispatchCompute(shad, EXECUTE_POINT_KERNEL, i.clusterCount, 1, 1);
+            }
+        }
+        public static void MoveAllScenes(float3 delta, int offset, int clusterCount)
+        {
+            if (clusterCount <= 0) return;
+            ComputeShader shad = resources.shaders.streamingShader;
+            CommandBuffer cb = RenderPipeline.BeforeFrameBuffer;
+            cb.SetComputeIntParam(shad, ShaderIDs._Offset, offset);
+            cb.SetComputeBufferParam(shad, EXECUTE_CLUSTER_KERNEL_MOVE_ALL, ShaderIDs.clusterBuffer, baseBuffer.clusterBuffer);
+            cb.SetComputeBufferParam(shad, EXECUTE_POINT_KERNEL_MOVE_ALL, ShaderIDs.verticesBuffer, baseBuffer.verticesBuffer);
+            cb.SetComputeVectorParam(shad, ShaderIDs._OffsetDirection, float4(delta, 1));
+            ComputeShaderUtility.Dispatch(shad, cb, EXECUTE_CLUSTER_KERNEL_MOVE_ALL, clusterCount);
+            cb.DispatchCompute(shad, EXECUTE_POINT_KERNEL_MOVE_ALL, clusterCount, 1, 1);
+        }
+        public static void MoveScene(int sceneIndex, float3 deltaPosition, int clusterCount)
+        {
+            ComputeShader shad = resources.shaders.streamingShader;
+            ComputeBuffer tempBuffer = GetTempPropertyBuffer(clusterCount + 1, sizeof(uint));
+            CommandBuffer cb = RenderPipeline.BeforeFrameBuffer;
+            cb.SetComputeIntParam(shad, ShaderIDs._TargetElement, sceneIndex);
+            cb.SetComputeBufferParam(shad, CLEAR_KERNEL, ShaderIDs._TempPropBuffer, tempBuffer);
+            cb.SetComputeBufferParam(shad, COLLECT_KERNEL, ShaderIDs._TempPropBuffer, tempBuffer);
+            cb.SetComputeBufferParam(shad, COLLECT_KERNEL, ShaderIDs.clusterBuffer, baseBuffer.clusterBuffer);
+            cb.SetComputeBufferParam(shad, EXECUTE_CLUSTER_KERNEL, ShaderIDs._TempPropBuffer, tempBuffer);
+            cb.SetComputeBufferParam(shad, EXECUTE_CLUSTER_KERNEL, ShaderIDs.clusterBuffer, baseBuffer.clusterBuffer);
+            cb.SetComputeBufferParam(shad, EXECUTE_POINT_KERNEL, ShaderIDs.verticesBuffer, baseBuffer.verticesBuffer);
+            cb.SetComputeBufferParam(shad, EXECUTE_POINT_KERNEL, ShaderIDs._TempPropBuffer, tempBuffer);
+            cb.SetComputeVectorParam(shad, ShaderIDs._OffsetDirection, float4(deltaPosition, 1));
+            cb.DispatchCompute(shad, CLEAR_KERNEL, 1, 1, 1);
+            ComputeShaderUtility.Dispatch(shad, cb, COLLECT_KERNEL, baseBuffer.clusterCount);
+            ComputeShaderUtility.Dispatch(shad, cb, EXECUTE_CLUSTER_KERNEL, clusterCount);
+            cb.DispatchCompute(shad, EXECUTE_POINT_KERNEL, clusterCount, 1, 1);
+        }
+
         public static void Dispose(PipelineResources res)
         {
             singletonReady = false;
@@ -94,10 +211,13 @@ namespace MPipeline
             if (Application.isPlaying && res.clusterResources)
                 res.clusterResources.Dispose();
             addList.Dispose();
-            var values = allTempBuffers.Values;
-            foreach (var i in values)
+            if (allTempBuffers.isCreated)
             {
-                i.Dispose();
+                foreach (var i in allTempBuffers)
+                {
+                    ComputeBuffer bf = MUnsafeUtility.GetHookedObject(i.value) as ComputeBuffer;
+                    bf.Dispose();
+                }
             }
         }
         //Press number load scene

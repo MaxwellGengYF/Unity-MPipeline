@@ -23,7 +23,7 @@ namespace MPipeline
         
         public double heightOffset = 0;
         public double heightScale = 10;
-        public double displacementScale = 10;
+        public double maxDisplaceHeight = 5;
         public double materialTillingScale = 1;
         public double terrainLocalYPositionToGround = -2;
         public double largestChunkSize = 1000;
@@ -56,7 +56,7 @@ namespace MPipeline
         [EasyButtons.Button]
         void GetVirtualTextureSize()
         {
-            Debug.Log(((MTerrain.COLOR_RESOLUTION * MTerrain.COLOR_RESOLUTION * ((4.0 + 4.0 + 2.0) * 5.0 / 4.0 + 2) + MTerrain.HEIGHT_RESOLUTION * MTerrain.HEIGHT_RESOLUTION * 2) * virtualTexCapacity 
+            Debug.Log(((MTerrain.COLOR_RESOLUTION * MTerrain.COLOR_RESOLUTION * ((4.0 + 4.0 + 2.0) * 5.0 / 4.0) + MTerrain.HEIGHT_RESOLUTION * MTerrain.HEIGHT_RESOLUTION * 2) * virtualTexCapacity 
                       + heightmapTexCapacity * MTerrain.MASK_RESOLUTION * MTerrain.MASK_RESOLUTION * (1 + 2)) / 1024.0 / 1024.0);
         }
 

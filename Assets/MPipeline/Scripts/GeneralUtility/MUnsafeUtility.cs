@@ -3,7 +3,7 @@ using Unity.Collections.LowLevel.Unsafe;
 using static Unity.Collections.LowLevel.Unsafe.UnsafeUtility;
 using System.Runtime.CompilerServices;
 using UnityEngine;
-using System;
+using System.Collections.Generic;
 using Unity.Mathematics;
 public interface IObject
 {
@@ -35,6 +35,40 @@ public interface IObject<A, B, C, D>
 }
 public unsafe static class MUnsafeUtility
 {
+    private static List<object> antiGCCollect = new List<object>(100);
+    private static NativeList<int> removedAntiGCObject;
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static int HookObject(object obj)
+    {
+        if (removedAntiGCObject.isCreated && removedAntiGCObject.Length > 0)
+        {
+            int value = removedAntiGCObject[removedAntiGCObject.Length - 1];
+            removedAntiGCObject.RemoveLast();
+            antiGCCollect[value] = obj;
+            return value;
+        }
+        antiGCCollect.Add(obj);
+        return antiGCCollect.Count - 1;
+    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void RemoveHookedObject(int index)
+    {
+        antiGCCollect[index] = null;
+        if (!removedAntiGCObject.isCreated) removedAntiGCObject = new NativeList<int>(50, Allocator.Persistent);
+        removedAntiGCObject.Add(index);
+    }
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static object GetHookedObject(int index)
+    {
+        return antiGCCollect[index];
+    }
+
+    [MethodImpl(MethodImplOptions.AggressiveInlining)]
+    public static void SetHookedObject(int index, object obj)
+    {
+        antiGCCollect[index] = obj;
+    }
+
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static void Resize<T>(ref this NativeArray<T> arr, int targetLength, Allocator alloc) where T : unmanaged
     {
@@ -54,7 +88,7 @@ public unsafe static class MUnsafeUtility
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
     public static char* Ptr(this string arr)
     {
-        fixed(char* c = arr)
+        fixed (char* c = arr)
         {
             return c;
         }
@@ -161,7 +195,7 @@ public unsafe static class MUnsafeUtility
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining)]
-    public static void Delete<T>(T* value) where T : unmanaged , IObject
+    public static void Delete<T>(T* value) where T : unmanaged, IObject
     {
         value->Dispose();
         Allocator* allocPtr = ((Allocator*)value) - 1;
