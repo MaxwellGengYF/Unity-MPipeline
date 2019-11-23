@@ -68,9 +68,13 @@ namespace MPipeline
                 ResetMatrix();
             }
         }
-        public void AddToDict()
+        public static void InitializeDict()
         {
             if (!cameraSearchDict.isCreated) cameraSearchDict = new NativeDictionary<int, ulong, IntEqual>(20, Allocator.Persistent, new IntEqual());
+        }
+        public void AddToDict()
+        {
+            InitializeDict();
             cameraSearchDict[gameObject.GetInstanceID()] = (ulong)MUnsafeUtility.GetManagedPtr(this);
             if (!frustumArray.isCreated) frustumArray = new NativeList<float4>(6, 6, Allocator.Persistent);
         }

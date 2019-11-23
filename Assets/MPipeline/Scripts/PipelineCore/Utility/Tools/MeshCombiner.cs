@@ -18,7 +18,7 @@ namespace MPipeline
 #if UNITY_EDITOR
         public ClusterMatResources res;
 
-        public void GetPoints(NativeList<Point> points, NativeList<int> materialIndices, Mesh targetMesh, Transform meshTrans, Material[] sharedMaterials, Dictionary<Material, int> matToIndex)
+        private static void GetPoints(NativeList<Point> points, NativeList<int> materialIndices, Mesh targetMesh, Transform meshTrans, Material[] sharedMaterials, Dictionary<Material, int> matToIndex)
         {
             Vector3[] vertices;
             Vector3[] normals;
@@ -34,7 +34,7 @@ namespace MPipeline
                 //Material Count
             }
         }
-        public CombinedModel ProcessCluster(MeshRenderer[] allRenderers, ref SceneStreamLoader loader, Dictionary<MeshRenderer, bool> lowLODLevels)
+        public static CombinedModel ProcessCluster(MeshRenderer[] allRenderers, ref SceneStreamLoader loader, Dictionary<MeshRenderer, bool> lowLODLevels)
         {
             List<MeshFilter> allFilters = new List<MeshFilter>(allRenderers.Length);
             int sumVertexLength = 0;
@@ -49,6 +49,50 @@ namespace MPipeline
 
                 }
             }
+
+            NativeList<Point> points = new NativeList<Point>(sumVertexLength, Allocator.Temp);
+            NativeList<int> triangleMaterials = new NativeList<int>(sumVertexLength / 3, Allocator.Temp);
+            var matToIndexDict = VirtualMaterial.GetMaterialsData(allRenderers, ref loader);
+            for (int i = 0; i < allFilters.Count; ++i)
+            {
+                Mesh mesh = allFilters[i].sharedMesh;
+                GetPoints(points, triangleMaterials, mesh, allFilters[i].transform, allRenderers[i].sharedMaterials, matToIndexDict);
+            }
+            float3 less = points[0].vertex;
+            float3 more = points[0].vertex;
+
+            for (int i = 1; i < points.Length; ++i)
+            {
+                float3 current = points[i].vertex;
+                if (less.x > current.x) less.x = current.x;
+                if (more.x < current.x) more.x = current.x;
+                if (less.y > current.y) less.y = current.y;
+                if (more.y < current.y) more.y = current.y;
+                if (less.z > current.z) less.z = current.z;
+                if (more.z < current.z) more.z = current.z;
+            }
+
+            float3 center = (less + more) / 2;
+            float3 extent = more - center;
+            Bounds b = new Bounds(center, extent * 2);
+            CombinedModel md;
+            md.bound = b;
+            md.allPoints = points;
+            md.allMatIndex = triangleMaterials;
+            return md;
+        }
+        public static CombinedModel ProcessCluster(List<MeshRenderer> allRenderers, ref SceneStreamLoader loader)
+        {
+            List<MeshFilter> allFilters = new List<MeshFilter>(allRenderers.Count);
+            int sumVertexLength = 0;
+
+            for (int i = 0; i < allRenderers.Count; ++i)
+            {
+                MeshFilter filter = allRenderers[i].GetComponent<MeshFilter>();
+                allFilters.Add(filter);
+                sumVertexLength += (int)(filter.sharedMesh.vertexCount * 1.2f);
+            }
+
             NativeList<Point> points = new NativeList<Point>(sumVertexLength, Allocator.Temp);
             NativeList<int> triangleMaterials = new NativeList<int>(sumVertexLength / 3, Allocator.Temp);
             var matToIndexDict = VirtualMaterial.GetMaterialsData(allRenderers, ref loader);
@@ -96,12 +140,12 @@ namespace MPipeline
         public void TryThis()
         {
             string fileName = ClusterMatResources.infosPath + modelName + ".mpipe";
-            if(!property)
+            if (!property)
             {
                 Debug.LogError("Property Empty!");
             }
 
-            if(string.IsNullOrEmpty(modelName))
+            if (string.IsNullOrEmpty(modelName))
             {
                 Debug.LogError("Name Empty!");
                 return;

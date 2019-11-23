@@ -156,12 +156,13 @@ void CollectTargetScene(uint id : SV_DISPATCHTHREADID)
     }
 }
 float3 _OffsetDirection;
+uint _Offset;
 [numthreads(64, 1, 1)]
 void ExecuteClusterMoving(uint id : SV_DISPATCHTHREADID)
 {
     if(id >= _Count) return;
     #ifdef MOVE_ALL
-    clusterBuffer[id].position += _OffsetDirection;
+    clusterBuffer[id + _Offset].position += _OffsetDirection;
     #else
     clusterBuffer[_TempPropBuffer[id + 1]].position += _OffsetDirection;
     #endif
@@ -171,7 +172,7 @@ void ExecuteClusterMoving(uint id : SV_DISPATCHTHREADID)
 void ExecutePointMoving(uint2 id : SV_DISPATCHTHREADID)
 {
     #ifdef MOVE_ALL
-    verticesBuffer[id.y + id.x* CLUSTERCLIPCOUNT].vertex += _OffsetDirection;
+    verticesBuffer[id.y + (id.x + _Offset) * CLUSTERCLIPCOUNT].vertex += _OffsetDirection;
     #else
     verticesBuffer[id.y + _TempPropBuffer[id.x + 1] * CLUSTERCLIPCOUNT].vertex += _OffsetDirection;
     #endif

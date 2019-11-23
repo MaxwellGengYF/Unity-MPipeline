@@ -32,12 +32,6 @@ namespace MPipeline
             Shader.DisableKeyword("USE_WHITE");
         }
         public ClusterMatResources tex;
-        [EasyButtons.Button]
-        void TestCross()
-        {
-            SceneController.MoveAllScenes(float3(0, 1, 0));
-        }
-
         bool sb;
         private void Update()
         {

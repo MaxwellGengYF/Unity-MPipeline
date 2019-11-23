@@ -100,7 +100,7 @@ namespace MPipeline
             decalMask = decalLayer < 0 ? (LayerMask)0 : MTerrain.current.terrainData.allDecalLayers[decalLayer];
             if (lodLevel >= MTerrain.current.lodOffset)
             {
-                
+
                 //Larger
                 if (lodLevel > MTerrain.current.lodOffset)
                 {
@@ -266,7 +266,7 @@ namespace MPipeline
             {
                 m_isRendering = false;
             }
-            
+
             if (leftDown != null)
             {
                 leftDown->Dispose();
@@ -364,38 +364,35 @@ namespace MPipeline
             {
                 EnableRendering();
             }
-            else
+            else if (leftDown == null && MTerrain.current.textureCapacity >= (isRendering ? 3 : 4))
             {
-                if (leftDown == null && MTerrain.current.textureCapacity >= (isRendering ? 3 : 4))
+                isRendering = false;
+                leftDown = MUnsafeUtility.Malloc<TerrainQuadTree>(sizeof(TerrainQuadTree) * 4, Allocator.Persistent);
+                leftUp = leftDown + 1;
+                rightDown = leftDown + 2;
+                rightUp = leftDown + 3;
+                double subSize = worldSize * 0.5;
+                *leftDown = new TerrainQuadTree(lodLevel, LocalPos.LeftDown, localPosition, renderingLocalPosition, subSize, this.maskScaleOffset, rootPos);
+                *leftUp = new TerrainQuadTree(lodLevel, LocalPos.LeftUp, localPosition, renderingLocalPosition, subSize, this.maskScaleOffset, rootPos);
+                *rightDown = new TerrainQuadTree(lodLevel, LocalPos.RightDown, localPosition, renderingLocalPosition, subSize, this.maskScaleOffset, rootPos);
+                *rightUp = new TerrainQuadTree(lodLevel, LocalPos.RightUp, localPosition, renderingLocalPosition, subSize, this.maskScaleOffset, rootPos);
+                float3 maskScaleOffset = (float3)this.maskScaleOffset;
+                maskScaleOffset.x *= 0.5f;
+                leftDown->isRendering = true;
+                leftUp->isRendering = true;
+                rightDown->isRendering = true;
+                rightUp->isRendering = true;
+                if (!MTerrain.current.initializing)
                 {
-                    isRendering = false;
-                    leftDown = MUnsafeUtility.Malloc<TerrainQuadTree>(sizeof(TerrainQuadTree) * 4, Allocator.Persistent);
-                    leftUp = leftDown + 1;
-                    rightDown = leftDown + 2;
-                    rightUp = leftDown + 3;
-                    double subSize = worldSize * 0.5;
-                    *leftDown = new TerrainQuadTree(lodLevel, LocalPos.LeftDown, localPosition, renderingLocalPosition, subSize, this.maskScaleOffset, rootPos);
-                    *leftUp = new TerrainQuadTree(lodLevel, LocalPos.LeftUp, localPosition, renderingLocalPosition, subSize, this.maskScaleOffset, rootPos);
-                    *rightDown = new TerrainQuadTree(lodLevel, LocalPos.RightDown, localPosition, renderingLocalPosition, subSize, this.maskScaleOffset, rootPos);
-                    *rightUp = new TerrainQuadTree(lodLevel, LocalPos.RightUp, localPosition, renderingLocalPosition, subSize, this.maskScaleOffset, rootPos);
-                    float3 maskScaleOffset = (float3)this.maskScaleOffset;
-                    maskScaleOffset.x *= 0.5f;
-                    leftDown->isRendering = true;
-                    leftUp->isRendering = true;
-                    rightDown->isRendering = true;
-                    rightUp->isRendering = true;
-                    if (!MTerrain.current.initializing)
+                    MTerrain.current.loadDataList.Add(new TerrainLoadData
                     {
-                        MTerrain.current.loadDataList.Add(new TerrainLoadData
-                        {
-                            ope = TerrainLoadData.Operator.Separate,
-                            startIndex = VirtualTextureIndex,
-                            size = VirtualTextureSize,
-                            rootPos = rootPos,
-                            maskScaleOffset = maskScaleOffset,
-                            targetDecalLayer = leftDown->decalMask
-                        });
-                    }
+                        ope = TerrainLoadData.Operator.Separate,
+                        startIndex = VirtualTextureIndex,
+                        size = VirtualTextureSize,
+                        rootPos = rootPos,
+                        maskScaleOffset = maskScaleOffset,
+                        targetDecalLayer = leftDown->decalMask
+                    });
                 }
             }
             distOffset = -MTerrain.current.terrainData.lodDeferredOffset;
@@ -497,11 +494,11 @@ namespace MPipeline
             double2 heightCenterExtent = double2(heightMinMax.x + heightMinMax.y, heightMinMax.y - heightMinMax.x) * 0.5;
             double3 centerWorldPos = double3(centerworldPosXZ.x, heightCenterExtent.x, centerworldPosXZ.y);
             double3 centerExtent = double3(extent, heightCenterExtent.y + MTerrain.current.terrainData.maxDisplaceHeight, extent);
-            
+
             isInRange = MathLib.BoxContactWithBox(camFrustumMin, camFrustumMax, double3(xzBounding.x, heightMinMax.x, xzBounding.y), double3(xzBounding.z, heightMinMax.y, xzBounding.w));
             if (isInRange)
             {
-                
+
                 isInRange = MathLib.BoxIntersect(centerWorldPos, centerExtent, planes, 6);
             }
             toPoint = camPos - centerWorldPos;

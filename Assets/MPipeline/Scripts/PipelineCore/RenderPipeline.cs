@@ -235,6 +235,7 @@ namespace MPipeline
         protected override void Render(ScriptableRenderContext renderContext, Camera[] cameras)
         {
             currentFrameCamera.Clear();
+            PipelineCamera.InitializeDict();
             foreach(var cam in cameras)
             {
                 CameraSetting csg;
@@ -300,6 +301,7 @@ namespace MPipeline
             data.buffer.SetGlobalBuffer(ShaderIDs._LastFrameModel, motionVectorMatricesBuffer);
 
 #if UNITY_EDITOR
+            
             int tempID = Shader.PropertyToID("_TempRT");
 
             foreach (var pair in bakeList)
@@ -382,11 +384,15 @@ namespace MPipeline
             foreach (var cam in currentFrameCamera)
             {
                 renderingEditor = cam.isRenderingEditor;
+                
                 Render(cam.pipeCam, ref renderContext, cam.cam, propertyCheckedFlags);
                 data.ExecuteCommandBuffer();
 #if UNITY_EDITOR
                 if (renderingEditor)
+                {
                     renderContext.DrawGizmos(cam.cam, GizmoSubset.PostImageEffects);
+                    ScriptableRenderContext.EmitWorldGeometryForSceneView(cam.cam);
+                }
 #endif
                 renderContext.Submit();
                 needSubmit = false;

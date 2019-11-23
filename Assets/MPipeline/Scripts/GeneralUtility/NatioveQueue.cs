@@ -23,6 +23,7 @@ namespace MPipeline
                 return ref *nextPtr;
             }
         }
+        [NativeDisableUnsafePtrRestriction]
         private NativeQueueData* queueData;
         private NativeList<ulong> nodes;
         private int capacity;
