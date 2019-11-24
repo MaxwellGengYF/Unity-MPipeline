@@ -67,7 +67,7 @@ namespace MPipeline
             {
                 autoGenerateMips = false,
                 bindMS = false,
-                colorFormat = RenderTextureFormat.ARGBHalf,
+                graphicsFormat = UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16B16A16_SFloat,
                 depthBufferBits = 0,
                 dimension = TextureDimension.Tex3D,
                 enableRandomWrite = true,
@@ -76,7 +76,6 @@ namespace MPipeline
                 memoryless = RenderTextureMemoryless.None,
                 msaaSamples = 1,
                 shadowSamplingMode = ShadowSamplingMode.None,
-                sRGB = false,
                 useMipMap = false,
                 volumeDepth = downSampledSize.z,
                 vrUsage = VRTextureUsage.None
