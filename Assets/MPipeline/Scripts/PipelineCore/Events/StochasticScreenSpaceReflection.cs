@@ -4,6 +4,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using Unity.Mathematics;
 using Unity.Collections;
+using UnityEngine.Experimental.Rendering;
 using static Unity.Mathematics.math;
 using UnityEngine.Rendering.PostProcessing;
 using Random = Unity.Mathematics.Random;
@@ -275,7 +276,7 @@ namespace MPipeline
         public PreviousDepthData(Vector2Int currentSize)
         {
             CameraSize = currentSize;
-            SSR_PrevDepth_RT = new RenderTexture(currentSize.x, currentSize.y, 0, RenderTextureFormat.RFloat);
+            SSR_PrevDepth_RT = new RenderTexture(currentSize.x, currentSize.y, 0, GraphicsFormat.R32_SFloat, 0);
             SSR_PrevDepth_RT.filterMode = FilterMode.Bilinear;
             SSR_PrevDepth_RT.Create();
         }
@@ -283,7 +284,7 @@ namespace MPipeline
         {
             if (CameraSize == currentSize) return false;
             CameraSize = currentSize;
-            SSRCameraData.ChangeSet(SSR_PrevDepth_RT, currentSize.x, currentSize.y, 0, RenderTextureFormat.RFloat);
+            SSRCameraData.ChangeSet(SSR_PrevDepth_RT, currentSize.x, currentSize.y, 0, GraphicsFormat.R32_SFloat);
             return true;
         }
         public override void DisposeProperty()
@@ -319,17 +320,17 @@ namespace MPipeline
             CameraSize = currentSize;
             RayCastingResolution = targetResolution;
 
-            SSR_HierarchicalDepth_RT = new RenderTexture(currentSize.x, currentSize.y, 0, RenderTextureFormat.RFloat, RenderTextureReadWrite.Linear);
+            SSR_HierarchicalDepth_RT = new RenderTexture(currentSize.x, currentSize.y, 0, GraphicsFormat.R32_SFloat, 0);
             SSR_HierarchicalDepth_RT.filterMode = FilterMode.Point;
             SSR_HierarchicalDepth_RT.useMipMap = true;
             SSR_HierarchicalDepth_RT.autoGenerateMips = false;
 
-            SSR_HierarchicalDepth_BackUp_RT = new RenderTexture(currentSize.x, currentSize.y, 0, RenderTextureFormat.RFloat, RenderTextureReadWrite.Linear);
+            SSR_HierarchicalDepth_BackUp_RT = new RenderTexture(currentSize.x, currentSize.y, 0, GraphicsFormat.R32_SFloat, 0);
             SSR_HierarchicalDepth_BackUp_RT.filterMode = FilterMode.Point;
             SSR_HierarchicalDepth_BackUp_RT.useMipMap = true;
             SSR_HierarchicalDepth_BackUp_RT.autoGenerateMips = false;
 
-            SSR_TemporalPrev_RT = new RenderTexture(currentSize.x, currentSize.y, 0, RenderTextureFormat.ARGBHalf);
+            SSR_TemporalPrev_RT = new RenderTexture(currentSize.x, currentSize.y, 0, GraphicsFormat.R16G16B16A16_SFloat, 0);
             SSR_TemporalPrev_RT.filterMode = FilterMode.Bilinear;
             SSR_HierarchicalDepth_RT.Create();
             SSR_HierarchicalDepth_BackUp_RT.Create();
@@ -337,13 +338,13 @@ namespace MPipeline
 
         }
 
-        public static void ChangeSet(RenderTexture targetRT, int width, int height, int depth, RenderTextureFormat format)
+        public static void ChangeSet(RenderTexture targetRT, int width, int height, int depth, GraphicsFormat format)
         {
             targetRT.Release();
             targetRT.width = width;
             targetRT.height = height;
             targetRT.depth = depth;
-            targetRT.format = format;
+            targetRT.graphicsFormat = format;
             targetRT.Create();
         }
 
@@ -352,9 +353,9 @@ namespace MPipeline
             if (CameraSize == currentSize && RayCastingResolution == targetResolution) return false;
             CameraSize = currentSize;
             RayCastingResolution = targetResolution;
-            ChangeSet(SSR_HierarchicalDepth_RT, currentSize.x, currentSize.y, 0, RenderTextureFormat.RFloat);
-            ChangeSet(SSR_HierarchicalDepth_BackUp_RT, currentSize.x, currentSize.y, 0, RenderTextureFormat.RFloat);
-            ChangeSet(SSR_TemporalPrev_RT, currentSize.x, currentSize.y, 0, RenderTextureFormat.ARGBHalf);
+            ChangeSet(SSR_HierarchicalDepth_RT, currentSize.x, currentSize.y, 0, GraphicsFormat.R32_SFloat);
+            ChangeSet(SSR_HierarchicalDepth_BackUp_RT, currentSize.x, currentSize.y, 0, GraphicsFormat.R32_SFloat);
+            ChangeSet(SSR_TemporalPrev_RT, currentSize.x, currentSize.y, 0, GraphicsFormat.R16G16B16A16_SFloat);
             return true;
         }
 

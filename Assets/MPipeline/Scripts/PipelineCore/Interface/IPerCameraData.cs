@@ -12,7 +12,7 @@ namespace MPipeline
         {
             int index;
             IPerCameraData data;
-            if (!camera.allDatas.isCreated) camera.allDatas = new NativeDictionary<ulong, int, PipelineCamera.PtrEqual>(20, Unity.Collections.Allocator.Persistent, new PipelineCamera.PtrEqual());
+            if (!camera.allDatas.isCreated) camera.allDatas = new NativeDictionary<ulong, int, PtrEqual>(20, Unity.Collections.Allocator.Persistent, new PtrEqual());
             if (!camera.allDatas.Get((ulong)MUnsafeUtility.GetManagedPtr(typeof(T)), out index))
             {
                 data = runnable.Run();

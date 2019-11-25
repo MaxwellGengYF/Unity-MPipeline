@@ -88,7 +88,6 @@ namespace MPipeline
                             if (allGPURPScene[cmd.rightDownSon]) childrenList.Add(allGPURPScene[cmd.rightDownSon]);
                             if (allGPURPScene[cmd.rightUpSon]) childrenList.Add(allGPURPScene[cmd.rightUpSon]);
                             yield return SceneStreaming.Separate(allGPURPScene[cmd.parent], childrenList);
-                            Debug.Log("Separate");
                             break;
                     }
                 }

@@ -41,7 +41,8 @@ namespace MPipeline
                 sb = new MStringBuilder(100);
             }
             state = State.Unloaded;
-            
+            propertyCount = propertyStaticCount;
+            propertyStaticCount++;
             originPos = transform.position;
             textureLoadingFlags = new NativeList<bool>(50, Allocator.Persistent);
         }
@@ -111,8 +112,6 @@ namespace MPipeline
         }
         public void GenerateAsync()
         {
-            propertyCount = propertyStaticCount;
-            propertyStaticCount++;
             var resources = ClusterMatResources.current;
             allStrings[0] = ClusterMatResources.infosPath;
             allStrings[1] = fileName;
@@ -407,7 +406,9 @@ namespace MPipeline
                     yield return null;
                 }
             }
+          //  SceneController.MoveAllScenes(new float3(0, 0, 1), baseBuffer.prepareClusterCount, loader.clusterCount);
             baseBuffer.prepareClusterCount += loader.clusterCount;
+            
             if (!waiting)
             {
                 baseBuffer.clusterCount = baseBuffer.prepareClusterCount;

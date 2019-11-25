@@ -10,6 +10,22 @@ using static Unity.Mathematics.math;
 using Unity.Collections.LowLevel.Unsafe;
 namespace MPipeline
 {
+    public struct IntEqual : IFunction<int, int, bool>
+    {
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public bool Run(ref int a, ref int b)
+        {
+            return a == b;
+        }
+    }
+    public struct PtrEqual : IFunction<ulong, ulong, bool>
+    {
+        [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
+        public bool Run(ref ulong a, ref ulong b)
+        {
+            return a == b;
+        }
+    }
     [ExecuteInEditMode]
     [RequireComponent(typeof(Camera))]
     public unsafe sealed class PipelineCamera : MonoBehaviour
@@ -25,22 +41,7 @@ namespace MPipeline
             cam.ResetStereoViewMatrices();
             cam.ResetWorldToCameraMatrix();
         }
-        public struct IntEqual : IFunction<int, int, bool>
-        {
-            [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-            public bool Run(ref int a, ref int b)
-            {
-                return a == b;
-            }
-        }
-        public struct PtrEqual : IFunction<ulong, ulong, bool>
-        {
-            [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-            public bool Run(ref ulong a, ref ulong b)
-            {
-                return a == b;
-            }
-        }
+
         [System.NonSerialized]
         public Camera cam;
         [System.NonSerialized]
@@ -119,6 +120,7 @@ namespace MPipeline
         public NativeList<float4> frustumArray;
         public void BeforeFrameRendering()
         {
+            if (!enabled) return;
             Transform camTrans = cam.transform;
             perspCam.forward = camTrans.forward;
             perspCam.up = camTrans.up;

@@ -15,33 +15,24 @@ namespace MPipeline
 {
     public unsafe sealed class Test : MonoBehaviour
     {
-        public List<SceneStreaming> streamers;
-        public SceneStreaming parentStreamer;
-        public List<float> distances;
-        public Transform point;
-        private int level = 0;
-        [EasyButtons.Button]
-        void EnableWhiteModel()
-        {
-            Shader.EnableKeyword("USE_WHITE");
-        }
-
-        [EasyButtons.Button]
-        void DisableWhiteModel()
-        {
-            Shader.DisableKeyword("USE_WHITE");
-        }
-        public ClusterMatResources tex;
-        bool sb;
+        public List<Transform> targetTrans;
+        public Transform remover;
         private void Update()
         {
-            if(Input.GetKeyDown(KeyCode.Space))
+            if (targetTrans.Count > 0)
             {
-                if (sb)
-                    StartCoroutine(SceneStreaming.Combine(parentStreamer, streamers));
-                else
-                    StartCoroutine(SceneStreaming.Separate(parentStreamer, streamers));
-                sb = !sb;
+                foreach (var i in targetTrans)
+                    MoveScene.current.AddTransform(i);
+                targetTrans.Clear();
+            }
+            if(Input.GetKeyDown(KeyCode.P) && remover)
+            {
+                MoveScene.current.RemoveTransform(remover);
+                remover = null;
+            }
+            if (Input.GetKeyDown(KeyCode.Space))
+            {
+                MoveScene.current.Move(float3(0, 20, 0));
             }
         }
     }

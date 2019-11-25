@@ -16,7 +16,7 @@ MonoBehaviour:
   backgroundCubemap: {fileID: 8900000, guid: 51c42d3aebe94d44bbb8fdaf332ed225, type: 3}
   availiableDistance: 100
   ssrEvents:
-    enabled: 0
+    enabled: 1
     downSample: 0
     Thickness: 0.3
     brdfBias: 0

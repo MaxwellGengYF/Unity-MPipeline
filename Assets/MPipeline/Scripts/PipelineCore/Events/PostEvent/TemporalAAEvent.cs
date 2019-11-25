@@ -4,6 +4,7 @@ using UnityEngine;
 using Unity.Mathematics;
 using UnityEngine.Rendering.PostProcessing;
 using UnityEngine.Rendering;
+using UnityEngine.Experimental.Rendering;
 namespace MPipeline
 {
     [CreateAssetMenu(menuName = "GPURP Events/Temporal AA")]
@@ -136,16 +137,20 @@ namespace MPipeline
         {
             if (history == null)
             {
-                history = new RenderTexture(cam.pixelWidth, cam.pixelHeight, 0, RenderTextureFormat.ARGBHalf, RenderTextureReadWrite.Linear);
+                history = new RenderTexture(cam.pixelWidth, cam.pixelHeight, 0, GraphicsFormat.R16G16B16A16_SFloat, 0);
                 history.filterMode = FilterMode.Bilinear;
+                history.bindTextureMS = false;
+                history.antiAliasing = 1;
                 buffer.CopyTexture(renderTarget, history);
             }
             else if (history.width != cam.pixelWidth || history.height != cam.pixelHeight)
             {
                 history.Release();
                 Destroy(history);
-                history = new RenderTexture(cam.pixelWidth, cam.pixelHeight, 0, RenderTextureFormat.ARGBHalf, RenderTextureReadWrite.Linear);
+                history = new RenderTexture(cam.pixelWidth, cam.pixelHeight, 0, GraphicsFormat.R16G16B16A16_SFloat, 0);
                 history.filterMode = FilterMode.Bilinear;
+                history.bindTextureMS = false;
+                history.antiAliasing = 1;
                 buffer.CopyTexture(renderTarget, history);
             }
         }
@@ -166,8 +171,12 @@ namespace MPipeline
         public Vector2 jitter;
         public HistoryTexture(Camera cam)
         {
-            historyTex = new RenderTexture(cam.pixelWidth, cam.pixelHeight, 0, RenderTextureFormat.ARGBHalf, RenderTextureReadWrite.Linear);
-            historyMV = new RenderTexture(cam.pixelWidth, cam.pixelHeight, 0, RenderTextureFormat.RGHalf, RenderTextureReadWrite.Linear);
+            historyTex = new RenderTexture(cam.pixelWidth, cam.pixelHeight, 0, GraphicsFormat.R16G16B16A16_SFloat, 0);
+            historyTex.bindTextureMS = false;
+            historyMV = new RenderTexture(cam.pixelWidth, cam.pixelHeight, 0, GraphicsFormat.R16G16_SNorm, 0);
+            historyMV.bindTextureMS = false;
+            historyTex.Create();
+            historyMV.Create();
         }
 
         public override void DisposeProperty()
@@ -190,8 +199,19 @@ namespace MPipeline
             int camWidth = camera.cam.pixelWidth;
             int camHeight = camera.cam.pixelHeight;
             var cam = camera.cam;
-            if(!historyTex) historyTex = new RenderTexture(cam.pixelWidth, cam.pixelHeight, 0, RenderTextureFormat.ARGBHalf, RenderTextureReadWrite.Linear);
-            if (!historyMV) historyMV = new RenderTexture(cam.pixelWidth, cam.pixelHeight, 0, RenderTextureFormat.RGHalf, RenderTextureReadWrite.Linear);
+            if (!historyTex)
+            {
+                historyTex = new RenderTexture(cam.pixelWidth, cam.pixelHeight, 0, GraphicsFormat.R16G16B16A16_SFloat, 0);
+                historyTex.bindTextureMS = false;
+                historyTex.Create();
+            }
+
+            if (!historyMV)
+            {
+                historyMV = new RenderTexture(cam.pixelWidth, cam.pixelHeight, 0, GraphicsFormat.R16G16_SNorm, 0);
+                historyMV.bindTextureMS = false;
+                historyMV.Create();
+            }
             Resize(historyTex, camWidth, camHeight);
             Resize(historyMV, camWidth, camHeight);
         }
