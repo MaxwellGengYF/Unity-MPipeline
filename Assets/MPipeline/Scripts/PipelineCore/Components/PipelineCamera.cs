@@ -84,6 +84,10 @@ namespace MPipeline
             if (!allDatas.isCreated) allDatas = new NativeDictionary<ulong, int, PtrEqual>(17, Allocator.Persistent, new PtrEqual());
             AddToDict();
             GetComponent<Camera>().layerCullDistances = layerCullDistance;
+            var tr = transform.parent;
+            transform.SetParent(null);
+            transform.localScale = Vector3.one;
+            transform.SetParent(tr);
         }
 
         private void OnDisable()
@@ -120,7 +124,6 @@ namespace MPipeline
         public NativeList<float4> frustumArray;
         public void BeforeFrameRendering()
         {
-            if (!enabled) return;
             Transform camTrans = cam.transform;
             perspCam.forward = camTrans.forward;
             perspCam.up = camTrans.up;

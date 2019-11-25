@@ -105,7 +105,29 @@ namespace MPipeline
         private ComputeBuffer materialBuffer;
         private NativeArray<int> vtContainer;
         private int leastVirtualTextureLefted = int.MaxValue;
+        private double3 moveOffset;
+        private void Awake()
+        {
+            moveOffset = 0;
+        }
 
+        public void MoveTerrain(double3 deltaOffset)
+        {
+            moveOffset += deltaOffset;
+            if(terrainData)
+            {
+                terrainData.heightOffset += deltaOffset.y;
+                terrainData.screenOffset += deltaOffset.xz;
+            }
+        }
+        private void OnDestroy()
+        {
+            if(terrainData)
+            {
+                terrainData.heightOffset -= moveOffset.y;
+                terrainData.screenOffset -= moveOffset.xz;
+            }
+        }
         public override void PrepareJob()
         {
             allDrawCommand.Clear();

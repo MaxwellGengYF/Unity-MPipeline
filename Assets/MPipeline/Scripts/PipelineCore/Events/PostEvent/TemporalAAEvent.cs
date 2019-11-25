@@ -141,6 +141,7 @@ namespace MPipeline
                 history.filterMode = FilterMode.Bilinear;
                 history.bindTextureMS = false;
                 history.antiAliasing = 1;
+                history.Create();
                 buffer.CopyTexture(renderTarget, history);
             }
             else if (history.width != cam.pixelWidth || history.height != cam.pixelHeight)
@@ -151,6 +152,7 @@ namespace MPipeline
                 history.filterMode = FilterMode.Bilinear;
                 history.bindTextureMS = false;
                 history.antiAliasing = 1;
+                history.Create();
                 buffer.CopyTexture(renderTarget, history);
             }
         }

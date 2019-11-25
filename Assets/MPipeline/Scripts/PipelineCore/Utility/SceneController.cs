@@ -184,6 +184,20 @@ namespace MPipeline
             ComputeShaderUtility.Dispatch(shad, cb, EXECUTE_CLUSTER_KERNEL_MOVE_ALL, clusterCount);
             cb.DispatchCompute(shad, EXECUTE_POINT_KERNEL_MOVE_ALL, clusterCount, 1, 1);
         }
+
+        public static void MoveAllScenes(float3 delta)
+        {
+            int clusterCount = baseBuffer.clusterCount;
+            if (clusterCount <= 0) return;
+            ComputeShader shad = resources.shaders.streamingShader;
+            CommandBuffer cb = RenderPipeline.BeforeFrameBuffer;
+            cb.SetComputeIntParam(shad, ShaderIDs._Offset, 0);
+            cb.SetComputeBufferParam(shad, EXECUTE_CLUSTER_KERNEL_MOVE_ALL, ShaderIDs.clusterBuffer, baseBuffer.clusterBuffer);
+            cb.SetComputeBufferParam(shad, EXECUTE_POINT_KERNEL_MOVE_ALL, ShaderIDs.verticesBuffer, baseBuffer.verticesBuffer);
+            cb.SetComputeVectorParam(shad, ShaderIDs._OffsetDirection, float4(delta, 1));
+            ComputeShaderUtility.Dispatch(shad, cb, EXECUTE_CLUSTER_KERNEL_MOVE_ALL, clusterCount);
+            cb.DispatchCompute(shad, EXECUTE_POINT_KERNEL_MOVE_ALL, clusterCount, 1, 1);
+        }
         public static void MoveScene(int sceneIndex, float3 deltaPosition, int clusterCount)
         {
             ComputeShader shad = resources.shaders.streamingShader;

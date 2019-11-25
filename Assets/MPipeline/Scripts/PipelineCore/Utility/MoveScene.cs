@@ -73,12 +73,18 @@ namespace MPipeline
                     deltaDir = moveDist
                 }.Schedule(tranArray);
             }
+           
         }
 
         public override void FinishJob()
         {
             if (move)
             {
+                if(MTerrain.current)
+                {
+                    MTerrain.current.MoveTerrain(moveDist);
+                }
+                SceneController.MoveAllScenes(moveDist);
                 move = false;
                 moveDist = 0;
                 moveHandle.Complete();

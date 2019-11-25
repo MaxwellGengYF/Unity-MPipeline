@@ -10,6 +10,7 @@ using Unity.Collections;
 using System.IO;
 using Unity.Collections.LowLevel.Unsafe;
 using Random = UnityEngine.Random;
+using UnityEngine.Jobs;
 using UnityEngine.AddressableAssets;
 namespace MPipeline
 {
