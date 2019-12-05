@@ -459,6 +459,7 @@ namespace MPipeline
                             rightUpIndex = loadData.startIndex + subSize;
                             targetElement = vt.CombineQuadTextures(leftDownIndex, rightDownIndex, leftUpIndex, rightUpIndex, leftDownIndex, loadData.size, RenderPipeline.BeforeFrameBuffer);
                             GenerateMips(targetElement, RenderPipeline.BeforeFrameBuffer);
+
                             yield return null;
                             break;
                     }

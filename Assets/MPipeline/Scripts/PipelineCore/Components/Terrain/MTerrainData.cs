@@ -44,7 +44,7 @@ namespace MPipeline
         public LayerMask[] allDecalLayers;
         [Range(1, 256)]
         public int virtualTexCapacity = 128;
-        [Range(1, 16)]
+        [Range(1, 64)]
         public int heightmapTexCapacity = 6;
         public HeightBlendMaterial[] allMaterials;
         public string heightmapPath = "Assets/BinaryData/TerrainHeight.mquad";

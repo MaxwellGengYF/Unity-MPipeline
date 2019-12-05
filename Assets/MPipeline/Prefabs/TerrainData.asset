@@ -17,18 +17,21 @@ MonoBehaviour:
   maxDisplaceHeight: 5
   materialTillingScale: 1
   terrainLocalYPositionToGround: -2
-  largestChunkSize: 2048
+  largestChunkSize: 16384
   screenOffset:
-    x: -1024
-    y: -1024
+    x: -8192
+    y: -8192
   lodDeferredOffset: 2
-  backfaceCullingLevel: 0.5
+  backfaceCullingLevel: 1
   noiseTex: {fileID: 2800000, guid: 86c030b5b41938841b5819798ee91474, type: 3}
   lodDistances:
+  - 2600
+  - 2400
+  - 2200
   - 2000
-  - 1500
+  - 1800
+  - 1750
   - 500
-  - 300
   - 150
   - 70
   - 50
@@ -54,8 +57,8 @@ MonoBehaviour:
     m_Bits: 4294967295
   - serializedVersion: 2
     m_Bits: 4294967295
-  virtualTexCapacity: 91
-  heightmapTexCapacity: 4
+  virtualTexCapacity: 184
+  heightmapTexCapacity: 64
   allMaterials:
   - materialIndex: 0
     albedoColor:

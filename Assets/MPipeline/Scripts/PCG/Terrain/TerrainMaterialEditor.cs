@@ -73,6 +73,7 @@ namespace MPipeline
             public List<VTMaterial> blendWeights;
             public bool isOpen;
         }
+        public int splatTillingScale = 1;
         [HideInInspector]
         public List<BlendMaterial> allMaterials = new List<BlendMaterial>(10);
         [HideInInspector]
@@ -182,7 +183,7 @@ namespace MPipeline
                         if (splat)
                         {
                             int2 border = largestChunkCount - a.splatStartPos;
-                            border = min(border, splat.width / MTerrain.MASK_RESOLUTION);
+                            border = min(border, splatTillingScale * splat.width / MTerrain.MASK_RESOLUTION);
                             for (int x = 0; x < border.x; ++x)
                                 for (int y = 0; y < border.y; ++y)
                                 {

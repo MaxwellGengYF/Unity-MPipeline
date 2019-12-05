@@ -14,6 +14,8 @@ namespace MPipeline
         public Vector2Int chunkPosition = Vector2Int.zero;
         public int targetChunkCount = 1;
         public Texture heightTexture;
+        
+        public float tillingScale = 1;
         public Texture maskTexture;
         public ComputeShader terrainEdit;
         [MenuItem("MPipeline/Terrain/Generate Tool")]
@@ -32,6 +34,7 @@ namespace MPipeline
             terrainData = (MTerrainData)EditorGUILayout.ObjectField("Terrain Data", terrainData, typeof(MTerrainData), false);
             if (!terrainData)
                 return;
+            tillingScale = EditorGUILayout.FloatField("Tilling Scale", tillingScale);
             chunkPosition = EditorGUILayout.Vector2IntField("Chunk Position", new Vector2Int(chunkPosition.x, chunkPosition.y));
             heightTexture = EditorGUILayout.ObjectField("Height Texture", heightTexture, typeof(Texture), false) as Texture;
             targetChunkCount = EditorGUILayout.IntField("Chunk Count", targetChunkCount);
@@ -84,7 +87,7 @@ namespace MPipeline
                         terrainEdit.SetTexture(6, ShaderIDs._DestTex, cacheRt);
                         terrainEdit.SetInt(ShaderIDs._Count, MTerrain.MASK_RESOLUTION);
                         terrainEdit.SetInt(ShaderIDs._OffsetIndex, 0);
-                        terrainEdit.SetVector("_ScaleOffset", float4(float2(1.0 / targetChunkCount), float2(x, y) / targetChunkCount));
+                        terrainEdit.SetVector("_ScaleOffset", float4(float2(tillingScale / targetChunkCount), (tillingScale * float2(x, y)) / targetChunkCount));
                         const int disp = MTerrain.MASK_RESOLUTION / 16;
                         terrainEdit.Dispatch(6, disp, disp, 1);
                         loader.WriteToDisk(cacheRt, 0, pos);

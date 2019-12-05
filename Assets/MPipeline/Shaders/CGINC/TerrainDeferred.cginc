@@ -288,7 +288,7 @@ float2 weight;
 GetBilinearVirtualTextureUV(_MaskIndexMap,_MaskIndexMap_TexelSize, _HeightScaleOffset.zw, absoluteUV, _VirtualHeightmap_TexelSize, uvs, weight);
   worldPos.y += SampleHeight(uvs, weight);*/
   float2 pack0 = vi[0].pack0*bary.x + vi[1].pack0*bary.y + vi[2].pack0*bary.z;
-  float2 uvNextOne = (pack0.xy > 0.999 && (vi[0].vtUV.xy + 1) < _TextureSize.w) ? 1 : 0;
+  float2 uvNextOne =  (pack0.xy > 0.999 && (vi[0].vtUV.xy + 1) < _TextureSize.w) ? 1 : 0;
   float3 dispVtUV = GetVirtualTextureUV(_TerrainVTIndexTex, _TerrainVTIndexTex_TexelSize, vi[0].vtUV + uvNextOne, saturate(pack0 - uvNextOne));
 worldPos.y += _VirtualDisplacement.SampleLevel(sampler_VirtualDisplacement, dispVtUV, 0) * _HeightScaleOffset.x;
 o.pos= mul(_ShadowMapVP, worldPos);

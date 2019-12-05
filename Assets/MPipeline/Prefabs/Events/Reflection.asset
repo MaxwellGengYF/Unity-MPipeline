@@ -12,7 +12,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: fcd0c6469ac1cd442b693ea77f1a521b, type: 3}
   m_Name: Reflection
   m_EditorClassIdentifier: 
-  enabled: 0
+  enabled: 1
   backgroundCubemap: {fileID: 8900000, guid: 51c42d3aebe94d44bbb8fdaf332ed225, type: 3}
   availiableDistance: 100
   ssrEvents:
