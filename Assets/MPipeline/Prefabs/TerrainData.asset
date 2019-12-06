@@ -29,14 +29,14 @@ MonoBehaviour:
   - 2400
   - 2200
   - 2100
-  - 1600
-  - 1500
-  - 500
-  - 150
-  - 70
-  - 50
-  - 35
-  - 12
+  - 2000
+  - 1200
+  - 200
+  - 80
+  - 40
+  - 26
+  - 15
+  - 8
   renderingLevelCount: 8
   allDecalLayers:
   - serializedVersion: 2
@@ -63,8 +63,8 @@ MonoBehaviour:
     m_Bits: 0
   - serializedVersion: 2
     m_Bits: 0
-  virtualTexCapacity: 128
-  heightmapTexCapacity: 20
+  virtualTexCapacity: 112
+  heightmapTexCapacity: 32
   allMaterials:
   - materialIndex: 0
     albedoColor:

@@ -534,13 +534,18 @@ namespace MPipeline
                 rightDown->CombineUpdate();
                 rightUp->CombineUpdate();
             }
-            double backface = isInRange ? 1 : MTerrain.current.terrainData.backfaceCullingLevel;
-            if (dist > MTerrain.current.allLodLevles[lodLevel] * backface - distOffset)
+            double backface = (isInRange || lodLevel <= MTerrain.current.lodOffset + 1) ? 1 : MTerrain.current.terrainData.backfaceCullingLevel;
+            float SampleLevel(int targetLevel)
+            {
+                int nextLevel = min(MTerrain.current.allLodLevles.Length - 1, targetLevel + 1);
+                return max(MTerrain.current.allLodLevles[nextLevel], MTerrain.current.allLodLevles[targetLevel] * (float)backface);
+            }
+            if (dist > SampleLevel(lodLevel) - distOffset)
             {
                 separate = false;
                 Combine(lodLevel > MTerrain.current.lodOffset, (lodLevel + 1) > MTerrain.current.lodOffset);
             }
-            else if (dist > MTerrain.current.allLodLevles[lodLevel + 1] * backface - distOffset)
+            else if (dist > SampleLevel(lodLevel + 1) - distOffset)
             {
                 separate = false;
                 Combine(lodLevel >= MTerrain.current.lodOffset, (lodLevel + 1) > MTerrain.current.lodOffset);

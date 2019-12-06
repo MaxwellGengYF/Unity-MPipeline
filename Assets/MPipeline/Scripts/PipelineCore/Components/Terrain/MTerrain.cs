@@ -86,6 +86,7 @@ namespace MPipeline
         //  private RenderTexture heightTex;
         private RenderTexture heightloadingCacheRT;
         private NativeArray<int> mipIDs;
+        private NativeDictionary<int2, bool, Int2Equal> loadedChunk;
         public VirtualTexture maskVT { get; private set; }
         private static Vector4[] planes = new Vector4[6];
         private TerrainQuadTree tree;
@@ -323,11 +324,12 @@ namespace MPipeline
                         {
                             Debug.LogError("No Enough Mask Position!");
                         }
+                        loadedChunk[maskCommand.pos] = true;
                     }
                     else
                     {
                         maskVT.UnloadTexture(maskCommand.pos);
-
+                        loadedChunk.Remove(maskCommand.pos);
                     }
 
                 }
@@ -544,7 +546,7 @@ namespace MPipeline
             loadingThread = new MTerrainLoadingThread(10);
             maskLoader = new VirtualTextureLoader(terrainData.maskmapPath, editShader, largestChunkCount, MASK_RESOLUTION, false, loadingThread);
             heightLoader = new VirtualTextureLoader(terrainData.heightmapPath, editShader, largestChunkCount, MASK_RESOLUTION, true, loadingThread);
-
+            loadedChunk = new NativeDictionary<int2, bool, Int2Equal>(100, Allocator.Persistent, new Int2Equal());
             loadDataList = new NativeQueue<TerrainLoadData>(100, Allocator.Persistent);
             initializeLoadList = new NativeQueue<TerrainLoadData>(100, Allocator.Persistent);
             NativeArray<uint> dispatchDraw = new NativeArray<uint>(5, Allocator.Temp, NativeArrayOptions.ClearMemory);
@@ -698,23 +700,26 @@ namespace MPipeline
         {
             foreach (var i in allDrawCommand)
             {
-                buffer.SetComputeIntParam(shader, ShaderIDs._Count, meshResolution);
-                buffer.SetComputeVectorParam(shader, ShaderIDs._StartPos, float4(i.startPos, (float)oneVTPixelWorldLength, 1));
-                buffer.SetComputeVectorArrayParam(shader, ShaderIDs.planes, planes);
-                buffer.SetComputeVectorParam(shader, ShaderIDs._HeightScaleOffset, (float4)double4(terrainData.heightScale, terrainData.heightOffset, 1, 1));
-                buffer.SetComputeVectorParam(shader, ShaderIDs._FrustumMaxPoint, float4(frustumMaxPoint, 1));
-                buffer.SetComputeVectorParam(shader, ShaderIDs._FrustumMinPoint, float4(frustumMinPoint, 1));
-                buffer.SetComputeTextureParam(shader, 0, ShaderIDs._CullingTexture, cullingFlags);
-                int dispCount = meshResolution / 8;
-                buffer.DispatchCompute(shader, 0, dispCount, dispCount, 1);
-                int lastElement = clamp(terrainData.lodDistances.Length - 5, 0, terrainData.lodDistances.Length - 1);
-                buffer.SetGlobalVector(ShaderIDs._HeightScaleOffset, (float4)double4(terrainData.heightScale, terrainData.heightOffset, i.rootPos));
-                buffer.SetGlobalVector(ShaderIDs._TessellationFactors, float4(allLodLevles[terrainData.lodDistances.Length - 1], allLodLevles[lastElement], 0, 0));
-                buffer.SetGlobalBuffer(ShaderIDs.verticesBuffer, meshBuffer);
-                buffer.SetGlobalVector(ShaderIDs._StartPos, float4(i.startPos, (float)oneVTPixelWorldLength, meshResolution));
-                buffer.SetGlobalVector(ShaderIDs._TextureSize, float4(i.startVTIndex, 0, chunkCount - 0.5f));
-                buffer.SetGlobalTexture(ShaderIDs._CullingTexture, cullingFlags);
-                buffer.DrawProcedural(Matrix4x4.identity, terrainData.drawTerrainMaterial, pass, MeshTopology.Triangles, meshBuffer.count);
+                if (loadedChunk[i.rootPos])
+                {
+                    buffer.SetComputeIntParam(shader, ShaderIDs._Count, meshResolution);
+                    buffer.SetComputeVectorParam(shader, ShaderIDs._StartPos, float4(i.startPos, (float)oneVTPixelWorldLength, 1));
+                    buffer.SetComputeVectorArrayParam(shader, ShaderIDs.planes, planes);
+                    buffer.SetComputeVectorParam(shader, ShaderIDs._HeightScaleOffset, (float4)double4(terrainData.heightScale, terrainData.heightOffset, 1, 1));
+                    buffer.SetComputeVectorParam(shader, ShaderIDs._FrustumMaxPoint, float4(frustumMaxPoint, 1));
+                    buffer.SetComputeVectorParam(shader, ShaderIDs._FrustumMinPoint, float4(frustumMinPoint, 1));
+                    buffer.SetComputeTextureParam(shader, 0, ShaderIDs._CullingTexture, cullingFlags);
+                    int dispCount = meshResolution / 8;
+                    buffer.DispatchCompute(shader, 0, dispCount, dispCount, 1);
+                    int lastElement = clamp(terrainData.lodDistances.Length - 6, 0, terrainData.lodDistances.Length - 1);
+                    buffer.SetGlobalVector(ShaderIDs._HeightScaleOffset, (float4)double4(terrainData.heightScale, terrainData.heightOffset, i.rootPos));
+                    buffer.SetGlobalVector(ShaderIDs._TessellationFactors, float4(allLodLevles[terrainData.lodDistances.Length - 1], allLodLevles[lastElement], 0, 0));
+                    buffer.SetGlobalBuffer(ShaderIDs.verticesBuffer, meshBuffer);
+                    buffer.SetGlobalVector(ShaderIDs._StartPos, float4(i.startPos, (float)oneVTPixelWorldLength, meshResolution));
+                    buffer.SetGlobalVector(ShaderIDs._TextureSize, float4(i.startVTIndex, 0, chunkCount - 0.5f));
+                    buffer.SetGlobalTexture(ShaderIDs._CullingTexture, cullingFlags);
+                    buffer.DrawProcedural(Matrix4x4.identity, terrainData.drawTerrainMaterial, pass, MeshTopology.Triangles, meshBuffer.count);
+                }
             }
         }
 
@@ -742,6 +747,7 @@ namespace MPipeline
             heightLoader.Dispose();
             maskLoadList.Dispose();
             vtContainer.Dispose();
+            loadedChunk.Dispose();
             Destroy(albedoTex);
             Destroy(cullingFlags);
             Destroy(normalTex);
