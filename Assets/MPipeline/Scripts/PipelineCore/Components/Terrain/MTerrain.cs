@@ -114,7 +114,7 @@ namespace MPipeline
         public void MoveTerrain(double3 deltaOffset)
         {
             moveOffset += deltaOffset;
-            if(terrainData)
+            if (terrainData)
             {
                 terrainData.heightOffset += deltaOffset.y;
                 terrainData.screenOffset += deltaOffset.xz;
@@ -122,7 +122,7 @@ namespace MPipeline
         }
         private void OnDestroy()
         {
-            if(terrainData)
+            if (terrainData)
             {
                 terrainData.heightOffset -= moveOffset.y;
                 terrainData.screenOffset -= moveOffset.xz;
@@ -183,7 +183,7 @@ namespace MPipeline
             buffer.DispatchCompute(textureShader, 0, disp, disp, 1);
             buffer.SetComputeVectorParam(textureShader, ShaderIDs._IndexTextureSize, float4(float2(1) / maskVT.indexSize, maskVT.indexSize));
             buffer.SetComputeIntParam(textureShader, ShaderIDs._Count, COLOR_RESOLUTION + 2);
-            
+
             int floatDisp = Mathf.CeilToInt((COLOR_RESOLUTION + 2f) / 8f);
             buffer.DispatchCompute(textureShader, 3, floatDisp, floatDisp, 1);
             buffer.DispatchCompute(textureShader, 4, disp, disp, 1);
@@ -272,7 +272,7 @@ namespace MPipeline
             Unity.Mathematics.Random r = new Unity.Mathematics.Random((uint)System.Guid.NewGuid().GetHashCode());
             buffer.SetComputeTextureParam(textureShader, 6, ShaderIDs._DestTex, randomTileRT);
             buffer.SetComputeVectorParam(textureShader, ShaderIDs._TextureSize, float4(float2(1.0 / 256), 1, 1));
-            buffer.SetComputeVectorParam(textureShader, ShaderIDs._RandomSeed, r.NextFloat4() + float4(0,0,0.5f,0.5f));
+            buffer.SetComputeVectorParam(textureShader, ShaderIDs._RandomSeed, r.NextFloat4() + float4(0, 0, 0.5f, 0.5f));
             buffer.DispatchCompute(textureShader, 6, 8, 8, 1);
             while (enabled)
             {
@@ -673,7 +673,7 @@ namespace MPipeline
             randomTileRT.wrapMode = TextureWrapMode.Repeat;
             randomTileRT.filterMode = FilterMode.Point;
             randomTileRT.Create();
-            
+
             heightloadingCacheRT.Create();
             //    heightTex.Create();
             smTex.wrapMode = TextureWrapMode.Repeat;
@@ -707,7 +707,7 @@ namespace MPipeline
                 buffer.SetComputeTextureParam(shader, 0, ShaderIDs._CullingTexture, cullingFlags);
                 int dispCount = meshResolution / 8;
                 buffer.DispatchCompute(shader, 0, dispCount, dispCount, 1);
-                int lastElement = clamp(terrainData.lodDistances.Length - 7, 0, terrainData.lodDistances.Length - 1);
+                int lastElement = clamp(terrainData.lodDistances.Length - 5, 0, terrainData.lodDistances.Length - 1);
                 buffer.SetGlobalVector(ShaderIDs._HeightScaleOffset, (float4)double4(terrainData.heightScale, terrainData.heightOffset, i.rootPos));
                 buffer.SetGlobalVector(ShaderIDs._TessellationFactors, float4(allLodLevles[terrainData.lodDistances.Length - 1], allLodLevles[lastElement], 0, 0));
                 buffer.SetGlobalBuffer(ShaderIDs.verticesBuffer, meshBuffer);

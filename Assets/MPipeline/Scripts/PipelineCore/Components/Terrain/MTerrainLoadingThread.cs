@@ -21,11 +21,13 @@ namespace MPipeline
                 while (enable)
                 {
                     resetEvent.WaitOne();
+
                     foreach (var i in missions)
                     {
                         i();
                     }
                     missions.Clear();
+
                 }
             });
             t.Start();

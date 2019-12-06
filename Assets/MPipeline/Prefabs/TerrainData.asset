@@ -22,15 +22,15 @@ MonoBehaviour:
     x: -8192
     y: -8192
   lodDeferredOffset: 2
-  backfaceCullingLevel: 1
+  backfaceCullingLevel: 0.5
   noiseTex: {fileID: 2800000, guid: 86c030b5b41938841b5819798ee91474, type: 3}
   lodDistances:
   - 2600
   - 2400
   - 2200
-  - 2000
-  - 1800
-  - 1750
+  - 2100
+  - 1600
+  - 1500
   - 500
   - 150
   - 70
@@ -40,25 +40,31 @@ MonoBehaviour:
   renderingLevelCount: 8
   allDecalLayers:
   - serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 0
   - serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 0
   - serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 0
   - serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 0
   - serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 0
   - serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 0
   - serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 0
   - serializedVersion: 2
-    m_Bits: 4294967295
+    m_Bits: 0
   - serializedVersion: 2
-    m_Bits: 4294967295
-  virtualTexCapacity: 184
-  heightmapTexCapacity: 64
+    m_Bits: 0
+  - serializedVersion: 2
+    m_Bits: 0
+  - serializedVersion: 2
+    m_Bits: 0
+  - serializedVersion: 2
+    m_Bits: 0
+  virtualTexCapacity: 128
+  heightmapTexCapacity: 20
   allMaterials:
   - materialIndex: 0
     albedoColor:
