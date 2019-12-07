@@ -63,7 +63,7 @@ MonoBehaviour:
     m_Bits: 0
   - serializedVersion: 2
     m_Bits: 0
-  virtualTexCapacity: 112
+  virtualTexCapacity: 118
   heightmapTexCapacity: 32
   allMaterials:
   - materialIndex: 0

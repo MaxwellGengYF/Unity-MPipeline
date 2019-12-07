@@ -3,12 +3,13 @@
 #pragma kernel BlitTex
 #pragma kernel CopyTex
 #pragma kernel CombineTex
+#pragma kernel UnloadIndex
+#pragma kernel InitIndex
 #include "UnityCG.cginc"
-RWTexture2D<half4> _IndexTexture;
+RWTexture2D<float4> _IndexTexture;
 float4 _TextureSize; // X: virtual texture element's size Y: index texture size ZW: Start Index
 uint _TargetElement;
 RWTexture2DArray<float4> _VirtualTexture;
-
 Texture2DArray<float4> _TextureBuffer; SamplerState sampler_TextureBuffer;
 
 RWTexture2D<float4> _BlendTex;
@@ -72,4 +73,18 @@ void CombineTex(uint2 id : SV_DISPATCHTHREADID)
     float2 uv = (id + 0.5) / _Count;
 
     _VirtualTexture[uint3(id, _TargetElement)] = _MainTex.SampleLevel(sampler_MainTex, uv, 0);
+}
+
+[numthreads(8,8,1)]
+void UnloadIndex(uint2 id : SV_DISPATCHTHREADID)
+{
+    if(id.x >= _Count || id.y >= _Count) return;
+    _IndexTexture[(_VTVariables.xy + id) % _VTVariables.zw] = float4(0,0,0,1);
+}
+
+[numthreads(8,8,1)]
+void InitIndex(uint2 id : SV_DISPATCHTHREADID)
+{
+    if(id.x >= _IndexTextureSize.x || id.y >= _IndexTextureSize.y) return;
+    _IndexTexture[id] = float4(0,0,0,1);
 }

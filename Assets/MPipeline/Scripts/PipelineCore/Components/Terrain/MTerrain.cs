@@ -328,7 +328,7 @@ namespace MPipeline
                     }
                     else
                     {
-                        maskVT.UnloadTexture(maskCommand.pos);
+                        maskVT.UnloadTexture(maskCommand.pos, RenderPipeline.BeforeFrameBuffer);
                         loadedChunk.Remove(maskCommand.pos);
                     }
 
@@ -451,7 +451,7 @@ namespace MPipeline
                             yield return null;
                             break;
                         case TerrainLoadData.Operator.Unload:
-                            vt.UnloadTexture(loadData.startIndex);
+                            vt.UnloadTexture(loadData.startIndex, RenderPipeline.BeforeFrameBuffer);
                             break;
                         case TerrainLoadData.Operator.Combine:
                             subSize = loadData.size / 2;

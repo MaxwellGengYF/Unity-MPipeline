@@ -156,9 +156,9 @@ namespace MPipeline
         /// <param name="formats">Each VT's format</param>
         public VirtualTexture(int maximumSize, int2 indexSize, VirtualTextureFormat* formats, int formatLen, string indexTexName)
         {
-            if (maximumSize > 2048)
+            if (maximumSize > 2047)
             {
-                throw new System.Exception("Virtual Texture Maximum Size can not larger than 2048");
+                throw new System.Exception("Virtual Texture Maximum Size can not larger than 2047");
             }
             indexTexID = Shader.PropertyToID(indexTexName);
             this.indexSize = indexSize;
@@ -173,6 +173,13 @@ namespace MPipeline
             indexTex.useMipMap = false;
             indexTex.filterMode = FilterMode.Point;
             indexTex.Create();
+
+            shader.SetTexture( 6, ShaderIDs._IndexTexture, indexTex);
+            texSize[0] = indexSize.x;
+            texSize[1] = indexSize.y;
+            shader.SetInts(ShaderIDs._IndexTextureSize, texSize);
+            float2 dispCount = indexSize / float2(8);
+            shader.Dispatch(6, Mathf.CeilToInt(dispCount.x), Mathf.CeilToInt(dispCount.y), 1);
             textures = new RenderTexture[formatLen];
             for (int i = 0; i < formatLen; ++i)
             {
@@ -315,9 +322,21 @@ namespace MPipeline
         /// <param name="startIndex">Start Index in IndexTexture </param>
         /// <param name="size">Target Size in IndexTexture</param>
         [System.Runtime.CompilerServices.MethodImpl(System.Runtime.CompilerServices.MethodImplOptions.AggressiveInlining)]
-        public void UnloadTexture(int2 startIndex)
+        public void UnloadTexture(int2 startIndex, CommandBuffer buffer)
         {
-            UnloadChunk(ref startIndex);
+            int size = UnloadChunk(ref startIndex); 
+            if(size > 0)
+            {
+                buffer.SetComputeTextureParam(shader, 5, ShaderIDs._IndexTexture, indexTex);
+                vtVariables[0] = startIndex.x;
+                vtVariables[1] = startIndex.y;
+                vtVariables[2] = indexSize.x;
+                vtVariables[3] = indexSize.y;
+                buffer.SetComputeIntParam(shader, ShaderIDs._Count, size);
+                buffer.SetComputeIntParams(shader, ShaderIDs._VTVariables, vtVariables);
+                int dispCount = Mathf.CeilToInt(size / 8f);
+                buffer.DispatchCompute(shader, 5, dispCount, dispCount, 1);
+            }
         }
 
         public int CombineQuadTextureImmiedietely(int2 leftDownIndex, int2 rightDownIndex, int2 leftUpIndex, int2 rightUpIndex, int2 targetIndex, int targetSize)
@@ -395,13 +414,13 @@ namespace MPipeline
             vtVariables[1] = targetIndex.y;
             vtVariables[2] = targetSize;
             vtVariables[3] = targetElement;
-            shader.SetInts(ShaderIDs._VTVariables, vtVariables);
+            buffer.SetComputeIntParams(shader, ShaderIDs._VTVariables, vtVariables);
             texSize[0] = indexSize.x;
             texSize[1] = indexSize.y;
-            shader.SetInts(ShaderIDs._IndexTextureSize, texSize);
-            shader.SetTexture(0, ShaderIDs._IndexTexture, indexTex);
+            buffer.SetComputeIntParams(shader, ShaderIDs._IndexTextureSize, texSize);
+            buffer.SetComputeTextureParam(shader, 0, ShaderIDs._IndexTexture, indexTex);
             int dispatchCount = Mathf.CeilToInt(targetSize / 8f);
-            shader.Dispatch(0, dispatchCount, dispatchCount, 1);
+            buffer.DispatchCompute(shader, 0, dispatchCount, dispatchCount, 1);
             return targetElement;
         }
     }
