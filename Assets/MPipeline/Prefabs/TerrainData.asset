@@ -21,15 +21,15 @@ MonoBehaviour:
   screenOffset:
     x: -8192
     y: -8192
-  lodDeferredOffset: 2
-  backfaceCullingLevel: 0.5
+  lodDeferredOffset: 1
+  backfaceCullingLevel: 1
   noiseTex: {fileID: 2800000, guid: 86c030b5b41938841b5819798ee91474, type: 3}
   lodDistances:
-  - 2600
-  - 2400
-  - 2200
-  - 2100
   - 2000
+  - 1800
+  - 1600
+  - 1400
+  - 1200
   - 1200
   - 200
   - 80
@@ -64,7 +64,7 @@ MonoBehaviour:
   - serializedVersion: 2
     m_Bits: 0
   virtualTexCapacity: 118
-  heightmapTexCapacity: 32
+  heightmapTexCapacity: 36
   allMaterials:
   - materialIndex: 0
     albedoColor:

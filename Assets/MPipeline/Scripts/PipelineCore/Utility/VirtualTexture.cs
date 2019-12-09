@@ -269,7 +269,7 @@ namespace MPipeline
         /// <param name="startIndex">Start Index in the index texture</param>
         /// <param name="size">Pixel count in index texture</param>
         /// <returns>The target array index in TextureArray, return -1 if the pool is full</returns>
-        public bool LoadNewTexture(int2 startIndex, int size, out int element)
+        public bool LoadNewTextureImmidietly(int2 startIndex, int size, out int element)
         {
             bool res = GetChunk(ref startIndex, size, out element);
             vtVariables[0] = startIndex.x;
@@ -286,7 +286,24 @@ namespace MPipeline
             return res;
         }
 
-        public void LoadNewTextureChunks(int2 startIndex, int chunkSize, int chunkCount, NativeArray<int> texsContainner)
+        public bool LoadNewTexture(int2 startIndex, int size, out int element, CommandBuffer cb)
+        {
+            bool res = GetChunk(ref startIndex, size, out element);
+            vtVariables[0] = startIndex.x;
+            vtVariables[1] = startIndex.y;
+            vtVariables[2] = size;
+            vtVariables[3] = element;
+            cb.SetComputeIntParams(shader, ShaderIDs._VTVariables, vtVariables);
+            texSize[0] = indexSize.x;
+            texSize[1] = indexSize.y;
+            cb.SetComputeIntParams(shader, ShaderIDs._IndexTextureSize, texSize);
+            cb.SetComputeTextureParam(shader, 0, ShaderIDs._IndexTexture, indexTex);
+            int dispatchCount = Mathf.CeilToInt(size / 8f);
+            cb.DispatchCompute(shader, 0, dispatchCount, dispatchCount, 1);
+            return res;
+        }
+
+        public void LoadNewTextureChunksImmidietly(int2 startIndex, int chunkSize, int chunkCount, NativeArray<int> texsContainner)
         {
             if (chunkCount * chunkCount > setIndexBuffer.count)
             {
@@ -316,6 +333,36 @@ namespace MPipeline
             int dispatchCount = Mathf.CeilToInt(fullSize / 8f);
             shader.Dispatch(1, dispatchCount, dispatchCount, 1);
         }
+        public void LoadNewTextureChunks(int2 startIndex, int chunkSize, int chunkCount, NativeArray<int> texsContainner, CommandBuffer cb)
+        {
+            if (chunkCount * chunkCount > setIndexBuffer.count)
+            {
+                setIndexBuffer.Dispose();
+                setIndexBuffer = new ComputeBuffer(chunkCount * chunkCount, sizeof(uint));
+            }
+            int fullSize = chunkCount * chunkSize;
+            int* ptr = texsContainner.Ptr();
+            for (int y = 0; y < chunkCount; ++y)
+                for (int x = 0; x < chunkCount; ++x)
+                {
+                    int2 idx = startIndex + int2(x * chunkSize, y * chunkSize);
+                    bool res = GetChunk(ref idx, chunkSize, out ptr[x + y * chunkCount]);
+                }
+            startIndex %= indexSize;
+            vtVariables[0] = startIndex.x;
+            vtVariables[1] = startIndex.y;
+            vtVariables[2] = chunkSize;
+            vtVariables[3] = chunkCount;
+            cb.SetComputeIntParams(shader, ShaderIDs._VTVariables, vtVariables);
+            texSize[0] = indexSize.x;
+            texSize[1] = indexSize.y;
+            cb.SetComputeIntParams(shader, ShaderIDs._IndexTextureSize, texSize);
+            cb.SetComputeTextureParam(shader, 1, ShaderIDs._IndexTexture, indexTex);
+            cb.SetComputeBufferParam(shader, 1, ShaderIDs._ElementBuffer, setIndexBuffer);
+            setIndexBuffer.SetData(texsContainner);
+            int dispatchCount = Mathf.CeilToInt(fullSize / 8f);
+            cb.DispatchCompute(shader, 1, dispatchCount, dispatchCount, 1);
+        }
         /// <summary>
         /// Unload space
         /// </summary>
@@ -337,6 +384,29 @@ namespace MPipeline
                 int dispCount = Mathf.CeilToInt(size / 8f);
                 buffer.DispatchCompute(shader, 5, dispCount, dispCount, 1);
             }
+        }
+
+        public void UnloadQuadTexture(int2 startIndex, int quadSize, CommandBuffer buffer)
+        {
+            if (quadSize <= 1) return;
+            int subSize = quadSize / 2;
+            UnloadChunk(ref startIndex);
+            int2 leftUpIndex = startIndex + int2(0, subSize);
+            UnloadChunk(ref leftUpIndex);
+            int2 rightDownIndex = startIndex + int2(subSize, 0);
+            UnloadChunk(ref rightDownIndex);
+            int2 rightUpIndex = startIndex + subSize;
+            UnloadChunk(ref rightUpIndex);
+
+            buffer.SetComputeTextureParam(shader, 5, ShaderIDs._IndexTexture, indexTex);
+            vtVariables[0] = startIndex.x;
+            vtVariables[1] = startIndex.y;
+            vtVariables[2] = indexSize.x;
+            vtVariables[3] = indexSize.y;
+            buffer.SetComputeIntParam(shader, ShaderIDs._Count, quadSize);
+            buffer.SetComputeIntParams(shader, ShaderIDs._VTVariables, vtVariables);
+            int dispCount = Mathf.CeilToInt(quadSize / 8f);
+            buffer.DispatchCompute(shader, 5, dispCount, dispCount, 1);
         }
 
         public int CombineQuadTextureImmiedietely(int2 leftDownIndex, int2 rightDownIndex, int2 leftUpIndex, int2 rightUpIndex, int2 targetIndex, int targetSize)

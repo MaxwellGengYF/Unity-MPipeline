@@ -21,7 +21,7 @@ namespace MPipeline
     {
         public enum Operator
         {
-            Load, Separate, Update, Unload, Combine
+            Load, Separate, Update, Unload, Combine, UnloadQuad
         }
         public Operator ope;
         public int size;
@@ -137,6 +137,7 @@ namespace MPipeline
                         pos = this.rootPos,
                     };
                     MTerrain.current.maskLoadList.Add(loadCommand);
+                    MTerrain.current.drawEnableList.Add(loadCommand);
                     lock (MTerrain.current)
                     {
                         MTerrain.current.boundBoxLoadList.Add(loadCommand);
@@ -244,6 +245,7 @@ namespace MPipeline
                     pos = rootPos
                 };
                 MTerrain.current.maskLoadList.Add(loadCommand);
+                MTerrain.current.drawEnableList.Add(loadCommand);
                 lock (MTerrain.current)
                 {
                     MTerrain.current.boundBoxLoadList.Add(loadCommand);
@@ -393,9 +395,9 @@ namespace MPipeline
         }
         private void Combine(bool enableSelf, bool childShouldEnable)
         {
-            distOffset = MTerrain.current.terrainData.lodDeferredOffset;
             if (leftDown != null)
             {
+                if (leftDown->leftDown != null || leftUp->leftDown != null || rightDown->leftDown != null || rightUp -> leftDown != null) return;
                 leftDown->isRendering = false;
                 leftUp->isRendering = false;
                 rightDown->isRendering = false;
@@ -417,25 +419,11 @@ namespace MPipeline
                     {
                         MTerrain.current.loadDataList.Add(new TerrainLoadData
                         {
-                            ope = TerrainLoadData.Operator.Unload,
-                            startIndex = leftDown->VirtualTextureIndex,
+                            ope = TerrainLoadData.Operator.UnloadQuad,
+                            startIndex = VirtualTextureIndex,
+                            size = VirtualTextureSize
                         });
-                        MTerrain.current.loadDataList.Add(new TerrainLoadData
-                        {
-                            ope = TerrainLoadData.Operator.Unload,
-                            startIndex = leftUp->VirtualTextureIndex,
-                        });
-                        MTerrain.current.loadDataList.Add(new TerrainLoadData
-                        {
-                            ope = TerrainLoadData.Operator.Unload,
-                            startIndex = rightDown->VirtualTextureIndex,
-                        });
-                        MTerrain.current.loadDataList.Add(new TerrainLoadData
-                        {
-                            ope = TerrainLoadData.Operator.Unload,
-                            startIndex = rightUp->VirtualTextureIndex,
-                        });
-                        DisableRendering();
+                        isRendering = false;
                     }
                 }
                 leftDown->Dispose();
@@ -447,6 +435,7 @@ namespace MPipeline
                 leftUp = null;
                 rightDown = null;
                 rightUp = null;
+                distOffset = MTerrain.current.terrainData.lodDeferredOffset;
             }
             else
             {
@@ -454,6 +443,7 @@ namespace MPipeline
                     EnableRendering();
                 else
                     DisableRendering();
+                distOffset = MTerrain.current.terrainData.lodDeferredOffset;
             }
         }
         public void PushDrawRequest(NativeList<TerrainDrawCommand> loadedBufferList)
@@ -504,6 +494,8 @@ namespace MPipeline
 
             }
             double2 heightMinMax = heightScaleOffset.y + texMinMax * heightScaleOffset.x;
+            double disp = MTerrain.current.terrainData.maxDisplaceHeight;
+            heightMinMax += double2(-disp, disp);
             double2 heightCenterExtent = double2(heightMinMax.x + heightMinMax.y, heightMinMax.y - heightMinMax.x) * 0.5;
             double3 centerWorldPos = double3(centerworldPosXZ.x, heightCenterExtent.x, centerworldPosXZ.y);
             double3 centerExtent = double3(extent, heightCenterExtent.y + MTerrain.current.terrainData.maxDisplaceHeight, extent);
@@ -515,7 +507,7 @@ namespace MPipeline
                 isInRange = MathLib.BoxIntersect(centerWorldPos, centerExtent, planes, 6);
             }
             toPoint = camPos - centerWorldPos;
-            dist = MathLib.DistanceToCube(centerExtent, toPoint);
+            dist = MathLib.DistanceToQuad(extent, toPoint.xz);
             if (leftDown != null)
             {
                 leftDown->UpdateData(camPos, camDir, heightScaleOffset, camFrustumMin, camFrustumMax, planes);
@@ -538,7 +530,7 @@ namespace MPipeline
             float SampleLevel(int targetLevel)
             {
                 int nextLevel = min(MTerrain.current.allLodLevles.Length - 1, targetLevel + 1);
-                return max(MTerrain.current.allLodLevles[nextLevel], MTerrain.current.allLodLevles[targetLevel] * (float)backface);
+                return max(MTerrain.current.allLodLevles[nextLevel] + 0.1f, MTerrain.current.allLodLevles[targetLevel] * (float)backface);
             }
             if (dist > SampleLevel(lodLevel) - distOffset)
             {

@@ -52,6 +52,7 @@ namespace MPipeline
         public NativeQueue<TerrainLoadData> loadDataList;
         public NativeQueue<MaskLoadCommand> maskLoadList;
         public NativeQueue<MaskLoadCommand> boundBoxLoadList;
+        public NativeQueue<MaskLoadCommand> drawEnableList;
         public struct Int2Equal : IFunction<int2, int2, bool>
         {
             public bool Run(ref int2 a, ref int2 b)
@@ -311,7 +312,7 @@ namespace MPipeline
                     if (maskCommand.load)
                     {
                         int maskEle;
-                        if (maskVT.LoadNewTexture(maskCommand.pos, 1, out maskEle))
+                        if (maskVT.LoadNewTexture(maskCommand.pos, 1, out maskEle, RenderPipeline.BeforeFrameBuffer))
                         {
                             VirtualTextureLoader.MaskBuffer maskLoadBuffer = maskLoader.ScheduleLoadingJob(maskCommand.pos);
                             VirtualTextureLoader.MaskBuffer heightLoadBuffer = heightLoader.ScheduleLoadingJob(maskCommand.pos);
@@ -324,12 +325,11 @@ namespace MPipeline
                         {
                             Debug.LogError("No Enough Mask Position!");
                         }
-                        loadedChunk[maskCommand.pos] = true;
+                       
                     }
                     else
                     {
                         maskVT.UnloadTexture(maskCommand.pos, RenderPipeline.BeforeFrameBuffer);
-                        loadedChunk.Remove(maskCommand.pos);
                     }
 
                 }
@@ -346,11 +346,12 @@ namespace MPipeline
                             switch (loadData.ope)
                             {
                                 case TerrainLoadData.Operator.Load:
-                                    bool elementAva = vt.LoadNewTexture(loadData.startIndex, loadData.size, out targetElement);
+                                    buffer = RenderPipeline.BeforeFrameBuffer;
+                                    bool elementAva = vt.LoadNewTexture(loadData.startIndex, loadData.size, out targetElement, buffer);
 
                                     if (elementAva)
                                     {
-                                        LoadTexture(loadData.startIndex, loadData.size, loadData.rootPos, loadData.maskScaleOffset, targetElement, RenderPipeline.BeforeFrameBuffer);
+                                        LoadTexture(loadData.startIndex, loadData.size, loadData.rootPos, loadData.maskScaleOffset, targetElement, buffer);
 
                                     }
 
@@ -405,7 +406,7 @@ namespace MPipeline
                             break;
                         case TerrainLoadData.Operator.Load:
 
-                            bool elementAva = vt.LoadNewTexture(loadData.startIndex, loadData.size, out targetElement);
+                            bool elementAva = vt.LoadNewTexture(loadData.startIndex, loadData.size, out targetElement, RenderPipeline.BeforeFrameBuffer);
 
                             if (elementAva)
                             {
@@ -426,7 +427,8 @@ namespace MPipeline
                             int2 rightUpIndex = loadData.startIndex + subSize;
                             if (vt.LeftedTextureElement >= 3)
                             {
-                                vt.LoadNewTextureChunks(loadData.startIndex, subSize, 2, vtContainer);
+                                buffer = RenderPipeline.BeforeFrameBuffer;
+                                vt.LoadNewTextureChunks(loadData.startIndex, subSize, 2, vtContainer, buffer);
                                 float subScale = loadData.maskScaleOffset.x;
                                 float2 leftUpOffset = float2(loadData.maskScaleOffset.yz + float2(0, subScale));
                                 float2 rightDownOffset = float2(loadData.maskScaleOffset.yz + float2(subScale, 0));
@@ -435,10 +437,10 @@ namespace MPipeline
                                 float3 leftUpScaleOffset = float3(subScale, leftUpOffset);
                                 float3 rightDownScaleOffset = float3(subScale, rightDownOffset);
                                 float3 rightUpScaleOffset = float3(subScale, rightUpOffset);
-                                LoadTexture(leftDownIndex, subSize, loadData.rootPos, leftDownScaleOffset, vtContainer[0], RenderPipeline.BeforeFrameBuffer);
-                                LoadTexture(leftUpIndex, subSize, loadData.rootPos, leftUpScaleOffset, vtContainer[2], RenderPipeline.BeforeFrameBuffer);
-                                LoadTexture(rightDownIndex, subSize, loadData.rootPos, rightDownScaleOffset, vtContainer[1], RenderPipeline.BeforeFrameBuffer);
-                                LoadTexture(rightUpIndex, subSize, loadData.rootPos, rightUpScaleOffset, vtContainer[3], RenderPipeline.BeforeFrameBuffer);
+                                LoadTexture(leftDownIndex, subSize, loadData.rootPos, leftDownScaleOffset, vtContainer[0], buffer);
+                                LoadTexture(leftUpIndex, subSize, loadData.rootPos, leftUpScaleOffset, vtContainer[2], buffer);
+                                LoadTexture(rightDownIndex, subSize, loadData.rootPos, rightDownScaleOffset, vtContainer[1], buffer);
+                                LoadTexture(rightUpIndex, subSize, loadData.rootPos, rightUpScaleOffset, vtContainer[3], buffer);
                                 DrawDecal(leftDownIndex, subSize, vtContainer[0], loadData.targetDecalLayer, loadData.rootPos);
                                 DrawDecal(leftUpIndex, subSize, vtContainer[2], loadData.targetDecalLayer, loadData.rootPos);
                                 DrawDecal(rightDownIndex, subSize, vtContainer[1], loadData.targetDecalLayer, loadData.rootPos);
@@ -452,6 +454,9 @@ namespace MPipeline
                             break;
                         case TerrainLoadData.Operator.Unload:
                             vt.UnloadTexture(loadData.startIndex, RenderPipeline.BeforeFrameBuffer);
+                            break;
+                        case TerrainLoadData.Operator.UnloadQuad:
+                            vt.UnloadQuadTexture(loadData.startIndex, loadData.size, RenderPipeline.BeforeFrameBuffer);
                             break;
                         case TerrainLoadData.Operator.Combine:
                             subSize = loadData.size / 2;
@@ -467,6 +472,17 @@ namespace MPipeline
                     }
                 }
                 else yield return null;
+                if (drawEnableList.TryDequeue(out maskCommand))
+                {
+                    if(maskCommand.load)
+                    {
+                        loadedChunk[maskCommand.pos] = true;
+                    }
+                    else
+                    {
+                        loadedChunk.Remove(maskCommand.pos);
+                    }
+                }
             }
         }
 
@@ -542,6 +558,7 @@ namespace MPipeline
             }
             vtContainer = new NativeArray<int>(4, Allocator.Persistent, NativeArrayOptions.UninitializedMemory);
             maskLoadList = new NativeQueue<MaskLoadCommand>(10, Allocator.Persistent);
+            drawEnableList = new NativeQueue<MaskLoadCommand>(10, Allocator.Persistent);
             ComputeShader editShader = Resources.Load<ComputeShader>("TerrainEdit");
             loadingThread = new MTerrainLoadingThread(10);
             maskLoader = new VirtualTextureLoader(terrainData.maskmapPath, editShader, largestChunkCount, MASK_RESOLUTION, false, loadingThread);
@@ -746,6 +763,7 @@ namespace MPipeline
             maskLoader.Dispose();
             heightLoader.Dispose();
             maskLoadList.Dispose();
+            drawEnableList.Dispose();
             vtContainer.Dispose();
             loadedChunk.Dispose();
             Destroy(albedoTex);

@@ -18,6 +18,8 @@ namespace MPipeline
     {
         public List<Transform> targetTrans;
         public Transform remover;
+        public Camera cam;
+        public Transform testTrans;
         private void Update()
         {
             if (targetTrans.Count > 0)
@@ -35,6 +37,15 @@ namespace MPipeline
             {
                 MoveScene.current.Move(float3(0, 20, 0));
             }
+        }
+        [EasyButtons.Button]
+        void RunTest()
+        {
+            float4x4 mat = GL.GetGPUProjectionMatrix(cam.projectionMatrix, true);
+            Debug.Log((Matrix4x4)mat);
+            mat.c2.z = cam.nearClipPlane / (cam.farClipPlane - cam.nearClipPlane);
+            mat.c3.z = (cam.nearClipPlane * cam.farClipPlane) / (cam.farClipPlane - cam.nearClipPlane);
+            Debug.Log((Matrix4x4)mat);
         }
     }
 }
